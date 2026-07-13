@@ -18,7 +18,9 @@ import {
 } from "react";
 import {
   ActivityIndicator,
+  BackHandler,
   Image,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -57,6 +59,9 @@ const apiUrl =
   typeof configuredUrl === "string"
     ? configuredUrl.replace(/\/$/, "")
     : "http://localhost:3000";
+const tvAudiencePlatform = Platform.isTVOS ? "tvos" : "androidtv";
+const tvPairingTarget = Platform.isTVOS ? "tv" : "androidtv";
+const tvDeviceName = Platform.isTVOS ? "Apple TV" : "Android TV";
 const tokenKey = "harborline:tv:device-token";
 const installationKey = "harborline:tv:installation";
 const themeKey = "harborline:tv:theme";
@@ -137,7 +142,7 @@ async function reportPresence(token?: string) {
     },
     body: JSON.stringify({
       installationId,
-      platform: "tvos",
+      platform: tvAudiencePlatform,
       source: "tv-app",
       appVersion: Constants.expoConfig?.version ?? "1.0.0",
     }),
@@ -154,6 +159,7 @@ export default function App() {
 
 function TvApp() {
   const [account, setAccount] = useState<Account | null>(null);
+  const [guestMode, setGuestMode] = useState(false);
   const [pairing, setPairing] = useState<PairingRequest | null>(null);
   const [stories, setStories] = useState<Story[]>([]);
   const [live, setLive] = useState<LiveSnapshot | null>(null);
@@ -169,8 +175,8 @@ function TvApp() {
         await api<PairingRequest>("/api/v1/device-pairing", {
           method: "POST",
           body: JSON.stringify({
-            target: "tv",
-            deviceName: Platform.isTVOS ? "Apple TV" : "TV device",
+            target: tvPairingTarget,
+            deviceName: tvDeviceName,
           }),
         }),
       );
@@ -215,10 +221,10 @@ function TvApp() {
   }, []);
 
   useEffect(() => {
-    if (loading || account || pairing || notice) return;
+    if (loading || account || pairing || notice || guestMode) return;
     const timer = setTimeout(() => void beginPairing(), 0);
     return () => clearTimeout(timer);
-  }, [account, beginPairing, loading, notice, pairing]);
+  }, [account, beginPairing, guestMode, loading, notice, pairing]);
   useEffect(() => {
     if (!pairing || account) return;
     let active = true;
@@ -272,17 +278,22 @@ function TvApp() {
       }).catch(() => undefined);
     await SecureStore.deleteItemAsync(tokenKey);
     setAccount(null);
+    setGuestMode(true);
     setNotice("");
     setPairing(null);
   }
 
-  if (!account)
+  if (!account && !guestMode)
     return (
       <PairingScreen
         pairing={pairing}
         loading={loading}
         notice={notice}
         retry={beginPairing}
+        continueWithoutAccount={() => {
+          setPairing(null);
+          setGuestMode(true);
+        }}
       />
     );
   return (
@@ -291,6 +302,10 @@ function TvApp() {
       stories={stories}
       live={live}
       signOut={signOut}
+      connectAccount={() => {
+        setGuestMode(false);
+        void beginPairing();
+      }}
     />
   );
 }
@@ -300,11 +315,13 @@ function PairingScreen({
   loading,
   notice,
   retry,
+  continueWithoutAccount,
 }: {
   pairing: PairingRequest | null;
   loading: boolean;
   notice: string;
   retry: () => Promise<void>;
+  continueWithoutAccount: () => void;
 }) {
   const { colors, styles } = useTvTheme();
   return (
@@ -319,7 +336,7 @@ function PairingScreen({
       </View>
       <View style={styles.pairingContent}>
         <View style={styles.pairingCopy}>
-          <Text style={styles.eyebrow}>CONNECT YOUR APPLE TV</Text>
+          <Text style={styles.eyebrow}>CONNECT YOUR {tvDeviceName.toUpperCase()}</Text>
           <Text style={styles.pairingTitle}>
             Local news, ready for the big screen.
           </Text>
@@ -331,6 +348,10 @@ function PairingScreen({
             Sign in on your phone, then verify that its sync code exactly
             matches this television. The QR never contains your password.
           </Text>
+          <FocusButton
+            label="Continue without an account"
+            onPress={continueWithoutAccount}
+          />
         </View>
         <View style={styles.qrCard}>
           {pairing ? (
@@ -338,8 +359,8 @@ function PairingScreen({
               <Image
                 source={{ uri: pairing.qrImageUrl }}
                 style={styles.qr}
-                alt="QR code to connect this Apple TV"
-                accessibilityLabel="QR code to connect this Apple TV"
+                alt={`QR code to connect this ${tvDeviceName}`}
+                accessibilityLabel={`QR code to connect this ${tvDeviceName}`}
               />
               <Text style={styles.codeLabel}>SYNC CODE</Text>
               <Text style={styles.code}>{pairing.userCode}</Text>
@@ -373,14 +394,35 @@ function HomeScreen({
   stories,
   live,
   signOut,
+  connectAccount,
 }: {
-  account: Account;
+  account: Account | null;
   stories: Story[];
   live: LiveSnapshot | null;
   signOut: () => Promise<void>;
+  connectAccount: () => void;
 }) {
   const { styles } = useTvTheme();
+  const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const lead = stories[0];
+  useEffect(() => {
+    if (!selectedStory) return;
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        setSelectedStory(null);
+        return true;
+      },
+    );
+    return () => subscription.remove();
+  }, [selectedStory]);
+  if (selectedStory)
+    return (
+      <StoryDetail
+        story={selectedStory}
+        onBack={() => setSelectedStory(null)}
+      />
+    );
   return (
     <View style={styles.home}>
       <View style={styles.nav}>
@@ -396,13 +438,23 @@ function HomeScreen({
           <Text style={styles.navItem}>Weather</Text>
         </View>
         <View style={styles.account}>
-          <Text style={styles.accountName}>{account.name}</Text>
+          <Text style={styles.accountName}>
+            {account?.name ?? "Public access"}
+          </Text>
           <ThemeControls />
-          <FocusButton
-            label="Sign out"
-            onPress={() => void signOut()}
-            compact
-          />
+          {account ? (
+            <FocusButton
+              label="Sign out"
+              onPress={() => void signOut()}
+              compact
+            />
+          ) : (
+            <FocusButton
+              label="Connect"
+              onPress={connectAccount}
+              compact
+            />
+          )}
         </View>
       </View>
       <ScrollView contentContainerStyle={styles.homeContent}>
@@ -410,7 +462,14 @@ function HomeScreen({
           <View style={styles.liveBanner}>
             <Text style={styles.livePill}>LIVE</Text>
             <Text style={styles.liveTitle}>{live.title}</Text>
-            <FocusButton label="Watch now" onPress={() => undefined} compact />
+            <FocusButton
+              label="Watch now"
+              onPress={() => {
+                if (live.streamUrl)
+                  void Linking.openURL(live.streamUrl).catch(() => undefined);
+              }}
+              compact
+            />
           </View>
         ) : null}
         {lead ? (
@@ -429,7 +488,10 @@ function HomeScreen({
               <Text numberOfLines={2} style={styles.heroDek}>
                 {lead.dek}
               </Text>
-              <FocusButton label="Read story" onPress={() => undefined} />
+              <FocusButton
+                label="Read story"
+                onPress={() => setSelectedStory(lead)}
+              />
             </View>
           </View>
         ) : null}
@@ -440,7 +502,11 @@ function HomeScreen({
           contentContainerStyle={styles.rail}
         >
           {stories.slice(1).map((story) => (
-            <StoryTile key={story.id} story={story} />
+            <StoryTile
+              key={story.id}
+              story={story}
+              onPress={() => setSelectedStory(story)}
+            />
           ))}
         </ScrollView>
       </ScrollView>
@@ -448,11 +514,57 @@ function HomeScreen({
   );
 }
 
-function StoryTile({ story }: { story: Story }) {
+function StoryDetail({
+  story,
+  onBack,
+}: {
+  story: Story;
+  onBack: () => void;
+}) {
+  const { styles } = useTvTheme();
+  return (
+    <View style={styles.storyPage}>
+      <View style={styles.storyHeader}>
+        <View style={styles.brandCompact}>
+          <View style={styles.brandLine} />
+          <Text style={styles.brandName}>HARBORLINE</Text>
+          <Text style={styles.brandLocal}>TV</Text>
+        </View>
+        <FocusButton label="Back to latest" onPress={onBack} compact />
+      </View>
+      <ScrollView contentContainerStyle={styles.storyContent}>
+        <Text style={styles.storyCategory}>
+          {story.categoryLabel.toUpperCase()} · {story.location.toUpperCase()}
+        </Text>
+        <Text style={styles.storyHeadline}>{story.headline}</Text>
+        <Text style={styles.storyDek}>{story.dek}</Text>
+        <Text style={styles.storyByline}>
+          By {story.author.name} · {story.readingMinutes} MIN READ
+        </Text>
+        {story.body.map((paragraph, index) => (
+          <Text key={`${story.id}-${index}`} style={styles.storyParagraph}>
+            {paragraph}
+          </Text>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+function StoryTile({
+  story,
+  onPress,
+}: {
+  story: Story;
+  onPress: () => void;
+}) {
   const { styles } = useTvTheme();
   const [focused, setFocused] = useState(false);
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Read ${story.headline}`}
+      onPress={onPress}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
       style={[styles.tile, focused && styles.tileFocused]}
@@ -683,6 +795,55 @@ const createStyles = (colors: TvColors) =>
       gap: 18,
     },
     accountName: { color: colors.muted, fontSize: 14 },
+    storyPage: { flex: 1, backgroundColor: colors.navy },
+    storyHeader: {
+      height: 92,
+      paddingHorizontal: 54,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      borderBottomWidth: 1,
+      borderBottomColor: "#FFFFFF22",
+    },
+    storyContent: {
+      width: "78%",
+      maxWidth: 1200,
+      alignSelf: "center",
+      paddingVertical: 58,
+      paddingBottom: 120,
+    },
+    storyCategory: {
+      color: colors.yellow,
+      fontSize: 15,
+      fontWeight: "900",
+      letterSpacing: 2,
+    },
+    storyHeadline: {
+      color: colors.white,
+      fontSize: 50,
+      lineHeight: 58,
+      fontWeight: "900",
+      marginTop: 15,
+    },
+    storyDek: {
+      color: colors.muted,
+      fontSize: 24,
+      lineHeight: 35,
+      marginTop: 24,
+    },
+    storyByline: {
+      color: colors.yellow,
+      fontSize: 15,
+      fontWeight: "800",
+      marginTop: 28,
+      marginBottom: 36,
+    },
+    storyParagraph: {
+      color: colors.white,
+      fontSize: 22,
+      lineHeight: 36,
+      marginBottom: 24,
+    },
     homeContent: { padding: 48, paddingBottom: 80 },
     liveBanner: {
       borderRadius: 12,

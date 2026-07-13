@@ -9,8 +9,20 @@
       "bundleIdentifier": "com.mobilemediainteractions.thenews.tv",
       "supportsTablet": false
     },
+    "android": {
+      "package": "com.mobilemediainteractions.thenews.tv",
+      "versionCode": 1
+    },
     "plugins": [
-      "@react-native-tvos/config-tv",
+      [
+        "@react-native-tvos/config-tv",
+        {
+          "androidTVRequired": true,
+          "androidTVBanner": "../web/public/og.png",
+          "removeFlipperOnAndroid": true,
+          "tvosDeploymentTarget": "17.0"
+        }
+      ],
       "expo-secure-store"
     ],
     "extra": {

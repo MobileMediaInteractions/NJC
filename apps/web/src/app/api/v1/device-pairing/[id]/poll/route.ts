@@ -118,7 +118,12 @@ export async function POST(
       );
     }
     const access = createDeviceAccessToken();
-    const platform = claimed.target === "roku" ? "roku" : "tvos";
+    const platform =
+      claimed.target === "roku"
+        ? "roku"
+        : claimed.target === "androidtv"
+          ? "androidtv"
+          : "tvos";
     const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60_000);
     await db.insert(deviceSessions).values({
       tokenHash: access.tokenHash,

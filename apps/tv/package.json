@@ -7,6 +7,9 @@
     "start": "EXPO_TV=1 expo start --dev-client",
     "prebuild:tvos": "EXPO_TV=1 expo prebuild --platform ios",
     "tvos": "EXPO_TV=1 expo run:ios",
+    "prebuild:android-tv": "EXPO_TV=1 expo prebuild --clean --platform android",
+    "android-tv": "EXPO_TV=1 expo run:android",
+    "eas:android-tv": "EXPO_TV=1 eas build --platform android --profile android-tv-production",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint"
   },

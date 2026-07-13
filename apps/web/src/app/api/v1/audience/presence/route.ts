@@ -8,7 +8,7 @@ import { authenticateDeviceRequest } from "@/lib/device-pairing";
 
 const inputSchema = z.object({
   installationId: z.string().regex(/^[A-Za-z0-9_-]{20,100}$/),
-  platform: z.enum(["web", "ios", "android", "tvos", "roku"]),
+  platform: z.enum(["web", "ios", "android", "tvos", "androidtv", "roku"]),
   source: z
     .enum(["news-site", "mobile-app", "mobile-app-web", "tv-app", "roku-app"])
     .default("news-site"),
@@ -62,7 +62,9 @@ export async function POST(request: Request) {
   }
   if (
     !userClerkId &&
-    (parsed.data.platform === "tvos" || parsed.data.platform === "roku")
+    (["tvos", "androidtv", "roku"] as const).includes(
+      parsed.data.platform as "tvos" | "androidtv" | "roku",
+    )
   ) {
     try {
       userClerkId =

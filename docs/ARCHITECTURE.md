@@ -6,7 +6,7 @@ Harborline is organized by deployable target first, then by shared capability.
 apps/
   web/                 Next.js public site, CMS, legal pages and Vercel route handlers
   mobile/              One Expo codebase for iOS and Android
-  tv/                  react-native-tvos Apple TV application
+  tv/                  Shared react-native-tvos Apple TV and Android TV application
   roku/                Native SceneGraph/BrightScript Roku application
 packages/
   api-client/          Typed, platform-neutral HTTP requester used by native clients

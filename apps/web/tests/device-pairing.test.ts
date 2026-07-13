@@ -1,8 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { pairingTargets } from "@harborline/contracts";
 import { createPairingCredentials, formatUserCode, normalizeUserCode, safePairingHashEqual } from "../src/lib/device-pairing";
 
 process.env.DEVICE_PAIRING_PEPPER = "test-only-pairing-pepper-with-more-than-32-characters";
+
+test("pairing contracts include every browser and television target", () => {
+  assert.deepEqual(pairingTargets, ["tv", "androidtv", "roku", "web"]);
+});
 
 test("pairing codes normalize to a readable six-character code", () => {
   assert.equal(normalizeUserCode("ab2-c 34"), "AB2C34");

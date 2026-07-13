@@ -14,6 +14,21 @@
     },
     "production": {
       "env": { "EXPO_TV": "1" }
+    },
+    "android-tv-development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": { "EXPO_TV": "1" },
+      "android": { "buildType": "apk" }
+    },
+    "android-tv-preview": {
+      "distribution": "internal",
+      "env": { "EXPO_TV": "1" },
+      "android": { "buildType": "apk" }
+    },
+    "android-tv-production": {
+      "env": { "EXPO_TV": "1" },
+      "android": { "buildType": "app-bundle" }
     }
   }
 }

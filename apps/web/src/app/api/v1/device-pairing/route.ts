@@ -13,7 +13,7 @@ import {
 export const runtime = "nodejs";
 
 const inputSchema = z.object({
-  target: z.enum(["tv", "roku", "web"]),
+  target: z.enum(["tv", "androidtv", "roku", "web"]),
   deviceName: z.string().trim().min(1).max(80),
 });
 
@@ -81,10 +81,9 @@ export async function POST(request: Request) {
     ? new URL(process.env.NEXT_PUBLIC_SITE_URL).origin
     : new URL(request.url).origin;
   const verificationBase = `${origin}/login/tv`;
-  const verificationUri =
-    parsed.data.target === "roku"
-      ? `${verificationBase}?target=roku`
-      : verificationBase;
+  const verificationUri = ["androidtv", "roku"].includes(parsed.data.target)
+    ? `${verificationBase}?target=${parsed.data.target}`
+    : verificationBase;
   const verificationUriComplete = `${verificationBase}?session=${created.id}&code=${encodeURIComponent(credentials.userCode)}&target=${parsed.data.target}`;
   const qrValue =
     parsed.data.target === "web"

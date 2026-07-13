@@ -24,7 +24,7 @@ export function TvPairingApproval({
 }: {
   initialSession: string;
   initialCode: string;
-  initialTarget: "tv" | "roku";
+  initialTarget: "tv" | "androidtv" | "roku";
 }) {
   const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
@@ -32,7 +32,12 @@ export function TvPairingApproval({
   const [busy, setBusy] = useState(false);
   const [approved, setApproved] = useState(false);
   const [notice, setNotice] = useState("");
-  const deviceLabel = initialTarget === "roku" ? "Roku" : "Apple TV";
+  const deviceLabel =
+    initialTarget === "roku"
+      ? "Roku"
+      : initialTarget === "androidtv"
+        ? "Android TV"
+        : "Apple TV";
   const signInUrl = useMemo(
     () =>
       `/sign-in?redirect_url=${encodeURIComponent(`/login/tv?${new URLSearchParams({ ...(initialSession ? { session: initialSession } : {}), ...(code ? { code } : {}), target: initialTarget })}`)}`,

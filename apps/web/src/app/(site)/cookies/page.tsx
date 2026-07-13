@@ -16,7 +16,7 @@ export default function CookiesPage() {
           Clerk may store authentication and fraud-prevention values. Harborline
           stores consent choices and interface preferences. The mobile app uses
           on-device SQLite key-value storage for cached news, weather and
-          bookmarks. Apple TV and Roku use on-device storage for revocable
+          bookmarks. Apple TV, Android TV and Roku use on-device storage for revocable
           sign-in tokens and installation identifiers. These functions are
           necessary or explicitly requested and cannot all be disabled without
           losing the related feature.
@@ -33,7 +33,7 @@ export default function CookiesPage() {
           last-active time. The mobile app reports a random installation
           identifier, operating platform, app version and last-active time;
           readers can disable and delete that record from Account → Privacy and
-          support. Apple TV and Roku report their platform, app version and
+          support. Apple TV, Android TV and Roku report their platform, app version and
           last-active time as separate installation totals. These records do not include
           article-reading history or an advertising identifier.
         </p>

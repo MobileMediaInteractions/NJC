@@ -29,13 +29,19 @@ function parsePairing(value: string) {
     const code = formatCode(url.searchParams.get("code") ?? "");
     const requestedTarget = url.searchParams.get("target");
     const target =
-      requestedTarget === "web" || requestedTarget === "roku"
+      requestedTarget === "web" ||
+      requestedTarget === "roku" ||
+      requestedTarget === "androidtv"
         ? requestedTarget
         : url.pathname.includes("/login/tv")
           ? "tv"
           : "";
     return session && code && target
-      ? { session, code, target: target as "tv" | "roku" | "web" }
+      ? {
+          session,
+          code,
+          target: target as "tv" | "androidtv" | "roku" | "web",
+        }
       : null;
   } catch {
     return null;
@@ -58,8 +64,14 @@ export default function PairScreen() {
   const [code, setCode] = useState(
     formatCode(typeof params.code === "string" ? params.code : ""),
   );
-  const [target, setTarget] = useState<"tv" | "roku" | "web">(
-    params.target === "tv" || params.target === "roku" ? params.target : "web",
+  const [target, setTarget] = useState<
+    "tv" | "androidtv" | "roku" | "web"
+  >(
+    params.target === "tv" ||
+      params.target === "roku" ||
+      params.target === "androidtv"
+      ? params.target
+      : "web",
   );
   const [scanned, setScanned] = useState(Boolean(session && code));
   const [busy, setBusy] = useState(false);
@@ -92,7 +104,7 @@ export default function PairScreen() {
       setNotice(
         target === "web"
           ? "Browser approved. It will finish signing in now."
-          : `${target === "roku" ? "Roku" : "Apple TV"} approved. It will finish signing in now.`,
+          : `${target === "roku" ? "Roku" : target === "androidtv" ? "Android TV" : "Apple TV"} approved. It will finish signing in now.`,
       );
     } catch (error) {
       setNotice(
@@ -161,7 +173,14 @@ export default function PairScreen() {
       <Text style={styles.title}>Do these codes match?</Text>
       <Text style={styles.copy}>
         Compare this code with the one on the{" "}
-        {target === "web" ? "browser" : target === "roku" ? "Roku" : "Apple TV"}. If anything is different,
+        {target === "web"
+          ? "browser"
+          : target === "roku"
+            ? "Roku"
+            : target === "androidtv"
+              ? "Android TV"
+              : "Apple TV"}
+        . If anything is different,
         do not approve.
       </Text>
       <View style={styles.codeCard}>

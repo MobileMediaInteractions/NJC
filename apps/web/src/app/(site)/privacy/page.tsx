@@ -28,13 +28,13 @@ export default function PrivacyPage() {
           services may include newsletter choices, comments, tips, alert-device
           tokens, saved preferences, approximate region, request logs and
           privacy requests. Audience totals use a random or app-scoped
-          pseudonymous installation identifier, Web/iOS/Android/tvOS/Roku
+          pseudonymous installation identifier, Web/iOS/Android/tvOS/Android TV/Roku
           platform, app version, account link
           when authenticated and first/last-active timestamps. They do not store
           article-reading history or an advertising identifier. We do not store
           raw developer API keys after creation. Device sign-in handles
           short-lived pairing status, hashed sync codes and requester network
-          information for abuse prevention. Apple TV and Roku sessions retain account,
+          information for abuse prevention. Apple TV, Android TV and Roku sessions retain account,
           device, expiry and last-active metadata; raw device tokens are not
           stored.
         </p>

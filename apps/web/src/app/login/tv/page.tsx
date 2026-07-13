@@ -29,7 +29,11 @@ export default async function TvLoginPage({
     <TvPairingApproval
       initialSession={params.session ?? ""}
       initialCode={params.code ?? ""}
-      initialTarget={params.target === "roku" ? "roku" : "tv"}
+      initialTarget={
+        params.target === "roku" || params.target === "androidtv"
+          ? params.target
+          : "tv"
+      }
     />
   );
 }

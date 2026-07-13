@@ -15,6 +15,8 @@
     "mobile:check": "pnpm --dir apps/mobile typecheck && pnpm --dir apps/mobile lint",
     "tv:start": "pnpm --dir apps/tv start",
     "tv:check": "pnpm --dir apps/tv typecheck && pnpm --dir apps/tv lint",
+    "tv:prebuild:android": "pnpm --dir apps/tv prebuild:android-tv",
+    "tv:android": "pnpm --dir apps/tv android-tv",
     "roku:check": "pnpm --dir apps/roku test && pnpm --dir apps/roku typecheck",
     "roku:build": "pnpm --dir apps/roku build",
     "roku:package": "pnpm --dir apps/roku package:production",
