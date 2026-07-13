@@ -69,6 +69,12 @@ export async function getAccountIdentity() {
   return { clerkId: user.id, email: email.emailAddress, name: user.fullName ?? email.emailAddress };
 }
 
+export async function getOptionalAccountId() {
+  if (!isClerkConfigured()) return null;
+  const { userId } = await auth();
+  return userId ?? null;
+}
+
 export async function canUseMobileAdmin() {
   const user = await getStudioUser();
   return user && ["admin", "editor", "producer"].includes(user.role) ? user : null;

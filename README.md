@@ -13,6 +13,7 @@ Harborline Local is a production-oriented, fictional local-news network built wi
 - Versioned `/api/v1` contracts documented in `docs/MOBILE_API.md`
 - Expo SDK 57 app with offline feeds, bookmarks, weather, live video, push alerts and limited mobile newsroom controls
 - Verified developer accounts with scoped HMAC-hashed keys, audit records, revocation and Upstash rate limits
+- Consent-aware audience reporting with Web, iOS, Android and developer API totals in Studio and mobile admin
 - Legal/trust center, consent controls and verified privacy-request intake foundation
 - Provider-neutral Postgres, Blob, migration and configuration exports documented in `docs/PORTABLE_BACKUP.md`
 

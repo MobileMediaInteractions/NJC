@@ -2,6 +2,7 @@
 
 import { ClerkProvider } from "@clerk/nextjs";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AudienceTracker } from "@/components/audience-tracker";
 import { CookieConsent } from "@/components/cookie-consent";
 
 export function AppProviders({
@@ -11,6 +12,6 @@ export function AppProviders({
   children: React.ReactNode;
   clerkEnabled: boolean;
 }) {
-  const content = <TooltipProvider>{children}<CookieConsent /></TooltipProvider>;
+  const content = <TooltipProvider>{children}<AudienceTracker /><CookieConsent /></TooltipProvider>;
   return clerkEnabled ? <ClerkProvider>{content}</ClerkProvider> : content;
 }

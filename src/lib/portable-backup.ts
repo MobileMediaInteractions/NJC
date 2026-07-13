@@ -27,14 +27,14 @@ async function readDatasets(): Promise<Dataset[]> {
     db.select().from(schema.users), db.select().from(schema.categories), db.select().from(schema.stories), db.select().from(schema.storyRevisions),
     db.select().from(schema.mediaAssets), db.select().from(schema.assignments), db.select().from(schema.comments), db.select().from(schema.newsletterSubscribers),
     db.select().from(schema.alerts), db.select().from(schema.liveEvents), db.select().from(schema.newsTips), db.select().from(schema.apiKeys),
-    db.select().from(schema.apiAuditLogs), db.select().from(schema.pushDevices), db.select().from(schema.siteSettings), db.select().from(schema.dataRequests),
+    db.select().from(schema.apiAuditLogs), db.select().from(schema.pushDevices), db.select().from(schema.audienceInstallations), db.select().from(schema.siteSettings), db.select().from(schema.dataRequests),
     db.select().from(schema.portableExports),
   ]);
   const definitions = [
     ["users", schema.users], ["categories", schema.categories], ["stories", schema.stories], ["story_revisions", schema.storyRevisions],
     ["media_assets", schema.mediaAssets], ["assignments", schema.assignments], ["comments", schema.comments], ["newsletter_subscribers", schema.newsletterSubscribers],
     ["alerts", schema.alerts], ["live_events", schema.liveEvents], ["news_tips", schema.newsTips], ["api_keys", schema.apiKeys],
-    ["api_audit_logs", schema.apiAuditLogs], ["push_devices", schema.pushDevices], ["site_settings", schema.siteSettings], ["data_requests", schema.dataRequests],
+    ["api_audit_logs", schema.apiAuditLogs], ["push_devices", schema.pushDevices], ["audience_installations", schema.audienceInstallations], ["site_settings", schema.siteSettings], ["data_requests", schema.dataRequests],
     ["portable_exports", schema.portableExports],
   ] as const;
   return definitions.map(([name, table], index) => ({ name, table, rows: sanitize(name, toRecordRows(data[index] as unknown[])) }));

@@ -3,28 +3,26 @@
 import Link from "next/link";
 import { useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
-
-const storageKey = "harborline-cookie-consent-v1";
-const eventName = "harborline:consent";
+import { consentEventName, consentStorageKey } from "@/lib/analytics-consent";
 
 function subscribe(callback: () => void) {
-  window.addEventListener(eventName, callback);
-  return () => window.removeEventListener(eventName, callback);
+  window.addEventListener(consentEventName, callback);
+  return () => window.removeEventListener(consentEventName, callback);
 }
 
 export function CookieConsent() {
   const open = useSyncExternalStore(
     subscribe,
-    () => !localStorage.getItem(storageKey),
+    () => !localStorage.getItem(consentStorageKey),
     () => false,
   );
 
   function save(value: "essential" | "analytics") {
     localStorage.setItem(
-      storageKey,
+      consentStorageKey,
       JSON.stringify({ value, savedAt: new Date().toISOString() }),
     );
-    window.dispatchEvent(new Event(eventName));
+    window.dispatchEvent(new Event(consentEventName));
   }
 
   if (!open) return null;

@@ -15,6 +15,8 @@ The public web application and future native clients use the same versioned JSON
 | `POST` | `/api/v1/comments` | Moderated comment submission |
 | `POST` | `/api/v1/tips` | Newsroom tip intake |
 | `POST` | `/api/v1/mobile/push/register` | Register an Expo push token |
+| `POST` | `/api/v1/audience/presence` | Record consent-aware Web/iOS/Android installation presence |
+| `DELETE` | `/api/v1/audience/presence` | Remove an anonymous installation record after opt-out |
 
 Every successful response follows:
 
@@ -46,6 +48,7 @@ Errors follow:
 - Use HLS for the value in `live.streamUrl`; native players can consume the same stream.
 - Add cursor pagination before the story archive exceeds the first launch market.
 - Use universal links / app links for `/story/:slug`, `/category/:slug`, `/weather` and `/live`.
+- Platform presence records contain a random installation ID, platform, app version and activity timestamps. They do not contain reading history or an advertising identifier.
 
 ## Limited mobile newsroom endpoints
 
@@ -58,6 +61,8 @@ These routes require a valid Clerk bearer token and an `admin`, `editor` or `pro
 | `POST` | `/api/v1/mobile/admin/alerts` | Record and send breaking/weather alerts |
 | `PATCH` | `/api/v1/mobile/admin/live` | Toggle the cross-platform live banner |
 | `GET` | `/api/v1/mobile/admin/metrics` | Queue counts, alert/device counts and DB health |
+
+The mobile metrics response includes the same Web, iOS, Android and developer-API audience summary shown in Studio.
 
 ## Self-service developer API
 
@@ -76,3 +81,5 @@ Rate responses include `X-RateLimit-Limit-Minute`, `X-RateLimit-Remaining-Minute
 ## Studio endpoints
 
 The CMS uses `/api/v1/studio/*`. These endpoints require an authenticated staff user and server-side role checks. They are not public mobile endpoints.
+
+`GET /api/v1/studio/audience` returns 24-hour, 7-day, 30-day and all-time platform totals. Web totals include only visitors who allow optional analytics. iOS and Android users can remove their installation record by disabling anonymous audience measurement in the app.

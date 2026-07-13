@@ -27,4 +27,6 @@ pnpm --dir apps/mobile export:web
 
 The app remains useful without connected services: published demo coverage, weather, bookmarks and cached content work offline. Accounts, push registration and newsroom quick controls activate when Clerk, EAS and the deployed API are configured.
 
+The app reports a random installation identifier, platform, version and last-active time for CMS platform totals. Readers can disable this under Account → Privacy and support; disabling removes the corresponding server record when the API is reachable.
+
 Bundle identifiers default to `com.mobilemediainteractions.thenews` for both platforms. Confirm signing ownership and store records before the first production build.

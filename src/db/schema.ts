@@ -329,6 +329,26 @@ export const pushDevices = pgTable(
   (table) => [uniqueIndex("push_devices_token_idx").on(table.token)],
 );
 
+export const audienceInstallations = pgTable(
+  "audience_installations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    installationId: text("installation_id").notNull(),
+    platform: text("platform").notNull(),
+    source: text("source").notNull().default("unknown"),
+    appVersion: text("app_version"),
+    userClerkId: text("user_clerk_id"),
+    eventCount: integer("event_count").notNull().default(1),
+    firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("audience_installations_installation_idx").on(table.installationId),
+    index("audience_installations_platform_seen_idx").on(table.platform, table.lastSeenAt),
+    index("audience_installations_user_idx").on(table.userClerkId),
+  ],
+);
+
 export const siteSettings = pgTable("site_settings", {
   key: text("key").primaryKey(),
   value: jsonb("value").notNull(),

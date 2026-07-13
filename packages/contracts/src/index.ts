@@ -104,4 +104,33 @@ export const developerScopes = [
 
 export type DeveloperScope = (typeof developerScopes)[number];
 
+export const audiencePlatforms = ["web", "ios", "android", "api"] as const;
+
+export type AudiencePlatform = (typeof audiencePlatforms)[number];
+
+export interface AudiencePlatformMetric {
+  platform: AudiencePlatform;
+  label: string;
+  measurement: "installations" | "accounts";
+  allTime: number;
+  active24h: number;
+  active7d: number;
+  active30d: number;
+  knownAccounts: number;
+}
+
+export interface AudienceSummary {
+  platforms: AudiencePlatformMetric[];
+  totals: {
+    trackedInstallations: number;
+    active24h: number;
+    active7d: number;
+    active30d: number;
+    knownAccountLinks: number;
+    apiConsumers: number;
+  };
+  generatedAt: string;
+  database: "connected" | "not configured";
+}
+
 export const mobileApiVersion = "1" as const;
