@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server"; import { authorizeDeveloperRequest } from "@/lib/developer-api"; import { getLiveSnapshot } from "@/lib/live";
+export async function GET(request: Request) { const auth = await authorizeDeveloperRequest(request, "live:read"); if ("response" in auth) return auth.response; return NextResponse.json({ data: await getLiveSnapshot(), meta: { apiVersion: "1" } }, { headers: auth.headers }); }

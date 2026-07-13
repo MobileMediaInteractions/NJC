@@ -4,7 +4,7 @@ import { stories } from "@/db/schema";
 import { seedStories } from "@/lib/seed";
 import type { Story } from "@/lib/types";
 
-function normalizeStory(row: typeof stories.$inferSelect): Story {
+export function normalizeStory(row: typeof stories.$inferSelect): Story {
   const fallbackAuthor = {
     id: "harborline-desk",
     name: "Harborline Newsroom",

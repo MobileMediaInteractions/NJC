@@ -15,6 +15,13 @@
       "when": 1783967777901,
       "tag": "0001_messy_proteus",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783969724285,
+      "tag": "0002_noisy_cobalt_man",
+      "breakpoints": true
     }
   ]
 }

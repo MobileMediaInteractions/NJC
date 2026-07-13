@@ -1,6 +1,6 @@
 # Harborline Local
 
-Harborline Local is a production-oriented, fictional local-news network built with Next.js, TypeScript and the Vercel platform. It includes a public news product, role-aware newsroom CMS, Vercel-first persistence, media uploads, scheduled publishing, newsletters, comments and a versioned API for future iOS and Android apps.
+Harborline Local is a production-oriented, fictional local-news network built with Next.js, Expo, React Native and TypeScript for the Vercel platform. It includes a public news product, role-aware newsroom CMS, one iOS/Android codebase, portable encrypted backups, a self-service developer platform and a versioned API.
 
 ## Product surfaces
 
@@ -11,6 +11,10 @@ Harborline Local is a production-oriented, fictional local-news network built wi
 - Roles: admin, editor, producer, reporter and contributor
 - Workflow: idea, assigned, draft, review, scheduled, published and archived
 - Versioned `/api/v1` contracts documented in `docs/MOBILE_API.md`
+- Expo SDK 57 app with offline feeds, bookmarks, weather, live video, push alerts and limited mobile newsroom controls
+- Verified developer accounts with scoped HMAC-hashed keys, audit records, revocation and Upstash rate limits
+- Legal/trust center, consent controls and verified privacy-request intake foundation
+- Provider-neutral Postgres, Blob, migration and configuration exports documented in `docs/PORTABLE_BACKUP.md`
 
 ## Platform
 
@@ -19,6 +23,8 @@ Harborline Local is a production-oriented, fictional local-news network built wi
 - Neon Postgres + Drizzle ORM
 - Vercel Blob for newsroom media
 - Clerk for staff authentication
+- Upstash Redis for developer API rate limits
+- Expo/EAS for one iOS and Android mobile codebase
 - shadcn/ui + Tailwind CSS
 
 ## Local preview
@@ -38,14 +44,22 @@ CMS_DEMO_MODE=true pnpm dev
 
 This bypass is ignored in production.
 
+The mobile app is in `apps/mobile`:
+
+```bash
+pnpm mobile:start
+pnpm mobile:check
+```
+
 ## Vercel setup order
 
 1. Create or link the Vercel project.
 2. Install Neon, Clerk and Vercel Blob from the Vercel Marketplace/dashboard.
-3. Add `CRON_SECRET` and any optional newsletter/analytics values.
+3. Add `CRON_SECRET`, `API_KEY_PEPPER`, Upstash Redis values and any optional newsletter/analytics values.
 4. Pull the project environment into `.env.local`.
 5. Run `pnpm db:migrate` followed by `pnpm db:seed`.
 6. Deploy a preview, verify it, then promote the same artifact to production.
+7. Create the EAS project, replace the placeholder project ID, configure APNs/FCM and add the deployed API URL to mobile builds.
 
 Copy `.env.example` for the required key names. Never commit `.env.local`.
 
@@ -61,4 +75,5 @@ Most launch identity, region and module switches are centralized in `src/lib/sit
 pnpm lint
 pnpm typecheck
 pnpm build
+pnpm mobile:check
 ```

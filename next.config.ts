@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  transpilePackages: ["@harborline/contracts"],
   images: {
     remotePatterns: [
       {
@@ -11,6 +12,9 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     typedEnv: true,
+  },
+  outputFileTracingIncludes: {
+    "/api/v1/studio/exports": ["./drizzle/**/*"],
   },
 };
 

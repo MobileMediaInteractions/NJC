@@ -19,15 +19,15 @@ export function SiteFooter() {
           ["Latest", "/latest"], ["Local", "/category/local"], ["Weather", "/weather"], ["Sports", "/category/sports"], ["Investigates", "/category/investigates"],
         ]} />
         <FooterGroup title="Connect" links={[
-          ["Watch live", "/live"], ["Newsletters", "/newsletter"], ["Submit a tip", "/tips"], ["Advertise", "/advertise"], ["Newsroom login", "/studio"],
+          ["Watch live", "/live"], ["Newsletters", "/newsletter"], ["Submit a tip", "/tips"], ["Developers", "/developers"], ["Newsroom login", "/studio"],
         ]} />
         <FooterGroup title="Harborline" links={[
-          ["About us", "/about"], ["Our standards", "/standards"], ["Accessibility", "/accessibility"], ["Privacy", "/privacy"], ["Terms", "/terms"],
+          ["About us", "/about"], ["Our standards", "/standards"], ["Accessibility", "/accessibility"], ["Legal center", "/legal"], ["Privacy choices", "/data-requests"],
         ]} />
       </div>
       <div className="border-t border-white/12">
         <div className="container-news flex flex-col gap-2 py-6 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 Harborline Local Media. Fictional demonstration identity.</p>
+          <p>© 2026 Harborline Local Media. Fictional demonstration identity. <Link className="underline hover:text-white" href="/privacy">Privacy</Link> · <Link className="underline hover:text-white" href="/terms">Terms</Link></p>
           <p>The coast, clearly reported.</p>
         </div>
       </div>

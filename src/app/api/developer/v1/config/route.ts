@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server"; import { authorizeDeveloperRequest } from "@/lib/developer-api"; import { siteConfig } from "@/lib/site";
+export async function GET(request: Request) { const auth = await authorizeDeveloperRequest(request, "news:read"); if (auth.response) return auth.response; return NextResponse.json({ data: { name: siteConfig.name, tagline: siteConfig.tagline, region: siteConfig.region, navigation: siteConfig.navigation }, meta: { apiVersion: "1" } }, { headers: auth.headers }); }

@@ -1,0 +1,2 @@
+import { NextResponse } from "next/server"; import { weatherSeed } from "@/lib/seed"; import { authorizeDeveloperRequest } from "@/lib/developer-api";
+export async function GET(request: Request) { const auth = await authorizeDeveloperRequest(request, "weather:read"); if (auth.response) return auth.response; return NextResponse.json({ data: weatherSeed, meta: { apiVersion: "1", observedAt: new Date().toISOString() } }, { headers: auth.headers }); }

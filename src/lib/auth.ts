@@ -58,3 +58,18 @@ export async function canPublish() {
   const user = await getStudioUser();
   return Boolean(user && ["admin", "editor", "producer"].includes(user.role));
 }
+
+export async function getAccountIdentity() {
+  if (!isClerkConfigured()) return null;
+  const { userId } = await auth();
+  if (!userId) return null;
+  const user = await currentUser();
+  const email = user?.primaryEmailAddress;
+  if (!user || !email || email.verification?.status !== "verified") return null;
+  return { clerkId: user.id, email: email.emailAddress, name: user.fullName ?? email.emailAddress };
+}
+
+export async function canUseMobileAdmin() {
+  const user = await getStudioUser();
+  return user && ["admin", "editor", "producer"].includes(user.role) ? user : null;
+}

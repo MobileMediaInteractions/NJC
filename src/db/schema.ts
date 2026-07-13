@@ -275,3 +275,95 @@ export const newsTips = pgTable(
   },
   (table) => [index("news_tips_status_idx").on(table.status, table.createdAt)],
 );
+
+export const apiKeys = pgTable(
+  "api_keys",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerClerkId: text("owner_clerk_id").notNull(),
+    ownerEmail: text("owner_email").notNull(),
+    name: text("name").notNull(),
+    prefix: text("prefix").notNull(),
+    keyHash: text("key_hash").notNull(),
+    scopes: jsonb("scopes").$type<string[]>().notNull().default([]),
+    rateLimitMinute: integer("rate_limit_minute").notNull().default(60),
+    rateLimitDay: integer("rate_limit_day").notNull().default(10000),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("api_keys_prefix_idx").on(table.prefix),
+    index("api_keys_owner_idx").on(table.ownerClerkId, table.createdAt),
+  ],
+);
+
+export const apiAuditLogs = pgTable(
+  "api_audit_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    apiKeyId: uuid("api_key_id").references(() => apiKeys.id, { onDelete: "set null" }),
+    actorClerkId: text("actor_clerk_id"),
+    event: text("event").notNull(),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("api_audit_event_idx").on(table.event, table.createdAt)],
+);
+
+export const pushDevices = pgTable(
+  "push_devices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    token: text("token").notNull(),
+    platform: text("platform").notNull(),
+    userClerkId: text("user_clerk_id"),
+    deviceName: text("device_name"),
+    isActive: boolean("is_active").notNull().default(true),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("push_devices_token_idx").on(table.token)],
+);
+
+export const siteSettings = pgTable("site_settings", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").notNull(),
+  updatedByClerkId: text("updated_by_clerk_id"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const dataRequests = pgTable(
+  "data_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    clerkId: text("clerk_id"),
+    email: text("email").notNull(),
+    requestType: text("request_type").notNull(),
+    jurisdiction: text("jurisdiction"),
+    status: text("status").notNull().default("received"),
+    verificationTokenHash: text("verification_token_hash"),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+  },
+  (table) => [index("data_requests_email_idx").on(table.email, table.createdAt)],
+);
+
+export const portableExports = pgTable(
+  "portable_exports",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    blobUrl: text("blob_url").notNull(),
+    pathname: text("pathname").notNull(),
+    checksumSha256: text("checksum_sha256").notNull(),
+    size: integer("size").notNull(),
+    createdByClerkId: text("created_by_clerk_id").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("portable_exports_created_idx").on(table.createdAt)],
+);

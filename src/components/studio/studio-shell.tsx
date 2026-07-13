@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, BookOpenText, ChevronLeft, FilePlus2, LayoutDashboard, Library, Settings, Users } from "lucide-react";
+import { Archive, BarChart3, BookOpenText, ChevronLeft, FilePlus2, LayoutDashboard, Library, Settings, Users } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ const navigation = [
   { label: "Media", href: "/studio/media", icon: Library },
   { label: "Analytics", href: "/studio/analytics", icon: BarChart3 },
   { label: "Team & roles", href: "/studio/team", icon: Users },
+  { label: "Portable exports", href: "/studio/exports", icon: Archive },
   { label: "Settings", href: "/studio/settings", icon: Settings },
 ];
 
