@@ -349,6 +349,50 @@ export const audienceInstallations = pgTable(
   ],
 );
 
+export const devicePairingRequests = pgTable(
+  "device_pairing_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    target: text("target").notNull(),
+    deviceName: text("device_name").notNull(),
+    deviceSecretHash: text("device_secret_hash").notNull(),
+    userCodeHash: text("user_code_hash").notNull(),
+    requesterIpHash: text("requester_ip_hash").notNull(),
+    status: text("status").notNull().default("pending"),
+    approvalAttempts: integer("approval_attempts").notNull().default(0),
+    approvedByClerkId: text("approved_by_clerk_id"),
+    approvedByName: text("approved_by_name"),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("device_pairing_ip_created_idx").on(table.requesterIpHash, table.createdAt),
+    index("device_pairing_status_expires_idx").on(table.status, table.expiresAt),
+  ],
+);
+
+export const deviceSessions = pgTable(
+  "device_sessions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tokenHash: text("token_hash").notNull(),
+    userClerkId: text("user_clerk_id").notNull(),
+    displayName: text("display_name").notNull(),
+    platform: text("platform").notNull(),
+    deviceName: text("device_name").notNull(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("device_sessions_token_idx").on(table.tokenHash),
+    index("device_sessions_user_idx").on(table.userClerkId, table.createdAt),
+  ],
+);
+
 export const siteSettings = pgTable("site_settings", {
   key: text("key").primaryKey(),
   value: jsonb("value").notNull(),

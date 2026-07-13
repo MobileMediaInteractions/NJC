@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+**/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -19,6 +20,13 @@
 
 # production
 /build
+/apps/mobile/ios
+/apps/mobile/android
+/apps/tv/ios
+/apps/tv/android
+/apps/tv/dist
+/apps/mobile/.expo
+/apps/tv/.expo
 
 # misc
 .DS_Store

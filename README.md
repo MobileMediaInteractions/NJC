@@ -1,6 +1,6 @@
 # Harborline Local
 
-Harborline Local is a production-oriented, fictional local-news network built with Next.js, Expo, React Native and TypeScript for the Vercel platform. It includes a public news product, role-aware newsroom CMS, one iOS/Android codebase, portable encrypted backups, a self-service developer platform and a versioned API.
+Harborline Local is a production-oriented, fictional local-news network built with Next.js, Expo, React Native and TypeScript for the Vercel platform. It includes a public news product, role-aware newsroom CMS, one iOS/Android codebase, a dedicated Apple TV app, portable encrypted backups, a self-service developer platform and a versioned API.
 
 ## Product surfaces
 
@@ -12,8 +12,10 @@ Harborline Local is a production-oriented, fictional local-news network built wi
 - Workflow: idea, assigned, draft, review, scheduled, published and archived
 - Versioned `/api/v1` contracts documented in `docs/MOBILE_API.md`
 - Expo SDK 57 app with offline feeds, bookmarks, weather, live video, push alerts and limited mobile newsroom controls
+- Apple TV client built on `react-native-tvos`, with remote focus states and secure QR/code activation
+- Two-way device pairing: approve TV at `/login/tv`, or sign a browser in from mobile at `/login/quick`
 - Verified developer accounts with scoped HMAC-hashed keys, audit records, revocation and Upstash rate limits
-- Consent-aware audience reporting with Web, iOS, Android and developer API totals in Studio and mobile admin
+- Consent-aware audience reporting with Web, iOS, Android, Apple TV and developer API totals in Studio and mobile admin
 - Legal/trust center, consent controls and verified privacy-request intake foundation
 - Provider-neutral Postgres, Blob, migration and configuration exports documented in `docs/PORTABLE_BACKUP.md`
 
@@ -25,7 +27,7 @@ Harborline Local is a production-oriented, fictional local-news network built wi
 - Vercel Blob for newsroom media
 - Clerk for staff authentication
 - Upstash Redis for developer API rate limits
-- Expo/EAS for one iOS and Android mobile codebase
+- Expo/EAS for one iOS/Android mobile codebase and a focused tvOS target
 - shadcn/ui + Tailwind CSS
 
 ## Local preview
@@ -52,15 +54,24 @@ pnpm mobile:start
 pnpm mobile:check
 ```
 
+The Apple TV app is in `apps/tv`:
+
+```bash
+pnpm tv:start
+pnpm tv:check
+```
+
+See `docs/TV_PAIRING.md` for the tvOS build and secure activation model.
+
 ## Vercel setup order
 
 1. Create or link the Vercel project.
 2. Install Neon, Clerk and Vercel Blob from the Vercel Marketplace/dashboard.
-3. Add `CRON_SECRET`, `API_KEY_PEPPER`, Upstash Redis values and any optional newsletter/analytics values.
+3. Add `CRON_SECRET`, `API_KEY_PEPPER`, a separate `DEVICE_PAIRING_PEPPER`, Upstash Redis values and any optional newsletter/analytics values.
 4. Pull the project environment into `.env.local`.
 5. Run `pnpm db:migrate` followed by `pnpm db:seed`.
 6. Deploy a preview, verify it, then promote the same artifact to production.
-7. Create the EAS project, replace the placeholder project ID, configure APNs/FCM and add the deployed API URL to mobile builds.
+7. Create the mobile and TV EAS projects, replace both placeholder project IDs, configure APNs/FCM and add the deployed API URL to app builds.
 
 Copy `.env.example` for the required key names. Never commit `.env.local`.
 
@@ -77,4 +88,5 @@ pnpm lint
 pnpm typecheck
 pnpm build
 pnpm mobile:check
+pnpm tv:check
 ```

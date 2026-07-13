@@ -15,7 +15,7 @@ The public web application and future native clients use the same versioned JSON
 | `POST` | `/api/v1/comments` | Moderated comment submission |
 | `POST` | `/api/v1/tips` | Newsroom tip intake |
 | `POST` | `/api/v1/mobile/push/register` | Register an Expo push token |
-| `POST` | `/api/v1/audience/presence` | Record consent-aware Web/iOS/Android installation presence |
+| `POST` | `/api/v1/audience/presence` | Record consent-aware Web/iOS/Android/tvOS installation presence |
 | `DELETE` | `/api/v1/audience/presence` | Remove an anonymous installation record after opt-out |
 
 Every successful response follows:
@@ -50,6 +50,22 @@ Errors follow:
 - Use universal links / app links for `/story/:slug`, `/category/:slug`, `/weather` and `/live`.
 - Platform presence records contain a random installation ID, platform, app version and activity timestamps. They do not contain reading history or an advertising identifier.
 
+## Device pairing and Apple TV
+
+Apple TV does not collect a Clerk password. It creates a ten-minute pairing request and displays both a QR and a six-character sync code. A signed-in website or mobile app must show and explicitly confirm the identical code before the request can be exchanged once.
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/v1/device-pairing` | Create a rate-limited TV or web pairing request |
+| `POST` | `/api/v1/device-pairing/:id/approve` | Approve matching code with a Clerk session |
+| `POST` | `/api/v1/device-pairing/approve` | Approve a TV by manually entered sync code |
+| `POST` | `/api/v1/device-pairing/:id/poll` | Exchange the private device secret once after approval |
+| `GET` | `/api/v1/device-pairing/qr?value=` | Render a no-store PNG QR image |
+| `GET` | `/api/v1/device-session` | Resolve a revocable Apple TV device token |
+| `DELETE` | `/api/v1/device-session` | Sign the Apple TV out and revoke its token |
+
+Browser pairing returns a 90-second, one-time Clerk sign-in ticket. Apple TV pairing returns a first-party token that is HMAC-hashed at rest, expires after 90 days and is only accepted by device-session endpoints. Pairing codes and raw device tokens are never stored. Configure `DEVICE_PAIRING_PEPPER` independently from `API_KEY_PEPPER`.
+
 ## Limited mobile newsroom endpoints
 
 These routes require a valid Clerk bearer token and an `admin`, `editor` or `producer` role. Full story editing stays in the web Studio.
@@ -62,7 +78,7 @@ These routes require a valid Clerk bearer token and an `admin`, `editor` or `pro
 | `PATCH` | `/api/v1/mobile/admin/live` | Toggle the cross-platform live banner |
 | `GET` | `/api/v1/mobile/admin/metrics` | Queue counts, alert/device counts and DB health |
 
-The mobile metrics response includes the same Web, iOS, Android and developer-API audience summary shown in Studio.
+The mobile metrics response includes the same Web, iOS, Android, Apple TV and developer-API audience summary shown in Studio.
 
 ## Self-service developer API
 
@@ -82,4 +98,4 @@ Rate responses include `X-RateLimit-Limit-Minute`, `X-RateLimit-Remaining-Minute
 
 The CMS uses `/api/v1/studio/*`. These endpoints require an authenticated staff user and server-side role checks. They are not public mobile endpoints.
 
-`GET /api/v1/studio/audience` returns 24-hour, 7-day, 30-day and all-time platform totals. Web totals include only visitors who allow optional analytics. iOS and Android users can remove their installation record by disabling anonymous audience measurement in the app.
+`GET /api/v1/studio/audience` returns 24-hour, 7-day, 30-day and all-time platform totals. Web totals include only visitors who allow optional analytics. iOS and Android users can remove their installation record by disabling anonymous audience measurement in the app. Apple TV is reported separately as `tvos`.

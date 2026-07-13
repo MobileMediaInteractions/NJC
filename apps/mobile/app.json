@@ -45,7 +45,15 @@
       ],
       "expo-secure-store",
       "expo-sqlite",
-      "expo-video"
+      "expo-video",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Harborline Local to scan secure sign-in QR codes",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
+        }
+      ]
     ],
     "extra": {
       "apiUrl": "https://harborline.example",

@@ -18,6 +18,8 @@ function toRecordRows(rows: unknown[]) { return rows.map((row) => ({ ...(row as 
 function sanitize(name: string, rows: Record<string, unknown>[]) {
   if (name === "api_keys") return rows.map((row) => ({ ...row, keyHash: "DISABLED_AFTER_RESTORE", revokedAt: row.revokedAt ?? new Date().toISOString() }));
   if (name === "data_requests") return rows.map((row) => ({ ...row, verificationTokenHash: null }));
+  if (name === "device_pairing_requests") return rows.map((row) => ({ ...row, deviceSecretHash: "REMOVED", userCodeHash: "REMOVED", requesterIpHash: "REMOVED", status: "expired" }));
+  if (name === "device_sessions") return rows.map((row) => ({ ...row, tokenHash: "REMOVED", revokedAt: row.revokedAt ?? new Date().toISOString() }));
   return rows;
 }
 
@@ -28,14 +30,14 @@ async function readDatasets(): Promise<Dataset[]> {
     db.select().from(schema.mediaAssets), db.select().from(schema.assignments), db.select().from(schema.comments), db.select().from(schema.newsletterSubscribers),
     db.select().from(schema.alerts), db.select().from(schema.liveEvents), db.select().from(schema.newsTips), db.select().from(schema.apiKeys),
     db.select().from(schema.apiAuditLogs), db.select().from(schema.pushDevices), db.select().from(schema.audienceInstallations), db.select().from(schema.siteSettings), db.select().from(schema.dataRequests),
-    db.select().from(schema.portableExports),
+    db.select().from(schema.portableExports), db.select().from(schema.devicePairingRequests), db.select().from(schema.deviceSessions),
   ]);
   const definitions = [
     ["users", schema.users], ["categories", schema.categories], ["stories", schema.stories], ["story_revisions", schema.storyRevisions],
     ["media_assets", schema.mediaAssets], ["assignments", schema.assignments], ["comments", schema.comments], ["newsletter_subscribers", schema.newsletterSubscribers],
     ["alerts", schema.alerts], ["live_events", schema.liveEvents], ["news_tips", schema.newsTips], ["api_keys", schema.apiKeys],
     ["api_audit_logs", schema.apiAuditLogs], ["push_devices", schema.pushDevices], ["audience_installations", schema.audienceInstallations], ["site_settings", schema.siteSettings], ["data_requests", schema.dataRequests],
-    ["portable_exports", schema.portableExports],
+    ["portable_exports", schema.portableExports], ["device_pairing_requests", schema.devicePairingRequests], ["device_sessions", schema.deviceSessions],
   ] as const;
   return definitions.map(([name, table], index) => ({ name, table, rows: sanitize(name, toRecordRows(data[index] as unknown[])) }));
 }
@@ -54,7 +56,7 @@ export async function createPortableBackup(options: { passphrase: string; includ
   const datasets = await readDatasets(); const archive = pack.pack();
   const manifest = { format, createdAt: new Date().toISOString(), site: siteConfig, database: { engine: "PostgreSQL", tables: datasets.map((item) => ({ name: item.name, rows: item.rows.length })) }, security: { encrypted: true, apiKeys: "Raw keys are never stored. Restored hashed keys are disabled and must be rotated.", environment: "Variable names only; secret values excluded." }, media: { included: Boolean(options.includeMedia) } };
   entry(archive, "manifest.json", jsonValue(manifest)); entry(archive, "config/site.json", jsonValue(siteConfig));
-  entry(archive, "config/environment-keys.txt", ["DATABASE_URL", "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "CLERK_SECRET_KEY", "BLOB_READ_WRITE_TOKEN", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN", "API_KEY_PEPPER", "CRON_SECRET", "EXPO_PUBLIC_API_URL", "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY"].join("\n"));
+  entry(archive, "config/environment-keys.txt", ["DATABASE_URL", "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "CLERK_SECRET_KEY", "BLOB_READ_WRITE_TOKEN", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN", "API_KEY_PEPPER", "DEVICE_PAIRING_PEPPER", "CRON_SECRET", "EXPO_PUBLIC_API_URL", "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY", "EXPO_PUBLIC_TV_API_URL"].join("\n"));
   for (const dataset of datasets) { entry(archive, `database/json/${dataset.name}.json`, jsonValue(dataset.rows)); entry(archive, `database/csv/${dataset.name}.csv`, datasetCsv(dataset)); }
   entry(archive, "database/data.sql", ["BEGIN;", ...datasets.map(datasetSql), "COMMIT;"].join("\n\n"));
   try { const migrationDir = path.join(process.cwd(), "drizzle"); for (const filename of (await readdir(migrationDir)).filter((name) => name.endsWith(".sql")).sort()) entry(archive, `database/migrations/${filename}`, await readFile(path.join(migrationDir, filename))); } catch { entry(archive, "database/migrations/README.txt", "Migration source files were unavailable in this runtime. Use the repository drizzle directory."); }

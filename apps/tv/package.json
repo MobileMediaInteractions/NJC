@@ -1,0 +1,33 @@
+{
+  "name": "tv",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "start": "EXPO_TV=1 expo start --dev-client",
+    "prebuild:tvos": "EXPO_TV=1 expo prebuild --platform ios",
+    "tvos": "EXPO_TV=1 expo run:ios",
+    "typecheck": "tsc --noEmit",
+    "lint": "expo lint"
+  },
+  "dependencies": {
+    "@harborline/contracts": "workspace:*",
+    "expo": "~57.0.4",
+    "expo-constants": "~57.0.3",
+    "expo-secure-store": "~57.0.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "npm:react-native-tvos@0.86.0-2",
+    "react-native-web": "~0.21.0"
+  },
+  "devDependencies": {
+    "@react-native-tvos/config-tv": "^0.1.6",
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3"
+  },
+  "expo": {
+    "install": {
+      "exclude": ["react-native"]
+    }
+  }
+}

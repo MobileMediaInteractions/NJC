@@ -1,4 +1,4 @@
-import { Braces, Clock3, Link2, Monitor, Radio, Smartphone, Users } from "lucide-react";
+import { Braces, Clock3, Link2, Monitor, Radio, Smartphone, Tv, Users } from "lucide-react";
 import type { AudiencePlatform, AudiencePlatformMetric } from "@harborline/contracts";
 import { StudioGate } from "@/components/studio/studio-gate";
 import { StudioShell } from "@/components/studio/studio-shell";
@@ -14,6 +14,7 @@ const icons: Record<AudiencePlatform, React.ReactNode> = {
   web: <Monitor />,
   ios: <Smartphone />,
   android: <Smartphone />,
+  tvos: <Tv />,
   api: <Braces />,
 };
 
@@ -27,7 +28,7 @@ export default async function AnalyticsPage() {
     <div className="flex flex-wrap items-start justify-between gap-4"><div><h1 className="text-3xl font-bold tracking-tight">Audience platforms</h1><p className="mt-1 text-sm text-muted-foreground">Unique installations and authenticated API consumers, separated by platform.</p></div><Badge variant={summary.database === "connected" ? "secondary" : "outline"}>{summary.database === "connected" ? "Live database" : "Database not connected"}</Badge></div>
     {summary.database !== "connected" ? <div className="mt-6 rounded-md border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100">Platform totals begin after Postgres is connected and the latest migration is applied.</div> : null}
     <div className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <Metric icon={<Radio />} title="Tracked installations" value={summary.totals.trackedInstallations} detail="Web, iOS and Android" />
+      <Metric icon={<Radio />} title="Tracked installations" value={summary.totals.trackedInstallations} detail="Web, mobile and Apple TV" />
       <Metric icon={<Clock3 />} title="Active in 24 hours" value={summary.totals.active24h} detail={`${number.format(summary.totals.active7d)} active in 7 days`} />
       <Metric icon={<Link2 />} title="Account links" value={summary.totals.knownAccountLinks} detail="May repeat across platforms" />
       <Metric icon={<Users />} title="API consumers" value={summary.totals.apiConsumers} detail="Developer accounts with keys" />

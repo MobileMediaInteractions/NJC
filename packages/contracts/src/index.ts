@@ -104,7 +104,7 @@ export const developerScopes = [
 
 export type DeveloperScope = (typeof developerScopes)[number];
 
-export const audiencePlatforms = ["web", "ios", "android", "api"] as const;
+export const audiencePlatforms = ["web", "ios", "android", "tvos", "api"] as const;
 
 export type AudiencePlatform = (typeof audiencePlatforms)[number];
 
@@ -134,3 +134,24 @@ export interface AudienceSummary {
 }
 
 export const mobileApiVersion = "1" as const;
+
+export const pairingTargets = ["tv", "web"] as const;
+export type PairingTarget = (typeof pairingTargets)[number];
+
+export interface PairingRequest {
+  id: string;
+  target: PairingTarget;
+  deviceSecret: string;
+  userCode: string;
+  verificationUri: string;
+  verificationUriComplete: string;
+  qrImageUrl: string;
+  expiresAt: string;
+  pollIntervalSeconds: number;
+}
+
+export type PairingPollResult =
+  | { status: "pending"; expiresAt: string }
+  | { status: "approved"; accessToken: string; account: { name: string; platform: "tvos" }; expiresAt: string }
+  | { status: "approved"; ticket: string; expiresAt: string }
+  | { status: "expired" | "consumed" | "denied" };

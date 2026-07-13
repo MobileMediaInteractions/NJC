@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "Harborline Local TV",
+    "slug": "harborline-local-tv",
+    "version": "1.0.0",
+    "orientation": "landscape",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "bundleIdentifier": "com.mobilemediainteractions.thenews.tv",
+      "supportsTablet": false
+    },
+    "plugins": [
+      "@react-native-tvos/config-tv",
+      "expo-secure-store"
+    ],
+    "extra": {
+      "apiUrl": "https://harborline.example",
+      "eas": {
+        "projectId": "REPLACE_WITH_TV_EAS_PROJECT_ID"
+      }
+    }
+  }
+}
