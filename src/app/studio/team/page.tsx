@@ -1,0 +1,11 @@
+import { ShieldCheck, UserPlus } from "lucide-react";
+import { StudioGate } from "@/components/studio/studio-gate";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+const team = [["Alex Morgan","AM","admin","alex@harborline.local"],["Priya Shah","PS","editor","priya@harborline.local"],["Mara Chen","MC","reporter","mara@harborline.local"],["Theo Brooks","TB","producer","theo@harborline.local"],["June Bell","JB","contributor","june@harborline.local"]];
+
+export default function TeamPage() { return <StudioGate><div><div className="flex items-end justify-between"><div><h1 className="text-3xl font-bold tracking-tight">Team & roles</h1><p className="mt-1 text-sm text-muted-foreground">Control newsroom access and publishing authority.</p></div><Button><UserPlus /> Invite teammate</Button></div><Card className="mt-7"><CardHeader><CardTitle>Newsroom members</CardTitle><CardDescription>Identity is managed in Clerk; editorial roles are synced into Harborline.</CardDescription></CardHeader><CardContent><Table><TableHeader><TableRow><TableHead>Member</TableHead><TableHead>Role</TableHead><TableHead>Publishing access</TableHead><TableHead>Status</TableHead></TableRow></TableHeader><TableBody>{team.map(([name,initials,role,email]) => <TableRow key={email}><TableCell><div className="flex items-center gap-3"><Avatar className="size-8"><AvatarFallback>{initials}</AvatarFallback></Avatar><div><p className="font-medium">{name}</p><p className="text-xs text-muted-foreground">{email}</p></div></div></TableCell><TableCell><Badge variant="secondary" className="capitalize">{role}</Badge></TableCell><TableCell>{["admin","editor","producer"].includes(role) ? <span className="flex items-center gap-1.5 text-sm text-emerald-400"><ShieldCheck className="size-4" /> Can publish</span> : <span className="text-sm text-muted-foreground">Submit for review</span>}</TableCell><TableCell><Badge variant="outline">Active</Badge></TableCell></TableRow>)}</TableBody></Table></CardContent></Card></div></StudioGate>; }

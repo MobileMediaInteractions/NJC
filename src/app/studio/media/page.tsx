@@ -1,0 +1,6 @@
+import { ImageIcon, Upload } from "lucide-react";
+import { StudioGate } from "@/components/studio/studio-gate";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
+export default function MediaPage() { return <StudioGate><div><div className="flex items-end justify-between"><div><h1 className="text-3xl font-bold tracking-tight">Media library</h1><p className="mt-1 text-sm text-muted-foreground">Photos, video, documents and reusable graphics stored in Vercel Blob.</p></div><Button><Upload /> Upload</Button></div><Card className="mt-7"><CardHeader><CardTitle>Library</CardTitle><CardDescription>Uploaded media will appear here after Vercel Blob is connected.</CardDescription></CardHeader><CardContent><div className="grid min-h-72 place-items-center rounded-lg border border-dashed"><div className="max-w-sm text-center"><span className="mx-auto grid size-12 place-items-center rounded-full bg-muted text-muted-foreground"><ImageIcon /></span><h2 className="mt-4 font-semibold">No uploaded media yet</h2><p className="mt-1 text-sm text-muted-foreground">Connect Blob, then upload an image from here or directly inside the story editor.</p></div></div></CardContent></Card></div></StudioGate>; }

@@ -1,0 +1,4 @@
+import type { MetadataRoute } from "next";
+import { getPublishedStories } from "@/lib/content";
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> { const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"; const stories = await getPublishedStories({ limit: 100 }); const routes = ["", "/latest", "/category/local", "/weather", "/watch", "/category/investigates", "/category/sports", "/category/culture", "/newsletter", "/about"]; return [...routes.map((route) => ({ url: `${base}${route}`, lastModified: new Date(), changeFrequency: route === "" ? "hourly" as const : "daily" as const, priority: route === "" ? 1 : 0.7 })), ...stories.map((story) => ({ url: `${base}/story/${story.slug}`, lastModified: new Date(story.updatedAt ?? story.publishedAt), changeFrequency: "weekly" as const, priority: 0.8 }))]; }
