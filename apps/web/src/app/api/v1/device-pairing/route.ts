@@ -13,7 +13,7 @@ import {
 export const runtime = "nodejs";
 
 const inputSchema = z.object({
-  target: z.enum(["tv", "web"]),
+  target: z.enum(["tv", "roku", "web"]),
   deviceName: z.string().trim().min(1).max(80),
 });
 
@@ -80,12 +80,16 @@ export async function POST(request: Request) {
   const origin = process.env.NEXT_PUBLIC_SITE_URL
     ? new URL(process.env.NEXT_PUBLIC_SITE_URL).origin
     : new URL(request.url).origin;
-  const verificationUri = `${origin}/login/tv`;
-  const verificationUriComplete = `${verificationUri}?session=${created.id}&code=${encodeURIComponent(credentials.userCode)}`;
+  const verificationBase = `${origin}/login/tv`;
+  const verificationUri =
+    parsed.data.target === "roku"
+      ? `${verificationBase}?target=roku`
+      : verificationBase;
+  const verificationUriComplete = `${verificationBase}?session=${created.id}&code=${encodeURIComponent(credentials.userCode)}&target=${parsed.data.target}`;
   const qrValue =
-    parsed.data.target === "tv"
-      ? verificationUriComplete
-      : `harborline://pair?session=${created.id}&code=${encodeURIComponent(credentials.userCode)}&target=web`;
+    parsed.data.target === "web"
+      ? `harborline://pair?session=${created.id}&code=${encodeURIComponent(credentials.userCode)}&target=web`
+      : verificationUriComplete;
   return NextResponse.json(
     {
       data: {

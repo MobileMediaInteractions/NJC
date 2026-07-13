@@ -118,12 +118,13 @@ export async function POST(
       );
     }
     const access = createDeviceAccessToken();
+    const platform = claimed.target === "roku" ? "roku" : "tvos";
     const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60_000);
     await db.insert(deviceSessions).values({
       tokenHash: access.tokenHash,
       userClerkId: claimed.approvedByClerkId,
       displayName: claimed.approvedByName ?? "Harborline reader",
-      platform: "tvos",
+      platform,
       deviceName: claimed.deviceName,
       expiresAt,
     });
@@ -134,7 +135,7 @@ export async function POST(
           accessToken: access.rawToken,
           account: {
             name: claimed.approvedByName ?? "Harborline reader",
-            platform: "tvos",
+            platform,
           },
           expiresAt: expiresAt.toISOString(),
         },

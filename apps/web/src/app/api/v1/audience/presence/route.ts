@@ -8,9 +8,9 @@ import { authenticateDeviceRequest } from "@/lib/device-pairing";
 
 const inputSchema = z.object({
   installationId: z.string().regex(/^[A-Za-z0-9_-]{20,100}$/),
-  platform: z.enum(["web", "ios", "android", "tvos"]),
+  platform: z.enum(["web", "ios", "android", "tvos", "roku"]),
   source: z
-    .enum(["news-site", "mobile-app", "mobile-app-web", "tv-app"])
+    .enum(["news-site", "mobile-app", "mobile-app-web", "tv-app", "roku-app"])
     .default("news-site"),
   appVersion: z.string().trim().min(1).max(40).optional(),
 });
@@ -60,7 +60,10 @@ export async function POST(request: Request) {
   } catch {
     /* Anonymous presence is still valid. */
   }
-  if (!userClerkId && parsed.data.platform === "tvos") {
+  if (
+    !userClerkId &&
+    (parsed.data.platform === "tvos" || parsed.data.platform === "roku")
+  ) {
     try {
       userClerkId =
         (await authenticateDeviceRequest(request))?.userClerkId ?? null;

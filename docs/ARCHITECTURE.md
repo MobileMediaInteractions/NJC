@@ -7,6 +7,7 @@ apps/
   web/                 Next.js public site, CMS, legal pages and Vercel route handlers
   mobile/              One Expo codebase for iOS and Android
   tv/                  react-native-tvos Apple TV application
+  roku/                Native SceneGraph/BrightScript Roku application
 packages/
   api-client/          Typed, platform-neutral HTTP requester used by native clients
   backend/             Database connection and Drizzle schema
@@ -26,7 +27,7 @@ Create the Vercel project from this repository and set its Root Directory to `ap
 
 ## Native C and C++ policy
 
-TypeScript remains the default because it is portable across Next.js, iOS, Android and tvOS. Native C or C++ should be introduced only when measurement shows that JavaScript is the limiting factor, for example:
+TypeScript remains the default for Next.js, iOS, Android and tvOS. Roku uses its supported SceneGraph/BrightScript runtime. Native C or C++ should be introduced only when measurement shows that JavaScript is the limiting factor, for example:
 
 - on-device video or audio transforms;
 - offline full-text indexing over a large downloaded archive;
@@ -34,3 +35,5 @@ TypeScript remains the default because it is portable across Next.js, iOS, Andro
 - a shared algorithm that must run identically on iOS, Android and tvOS.
 
 When one of those cases exists, it belongs in a future `packages/native-core` CMake library behind React Native TurboModules. Cryptography should continue to use maintained platform or audited libraries rather than custom C/C++. Ordinary CMS, API, database and UI work should not use native code because it would reduce Vercel portability and increase memory-safety and release risk.
+
+Roku does not consume that React Native native-core boundary. Add Roku-native extensions only when the Roku platform and distribution agreement explicitly support them and a measured product requirement cannot be met in BrightScript.

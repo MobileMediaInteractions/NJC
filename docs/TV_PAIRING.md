@@ -1,6 +1,8 @@
-# Apple TV and quick sign-in
+# Television and quick sign-in
 
 Harborline has a dedicated Expo SDK 57 application in `apps/tv`. It aliases React Native to `react-native-tvos@0.86.0-2`, matching the React Native 0.86 line used by Expo SDK 57. The mobile project uses the same fork to avoid conflicting React Native copies in the monorepo, while only the TV project activates `@react-native-tvos/config-tv`.
+
+The native Roku client in `apps/roku` uses the same pairing protocol with the distinct `roku` target and receives a device session labeled `roku`. Both television clients remain fully usable for public news without an account.
 
 ## Apple TV build
 
@@ -16,10 +18,10 @@ EXPO_PUBLIC_TV_API_URL=https://your-domain.example pnpm --dir apps/tv tvos
 ## Pairing states
 
 1. The TV or unsigned browser creates a ten-minute request. The server stores only HMAC hashes of its private secret, six-character user code and requester IP.
-2. The TV QR opens `/login/tv?session=…&code=…`. Manual activation at `/login/tv` accepts the code without a QR. A browser QR opens `harborline://pair` in the native app.
+2. The TV QR opens `/login/tv?session=…&code=…&target=tv|roku`. Manual activation at `/login/tv` accepts the code without a QR. A browser QR opens `harborline://pair` in the native app.
 3. A user with a verified Clerk account sees the same code and must explicitly approve it. Five incorrect code attempts lock the request.
 4. The initiating device polls using a 256-bit secret that is not present in the QR. The approved request can be claimed once.
-5. Web receives a 90-second Clerk sign-in ticket. TV receives a random, HMAC-hashed, revocable 90-day device token.
+5. Web receives a 90-second Clerk sign-in ticket. Apple TV and Roku receive random, HMAC-hashed, revocable 90-day device tokens.
 
 Never log raw pairing secrets, sign-in tickets or device tokens. Keep `DEVICE_PAIRING_PEPPER` separate from other signing values and rotate it only with a plan to sign every TV out.
 
@@ -31,3 +33,4 @@ Never log raw pairing secrets, sign-in tickets or device tokens. Keep `DEVICE_PA
 - Replace both EAS project placeholders and Apple bundle identifiers before store submission.
 - Test QR and manual-code activation, mismatch rejection, expiry, replay rejection, sign-out and a revoked/expired session.
 - Complete Apple TV privacy disclosures and final entity-specific legal review before launch.
+- Keep Roku public access account-free and review Roku’s current on-device authentication certification requirements before Channel Store submission.

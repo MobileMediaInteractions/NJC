@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene" initialFocus="homeButton">
+  <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
+  <children>
+    <Rectangle id="background" width="1920" height="1080" color="0x061B29FF" />
+
+    <Label id="brand" translation="[72,42]" width="700" height="62" text="HARBORLINE" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" />
+    <Label id="tagline" translation="[78,94]" width="620" height="34" text="LOCAL NEWS · HARBOR COUNTY" color="0x87A9BCFF" font="font:SmallBoldSystemFont" />
+    <Label id="accountLabel" translation="[1350,55]" width="490" height="34" text="Public access" color="0x87A9BCFF" font="font:SmallSystemFont" horizAlign="right" />
+
+    <LayoutGroup id="navigation" translation="[70,146]" layoutDirection="horiz" itemSpacings="[18]" vertAlignment="center">
+      <Button id="homeButton" text="Latest" minWidth="210" />
+      <Button id="liveButton" text="Watch live" minWidth="240" />
+      <Button id="weatherButton" text="Weather" minWidth="220" />
+      <Button id="connectButton" text="Connect account" minWidth="300" />
+      <Button id="themeButton" text="Theme: System" minWidth="300" />
+    </LayoutGroup>
+    <Rectangle id="rule" translation="[72,226]" width="1776" height="2" color="0x295066FF" />
+
+    <Poster id="heroImage" translation="[72,270]" width="980" height="420" loadDisplayMode="scaleToZoom" />
+    <Rectangle id="heroScrim" translation="[72,610]" width="980" height="80" color="0x00000099" />
+    <Label id="heroCategory" translation="[1098,278]" width="650" height="34" text="LATEST" color="0xF5B335FF" font="font:SmallBoldSystemFont" />
+    <Label id="heroHeadline" translation="[1098,330]" width="700" height="180" text="Loading Harborline…" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" wrap="true" numLines="3" />
+    <Label id="heroDek" translation="[1098,522]" width="680" height="118" text="Local reporting is on the way." color="0xC5D5DEFF" font="font:MediumSystemFont" wrap="true" numLines="3" />
+    <Label id="heroMeta" translation="[1098,654]" width="680" height="34" color="0x87A9BCFF" font="font:SmallSystemFont" />
+
+    <Label id="latestLabel" translation="[72,724]" width="900" height="44" text="MORE FROM HARBOR COUNTY" color="0xFFFFFFFF" font="font:LargeBoldSystemFont" />
+    <RowList
+      id="storyList"
+      translation="[72,790]"
+      width="1776"
+      height="230"
+      numRows="1"
+      rowItemSize="[[424,224]]"
+      rowItemSpacing="[[24,0]]"
+      rowHeights="[224]"
+      showRowLabel="false"
+      itemComponentName="StoryCard"
+      focusXOffset="[0]" />
+
+    <Label id="statusLabel" translation="[72,1034]" width="1776" height="30" text="Starting Harborline…" color="0x87A9BCFF" font="font:SmallSystemFont" />
+
+    <Group id="detailOverlay" visible="false">
+      <Rectangle width="1920" height="1080" color="0x03131EEF" />
+      <Label translation="[96,70]" width="1728" height="34" text="HARBORLINE · STORY" color="0xF5B335FF" font="font:SmallBoldSystemFont" />
+      <Label id="detailHeadline" translation="[96,138]" width="1728" height="190" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" wrap="true" numLines="3" />
+      <Rectangle translation="[96,352]" width="1728" height="2" color="0x295066FF" />
+      <Label id="detailDek" translation="[96,400]" width="1500" height="125" color="0xC5D5DEFF" font="font:LargeSystemFont" wrap="true" numLines="3" />
+      <Label id="detailBody" translation="[96,565]" width="1500" height="300" color="0xFFFFFFFF" font="font:MediumSystemFont" wrap="true" numLines="8" />
+      <Label translation="[96,980]" width="1000" height="40" text="Press Back to return to the latest stories" color="0x87A9BCFF" font="font:SmallSystemFont" />
+    </Group>
+
+    <Group id="weatherOverlay" visible="false">
+      <Rectangle width="1920" height="1080" color="0x082E47F5" />
+      <Label translation="[96,80]" width="1728" height="48" text="HARBORLINE WEATHER" color="0xF5B335FF" font="font:LargeBoldSystemFont" />
+      <Label id="weatherLocation" translation="[96,180]" width="1100" height="70" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" />
+      <Label id="weatherTemperature" translation="[96,286]" width="600" height="180" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" />
+      <Label id="weatherCondition" translation="[700,318]" width="900" height="70" color="0xC5D5DEFF" font="font:LargeSystemFont" />
+      <Label id="weatherDetails" translation="[104,520]" width="1500" height="150" color="0xFFFFFFFF" font="font:MediumSystemFont" wrap="true" numLines="4" />
+      <Label id="weatherAlert" translation="[104,710]" width="1500" height="100" color="0xF5B335FF" font="font:LargeBoldSystemFont" wrap="true" numLines="2" />
+      <Label translation="[96,980]" width="1000" height="40" text="Press Back to return" color="0x87A9BCFF" font="font:SmallSystemFont" />
+    </Group>
+
+    <Group id="pairOverlay" visible="false">
+      <Rectangle width="1920" height="1080" color="0x03131EF7" />
+      <Label translation="[96,66]" width="1728" height="48" text="CONNECT YOUR HARBORLINE ACCOUNT" color="0xF5B335FF" font="font:LargeBoldSystemFont" />
+      <Label translation="[96,148]" width="1050" height="120" text="Scan the QR code or visit the address below. Confirm that the sync code matches before approving this Roku." color="0xFFFFFFFF" font="font:LargeSystemFont" wrap="true" numLines="3" />
+      <Poster id="pairQr" translation="[1280,120]" width="420" height="420" loadDisplayMode="scaleToFit" />
+      <Label id="pairUri" translation="[96,334]" width="1080" height="52" color="0xC5D5DEFF" font="font:MediumSystemFont" />
+      <Label translation="[96,430]" width="800" height="34" text="SYNC CODE" color="0x87A9BCFF" font="font:SmallBoldSystemFont" />
+      <Label id="pairCode" translation="[96,482]" width="900" height="120" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" />
+      <Label id="pairStatus" translation="[96,642]" width="1080" height="100" text="Creating a secure request…" color="0xC5D5DEFF" font="font:MediumSystemFont" wrap="true" numLines="2" />
+      <LayoutGroup translation="[96,810]" layoutDirection="horiz" itemSpacings="[24]">
+        <Button id="pairRetry" text="Try again" minWidth="240" />
+        <Button id="pairClose" text="Close" minWidth="220" />
+      </LayoutGroup>
+      <Label translation="[96,965]" width="1500" height="54" text="Account linking is optional. Harborline news and live coverage remain available without signing in." color="0x87A9BCFF" font="font:SmallSystemFont" />
+    </Group>
+
+    <Video id="video" width="1920" height="1080" visible="false" enableUI="true" />
+    <Timer id="pairTimer" duration="2" repeat="true" />
+  </children>
+</component>

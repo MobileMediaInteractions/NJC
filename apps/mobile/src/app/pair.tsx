@@ -27,14 +27,15 @@ function parsePairing(value: string) {
     const url = new URL(value);
     const session = url.searchParams.get("session") ?? "";
     const code = formatCode(url.searchParams.get("code") ?? "");
+    const requestedTarget = url.searchParams.get("target");
     const target =
-      url.searchParams.get("target") === "web"
-        ? "web"
+      requestedTarget === "web" || requestedTarget === "roku"
+        ? requestedTarget
         : url.pathname.includes("/login/tv")
           ? "tv"
           : "";
     return session && code && target
-      ? { session, code, target: target as "tv" | "web" }
+      ? { session, code, target: target as "tv" | "roku" | "web" }
       : null;
   } catch {
     return null;
@@ -57,8 +58,8 @@ export default function PairScreen() {
   const [code, setCode] = useState(
     formatCode(typeof params.code === "string" ? params.code : ""),
   );
-  const [target, setTarget] = useState<"tv" | "web">(
-    params.target === "tv" ? "tv" : "web",
+  const [target, setTarget] = useState<"tv" | "roku" | "web">(
+    params.target === "tv" || params.target === "roku" ? params.target : "web",
   );
   const [scanned, setScanned] = useState(Boolean(session && code));
   const [busy, setBusy] = useState(false);
@@ -91,7 +92,7 @@ export default function PairScreen() {
       setNotice(
         target === "web"
           ? "Browser approved. It will finish signing in now."
-          : "Apple TV approved. It will finish signing in now.",
+          : `${target === "roku" ? "Roku" : "Apple TV"} approved. It will finish signing in now.`,
       );
     } catch (error) {
       setNotice(
@@ -110,7 +111,7 @@ export default function PairScreen() {
         <Text style={styles.title}>Sign in first</Text>
         <Text style={styles.copy}>
           Only an authenticated Harborline account can approve a browser or
-          Apple TV.
+          television.
         </Text>
         <Link href="/account" asChild>
           <Pressable style={styles.primary}>
@@ -126,7 +127,7 @@ export default function PairScreen() {
         <View style={styles.cameraHeader}>
           <Text style={styles.cameraTitle}>Scan Harborline QR</Text>
           <Text style={styles.cameraCopy}>
-            The QR should be visible on the browser or Apple TV you want to
+            The QR should be visible on the browser or television you want to
             connect.
           </Text>
         </View>
@@ -160,7 +161,7 @@ export default function PairScreen() {
       <Text style={styles.title}>Do these codes match?</Text>
       <Text style={styles.copy}>
         Compare this code with the one on the{" "}
-        {target === "web" ? "browser" : "Apple TV"}. If anything is different,
+        {target === "web" ? "browser" : target === "roku" ? "Roku" : "Apple TV"}. If anything is different,
         do not approve.
       </Text>
       <View style={styles.codeCard}>

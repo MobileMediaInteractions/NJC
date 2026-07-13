@@ -1,0 +1,9 @@
+title=Harborline Local News
+subtitle=Local reporting for Harbor County
+major_version=1
+minor_version=0
+build_version=0
+ui_resolutions=fhd
+api_url=https://news.harborline.example
+supports_input_launch=1
+

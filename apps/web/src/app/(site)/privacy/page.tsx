@@ -27,13 +27,14 @@ export default function PrivacyPage() {
           identifier, role, API-key metadata and security events. Reader
           services may include newsletter choices, comments, tips, alert-device
           tokens, saved preferences, approximate region, request logs and
-          privacy requests. Audience totals use a random installation
-          identifier, Web/iOS/Android/tvOS platform, app version, account link
+          privacy requests. Audience totals use a random or app-scoped
+          pseudonymous installation identifier, Web/iOS/Android/tvOS/Roku
+          platform, app version, account link
           when authenticated and first/last-active timestamps. They do not store
           article-reading history or an advertising identifier. We do not store
           raw developer API keys after creation. Device sign-in handles
           short-lived pairing status, hashed sync codes and requester network
-          information for abuse prevention. Apple TV sessions retain account,
+          information for abuse prevention. Apple TV and Roku sessions retain account,
           device, expiry and last-active metadata; raw device tokens are not
           stored.
         </p>
@@ -72,7 +73,7 @@ export default function PrivacyPage() {
         </h2>
         <p className="mt-3">
           Retention is limited to operational, editorial, security and legal
-          needs. Unapproved pairing requests expire after ten minutes. Apple TV
+          needs. Unapproved pairing requests expire after ten minutes. Television
           sessions expire after 90 days unless renewed and can be revoked by
           signing out. Revoked API-key records and security audit logs may be
           retained to investigate abuse. Audience installation records are

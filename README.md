@@ -1,8 +1,8 @@
 # Harborline Local
 
-Harborline Local is a production-oriented, fictional local-news network built with Next.js, Expo, React Native and TypeScript for the Vercel platform. It includes a public news product, role-aware newsroom CMS, one iOS/Android codebase, a dedicated Apple TV app, portable encrypted backups, a self-service developer platform and a versioned API.
+Harborline Local is a production-oriented, fictional local-news network built with Next.js, Expo, React Native, TypeScript and native Roku SceneGraph for the Vercel platform. It includes a public news product, role-aware newsroom CMS, one iOS/Android codebase, dedicated Apple TV and Roku apps, portable encrypted backups, a self-service developer platform and a versioned API.
 
-The repository is a Turborepo organized by target: `apps/web`, `apps/mobile` and `apps/tv`. Shared database, API-client and contract code lives under `packages`. See `docs/ARCHITECTURE.md` for boundaries and the native C/C++ policy.
+The repository is a Turborepo organized by target: `apps/web`, `apps/mobile`, `apps/tv` and `apps/roku`. Shared database, API-client and contract code lives under `packages`. See `docs/ARCHITECTURE.md` for boundaries and the native C/C++ policy.
 
 ## Product surfaces
 
@@ -15,9 +15,10 @@ The repository is a Turborepo organized by target: `apps/web`, `apps/mobile` and
 - Versioned `/api/v1` contracts documented in `docs/MOBILE_API.md`
 - Expo SDK 57 app with offline feeds, bookmarks, weather, live video, push alerts and limited mobile newsroom controls
 - Apple TV client built on `react-native-tvos`, with remote focus states and secure QR/code activation
+- Native Roku SceneGraph client with story rails, weather, HLS live playback, themes and optional account linking
 - Two-way device pairing: approve TV at `/login/tv`, or sign a browser in from mobile at `/login/quick`
 - Verified developer accounts with scoped HMAC-hashed keys, audit records, revocation and Upstash rate limits
-- Consent-aware audience reporting with Web, iOS, Android, Apple TV and developer API totals in Studio and mobile admin
+- Consent-aware audience reporting with Web, iOS, Android, Apple TV, Roku and developer API totals in Studio and mobile admin
 - Legal/trust center, consent controls and verified privacy-request intake foundation
 - Provider-neutral Postgres, Blob, migration and configuration exports documented in `docs/PORTABLE_BACKUP.md`
 
@@ -30,6 +31,7 @@ The repository is a Turborepo organized by target: `apps/web`, `apps/mobile` and
 - Clerk for staff authentication
 - Upstash Redis for developer API rate limits
 - Expo/EAS for one iOS/Android mobile codebase and a focused tvOS target
+- Roku SceneGraph/BrightScript with BrighterScript validation and sideloadable ZIP packaging
 - shadcn/ui + Tailwind CSS
 
 ## Local preview
@@ -65,6 +67,15 @@ pnpm tv:check
 
 See `docs/TV_PAIRING.md` for the tvOS build and secure activation model.
 
+The Roku app is in `apps/roku`:
+
+```bash
+pnpm roku:check
+ROKU_API_URL=https://news.your-domain.example pnpm roku:package
+```
+
+See `apps/roku/README.md` for sideloading and Roku Channel Store requirements.
+
 ## Vercel setup order
 
 1. Create or link the Vercel project and set its Root Directory to `apps/web`.
@@ -74,6 +85,7 @@ See `docs/TV_PAIRING.md` for the tvOS build and secure activation model.
 5. Run `pnpm db:migrate` followed by `pnpm db:seed`.
 6. Deploy a preview, verify it, then promote the same artifact to production.
 7. Create the mobile and TV EAS projects, replace both placeholder project IDs, configure APNs/FCM and add the deployed API URL to app builds.
+8. Package Roku with the same public HTTPS origin, sideload it to physical devices and complete Roku certification assets and testing.
 
 Copy `apps/web/.env.example` for the required key names. Never commit `.env.local`.
 
@@ -91,4 +103,5 @@ pnpm typecheck
 pnpm build
 pnpm mobile:check
 pnpm tv:check
+pnpm roku:check
 ```

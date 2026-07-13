@@ -14,7 +14,7 @@ import {
 
 const inputSchema = z.object({
   code: z.string().min(6).max(12),
-  target: z.enum(["tv", "web"]),
+  target: z.enum(["tv", "roku", "web"]),
 });
 
 export async function POST(

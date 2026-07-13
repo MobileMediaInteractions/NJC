@@ -1,0 +1,16 @@
+{
+  "name": "@harborline/roku",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "bsc --project bsconfig.json",
+    "package:production": "node scripts/package-production.mjs",
+    "lint": "bsc --project bsconfig.json --create-package false --copy-to-staging false",
+    "typecheck": "bsc --project bsconfig.json --create-package false --copy-to-staging false",
+    "test": "node scripts/validate-package.mjs",
+    "install:device": "node scripts/install-device.mjs"
+  },
+  "devDependencies": {
+    "brighterscript": "^0.73.0"
+  }
+}

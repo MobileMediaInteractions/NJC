@@ -20,9 +20,11 @@ function formatUserCode(value: string) {
 export function TvPairingApproval({
   initialSession,
   initialCode,
+  initialTarget,
 }: {
   initialSession: string;
   initialCode: string;
+  initialTarget: "tv" | "roku";
 }) {
   const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
@@ -30,10 +32,11 @@ export function TvPairingApproval({
   const [busy, setBusy] = useState(false);
   const [approved, setApproved] = useState(false);
   const [notice, setNotice] = useState("");
+  const deviceLabel = initialTarget === "roku" ? "Roku" : "Apple TV";
   const signInUrl = useMemo(
     () =>
-      `/sign-in?redirect_url=${encodeURIComponent(`/login/tv?${new URLSearchParams({ ...(initialSession ? { session: initialSession } : {}), ...(code ? { code } : {}) })}`)}`,
-    [code, initialSession],
+      `/sign-in?redirect_url=${encodeURIComponent(`/login/tv?${new URLSearchParams({ ...(initialSession ? { session: initialSession } : {}), ...(code ? { code } : {}), target: initialTarget })}`)}`,
+    [code, initialSession, initialTarget],
   );
 
   async function approve() {
@@ -45,13 +48,13 @@ export function TvPairingApproval({
     const response = await fetch(path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, target: "tv" }),
+      body: JSON.stringify({ code, target: initialTarget }),
     });
     const payload = await response.json();
     if (response.ok) setApproved(true);
     else
       setNotice(
-        payload.error?.message ?? "This Apple TV could not be approved.",
+        payload.error?.message ?? `This ${deviceLabel} could not be approved.`,
       );
     setBusy(false);
   }
@@ -63,7 +66,7 @@ export function TvPairingApproval({
           <CheckCircle2 className="size-10" />
         </div>
         <h1 className="mt-7 text-4xl font-black tracking-tight">
-          Apple TV connected
+          {deviceLabel} connected
         </h1>
         <p className="mt-4 max-w-lg text-lg leading-8 text-white/70">
           The television can now finish signing in as{" "}
@@ -82,7 +85,7 @@ export function TvPairingApproval({
           <Tv className="size-7" />
         </div>
         <p className="mt-7 text-xs font-black uppercase tracking-[0.22em] text-brand-yellow">
-          Apple TV activation
+          {deviceLabel} activation
         </p>
         <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
           Match the code before you connect.
@@ -108,7 +111,7 @@ export function TvPairingApproval({
           htmlFor="tv-sync-code"
           className="mt-7 block text-sm font-bold text-slate-700"
         >
-          Code shown on Apple TV
+          Code shown on {deviceLabel}
         </label>
         <Input
           id="tv-sync-code"
@@ -128,7 +131,7 @@ export function TvPairingApproval({
               disabled={busy || code.length !== 7}
               onClick={() => void approve()}
             >
-              {busy ? "Verifying…" : "The codes match — connect Apple TV"}
+              {busy ? "Verifying…" : `The codes match — connect ${deviceLabel}`}
             </Button>
             <p className="mt-4 text-center text-xs text-slate-500">
               Approving as {user?.primaryEmailAddress?.emailAddress}

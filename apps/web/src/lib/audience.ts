@@ -8,10 +8,11 @@ const platformDetails: Record<AudiencePlatform, Pick<AudiencePlatformMetric, "la
   ios: { label: "iOS", measurement: "installations" },
   android: { label: "Android", measurement: "installations" },
   tvos: { label: "Apple TV", measurement: "installations" },
+  roku: { label: "Roku", measurement: "installations" },
   api: { label: "Developer API", measurement: "accounts" },
 };
 
-const platformOrder: AudiencePlatform[] = ["web", "ios", "android", "tvos", "api"];
+const platformOrder: AudiencePlatform[] = ["web", "ios", "android", "tvos", "roku", "api"];
 
 function emptyMetric(platform: AudiencePlatform): AudiencePlatformMetric {
   return {

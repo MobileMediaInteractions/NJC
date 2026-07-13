@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="StoryCard" extends="Group">
+  <interface>
+    <field id="itemContent" type="node" onChange="showContent" />
+    <field id="focusPercent" type="float" onChange="showFocus" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/StoryCard.brs" />
+  <children>
+    <Rectangle id="focus" width="424" height="224" color="0xF5B335FF" opacity="0" />
+    <Rectangle id="surface" translation="[4,4]" width="416" height="216" color="0x102F43FF" />
+    <Poster id="image" translation="[4,4]" width="416" height="128" loadDisplayMode="scaleToZoom" />
+    <Rectangle id="shade" translation="[4,108]" width="416" height="24" color="0x000000AA" />
+    <Label id="category" translation="[18,105]" width="380" height="26" color="0xF5B335FF" font="font:SmallBoldSystemFont" />
+    <Label id="headline" translation="[18,142]" width="382" height="66" color="0xFFFFFFFF" font="font:SmallBoldSystemFont" wrap="true" numLines="2" />
+  </children>
+</component>
