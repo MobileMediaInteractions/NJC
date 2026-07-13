@@ -3,7 +3,8 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@harborline/contracts": ["../../packages/contracts/src/index.ts"]
+      "@harborline/contracts": ["../../packages/contracts/src/index.ts"],
+      "@harborline/api-client": ["../../packages/api-client/src/index.ts"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", "expo-env.d.ts"]

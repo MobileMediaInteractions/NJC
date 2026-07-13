@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { type AppColors } from "@/constants/theme";
 import { type ThemePreference, useAppTheme } from "@/providers/theme-provider";
 
-const choices: Array<{ value: ThemePreference; label: string }> = [
+const choices: { value: ThemePreference; label: string }[] = [
   { value: "system", label: "Device" },
   { value: "light", label: "Light" },
   { value: "dark", label: "Dark" },

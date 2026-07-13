@@ -4,6 +4,7 @@ import type {
   PairingRequest,
   Story,
 } from "@harborline/contracts";
+import { requestHarborlineApi } from "@harborline/api-client";
 import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
 import {
@@ -115,20 +116,7 @@ function useTvTheme() {
 }
 
 async function api<T>(path: string, init?: RequestInit) {
-  const response = await fetch(`${apiUrl}${path}`, {
-    ...init,
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-  });
-  const payload = await response.json();
-  if (!response.ok)
-    throw new Error(
-      payload.error?.message ?? `Request failed (${response.status})`,
-    );
-  return payload.data as T;
+  return requestHarborlineApi<T>(path, { baseUrl: apiUrl }, init);
 }
 
 async function reportPresence(token?: string) {
@@ -526,7 +514,7 @@ function FocusButton({
 
 function ThemeControls() {
   const { preference, setPreference, styles } = useTvTheme();
-  const choices: Array<{ value: ThemePreference; label: string }> = [
+  const choices: { value: ThemePreference; label: string }[] = [
     { value: "system", label: "Device" },
     { value: "light", label: "Light" },
     { value: "dark", label: "Dark" },

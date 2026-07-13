@@ -1,5 +1,5 @@
 {
-  "name": "tv",
+  "name": "@harborline/tv",
   "version": "1.0.0",
   "private": true,
   "main": "index.ts",
@@ -11,6 +11,7 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@harborline/api-client": "workspace:*",
     "@harborline/contracts": "workspace:*",
     "expo": "~57.0.4",
     "expo-constants": "~57.0.3",
@@ -23,11 +24,15 @@
   "devDependencies": {
     "@react-native-tvos/config-tv": "^0.1.6",
     "@types/react": "~19.2.2",
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "~57.0.0",
     "typescript": "~6.0.3"
   },
   "expo": {
     "install": {
-      "exclude": ["react-native"]
+      "exclude": [
+        "react-native"
+      ]
     }
   }
 }

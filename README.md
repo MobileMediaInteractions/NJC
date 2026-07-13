@@ -2,6 +2,8 @@
 
 Harborline Local is a production-oriented, fictional local-news network built with Next.js, Expo, React Native and TypeScript for the Vercel platform. It includes a public news product, role-aware newsroom CMS, one iOS/Android codebase, a dedicated Apple TV app, portable encrypted backups, a self-service developer platform and a versioned API.
 
+The repository is a Turborepo organized by target: `apps/web`, `apps/mobile` and `apps/tv`. Shared database, API-client and contract code lives under `packages`. See `docs/ARCHITECTURE.md` for boundaries and the native C/C++ policy.
+
 ## Product surfaces
 
 - Broadcast-style, responsive public homepage and category desks
@@ -65,7 +67,7 @@ See `docs/TV_PAIRING.md` for the tvOS build and secure activation model.
 
 ## Vercel setup order
 
-1. Create or link the Vercel project.
+1. Create or link the Vercel project and set its Root Directory to `apps/web`.
 2. Install Neon, Clerk and Vercel Blob from the Vercel Marketplace/dashboard.
 3. Add `CRON_SECRET`, `API_KEY_PEPPER`, a separate `DEVICE_PAIRING_PEPPER`, Upstash Redis values and any optional newsletter/analytics values.
 4. Pull the project environment into `.env.local`.
@@ -73,13 +75,13 @@ See `docs/TV_PAIRING.md` for the tvOS build and secure activation model.
 6. Deploy a preview, verify it, then promote the same artifact to production.
 7. Create the mobile and TV EAS projects, replace both placeholder project IDs, configure APNs/FCM and add the deployed API URL to app builds.
 
-Copy `.env.example` for the required key names. Never commit `.env.local`.
+Copy `apps/web/.env.example` for the required key names. Never commit `.env.local`.
 
 The scheduled-publishing cron runs every five minutes and therefore requires a Vercel plan that supports sub-daily schedules. Change the cron cadence if deploying on a different plan.
 
 ## Replace the fictional launch identity
 
-Most launch identity, region and module switches are centralized in `src/lib/site.ts`. Replace the seed reporting in `src/lib/seed.ts`, update the social image and legal copy, then connect the real service credentials.
+Most launch identity, region and module switches are centralized in `apps/web/src/lib/site.ts`. Replace the seed reporting in `apps/web/src/lib/seed.ts`, update the social image and legal copy, then connect the real service credentials.
 
 ## Checks
 
