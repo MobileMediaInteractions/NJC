@@ -17,7 +17,7 @@ export default function SignInPage() {
             <Link href="/login/quick" className="block rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-center text-sm font-bold text-white transition-colors hover:bg-white/10">Sign in this browser with the mobile app QR</Link>
           </>
         ) : (
-          <div className="rounded-lg border border-white/15 bg-white p-6">
+          <div className="rounded-lg border border-white/15 bg-card p-6">
             <h1 className="text-xl font-bold text-brand-navy">
               Account identity is ready to connect
             </h1>

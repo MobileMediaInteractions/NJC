@@ -9,7 +9,8 @@
   --color-foreground: var(--foreground);
   --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
-  --font-heading: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-heading:
+    "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -53,6 +54,7 @@
 }
 
 :root {
+  color-scheme: light;
   --background: oklch(0.985 0.005 240);
   --foreground: oklch(0.2 0.025 245);
   --card: oklch(1 0 0);
@@ -88,6 +90,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: oklch(0.16 0.028 244);
   --foreground: oklch(0.975 0.005 235);
   --card: oklch(0.205 0.035 244);
@@ -117,7 +120,9 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "ss01" 1, "cv02" 1;
+    font-feature-settings:
+      "ss01" 1,
+      "cv02" 1;
   }
   a,
   button {
@@ -131,14 +136,14 @@
 
 @layer utilities {
   .container-news {
-    width: min(100% - 2rem, 82rem);
+    width: min(calc(100% - clamp(1.25rem, 4vw, 4rem)), 92rem);
     margin-inline: auto;
   }
   .headline-balance {
     text-wrap: balance;
   }
   .editorial-rule {
-    border-top: 4px solid #072f4d;
+    border-top: 4px solid currentColor;
   }
   .eyebrow {
     @apply text-[0.7rem] font-bold uppercase tracking-[0.16em];
@@ -148,9 +153,27 @@
   }
 }
 
+html.dark .text-brand-navy {
+  color: #e2edf4 !important;
+}
+html.dark .text-brand-blue {
+  color: #79bfe8 !important;
+}
+html.dark .border-brand-navy {
+  border-color: #8bb7cf !important;
+}
+html.dark .bg-brand-yellow.text-brand-navy,
+html.dark .bg-white.text-brand-navy {
+  color: #072f4d !important;
+}
+
 @keyframes ticker {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -11,7 +11,9 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Colors } from "@/constants/theme";
+import { type AppColors } from "@/constants/theme";
+import { ThemeSetting } from "@/components/theme-setting";
+import { useAppTheme } from "@/providers/theme-provider";
 import { apiBaseUrl } from "@/lib/api";
 import { registerForAlerts } from "@/lib/notifications";
 import {
@@ -29,6 +31,8 @@ function messageFrom(error: unknown) {
 }
 
 export default function AccountScreen() {
+  const { colors } = useAppTheme();
+  const styles = makeStyles(colors);
   if (!process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY)
     return (
       <ScrollView contentContainerStyle={styles.content}>
@@ -45,6 +49,8 @@ export default function AccountScreen() {
 }
 
 function ConfiguredAccount() {
+  const { colors } = useAppTheme();
+  const styles = makeStyles(colors);
   const { isSignedIn, getToken } = useAuth();
   const { user } = useUser();
   const { signOut } = useClerk();
@@ -133,7 +139,7 @@ function ConfiguredAccount() {
           Role: {role}. Your saved stories stay on this device; account services
           support alerts and newsroom authorization.
         </Text>
-        <Link href={'/pair' as Href} asChild>
+        <Link href={"/pair" as Href} asChild>
           <Pressable style={styles.primary}>
             <Text style={styles.primaryText}>Scan quick sign-in QR</Text>
           </Pressable>
@@ -260,6 +266,8 @@ function ConfiguredAccount() {
 }
 
 function AudiencePreference() {
+  const { colors } = useAppTheme();
+  const styles = makeStyles(colors);
   const [enabled, setEnabled] = useState(true);
   useEffect(() => {
     let active = true;
@@ -287,15 +295,19 @@ function AudiencePreference() {
         accessibilityLabel="Share anonymous audience measurement"
         value={enabled}
         onValueChange={(value) => void change(value)}
-        trackColor={{ true: Colors.blue }}
+        trackColor={{ true: colors.blue }}
       />
     </View>
   );
 }
 
 function LegalLinks() {
+  const { colors } = useAppTheme();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.legal}>
+      <ThemeSetting />
+      <View style={styles.legalDivider} />
       <Text style={styles.legalTitle}>Privacy and support</Text>
       <AudiencePreference />
       {[
@@ -315,105 +327,111 @@ function LegalLinks() {
   );
 }
 
-const styles = StyleSheet.create({
-  content: { flexGrow: 1, padding: 22, backgroundColor: Colors.background },
-  eyebrow: {
-    color: Colors.red,
-    fontSize: 10,
-    fontWeight: "900",
-    letterSpacing: 1.5,
-  },
-  title: {
-    color: Colors.navy,
-    fontSize: 30,
-    lineHeight: 35,
-    fontWeight: "900",
-    marginTop: 6,
-  },
-  copy: {
-    color: Colors.muted,
-    fontSize: 15,
-    lineHeight: 23,
-    marginTop: 10,
-    marginBottom: 18,
-  },
-  input: {
-    height: 50,
-    borderWidth: 1,
-    borderColor: Colors.line,
-    borderRadius: 8,
-    backgroundColor: Colors.surface,
-    paddingHorizontal: 14,
-    color: Colors.ink,
-    marginBottom: 12,
-    fontSize: 16,
-  },
-  primary: {
-    backgroundColor: Colors.blue,
-    borderRadius: 8,
-    minHeight: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-    marginTop: 4,
-  },
-  primaryText: { color: "#fff", fontWeight: "900" },
-  secondary: {
-    borderWidth: 1,
-    borderColor: Colors.blue,
-    borderRadius: 8,
-    minHeight: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-    marginTop: 12,
-  },
-  secondaryText: { color: Colors.blue, fontWeight: "900" },
-  disabled: { opacity: 0.6 },
-  notice: {
-    color: Colors.ink,
-    backgroundColor: Colors.sky,
-    padding: 12,
-    marginTop: 12,
-    lineHeight: 20,
-  },
-  switch: {
-    color: Colors.blue,
-    fontWeight: "800",
-    textAlign: "center",
-    padding: 18,
-  },
-  staff: {
-    backgroundColor: Colors.yellow,
-    borderRadius: 8,
-    minHeight: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 12,
-  },
-  staffText: { color: Colors.navy, fontWeight: "900" },
-  rule: { height: 1, backgroundColor: Colors.line, marginVertical: 22 },
-  signOut: { color: Colors.red, fontWeight: "800", paddingVertical: 14 },
-  legal: {
-    marginTop: 28,
-    borderTopWidth: 1,
-    borderTopColor: Colors.line,
-    paddingTop: 18,
-    gap: 12,
-  },
-  legalTitle: { color: Colors.ink, fontWeight: "900", marginBottom: 2 },
-  audiencePreference: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingVertical: 8,
-  },
-  preferenceCopy: { flex: 1 },
-  preferenceBody: {
-    color: Colors.muted,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 3,
-  },
-  link: { color: Colors.blue, fontWeight: "700" },
-});
+const makeStyles = (colors: AppColors) =>
+  StyleSheet.create({
+    content: { flexGrow: 1, padding: 22, backgroundColor: colors.background },
+    eyebrow: {
+      color: colors.red,
+      fontSize: 10,
+      fontWeight: "900",
+      letterSpacing: 1.5,
+    },
+    title: {
+      color: colors.navy,
+      fontSize: 30,
+      lineHeight: 35,
+      fontWeight: "900",
+      marginTop: 6,
+    },
+    copy: {
+      color: colors.muted,
+      fontSize: 15,
+      lineHeight: 23,
+      marginTop: 10,
+      marginBottom: 18,
+    },
+    input: {
+      height: 50,
+      borderWidth: 1,
+      borderColor: colors.line,
+      borderRadius: 8,
+      backgroundColor: colors.surface,
+      paddingHorizontal: 14,
+      color: colors.ink,
+      marginBottom: 12,
+      fontSize: 16,
+    },
+    primary: {
+      backgroundColor: colors.blue,
+      borderRadius: 8,
+      minHeight: 50,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 16,
+      marginTop: 4,
+    },
+    primaryText: { color: colors.onPrimary, fontWeight: "900" },
+    secondary: {
+      borderWidth: 1,
+      borderColor: colors.blue,
+      borderRadius: 8,
+      minHeight: 50,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 16,
+      marginTop: 12,
+    },
+    secondaryText: { color: colors.blue, fontWeight: "900" },
+    disabled: { opacity: 0.6 },
+    notice: {
+      color: colors.ink,
+      backgroundColor: colors.sky,
+      padding: 12,
+      marginTop: 12,
+      lineHeight: 20,
+    },
+    switch: {
+      color: colors.blue,
+      fontWeight: "800",
+      textAlign: "center",
+      padding: 18,
+    },
+    staff: {
+      backgroundColor: colors.yellow,
+      borderRadius: 8,
+      minHeight: 50,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 12,
+    },
+    staffText: { color: colors.brandNavy, fontWeight: "900" },
+    rule: { height: 1, backgroundColor: colors.line, marginVertical: 22 },
+    signOut: { color: colors.red, fontWeight: "800", paddingVertical: 14 },
+    legal: {
+      marginTop: 28,
+      borderTopWidth: 1,
+      borderTopColor: colors.line,
+      paddingTop: 18,
+      gap: 12,
+    },
+    legalDivider: {
+      height: 1,
+      backgroundColor: colors.line,
+      marginVertical: 6,
+    },
+    legalTitle: { color: colors.ink, fontWeight: "900", marginBottom: 2 },
+    audiencePreference: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingVertical: 8,
+    },
+    preferenceCopy: { flex: 1 },
+    preferenceBody: {
+      color: colors.muted,
+      fontSize: 12,
+      lineHeight: 18,
+      marginTop: 3,
+    },
+    link: { color: colors.blue, fontWeight: "700" },
+  });

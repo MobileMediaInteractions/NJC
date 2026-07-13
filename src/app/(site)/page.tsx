@@ -35,7 +35,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="border-y bg-white py-5">
+      <section className="border-y bg-card py-5">
         <div className="container-news grid gap-5 sm:grid-cols-3 sm:divide-x">
           <QuickFact icon={<Clock3 />} label="Morning brief" value="5 stories for your day" href="/newsletter" />
           <QuickFact icon={<MapPin />} label="Your community" value="Choose your town" href="/category/local" />
@@ -90,7 +90,7 @@ export default async function HomePage() {
             <SectionHeading title="Harborline Investigates" href="/category/investigates" />
             <StoryCard story={investigation} size="large" />
           </div>
-          <div className="bg-brand-sky/65 p-7 lg:mt-0">
+          <div className="bg-secondary p-7 lg:mt-0">
             <p className="eyebrow text-brand-blue">Public records desk</p>
             <h2 className="mt-3 text-3xl font-black leading-tight tracking-[-0.04em] text-brand-navy">We follow the paper trail so you don’t have to.</h2>
             <p className="mt-4 text-sm leading-6 text-muted-foreground">Explore documents, searchable databases and reporting methods behind our accountability work.</p>
@@ -123,7 +123,7 @@ export default async function HomePage() {
 function QuickFact({ icon, label, value, href }: { icon: React.ReactNode; label: string; value: string; href: string }) {
   return (
     <Link href={href} className="group flex items-center gap-4 sm:px-5 first:pl-0">
-      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-sky text-brand-blue [&_svg]:size-4">{icon}</span>
+      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-secondary text-brand-blue [&_svg]:size-4">{icon}</span>
       <span><span className="block text-[0.65rem] font-bold uppercase tracking-widest text-muted-foreground">{label}</span><span className="mt-0.5 block text-sm font-bold text-brand-navy group-hover:underline">{value}</span></span>
     </Link>
   );

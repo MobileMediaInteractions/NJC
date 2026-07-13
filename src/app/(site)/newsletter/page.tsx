@@ -19,5 +19,5 @@ export default function NewsletterPage() {
 }
 
 function NewsletterOption({ icon, title, schedule, copy }: { icon: React.ReactNode; title: string; schedule: string; copy: string }) {
-  return <article className="border bg-white p-6"><div className="text-brand-blue [&_svg]:size-7">{icon}</div><h2 className="mt-5 text-2xl font-black text-brand-navy">{title}</h2><p className="mt-1 text-xs font-bold uppercase tracking-wider text-brand-blue">{schedule}</p><p className="mt-4 text-sm leading-6 text-muted-foreground">{copy}</p></article>;
+  return <article className="border bg-card p-6"><div className="text-brand-blue [&_svg]:size-7">{icon}</div><h2 className="mt-5 text-2xl font-black text-brand-navy">{title}</h2><p className="mt-1 text-xs font-bold uppercase tracking-wider text-brand-blue">{schedule}</p><p className="mt-4 text-sm leading-6 text-muted-foreground">{copy}</p></article>;
 }

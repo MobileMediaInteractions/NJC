@@ -13,7 +13,7 @@ export default function SignUpPage() {
             forceRedirectUrl="/developers"
           />
         ) : (
-          <div className="rounded-lg bg-white p-6 text-sm text-muted-foreground">
+          <div className="rounded-lg bg-card p-6 text-sm text-muted-foreground">
             Connect Clerk before creating reader or developer accounts.
           </div>
         )}
