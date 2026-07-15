@@ -1,0 +1,11 @@
+import { Link } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Card, Label, Screen, StateCard } from "@/components/screen";
+import { useEmployee } from "@/providers/employee-provider";
+import { useAppTheme } from "@/providers/theme-provider";
+
+export default function HomeScreen() {
+  const employee = useEmployee(); const { colors } = useAppTheme(); const viewer = employee.data?.viewer;
+  return <Screen eyebrow="EMPLOYEE APP" title={viewer ? `Hello, ${viewer.name.split(" ")[0]}` : "Employee home"} refresh={() => void employee.refresh()} refreshing={employee.loading}>{employee.offline ? <StateCard title="Working offline" body="Showing the last in-memory navigation state. Privileged actions remain unavailable until the server reconnects." /> : null}{employee.error && !employee.offline ? <StateCard title="Employee services unavailable" body={employee.error} action="Try again" onAction={() => void employee.refresh()} /> : null}<View style={styles.grid}><Card><Label>Role</Label><Text style={[styles.value, { color: colors.ink }]}>{viewer?.role ?? "Unavailable"}</Text></Card><Card><Label>Unread</Label><Text style={[styles.value, { color: colors.ink }]}>{employee.data?.channels.reduce((total, channel) => total + channel.unread, 0) ?? 0}</Text></Card></View><Card><Text style={[styles.title, { color: colors.ink }]}>Communication</Text><Text style={{ color: colors.muted }}>Internal channels and direct conversations are isolated from the reader app.</Text><Link href="/(tabs)/chat" asChild><Pressable><Text style={[styles.link, { color: colors.brand }]}>Open chat</Text></Pressable></Link></Card><Card><Text style={[styles.title, { color: colors.ink }]}>Employee tools</Text><Text style={{ color: colors.muted }}>Only tools allowed by your current server-side capabilities appear.</Text><Link href="/(tabs)/tools" asChild><Pressable><Text style={[styles.link, { color: colors.brand }]}>View tools</Text></Pressable></Link></Card></Screen>;
+}
+const styles = StyleSheet.create({ grid: { flexDirection: "row", gap: 10 }, value: { fontSize: 23, fontWeight: "900", textTransform: "capitalize" }, title: { fontSize: 18, fontWeight: "900" }, link: { fontWeight: "900", marginTop: 4 } });

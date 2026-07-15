@@ -36,6 +36,34 @@
       "when": 1783972742715,
       "tag": "0004_rainy_wither",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784068824889,
+      "tag": "0005_confused_chat",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784069924459,
+      "tag": "0006_wise_goblin_queen",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784071261787,
+      "tag": "0007_happy_beyonder",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784074077676,
+      "tag": "0008_omniscient_moira_mactaggert",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,42 @@
+feature PurchaseConfirmation version 1.0.0 id "studio.purchase-confirmation"
+
+requires
+  network
+  secure-storage
+  purchase
+  animation
+  ui-overlays
+  accessibility
+  localization
+  entitlement "commerce.purchase"
+
+data Product id "data.product"
+  id text id "field.product.id"
+  name text id "field.product.name"
+  price money id "field.product.price"
+  image image id "field.product.image"
+
+screen ProductScreen route "/products/:productId" id "screen.product"
+  stack PurchaseLayout id "component.purchase-layout"
+    image ProductImage showing "asset://headphones" id "component.product-image"
+    heading ProductTitle showing "Studio Headphones" id "component.product-title"
+    text ProductPrice showing "$129.00" id "component.product-price"
+    button BuyButton saying "Purchase" id "component.buy-button"
+    modal PurchaseConfirmation showing "Confirm purchase" hidden id "component.purchase-confirmation"
+
+when BuyButton is tapped
+  set PurchaseStatus = confirming
+  ask "Purchase {SelectedProduct.name} for {SelectedProduct.price}?" using component.purchase-confirmation
+    title "Confirm purchase"
+    confirm "Purchase"
+    cancel "Cancel"
+  if confirmed
+    set PurchaseStatus = purchasing
+    call connector.purchase.operation.purchase using SelectedProduct as purchase
+    if purchase succeeds
+      set PurchaseStatus = success
+      play purchase-success
+      show purchase-success
+    otherwise
+      set PurchaseStatus = failure
+      show purchase-error

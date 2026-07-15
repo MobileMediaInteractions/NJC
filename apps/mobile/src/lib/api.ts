@@ -73,9 +73,9 @@ export function getLive() {
     "/api/v1/live",
     {
       isLive: false,
-      title: "Harborline Now",
+      title: "Courier Live",
       streamUrl: null,
-      schedule: [{ startsAt: "18:00", title: "Harborline at Six" }],
+      schedule: [{ startsAt: "18:00", title: "Middlesex Evening Briefing" }],
     },
     2 * 60_000,
   );

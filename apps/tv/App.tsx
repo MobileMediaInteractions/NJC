@@ -32,10 +32,10 @@ import {
 
 const darkColors = {
   navy: "#031C2E",
-  blue: "#0A4B78",
+  blue: "#2F6654",
   sky: "#DDECF4",
-  yellow: "#F5B335",
-  red: "#D82C3B",
+  yellow: "#C49545",
+  red: "#A5382F",
   white: "#FFFFFF",
   muted: "#AAC0CE",
   surface: "#0B3551",
@@ -44,11 +44,11 @@ const darkColors = {
 type TvColors = typeof darkColors;
 const lightColors: TvColors = {
   navy: "#EDF3F6",
-  blue: "#0A4B78",
+  blue: "#2F6654",
   sky: "#DDECF4",
   yellow: "#D99612",
   red: "#C92435",
-  white: "#072F4D",
+  white: "#173E32",
   muted: "#536976",
   surface: "#FFFFFF",
   onMedia: "#FFFFFF",
@@ -329,7 +329,7 @@ function PairingScreen({
       <View style={styles.topBar}>
         <View style={styles.brand}>
           <View style={styles.brandLine} />
-          <Text style={styles.brandName}>HARBORLINE</Text>
+          <Text style={styles.brandName}>NJ COURIER</Text>
           <Text style={styles.brandLocal}>LOCAL TV</Text>
         </View>
         <ThemeControls />
@@ -428,7 +428,7 @@ function HomeScreen({
       <View style={styles.nav}>
         <View style={styles.brandCompact}>
           <View style={styles.brandLine} />
-          <Text style={styles.brandName}>HARBORLINE</Text>
+          <Text style={styles.brandName}>NJ COURIER</Text>
           <Text style={styles.brandLocal}>TV</Text>
         </View>
         <View style={styles.navItems}>
@@ -495,7 +495,7 @@ function HomeScreen({
             </View>
           </View>
         ) : null}
-        <Text style={styles.sectionTitle}>Latest from Harbor County</Text>
+        <Text style={styles.sectionTitle}>Latest from Middlesex County</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -527,7 +527,7 @@ function StoryDetail({
       <View style={styles.storyHeader}>
         <View style={styles.brandCompact}>
           <View style={styles.brandLine} />
-          <Text style={styles.brandName}>HARBORLINE</Text>
+          <Text style={styles.brandName}>NJ COURIER</Text>
           <Text style={styles.brandLocal}>TV</Text>
         </View>
         <FocusButton label="Back to latest" onPress={onBack} compact />
@@ -728,7 +728,7 @@ const createStyles = (colors: TvColors) =>
       marginTop: 14,
     },
     code: {
-      color: "#072F4D",
+      color: "#173E32",
       fontSize: 41,
       fontWeight: "900",
       letterSpacing: 7,
@@ -768,7 +768,7 @@ const createStyles = (colors: TvColors) =>
     },
     buttonSelected: { borderColor: colors.yellow },
     buttonText: { color: colors.navy, fontSize: 17, fontWeight: "900" },
-    buttonTextFocused: { color: "#072F4D" },
+    buttonTextFocused: { color: "#173E32" },
     home: { flex: 1, backgroundColor: colors.navy },
     nav: {
       height: 92,

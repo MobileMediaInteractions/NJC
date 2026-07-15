@@ -7,14 +7,14 @@ export default function PrivacyPage() {
     <InfoPage
       eyebrow="Legal · Effective July 13, 2026"
       title="Privacy policy"
-      intro="This US-first launch baseline explains Harborline’s planned data practices. The real legal entity, address, contacts, vendors and markets must be finalized with qualified counsel before launch."
+      intro="This US-first launch baseline explains The New Jersey Courier’s planned data practices. The real legal entity, address, contacts, vendors and markets must be finalized with qualified counsel before launch."
     >
       <section className="rounded-md border border-amber-400/50 bg-amber-50 p-5 text-amber-950">
         <h2 className="font-black">Pre-launch legal placeholders</h2>
         <p className="mt-2">
-          Controller/operator: <strong>[Harborline legal entity name]</strong>,{" "}
+          Controller/operator: <strong>[The New Jersey Courier legal entity name]</strong>,{" "}
           <strong>[registered street address]</strong>. Privacy contact:{" "}
-          <strong>privacy@harborline.example</strong>. These are fictional
+          <strong>privacy@njcourier.com</strong>. These are fictional
           placeholders and do not create a real business contact.
         </p>
       </section>
@@ -36,7 +36,11 @@ export default function PrivacyPage() {
           short-lived pairing status, hashed sync codes and requester network
           information for abuse prevention. Apple TV, Android TV and Roku sessions retain account,
           device, expiry and last-active metadata; raw device tokens are not
-          stored.
+          stored.{" "}
+          Media press-kit requests include the requester’s name, organization,
+          work email, intended use, requested materials, selected asset groups,
+          generation status and archive size so the newsroom can fulfill and
+          audit the request.
         </p>
       </section>
       <section>
@@ -50,7 +54,10 @@ export default function PrivacyPage() {
           adoption and reliability, satisfy legal obligations and improve
           services. Production counsel must document the applicable legal basis
           for each market, including consent, contract, legitimate interests and
-          legal obligation where relevant.
+          legal obligation where relevant.{" "}
+          Press-kit request information is used for package generation, abuse
+          prevention and appropriate media-relations follow-up; it is not added
+          to a marketing list without separate consent.
         </p>
       </section>
       <section>
@@ -78,7 +85,7 @@ export default function PrivacyPage() {
           signing out. Revoked API-key records and security audit logs may be
           retained to investigate abuse. Audience installation records are
           removed when a mobile reader disables measurement and the deletion
-          request reaches Harborline; website records can be addressed through a
+          request reaches The New Jersey Courier; website records can be addressed through a
           privacy request. Backups are encrypted and access-controlled; raw
           secrets are excluded. Final retention periods, incident contacts and
           breach-response duties must be approved before production.
@@ -91,7 +98,7 @@ export default function PrivacyPage() {
         <p className="mt-3">
           Depending on location, you may request access, correction, deletion,
           portability, restriction, objection, or an opt-out from certain
-          sharing or targeted advertising. Harborline does not activate targeted
+          sharing or targeted advertising. The New Jersey Courier does not activate targeted
           advertising or sale/sharing of personal information in this launch
           build. We verify identity before fulfilling requests and will explain
           lawful exceptions.
@@ -114,7 +121,7 @@ export default function PrivacyPage() {
         <h2 className="text-2xl font-black text-brand-navy">Children</h2>
         <p className="mt-3">
           Accounts and developer access are intended for people age 13 or older.
-          The service is not directed to children under 13, and Harborline does
+          The service is not directed to children under 13, and The New Jersey Courier does
           not knowingly collect their personal information through account
           features. Contact us to report a potentially underage account.
         </p>
@@ -126,7 +133,7 @@ export default function PrivacyPage() {
         <p className="mt-3">
           Material changes will be dated and, when appropriate, notified
           in-product. Questions and appeals should go to{" "}
-          <strong>privacy@harborline.example</strong>; replace this address
+          <strong>privacy@njcourier.com</strong>; replace this address
           before launch.
         </p>
       </section>

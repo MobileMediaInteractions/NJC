@@ -1,0 +1,47 @@
+{
+  "name": "@njcourier/employee",
+  "version": "1.0.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "lint": "expo lint",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/**/*.test.ts",
+    "export:ios": "expo export --platform ios",
+    "export:android": "expo export --platform android"
+  },
+  "dependencies": {
+    "@clerk/expo": "^3.7.4",
+    "@expo/vector-icons": "^15.1.1",
+    "@harborline/api-client": "workspace:*",
+    "@harborline/contracts": "workspace:*",
+    "expo": "~57.0.4",
+    "expo-constants": "~57.0.3",
+    "expo-device": "~57.0.0",
+    "expo-linking": "~57.0.2",
+    "expo-notifications": "~57.0.3",
+    "expo-router": "~57.0.4",
+    "expo-secure-store": "~57.0.0",
+    "expo-splash-screen": "~57.0.2",
+    "expo-sqlite": "~57.0.0",
+    "expo-status-bar": "~57.0.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "npm:react-native-tvos@0.86.0-2",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "4.25.2",
+    "react-native-web": "~0.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "~19.2.2",
+    "eslint": "^9.39.5",
+    "eslint-config-expo": "~57.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "~6.0.3"
+  },
+  "expo": { "install": { "exclude": ["react-native"] } }
+}

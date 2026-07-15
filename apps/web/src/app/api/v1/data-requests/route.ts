@@ -13,7 +13,7 @@ const input = z.object({
 });
 
 export async function POST(request: Request) {
-  if (!hasDatabase()) return NextResponse.json({ error: { code: "service_not_configured", message: "Privacy-request storage is not connected yet. Email privacy@harborline.example instead." } }, { status: 503 });
+  if (!hasDatabase()) return NextResponse.json({ error: { code: "service_not_configured", message: "Privacy-request storage is not connected yet. Email privacy@njcourier.com instead." } }, { status: 503 });
   const parsed = input.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: { code: "invalid_request", message: "Enter a valid email address and request type." } }, { status: 400 });
   const userId = isClerkConfigured() ? (await auth()).userId : null;

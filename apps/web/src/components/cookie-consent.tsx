@@ -35,7 +35,7 @@ export function CookieConsent() {
         <div className="flex-1">
           <p className="font-bold text-brand-navy">Your privacy choices</p>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
-            Harborline uses essential storage for sign-in, security, saved
+            The New Jersey Courier uses essential storage for sign-in, security, saved
             preferences and consent. Optional audience measurement stays off
             unless you allow it.{" "}
             <Link href="/cookies" className="font-semibold text-primary underline">

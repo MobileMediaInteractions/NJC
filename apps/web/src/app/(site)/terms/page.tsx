@@ -14,7 +14,7 @@ export default function TermsPage() {
           Agreement and eligibility
         </h2>
         <p className="mt-3">
-          By using Harborline you agree to these Terms, the Privacy Policy and
+          By using The New Jersey Courier you agree to these Terms, the Privacy Policy and
           applicable posted rules. Account holders must be at least 13 and able
           to form a binding agreement; a parent or guardian must supervise
           minors where law requires.
@@ -25,7 +25,7 @@ export default function TermsPage() {
           News, emergencies and no professional advice
         </h2>
         <p className="mt-3">
-          Harborline aims for accurate, timely journalism but developing
+          The New Jersey Courier aims for accurate, timely journalism but developing
           information can change. Do not rely on the service as the sole source
           for emergency instructions; follow official public-safety authorities.
           Weather, financial, medical and legal coverage is informational and
@@ -51,12 +51,24 @@ export default function TermsPage() {
           Content and submissions
         </h2>
         <p className="mt-3">
-          Harborline and its licensors retain rights in original reporting,
+          The New Jersey Courier and its licensors retain rights in original reporting,
           design and media. You retain ownership of lawful submissions but grant{" "}
           <strong>[legal entity]</strong> a worldwide, nonexclusive,
           royalty-free license to host, review, display and distribute them for
           operating and reporting the service. Do not submit confidential tips
           through comments; use the designated secure channel.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-2xl font-black text-brand-navy">Press-kit assets</h2>
+        <p className="mt-3">
+          Approved media users may use generated press-kit assets to identify
+          and accurately report on The New Jersey Courier. The package does not
+          grant rights for merchandise, political advocacy, paid endorsement,
+          misleading alteration or standalone redistribution. Logos must keep
+          their proportions, and brand illustrations must not be presented as
+          documentary evidence. The license and provisional-detail notice
+          included in each generated ZIP also apply.
         </p>
       </section>
       <section>
@@ -92,7 +104,7 @@ export default function TermsPage() {
       <section>
         <h2 className="text-2xl font-black text-brand-navy">Contact</h2>
         <p className="mt-3">
-          Legal notices: <strong>legal@harborline.example</strong>,{" "}
+          Legal notices: <strong>legal@njcourier.com</strong>,{" "}
           <strong>[registered street address]</strong>. Both must be replaced
           before launch. Copyright notices follow the{" "}
           <Link className="font-bold text-primary underline" href="/dmca">

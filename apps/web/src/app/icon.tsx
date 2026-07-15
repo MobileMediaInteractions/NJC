@@ -8,8 +8,8 @@ export default function Icon() {
     <div
       style={{
         alignItems: "center",
-        background: "#072f4d",
-        color: "white",
+        background: "#173e32",
+        color: "#f6f1e7",
         display: "flex",
         fontSize: 34,
         fontWeight: 900,
@@ -20,10 +20,10 @@ export default function Icon() {
         width: "100%",
       }}
     >
-      HL
+      NJC
       <div
         style={{
-          background: "#f5b335",
+          background: "#c49545",
           bottom: 7,
           display: "flex",
           height: 5,

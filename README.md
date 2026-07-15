@@ -1,49 +1,67 @@
-# Harborline Local
+# The New Jersey Courier
 
-Harborline Local is a production-oriented, fictional local-news network built with Next.js, Expo, React Native, TypeScript and native Roku SceneGraph for the Vercel platform. It includes a public news product, role-aware newsroom CMS, one iOS/Android codebase, a shared Apple TV/Android TV codebase, a Roku app, portable encrypted backups, a self-service developer platform and a versioned API.
+**The Authoritative Voice of the Garden State**
 
-The repository is a Turborepo organized by target: `apps/web`, `apps/mobile`, `apps/tv` and `apps/roku`. Shared database, API-client and contract code lives under `packages`. See `docs/ARCHITECTURE.md` for boundaries and the native C/C++ policy.
+The New Jersey Courier is a county-first digital newspaper platform launching in Middlesex County, New Jersey. Its reporting model starts with municipal government, schools, transportation, accountability, civic life and high-school sports, then connects those local consequences to a dedicated Statehouse desk.
 
-## Product surfaces
+> This repository is a launch preview. Seed articles, people, polls and results are fictional demonstrations until the newsroom publishes verified reporting.
 
-- Broadcast-style, responsive public homepage and category desks
-- Long-form story pages with metadata, sharing, tags and related coverage
-- Weather, watch, live stream, search, newsletters and service pages
-- Newsroom Studio with dashboard, workflow queue, story editor, media, analytics, staff roles and settings
-- Roles: admin, editor, producer, reporter and contributor
-- Workflow: idea, assigned, draft, review, scheduled, published and archived
-- Versioned `/api/v1` contracts documented in `docs/MOBILE_API.md`
-- Expo SDK 57 app with offline feeds, bookmarks, weather, live video, push alerts and limited mobile newsroom controls
-- Shared Apple TV and Android TV/Google TV client built on `react-native-tvos`, with remote focus states and secure QR/code activation
-- Native Roku SceneGraph client with story rails, weather, HLS live playback, themes and optional account linking
-- Two-way device pairing: approve TV at `/login/tv`, or sign a browser in from mobile at `/login/quick`
-- Verified developer accounts with scoped HMAC-hashed keys, audit records, revocation and Upstash rate limits
-- Consent-aware audience reporting with Web, iOS, Android, Apple TV, Android TV, Roku and developer API totals in Studio and mobile admin
-- Legal/trust center, consent controls and verified privacy-request intake foundation
-- Provider-neutral Postgres, Blob, migration and configuration exports documented in `docs/PORTABLE_BACKUP.md`
+![The New Jersey Courier desktop homepage](docs/screenshots/home-desktop.png)
 
-## Platform
+## Editorial products
 
-- Next.js App Router + TypeScript
-- Vercel deployment and Cron Jobs
-- Neon Postgres + Drizzle ORM
-- Vercel Blob for newsroom media
-- Clerk for staff authentication
-- Upstash Redis for developer API rate limits
-- Expo/EAS for one iOS/Android mobile codebase and one shared Apple TV/Android TV target
-- Roku SceneGraph/BrightScript with BrighterScript validation and sideloadable ZIP packaging
-- shadcn/ui + Tailwind CSS
+- **Middlesex County Desk** — town-by-town reporting across all 25 municipalities
+- **Politics & Statehouse Desk** — Trenton reporting translated into local consequences
+- **Garden State Forum** — clearly labeled local opinion and op-eds
+- **Public Square / Weekly Pulse** — transparent, non-scientific civic polling with Sunday context
+- **Jersey Gridiron & Court** — high-school sports and moderated Player of the Week ballots
+- **Jersey Laurels** — annual, reader-nominated community recognition
+- **Courier Watch** — public records, service journalism and accountability reporting
+
+## Platform surfaces
+
+```text
+apps/
+  web/       Next.js newspaper, newsroom Studio, legal center and public APIs
+  mobile/    Shared Expo application for iOS and Android
+  employee/  Separate privileged Expo application for employee iOS and Android
+  tv/        Shared react-native-tvos application for Apple TV and Android/Google TV
+  roku/      Native Roku SceneGraph application
+  cdn/       Versioned asset source; same-origin now, CDN-ready later
+packages/
+  api-client/  Shared platform-neutral API requester
+  backend/     Neon/Postgres and Drizzle data layer
+  contracts/   Shared TypeScript API contracts
+platform/      Licensable feature host, entitlement system and animation runtime
+tools/studio/  Tauri desktop IDE for animation and feature development
+visual-feature-platform/  Extractable visual feature model, compiler, runtime and playground
+docs/          Architecture, operations, APIs, pairing and brand standards
+```
+
+The stack is TypeScript-first: Next.js App Router, Expo/React Native, Neon Postgres, Drizzle, Clerk, Upstash and Vercel Blob. Roku uses the native BrightScript/SceneGraph runtime. C or C++ is reserved for measured native performance needs behind a maintained cross-platform boundary.
+
+## Brand and assets
+
+Canonical assets live in [`apps/cdn/public/assets`](apps/cdn/public/assets). Every published pathname is versioned and immutable. The web app mirrors those files before development and production builds, so the initial Vercel deployment serves them from the same generated hostname:
+
+```text
+https://<your-vercel-project>.vercel.app/assets/brand/v1/mark.svg
+```
+
+No domain or separate CDN project is required. Later, set `NEXT_PUBLIC_ASSET_ORIGIN` to a dedicated Vercel asset project or `https://cdn.njcourier.com`; asset paths do not change.
+
+See the [brand guide](docs/brand/BRAND_GUIDE.md), [asset catalog](docs/brand/ASSET_CATALOG.md), and [CDN deployment guide](docs/CDN.md).
+
+![Courier responsive homepage](docs/screenshots/home-mobile.png)
 
 ## Local preview
-
-The public site runs with realistic seeded content even before services are connected.
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-To review Studio locally without configuring authentication, use the explicit development-only flag:
+Open `http://localhost:3000`. To review Studio locally without authentication:
 
 ```bash
 CMS_DEMO_MODE=true pnpm dev
@@ -51,59 +69,70 @@ CMS_DEMO_MODE=true pnpm dev
 
 This bypass is ignored in production.
 
-The mobile app is in `apps/mobile`:
+## Vercel deployment
+
+Create one Vercel project from this repository:
+
+1. Name it something available such as **new-jersey-courier** and set Root Directory to `apps/web`.
+2. Vercel will provide an HTTPS production alias such as `https://new-jersey-courier.vercel.app`, plus unique preview URLs for branches and pull requests.
+3. Leave `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_ASSET_ORIGIN` unset. The app detects Vercel’s URL and serves assets from `/assets` automatically.
+
+Install Neon, Clerk, Vercel Blob and Upstash for the web project, pull its environment values, run migrations and seed only non-production preview data. Vercel automatically CDN-caches static deployment assets; public newsroom uploads use Vercel Blob.
+
+When a domain is purchased, attach it to the same project and set `NEXT_PUBLIC_SITE_URL` to the canonical HTTPS URL. A second `apps/cdn` project remains optional; it can first use its own `*.vercel.app` alias and later receive `cdn.<domain>` without code changes.
+
+Copy [`apps/web/.env.example`](apps/web/.env.example) for configuration names. Never commit `.env.local`.
+
+## Portable operations
+
+The newsroom can export an encrypted, provider-neutral archive containing the database, migrations, public media inventory, configuration names and restore instructions:
 
 ```bash
-pnpm mobile:start
-pnpm mobile:check
+pnpm backup:export
+pnpm backup:restore
 ```
 
-The Apple TV and Android TV app is in `apps/tv`:
+See [portable backup and restore](docs/PORTABLE_BACKUP.md).
 
-```bash
-pnpm tv:start
-pnpm tv:check
-pnpm tv:prebuild:android
-pnpm tv:android
-```
+## Media press kits
 
-See `docs/TV_PAIRING.md` for Apple TV/Android TV builds and the secure activation model.
+The public `/press` workflow generates a tailored ZIP from the approved brand library, publication background and editorial illustration. Each package includes the requester’s brief, usage terms and a checksum manifest. Production requests are rate-limited with Upstash, logged for authorized Studio users and included in portable database exports. See [press-kit generation and operations](docs/PRESS_KIT.md).
 
-The Roku app is in `apps/roku`:
+## Search visibility
 
-```bash
-pnpm roku:check
-ROKU_API_URL=https://news.your-domain.example pnpm roku:package
-```
+The web app includes canonical metadata, `NewsArticle` and publisher structured data, general and Google News sitemaps, RSS, social previews, search-engine verification hooks and CMS-level SEO controls. Indexing is intentionally disabled while fictional preview stories remain; follow the [SEO launch and measurement guide](docs/SEO.md) before enabling it in production.
 
-See `apps/roku/README.md` for sideloading and Roku Channel Store requirements.
-
-## Vercel setup order
-
-1. Create or link the Vercel project and set its Root Directory to `apps/web`.
-2. Install Neon, Clerk and Vercel Blob from the Vercel Marketplace/dashboard.
-3. Add `CRON_SECRET`, `API_KEY_PEPPER`, a separate `DEVICE_PAIRING_PEPPER`, Upstash Redis values and any optional newsletter/analytics values.
-4. Pull the project environment into `.env.local`.
-5. Run `pnpm db:migrate` followed by `pnpm db:seed`.
-6. Deploy a preview, verify it, then promote the same artifact to production.
-7. Create the mobile and TV EAS projects, replace both placeholder project IDs, configure APNs/FCM and add the deployed API URL to Apple TV and Android TV builds.
-8. Package Roku with the same public HTTPS origin, sideload it to physical devices and complete Roku certification assets and testing.
-
-Copy `apps/web/.env.example` for the required key names. Never commit `.env.local`.
-
-The scheduled-publishing cron runs every five minutes and therefore requires a Vercel plan that supports sub-daily schedules. Change the cron cadence if deploying on a different plan.
-
-## Replace the fictional launch identity
-
-Most launch identity, region and module switches are centralized in `apps/web/src/lib/site.ts`. Replace the seed reporting in `apps/web/src/lib/seed.ts`, update the social image and legal copy, then connect the real service credentials.
-
-## Checks
+## Verification
 
 ```bash
 pnpm lint
 pnpm typecheck
 pnpm build
 pnpm mobile:check
+pnpm employee:check
+pnpm employee:export
 pnpm tv:check
 pnpm roku:check
+pnpm platform:check
+pnpm platform:conformance
+pnpm platform:demo
+pnpm platform:benchmark
+pnpm playground:check
+pnpm composer:check
 ```
+
+The separate animation playground runs with `pnpm playground:start` on port 3010. Platform architecture, licensing, language/SDK guides and explicit native limitations are indexed from [`platform/README.md`](platform/README.md).
+
+## Desktop animation Studio
+
+The repository includes a Tauri 2 desktop Studio with Monaco source editing, structured visual and timeline edits, the real animation compiler/runtime, an integrated virtual-device preview, project detection, workspace trust, allow-listed tasks, package inspection, state-machine tracing and toolchain diagnostics.
+
+```bash
+pnpm studio:start
+pnpm studio:check
+pnpm studio:build
+```
+
+See [`tools/studio/README.md`](tools/studio/README.md) for the working workflow, security boundary, screenshot and explicit remaining milestones.
+
+The Studio's **Feature** tab provides synchronized Design, Behavior, Data, Motion, Test and controlled-English Code modes. Its extraction-ready compiler/runtime workspace and standalone playground are documented in [`visual-feature-platform/README.md`](visual-feature-platform/README.md).

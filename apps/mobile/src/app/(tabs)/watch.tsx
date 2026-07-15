@@ -16,7 +16,7 @@ export default function WatchScreen() {
   const player = useVideoPlayer(live?.streamUrl ?? null);
   return (
     <View style={styles.screen}>
-      <BrandHeader eyebrow="WATCH HARBORLINE" />
+      <BrandHeader eyebrow="WATCH NJ COURIER" />
       <ScrollView>
         <View style={styles.video}>
           {live?.streamUrl ? (
@@ -28,7 +28,7 @@ export default function WatchScreen() {
             />
           ) : (
             <View style={styles.placeholder}>
-              <Text style={styles.station}>HLN 8</Text>
+              <Text style={styles.station}>COURIER LIVE</Text>
               <Text style={styles.offline}>The live stream is off air</Text>
               <Text style={styles.offlineCopy}>
                 Recorded updates and a configured HLS stream will appear here.
@@ -42,11 +42,11 @@ export default function WatchScreen() {
             {live?.isLive ? "LIVE NOW" : "UPCOMING"}
           </Text>
           <Text style={styles.liveTitle}>
-            {live?.title ?? "Harborline Now"}
+            {live?.title ?? "Courier Live"}
           </Text>
         </View>
         <View style={styles.content}>
-          <Text style={styles.heading}>Today on HLN 8</Text>
+          <Text style={styles.heading}>Today on Courier Live</Text>
           {(live?.schedule ?? []).map((item) => (
             <View
               key={`${item.startsAt}-${item.title}`}

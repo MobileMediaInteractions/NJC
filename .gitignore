@@ -29,6 +29,12 @@
 /apps/roku/dist
 /apps/mobile/.expo
 /apps/tv/.expo
+/apps/employee/.expo
+/apps/employee/dist
+/apps/employee/ios
+/apps/employee/android
+/platform/dist
+/apps/web/public/assets
 
 # misc
 .DS_Store

@@ -66,7 +66,7 @@ export default function HomeScreen() {
             {stories[0] ? <StoryCard story={stories[0]} featured /> : null}
             <View style={styles.section}>
               <Text style={styles.kicker}>YOUR LOCAL BRIEFING</Text>
-              <Text style={styles.title}>More from Harbor County</Text>
+              <Text style={styles.title}>More from Middlesex County</Text>
               {stories.slice(1).map((story) => (
                 <StoryCard key={story.id} story={story} />
               ))}

@@ -43,7 +43,7 @@ export function ExportManager() {
     });
     const payload = await response.json();
     if (response.ok) {
-      setNotice("Encrypted export created. Save the passphrase separately; Harborline never stores it.");
+      setNotice("Encrypted export created. Save the passphrase separately; The New Jersey Courier never stores it.");
       setPassphrase("");
       await load();
     } else {

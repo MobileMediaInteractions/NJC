@@ -1,0 +1,16 @@
+{
+  "brand": "The New Jersey Courier",
+  "version": "1",
+  "origin": "",
+  "originMode": "same-origin",
+  "plannedCustomOrigin": "https://cdn.njcourier.com",
+  "cachePolicy": "immutable",
+  "assets": {
+    "mark": "/assets/brand/v1/mark.svg",
+    "wordmark": "/assets/brand/v1/wordmark.svg",
+    "wordmarkInverse": "/assets/brand/v1/wordmark-inverse.svg",
+    "appIcon": "/assets/brand/v1/app-icon.svg",
+    "adaptiveForeground": "/assets/brand/v1/adaptive-foreground.svg",
+    "gardenStateEngraving": "/assets/editorial/v1/garden-state-engraving.png"
+  }
+}

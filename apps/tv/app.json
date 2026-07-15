@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Harborline Local TV",
-    "slug": "harborline-local-tv",
+    "name": "The New Jersey Courier TV",
+    "slug": "new-jersey-courier-tv",
     "version": "1.0.0",
     "orientation": "landscape",
     "userInterfaceStyle": "dark",
@@ -18,7 +18,7 @@
         "@react-native-tvos/config-tv",
         {
           "androidTVRequired": true,
-          "androidTVBanner": "../web/public/og.png",
+          "androidTVBanner": "../cdn/public/assets/editorial/v1/garden-state-engraving.png",
           "removeFlipperOnAndroid": true,
           "tvosDeploymentTarget": "17.0"
         }
@@ -26,7 +26,6 @@
       "expo-secure-store"
     ],
     "extra": {
-      "apiUrl": "https://harborline.example",
       "eas": {
         "projectId": "REPLACE_WITH_TV_EAS_PROJECT_ID"
       }

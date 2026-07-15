@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 
 const apiUrl = (process.env.ROKU_API_URL ?? process.argv[2] ?? "").replace(/\/$/, "");
 if (!apiUrl) {
-  console.error("Set ROKU_API_URL to the public HTTPS origin of the Harborline web app.");
+  console.error("Set ROKU_API_URL to the public HTTPS origin of the Courier web app.");
   process.exit(1);
 }
 
@@ -47,4 +47,4 @@ const result = spawnSync(
 );
 
 if (result.status !== 0) process.exit(result.status ?? 1);
-console.log(`Packaged Harborline Roku for ${apiUrl}: ${outFile}`);
+console.log(`Packaged New Jersey Courier Roku for ${apiUrl}: ${outFile}`);

@@ -1,6 +1,10 @@
 packages:
   - apps/*
   - packages/*
+  - platform
+  - tools/*
+  - visual-feature-platform/apps/*
+  - visual-feature-platform/packages/*
 
 allowBuilds:
   browser-tabs-lock: false

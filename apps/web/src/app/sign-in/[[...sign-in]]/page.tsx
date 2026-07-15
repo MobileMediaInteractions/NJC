@@ -1,7 +1,13 @@
+import type { Metadata } from "next";
 import { SignIn } from "@clerk/nextjs";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand-mark";
 import { isClerkConfigured } from "@/lib/auth";
+
+export const metadata: Metadata = {
+  title: "Sign in",
+  robots: { index: false, follow: false },
+};
 export default function SignInPage() {
   return (
     <main className="grid min-h-screen place-items-center bg-brand-navy p-6">

@@ -1,6 +1,6 @@
-# Harborline mobile
+# The New Jersey Courier mobile app
 
-One Expo SDK 57, React Native and TypeScript codebase for the Harborline iOS and Android apps. It uses Expo Router, the shared `@harborline/contracts` package, Clerk session tokens, Expo Notifications, Expo Video and SQLite-backed offline storage.
+One Expo SDK 57, React Native and TypeScript codebase for the New Jersey Courier iOS and Android apps. It uses Expo Router, the shared `@harborline/contracts` package, Clerk session tokens, Expo Notifications, Expo Video and SQLite-backed offline storage.
 
 ## Configure
 
@@ -10,6 +10,8 @@ Copy the mobile values from the root `.env.example` into the local environment:
 EXPO_PUBLIC_API_URL=http://localhost:3000
 EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 ```
+
+For preview and store builds, set `EXPO_PUBLIC_API_URL` to the web project’s generated production origin, such as `https://your-project.vercel.app`. No custom domain is required. Update the value for a later app release only after the custom domain is attached and canonical.
 
 Replace the placeholder EAS `projectId` in `app.json`, then configure APNs and FCM credentials through EAS. Remote notifications on Android require a development build; Expo Go is not sufficient.
 

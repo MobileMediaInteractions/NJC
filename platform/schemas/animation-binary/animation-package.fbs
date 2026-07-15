@@ -1,0 +1,66 @@
+namespace Platform.Animation.V1;
+
+table Keyframe {
+  time_ms:uint;
+  value:double;
+  easing:string;
+}
+
+table Track {
+  target:string;
+  keyframes:[Keyframe];
+}
+
+table Timeline {
+  name:string;
+  duration_ms:uint;
+  tracks:[Track];
+}
+
+table Component {
+  id:string;
+  kind:string;
+  properties_json:string;
+}
+
+table Input {
+  name:string;
+  type:string;
+  default_json:string;
+}
+
+table StateTransition {
+  from_state:string;
+  to_state:string;
+  event:string;
+  timeline:string;
+  emitted_event:string;
+}
+
+table StateMachine {
+  name:string;
+  initial_state:string;
+  states:[string];
+  transitions:[StateTransition];
+}
+
+table Scene {
+  name:string;
+  inputs:[Input];
+  components:[Component];
+  timelines:[Timeline];
+  machines:[StateMachine];
+  reduced_motion_timeline:string;
+}
+
+table AnimationPackage {
+  schema_version:uint;
+  minimum_runtime:string;
+  compiler_version:string;
+  source_hash:string;
+  scenes:[Scene];
+  required_features:[string];
+}
+
+root_type AnimationPackage;
+file_identifier "PANI";

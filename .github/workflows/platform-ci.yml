@@ -1,0 +1,74 @@
+name: Platform and application CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  platform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 11.7.0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm platform:check
+      - run: pnpm platform:conformance
+      - run: pnpm platform:demo
+        env: { PLATFORM_DEV_LICENSE_MODE: "true" }
+      - run: pnpm platform:benchmark
+      - name: C ABI smoke build
+        run: clang++ -std=c++17 -Wall -Wextra -Werror -I platform/sdks/c-abi/include platform/sdks/c-abi/src/platform_runtime.cpp platform/sdks/c-abi/tests/smoke.cpp -o /tmp/platform-runtime-smoke && /tmp/platform-runtime-smoke
+      - run: timeout 120s pnpm audit --audit-level high
+
+  applications:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 11.7.0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir apps/web test
+      - run: pnpm --dir apps/web typecheck
+      - run: pnpm --dir apps/web build
+      - run: pnpm playground:check
+      - run: pnpm employee:check
+      - run: pnpm mobile:check
+      - run: pnpm tv:check
+      - run: pnpm roku:check
+      - name: Migration freshness
+        run: pnpm db:generate && git diff --exit-code -- apps/web/drizzle packages/backend/src/db/schema.ts
+
+  studio:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 11.7.0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Tauri Linux prerequisites
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm studio:check
+
+  visual-feature-composer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 11.7.0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir visual-feature-platform install --frozen-lockfile
+      - run: pnpm --dir visual-feature-platform check
+      - run: pnpm --dir tools/studio test
+      - run: pnpm --dir tools/studio typecheck
+      - run: pnpm --dir tools/studio lint

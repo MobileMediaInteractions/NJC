@@ -34,7 +34,7 @@ export default function LatestScreen() {
           accessibilityLabel="Search local news"
           value={query}
           onChangeText={setQuery}
-          placeholder="Search Harborline"
+          placeholder="Search the Courier"
           placeholderTextColor={colors.muted}
           style={styles.input}
         />

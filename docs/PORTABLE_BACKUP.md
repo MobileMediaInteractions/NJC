@@ -1,6 +1,6 @@
 # Portable backups and provider migration
 
-Harborline exports a provider-neutral encrypted archive containing every Postgres table in JSON and CSV, a SQL data script, Drizzle migrations, tracked Blob objects, non-secret configuration names, checksums and a restore guide.
+New Jersey Courier exports a provider-neutral encrypted archive containing every Postgres table—including press-kit request records—in JSON and CSV, a SQL data script, Drizzle migrations, tracked Blob objects, non-secret configuration names, checksums and a restore guide.
 
 ## Create a local export
 

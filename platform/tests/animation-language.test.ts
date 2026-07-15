@@ -1,0 +1,15 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+import { compileAnimation, decodeAnimationFlatbuffer, formatAnimation, parseAnimation, verifyAndUnwrapAnimationPackage } from "../src/animation/index";
+import { sha256Hex } from "../src/core/sha256";
+
+const source = readFileSync(new URL("../examples/animation-showcase/welcome.pani", import.meta.url), "utf8");
+test("portable SHA-256 matches the published abc test vector", () => { assert.equal(sha256Hex("abc"), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"); });
+test("parser and formatter are idempotent", () => { const first = formatAnimation(parseAnimation(source)); const second = formatAnimation(parseAnimation(first)); assert.equal(second, first); });
+test("invalid syntax includes a precise source location", () => { assert.throws(() => parseAnimation("language 1\npackage bad;\nscene X { component nope rect { opacity 1; } }"), /Expected :.*4:|Expected :.*3:/); });
+test("semantic validation rejects unsupported host properties", () => { const bad = source.replace("cornerRadius: 18dp;", "secretNativeProperty: 18dp;"); assert.throws(() => compileAnimation(bad), /P121 Unknown property/); });
+test("compilation is deterministic and package is typed FlatBuffers", () => { const first = compileAnimation(source); const second = compileAnimation(source); assert.deepEqual(first.packageBytes, second.packageBytes); const decoded = decodeAnimationFlatbuffer(verifyAndUnwrapAnimationPackage(first.packageBytes)); assert.equal(decoded.scenes[0]?.name, "Welcome"); assert.equal(decoded.scenes[0]?.timelines.find((item) => item.name === "entrance")?.durationMs, 620); });
+test("tampered and truncated packages are rejected before deserialization", () => { const bytes = compileAnimation(source).packageBytes; const tampered = bytes.slice(); tampered[tampered.length - 1] = (tampered.at(-1) ?? 0) ^ 1; assert.throws(() => verifyAndUnwrapAnimationPackage(tampered), /checksum/); assert.throws(() => verifyAndUnwrapAnimationPackage(bytes.slice(0, 20)), /size|length/); });
+test("an older minimum-runtime package remains loadable by the current compatible runtime", async () => { const { AnimationRuntime } = await import("../src/animation/runtime"); const bytes = compileAnimation(source, { minimumRuntime: "0.0.1" }).packageBytes; assert.doesNotThrow(() => new AnimationRuntime(bytes, { scene: "Welcome", runtimeVersion: "0.1.0" })); });
+test("bounded package-reader fuzz corpus always rejects or returns a bounded payload", () => { let state = 0x12345678; const random = () => { state ^= state << 13; state ^= state >>> 17; state ^= state << 5; return state >>> 0; }; for (let iteration = 0; iteration < 500; iteration += 1) { const length = random() % 512; const bytes = new Uint8Array(length); for (let index = 0; index < length; index += 1) bytes[index] = random() & 0xff; try { const payload = verifyAndUnwrapAnimationPackage(bytes); assert.ok(payload.length <= bytes.length); } catch (error) { assert.ok(error instanceof Error); } } });

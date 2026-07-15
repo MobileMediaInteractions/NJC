@@ -1,0 +1,27 @@
+{
+  "name": "visual-feature-platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.7.0",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/**/*.test.ts",
+    "build": "pnpm --dir apps/feature-playground build",
+    "check": "pnpm test && pnpm typecheck && pnpm build",
+    "demo": "tsx examples/run-demos.ts",
+    "benchmark": "tsx examples/benchmark.ts",
+    "playground": "pnpm --dir apps/feature-playground dev"
+  },
+  "dependencies": {
+    "@visual-feature/compiler": "workspace:*",
+    "@visual-feature/language": "workspace:*",
+    "@visual-feature/model": "workspace:*",
+    "@visual-feature/runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsx": "^4.23.0",
+    "typescript": "^5.9.3"
+  }
+}

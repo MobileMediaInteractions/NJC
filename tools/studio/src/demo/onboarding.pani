@@ -1,0 +1,177 @@
+language 1
+package studio_demo;
+
+// Built-in project: every visual value remains editable source.
+scene Onboarding {
+  input userName: string = "Jersey reader";
+  input count: number = 12;
+  input accent: string = "#2D6A55";
+
+  component backdrop rect {
+    x: 0dp;
+    y: 0dp;
+    width: 390dp;
+    height: 844dp;
+    fill: "#F3EFE7";
+    cornerRadius: 42dp;
+  }
+
+  component orbit path {
+    path: "M20 90 C90 10 210 10 280 90";
+    x: 34dp;
+    y: 44dp;
+    opacity: 0.28;
+    scale: 0.9;
+    fill: "${accent}";
+  }
+
+  component badge rect {
+    x: 30dp;
+    y: 214dp;
+    width: 52dp;
+    height: 8dp;
+    fill: "${accent}";
+    cornerRadius: 4dp;
+    opacity: 0;
+  }
+
+  component title text {
+    text: "Local news, shaped around you.";
+    x: 30dp;
+    y: 248dp;
+    opacity: 0;
+    scale: 0.94;
+    color: "#17231F";
+  }
+
+  component greeting text {
+    text: "Welcome, ${userName}. ${count} stories are ready.";
+    x: 30dp;
+    y: 340dp;
+    opacity: 0;
+    color: "#52605B";
+  }
+
+  component status text {
+    text: "Loading your neighborhood briefing…";
+    x: 30dp;
+    y: 420dp;
+    opacity: 0;
+    color: "#52605B";
+  }
+
+  component continueButton host {
+    hostId: "continue-button";
+    x: 30dp;
+    y: 690dp;
+    width: 330dp;
+    height: 58dp;
+    opacity: 0;
+    scale: 0.94;
+    cornerRadius: 18dp;
+  }
+
+  component successCard rect {
+    x: 420dp;
+    y: 190dp;
+    width: 330dp;
+    height: 430dp;
+    opacity: 0;
+    fill: "${accent}";
+    cornerRadius: 28dp;
+  }
+
+  timeline loading 540ms {
+    track status.opacity {
+      0ms: 0;
+      180ms: 1 ease outCubic;
+      540ms: 0.65 ease inOutCubic;
+    }
+    track orbit.scale {
+      0ms: 0.9;
+      540ms: 1 ease spring;
+    }
+  }
+
+  timeline entrance 760ms {
+    track badge.opacity {
+      0ms: 0;
+      180ms: 1 ease outCubic;
+    }
+    track title.opacity {
+      100ms: 0;
+      420ms: 1 ease outCubic;
+    }
+    track title.scale {
+      100ms: 0.94;
+      620ms: 1 ease spring;
+    }
+    track greeting.opacity {
+      240ms: 0;
+      580ms: 1 ease outCubic;
+    }
+    track continueButton.opacity {
+      320ms: 0;
+      660ms: 1 ease outCubic;
+    }
+    track continueButton.scale {
+      320ms: 0.94;
+      760ms: 1 ease spring;
+    }
+  }
+
+  timeline complete 620ms {
+    track title.opacity {
+      0ms: 1;
+      240ms: 0 ease outCubic;
+    }
+    track successCard.x {
+      0ms: 420;
+      620ms: 30 ease outCubic;
+    }
+    track successCard.opacity {
+      160ms: 0;
+      520ms: 1 ease outCubic;
+    }
+  }
+
+  timeline failed 420ms {
+    track status.opacity {
+      0ms: 0.65;
+      180ms: 0 ease linear;
+      420ms: 1 ease outCubic;
+    }
+  }
+
+  timeline reduced 160ms {
+    track badge.opacity {
+      0ms: 0;
+      160ms: 1 ease linear;
+    }
+    track title.opacity {
+      0ms: 0;
+      160ms: 1 ease linear;
+    }
+    track greeting.opacity {
+      0ms: 0;
+      160ms: 1 ease linear;
+    }
+    track continueButton.opacity {
+      0ms: 0;
+      160ms: 1 ease linear;
+    }
+  }
+
+  machine OnboardingFlow initial loading {
+    state loading;
+    state ready;
+    state success;
+    state error;
+    transition loading -> ready on ready play entrance emit briefingReady;
+    transition loading -> error on fail play failed emit briefingFailed;
+    transition ready -> success on continue play complete emit onboardingComplete;
+    transition error -> loading on retry play loading emit retryRequested;
+  }
+
+  reducedMotion: reduced;
+}

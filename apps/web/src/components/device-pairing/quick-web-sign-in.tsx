@@ -110,10 +110,10 @@ export function QuickWebSignIn() {
         </div>
         <h1 className="mt-7 text-4xl font-black">You’re already signed in</h1>
         <p className="mt-4 text-white/70">
-          This browser already has an active Harborline account.
+          This browser already has an active Courier account.
         </p>
         <Button asChild className="mt-7 bg-brand-yellow text-brand-navy">
-          <Link href="/">Return to Harborline</Link>
+          <Link href="/">Return to The New Jersey Courier</Link>
         </Button>
       </section>
     );
@@ -134,7 +134,7 @@ export function QuickWebSignIn() {
         <ol className="mt-7 space-y-4 text-lg text-white/75">
           <li>
             <strong className="text-white">1.</strong> Open Account in the
-            Harborline mobile app.
+            The New Jersey Courier mobile app.
           </li>
           <li>
             <strong className="text-white">2.</strong> Choose “Scan quick

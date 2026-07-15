@@ -1,3 +1,22 @@
 import type { MetadataRoute } from "next";
+import { getSiteOrigin } from "@/lib/origin";
+import { isSearchIndexingEnabled } from "@/lib/seo";
 
-export default function robots(): MetadataRoute.Robots { const base = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"; return { rules: [{ userAgent: "*", allow: "/", disallow: ["/studio/", "/api/v1/studio/"] }], sitemap: `${base}/sitemap.xml` }; }
+export default function robots(): MetadataRoute.Robots {
+  const base = getSiteOrigin();
+  const indexingEnabled = isSearchIndexingEnabled();
+
+  return {
+    rules: indexingEnabled
+      ? [
+          {
+            userAgent: "*",
+            allow: "/",
+            disallow: ["/api/", "/studio/", "/sign-in/", "/sign-up/", "/login/", "/search"],
+          },
+        ]
+      : [{ userAgent: "*", disallow: "/" }],
+    sitemap: [`${base}/sitemap.xml`, `${base}/news-sitemap.xml`],
+    host: base,
+  };
+}

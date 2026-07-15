@@ -19,7 +19,7 @@ export default function SavedScreen() {
   );
   return (
     <View style={styles.screen}>
-      <BrandHeader eyebrow="YOUR HARBORLINE" />
+      <BrandHeader eyebrow="YOUR NJ COURIER" />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headingRow}>
           <View>

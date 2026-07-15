@@ -1,9 +1,8 @@
-title=Harborline Local News
-subtitle=Local reporting for Harbor County
+title=The New Jersey Courier
+subtitle=Middlesex County news
 major_version=1
 minor_version=0
 build_version=0
 ui_resolutions=fhd
-api_url=https://news.harborline.example
+api_url=https://your-project.vercel.app
 supports_input_launch=1
-

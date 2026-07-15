@@ -6,14 +6,14 @@ export default function CookiesPage() {
     <InfoPage
       eyebrow="Legal · Effective July 13, 2026"
       title="Cookie and local-storage policy"
-      intro="Harborline separates storage needed to operate the service from audience measurement."
+      intro="The New Jersey Courier separates storage needed to operate the service from audience measurement."
     >
       <section>
         <h2 className="text-2xl font-black text-brand-navy">
           Essential storage
         </h2>
         <p className="mt-3">
-          Clerk may store authentication and fraud-prevention values. Harborline
+          Clerk may store authentication and fraud-prevention values. The New Jersey Courier
           stores consent choices and interface preferences. The mobile app uses
           on-device SQLite key-value storage for cached news, weather and
           bookmarks. Apple TV, Android TV and Roku use on-device storage for revocable
@@ -28,7 +28,7 @@ export default function CookiesPage() {
         </h2>
         <p className="mt-3">
           Website measurement remains off until a visitor chooses “Allow
-          analytics.” When allowed, Harborline stores a random
+          analytics.” When allowed, The New Jersey Courier stores a random
           browser-installation identifier and reports its platform and
           last-active time. The mobile app reports a random installation
           identifier, operating platform, app version and last-active time;

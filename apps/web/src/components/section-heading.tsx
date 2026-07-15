@@ -11,12 +11,12 @@ export function SectionHeading({
   kicker?: string;
 }) {
   return (
-    <div className="mb-8 flex items-end justify-between gap-4 border-t-2 border-brand-navy pt-4">
+    <div className="mb-6 flex items-end justify-between gap-4 border-t-4 border-brand-navy pt-3">
       <div>
         {kicker ? (
           <p className="eyebrow mb-2 text-brand-blue">{kicker}</p>
         ) : null}
-        <h2 className="font-editorial text-3xl font-semibold leading-none tracking-[-0.035em] text-brand-navy sm:text-4xl">
+        <h2 className="text-2xl font-black leading-none tracking-[-0.035em] text-brand-navy sm:text-3xl">
           {title}
         </h2>
       </div>

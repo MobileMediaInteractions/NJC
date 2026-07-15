@@ -55,8 +55,8 @@ sub init()
   applyTheme()
 
   if Instr(1, m.apiBase, ".example") > 0
-    m.statusLabel.text = "Setup required: package this app with your public Harborline API URL."
-    m.heroHeadline.text = "Connect this Roku build to Harborline"
+    m.statusLabel.text = "Setup required: package this app with the public Courier API URL."
+    m.heroHeadline.text = "Connect this Roku build to the Courier"
     m.heroDek.text = "See apps/roku/README.md for the one-command production packaging workflow."
   else
     loadContent()
@@ -86,7 +86,7 @@ sub onBootstrap(event as Object)
   result = event.GetData()
   removeTask(event)
   if result = invalid or not result.ok
-    message = "Harborline is temporarily unavailable. Select Latest to try again."
+    message = "The Courier is temporarily unavailable. Select Latest to try again."
     if result <> invalid and result.DoesExist("message") then message = result.message
     m.statusLabel.text = message
     return
@@ -95,7 +95,7 @@ sub onBootstrap(event as Object)
   m.live = result.live
   m.weather = result.weather
   showStories(result.stories)
-  m.statusLabel.text = "Harborline is current · Select a story for more"
+  m.statusLabel.text = "The Courier is current · Select a story for more"
   reportPresence()
   if m.accessToken <> "" then validateSession()
 end sub
@@ -103,7 +103,7 @@ end sub
 sub showStories(stories as Dynamic)
   if stories = invalid or type(stories) <> "roArray" or stories.Count() = 0
     m.heroHeadline.text = "No published stories yet"
-    m.heroDek.text = "Editors can publish the first story from Harborline Studio."
+    m.heroDek.text = "Editors can publish the first story from Courier Studio."
     return
   end if
 
@@ -168,7 +168,7 @@ end sub
 
 sub onLiveSelected()
   if m.live = invalid or not m.live.isLive or m.live.streamUrl = invalid or m.live.streamUrl = ""
-    m.statusLabel.text = "Harborline is not live right now. Check the schedule on the website."
+    m.statusLabel.text = "The Courier is not live right now. Check the schedule on the website."
     return
   end if
   content = CreateObject("roSGNode", "ContentNode")
@@ -261,7 +261,7 @@ sub onPairPoll(event as Object)
     registry = CreateObject("roRegistrySection", "Harborline")
     registry.Write("deviceToken", m.accessToken)
     registry.Flush()
-    name = "Harborline reader"
+    name = "Courier reader"
     if result.account <> invalid and result.account.name <> invalid then name = result.account.name
     m.accountLabel.text = "Connected as " + name
     m.top.findNode("pairStatus").text = "Connected as " + name + ". You may close this screen."

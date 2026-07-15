@@ -1,6 +1,12 @@
+import type { Metadata } from "next";
 import { SignUp } from "@clerk/nextjs";
 import { BrandMark } from "@/components/brand-mark";
 import { isClerkConfigured } from "@/lib/auth";
+
+export const metadata: Metadata = {
+  title: "Create account",
+  robots: { index: false, follow: false },
+};
 export default function SignUpPage() {
   return (
     <main className="grid min-h-screen place-items-center bg-brand-navy p-6">

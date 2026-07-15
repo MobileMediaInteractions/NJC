@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, or } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, isNull, or } from "drizzle-orm";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import { stories } from "@harborline/backend/schema";
 import { seedStories } from "@/lib/seed";
@@ -6,10 +6,10 @@ import type { Story } from "@/lib/types";
 
 export function normalizeStory(row: typeof stories.$inferSelect): Story {
   const fallbackAuthor = {
-    id: "harborline-desk",
-    name: "Harborline Newsroom",
-    role: "Local news desk",
-    initials: "HL",
+    id: "courier-desk",
+    name: "Courier Newsroom",
+    role: "Middlesex County desk",
+    initials: "NJC",
   };
 
   return {
@@ -25,9 +25,13 @@ export function normalizeStory(row: typeof stories.$inferSelect): Story {
     updatedAt: row.updatedAt.toISOString(),
     readingMinutes: row.readingMinutes,
     image: row.imageUrl ?? seedStories[0].image,
-    imageAlt: row.imageAlt ?? "Harbor County news",
+    imageAlt: row.imageAlt ?? "Middlesex County news",
     author: row.authorSnapshot ?? fallbackAuthor,
     tags: row.tags,
+    seoTitle: row.seoTitle ?? undefined,
+    seoDescription: row.seoDescription ?? undefined,
+    canonicalUrl: row.canonicalUrl ?? undefined,
+    noIndex: row.noIndex,
     status: row.status,
     isBreaking: row.isBreaking,
     isLive: row.isLive,
@@ -35,6 +39,59 @@ export function normalizeStory(row: typeof stories.$inferSelect): Story {
     isDeveloping: row.isDeveloping,
     videoUrl: row.videoUrl ?? undefined,
   };
+}
+
+export type PublishedStoryIndexEntry = Pick<
+  Story,
+  "slug" | "headline" | "publishedAt" | "updatedAt" | "noIndex"
+>;
+
+export async function getPublishedStoryIndex(options?: {
+  limit?: number;
+  since?: Date;
+}): Promise<PublishedStoryIndexEntry[]> {
+  const limit = Math.min(options?.limit ?? 50_000, 50_000);
+
+  if (!hasDatabase()) {
+    return seedStories
+      .filter((story) => !story.noIndex && !story.canonicalUrl)
+      .filter((story) => !options?.since || new Date(story.publishedAt) >= options.since)
+      .slice(0, limit)
+      .map(({ slug, headline, publishedAt, updatedAt, noIndex }) => ({ slug, headline, publishedAt, updatedAt, noIndex }));
+  }
+
+  try {
+    const conditions = [
+      eq(stories.status, "published"),
+      eq(stories.noIndex, false),
+      or(isNull(stories.canonicalUrl), eq(stories.canonicalUrl, ""))!,
+    ];
+    if (options?.since) conditions.push(gte(stories.publishedAt, options.since));
+    const rows = await getDb()
+      .select({
+        slug: stories.slug,
+        headline: stories.headline,
+        publishedAt: stories.publishedAt,
+        createdAt: stories.createdAt,
+        updatedAt: stories.updatedAt,
+        noIndex: stories.noIndex,
+      })
+      .from(stories)
+      .where(and(...conditions))
+      .orderBy(desc(stories.publishedAt))
+      .limit(limit);
+
+    return rows.map((row) => ({
+      slug: row.slug,
+      headline: row.headline,
+      publishedAt: (row.publishedAt ?? row.createdAt).toISOString(),
+      updatedAt: row.updatedAt.toISOString(),
+      noIndex: row.noIndex,
+    }));
+  } catch (error) {
+    console.error("Falling back to seeded story index", error);
+    return seedStories.filter((story) => !story.noIndex && !story.canonicalUrl).slice(0, limit).map(({ slug, headline, publishedAt, updatedAt, noIndex }) => ({ slug, headline, publishedAt, updatedAt, noIndex }));
+  }
 }
 
 export async function getPublishedStories(options?: {
@@ -108,11 +165,16 @@ export async function getStoryBySlug(slug: string): Promise<Story | null> {
 
 export function getCategoryLabel(slug: string) {
   const labels: Record<string, string> = {
-    local: "Local",
+    local: "Middlesex County",
+    middlesex: "Middlesex County",
+    statehouse: "Statehouse Desk",
+    "public-square": "Public Square",
+    opinion: "Garden State Forum",
+    "jersey-laurels": "Jersey Laurels",
     weather: "Weather",
-    investigates: "Harborline Investigates",
-    sports: "Sports",
-    culture: "Things to Do",
+    investigates: "Courier Watch",
+    sports: "Jersey Gridiron & Court",
+    culture: "Life in Middlesex",
   };
   return labels[slug] ?? slug.replaceAll("-", " ");
 }

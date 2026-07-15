@@ -13,7 +13,7 @@ export default function WeatherPage() {
       <section className="bg-brand-navy py-10 text-white">
         <div className="container-news">
           <div className="flex flex-col justify-between gap-7 md:flex-row md:items-end">
-            <div><p className="eyebrow text-brand-yellow">Harborline Weather</p><h1 className="mt-2 text-5xl font-black tracking-[-0.055em] sm:text-6xl">{weatherSeed.location}</h1><p className="mt-2 text-white/60">Monday, July 13 · Updated 3:14 p.m.</p></div>
+            <div><p className="eyebrow text-brand-yellow">The New Jersey Courier Weather</p><h1 className="mt-2 text-5xl font-black tracking-[-0.055em] sm:text-6xl">{weatherSeed.location}</h1><p className="mt-2 text-white/60">Monday, July 13 · Updated 3:14 p.m.</p></div>
             <Button variant="outline" className="w-fit border-white/25 bg-transparent text-white hover:bg-white hover:text-brand-navy"><Navigation /> Use my location</Button>
           </div>
           <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_1.5fr]">

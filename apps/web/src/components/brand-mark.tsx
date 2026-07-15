@@ -1,5 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { brandAssets } from "@/lib/assets";
 
 export function BrandMark({
   inverse = false,
@@ -14,29 +16,9 @@ export function BrandMark({
     <Link
       href="/"
       className={cn("group inline-flex items-center gap-3", className)}
-      aria-label="Harborline Local home"
+      aria-label="The New Jersey Courier home"
     >
-      <span
-        className={cn(
-          "relative grid size-10 shrink-0 place-items-center overflow-hidden rounded-[0.3rem] border-2",
-          inverse ? "border-white bg-white" : "border-brand-navy bg-brand-navy",
-        )}
-        aria-hidden="true"
-      >
-        <span className="absolute bottom-[5px] left-[6px] h-1.5 w-6 -rotate-6 rounded-full bg-brand-yellow" />
-        <span
-          className={cn(
-            "absolute left-[13px] top-[5px] h-6 w-[3px] -rotate-3",
-            inverse ? "bg-brand-navy" : "bg-white",
-          )}
-        />
-        <span
-          className={cn(
-            "absolute left-[16px] top-[7px] size-0 border-b-[9px] border-l-[11px] border-t-[9px] border-b-transparent border-t-transparent",
-            inverse ? "border-l-brand-navy" : "border-l-white",
-          )}
-        />
-      </span>
+      <Image src={brandAssets.mark} alt="" width={40} height={40} className="size-10 shrink-0 rounded-[0.2rem]" aria-hidden="true" />
       {!compact && (
         <span className="flex flex-col leading-none">
           <span
@@ -45,7 +27,7 @@ export function BrandMark({
               inverse ? "text-white" : "text-brand-navy",
             )}
           >
-            Harborline
+            NJ Courier
           </span>
           <span
             className={cn(
@@ -53,7 +35,7 @@ export function BrandMark({
               inverse ? "text-white/70" : "text-brand-blue",
             )}
           >
-            Local News
+            Middlesex County
           </span>
         </span>
       )}

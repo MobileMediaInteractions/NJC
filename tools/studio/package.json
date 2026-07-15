@@ -1,0 +1,52 @@
+{
+  "name": "@platform/studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 1420",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --port 1420",
+    "typecheck": "tsc -b --pretty false",
+    "lint": "eslint src tests vite.config.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "rust:test": "cargo test --manifest-path src-tauri/Cargo.toml",
+    "check": "pnpm test && pnpm typecheck && pnpm lint && pnpm build && pnpm rust:test",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build:no-bundle": "tauri build --no-bundle"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "4.7.0",
+    "@platform/runtime": "workspace:*",
+    "@visual-feature/compiler": "workspace:*",
+    "@visual-feature/language": "workspace:*",
+    "@visual-feature/model": "workspace:*",
+    "@visual-feature/runtime": "workspace:*",
+    "@tauri-apps/api": "2.11.1",
+    "@tauri-apps/plugin-dialog": "2.7.1",
+    "monaco-editor": "0.55.1",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@tauri-apps/cli": "2.11.4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "latest",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "latest",
+    "eslint-plugin-react-refresh": "latest",
+    "globals": "latest",
+    "jsdom": "latest",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "latest",
+    "vite": "8.1.4",
+    "vitest": "4.1.10"
+  }
+}

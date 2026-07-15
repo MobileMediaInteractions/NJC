@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Archive, BarChart3, BookOpenText, ChevronLeft, FilePlus2, LayoutDashboard, Library, Settings, Users } from "lucide-react";
+import { Archive, BarChart3, BookOpenText, ChevronLeft, FilePlus2, LayoutDashboard, Library, Newspaper, Settings, Users } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ const navigation = [
   { label: "Dashboard", href: "/studio", icon: LayoutDashboard },
   { label: "Stories", href: "/studio/stories", icon: BookOpenText },
   { label: "Media", href: "/studio/media", icon: Library },
+  { label: "Press requests", href: "/studio/press", icon: Newspaper },
   { label: "Analytics", href: "/studio/analytics", icon: BarChart3 },
   { label: "Team & roles", href: "/studio/team", icon: Users },
   { label: "Portable exports", href: "/studio/exports", icon: Archive },
@@ -39,7 +40,7 @@ export function StudioShell({ children, viewer }: { children: React.ReactNode; v
         <div className="min-w-0">
           <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-4 backdrop-blur sm:px-7">
             <div className="flex items-center gap-3 lg:hidden"><BrandMark compact /><Badge variant="secondary">Studio</Badge></div>
-            <p className="hidden text-sm font-medium text-muted-foreground lg:block">Harbor County desk</p>
+            <p className="hidden text-sm font-medium text-muted-foreground lg:block">Middlesex County desk</p>
             <div className="flex items-center gap-3"><Button asChild size="sm"><Link href="/studio/stories/new"><FilePlus2 /> New story</Link></Button><div className="hidden items-center gap-2 sm:flex"><Avatar className="size-8"><AvatarFallback className="bg-brand-blue text-xs text-white">{viewer.name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2)}</AvatarFallback></Avatar><div><p className="text-xs font-semibold">{viewer.name}</p><p className="text-[0.65rem] capitalize text-muted-foreground">{viewer.role}</p></div></div></div>
           </header>
           <main className="p-4 sm:p-7">{children}</main>

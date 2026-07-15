@@ -10,9 +10,9 @@ export function BrandHeader({ eyebrow }: { eyebrow?: string }) {
   return (
     <View style={styles.wrap}>
       <View>
-        <Text style={styles.eyebrow}>{eyebrow ?? "HLN 8 · PORT ALDER"}</Text>
-        <Text style={styles.brand}>HARBORLINE</Text>
-        <Text style={styles.local}>LOCAL</Text>
+        <Text style={styles.eyebrow}>{eyebrow ?? "MIDDLESEX COUNTY · NEW JERSEY"}</Text>
+        <Text style={styles.brand}>NJ COURIER</Text>
+        <Text style={styles.local}>LOCAL NEWS</Text>
       </View>
       <Link href="/account" asChild>
         <Pressable accessibilityLabel="Open account" style={styles.account}>

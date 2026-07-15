@@ -5,11 +5,14 @@ import { seedStories } from "../src/lib/seed";
 async function seed() {
   const db = getDb();
   await db.insert(categories).values([
-    { slug: "local", name: "Local", description: "Reporting across Harbor County", sortOrder: 1 },
-    { slug: "weather", name: "Weather", description: "Forecasts, alerts and coastal conditions", sortOrder: 2 },
-    { slug: "investigates", name: "Harborline Investigates", description: "Accountability and public records", sortOrder: 3 },
-    { slug: "sports", name: "Sports", description: "Teams and athletes across the region", sortOrder: 4 },
-    { slug: "culture", name: "Things to Do", description: "Food, arts, events and outdoors", sortOrder: 5 },
+    { slug: "middlesex", name: "Middlesex County", description: "Town-by-town reporting across all 25 municipalities", sortOrder: 1 },
+    { slug: "statehouse", name: "Statehouse Desk", description: "Trenton decisions and their local consequences", sortOrder: 2 },
+    { slug: "public-square", name: "Public Square", description: "Civic engagement and transparent reader polling", sortOrder: 3 },
+    { slug: "opinion", name: "Garden State Forum", description: "Clearly labeled local opinion and op-eds", sortOrder: 4 },
+    { slug: "sports", name: "Jersey Gridiron & Court", description: "New Jersey high-school sports", sortOrder: 5 },
+    { slug: "jersey-laurels", name: "Jersey Laurels", description: "Reader-nominated community recognition", sortOrder: 6 },
+    { slug: "investigates", name: "Courier Watch", description: "Accountability, public records and service journalism", sortOrder: 7 },
+    { slug: "weather", name: "Weather", description: "Local forecasts and alerts", sortOrder: 8 },
   ]).onConflictDoNothing();
   for (const story of seedStories) {
     await db.insert(stories).values({

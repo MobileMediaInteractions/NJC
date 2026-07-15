@@ -3,7 +3,17 @@ import { SectionHeading } from "@/components/section-heading";
 import { StoryCard } from "@/components/story-card";
 import { getPublishedStories } from "@/lib/content";
 
-export const metadata: Metadata = { title: "Latest news" };
+export const metadata: Metadata = {
+  title: "Latest Middlesex County and New Jersey News",
+  description: "The latest local reporting from Middlesex County and New Jersey, updated throughout the day by The New Jersey Courier.",
+  alternates: { canonical: "/latest" },
+  openGraph: {
+    type: "website",
+    url: "/latest",
+    title: "Latest Middlesex County and New Jersey News",
+    description: "The latest local reporting from Middlesex County and New Jersey, updated throughout the day.",
+  },
+};
 
 export default async function LatestPage() {
   const stories = await getPublishedStories({ limit: 40 });

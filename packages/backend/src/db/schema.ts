@@ -36,6 +36,22 @@ export const commentStatus = pgEnum("comment_status", [
   "flagged",
 ]);
 
+export const employeeAccessRequestStatus = pgEnum(
+  "employee_access_request_status",
+  ["pending", "approved", "denied", "cancelled", "expired", "revoked"],
+);
+
+export const employeeChannelKind = pgEnum("employee_channel_kind", [
+  "public",
+  "private",
+  "direct",
+  "group",
+]);
+
+export const platformLicenseKind = pgEnum("platform_license_kind", ["commercial", "trial", "development", "first_party"]);
+export const platformLicenseStatus = pgEnum("platform_license_status", ["active", "suspended", "revoked", "expired"]);
+export const platformEnvironment = pgEnum("platform_environment", ["development", "preview", "staging", "production"]);
+
 export const users = pgTable(
   "users",
   {
@@ -100,6 +116,10 @@ export const stories = pgTable(
     imageAlt: text("image_alt"),
     videoUrl: text("video_url"),
     tags: jsonb("tags").$type<string[]>().notNull().default([]),
+    seoTitle: text("seo_title"),
+    seoDescription: text("seo_description"),
+    canonicalUrl: text("canonical_url"),
+    noIndex: boolean("no_index").notNull().default(false),
     readingMinutes: integer("reading_minutes").notNull().default(1),
     isBreaking: boolean("is_breaking").notNull().default(false),
     isLive: boolean("is_live").notNull().default(false),
@@ -276,6 +296,29 @@ export const newsTips = pgTable(
   (table) => [index("news_tips_status_idx").on(table.status, table.createdAt)],
 );
 
+export const pressKitRequests = pgTable(
+  "press_kit_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    organization: text("organization").notNull(),
+    email: text("email").notNull(),
+    intendedUse: text("intended_use").notNull(),
+    requestDetails: text("request_details").notNull(),
+    assetGroups: jsonb("asset_groups").$type<string[]>().notNull().default([]),
+    status: text("status").notNull().default("generated"),
+    archiveBytes: integer("archive_bytes"),
+    generatedAt: timestamp("generated_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("press_kit_requests_status_idx").on(table.status, table.createdAt),
+    index("press_kit_requests_email_idx").on(table.email, table.createdAt),
+  ],
+);
+
 export const apiKeys = pgTable(
   "api_keys",
   {
@@ -431,3 +474,230 @@ export const portableExports = pgTable(
   },
   (table) => [index("portable_exports_created_idx").on(table.createdAt)],
 );
+
+export const employeeCapabilityGrants = pgTable(
+  "employee_capability_grants",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userClerkId: text("user_clerk_id").notNull(),
+    capability: text("capability").notNull(),
+    effect: text("effect").notNull().default("allow"),
+    grantedByClerkId: text("granted_by_clerk_id").notNull(),
+    reason: text("reason"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("employee_capability_grants_user_idx").on(table.userClerkId, table.createdAt),
+    index("employee_capability_grants_active_idx").on(table.userClerkId, table.capability, table.revokedAt),
+  ],
+);
+
+export const employeeAccessRequests = pgTable(
+  "employee_access_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    requesterClerkId: text("requester_clerk_id").notNull(),
+    requesterEmail: text("requester_email").notNull(),
+    capability: text("capability").notNull(),
+    sourceApp: text("source_app").notNull().default("reader"),
+    intendedDestination: text("intended_destination"),
+    reason: text("reason"),
+    status: employeeAccessRequestStatus("status").notNull().default("pending"),
+    reviewedByClerkId: text("reviewed_by_clerk_id"),
+    reviewerNote: text("reviewer_note"),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("employee_access_requests_requester_idx").on(table.requesterClerkId, table.createdAt),
+    index("employee_access_requests_review_idx").on(table.status, table.createdAt),
+  ],
+);
+
+export const employeeChatChannels = pgTable(
+  "employee_chat_channels",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    kind: employeeChannelKind("kind").notNull().default("public"),
+    slug: text("slug"),
+    name: text("name").notNull(),
+    topic: text("topic"),
+    conversationKey: text("conversation_key"),
+    isArchived: boolean("is_archived").notNull().default(false),
+    createdByClerkId: text("created_by_clerk_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("employee_chat_channels_slug_idx").on(table.slug),
+    uniqueIndex("employee_chat_channels_conversation_idx").on(table.conversationKey),
+    index("employee_chat_channels_kind_idx").on(table.kind, table.isArchived),
+  ],
+);
+
+export const employeeChatMembers = pgTable(
+  "employee_chat_members",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    channelId: uuid("channel_id").notNull().references(() => employeeChatChannels.id, { onDelete: "cascade" }),
+    userClerkId: text("user_clerk_id").notNull(),
+    membershipRole: text("membership_role").notNull().default("member"),
+    lastReadAt: timestamp("last_read_at", { withTimezone: true }),
+    mutedUntil: timestamp("muted_until", { withTimezone: true }),
+    joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
+    leftAt: timestamp("left_at", { withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex("employee_chat_members_channel_user_idx").on(table.channelId, table.userClerkId),
+    index("employee_chat_members_user_idx").on(table.userClerkId, table.leftAt),
+  ],
+);
+
+export const employeeChatMessages = pgTable(
+  "employee_chat_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    channelId: uuid("channel_id").notNull().references(() => employeeChatChannels.id, { onDelete: "cascade" }),
+    authorClerkId: text("author_clerk_id").notNull(),
+    authorName: text("author_name").notNull(),
+    body: text("body").notNull(),
+    replyToId: uuid("reply_to_id"),
+    mentions: jsonb("mentions").$type<string[]>().notNull().default([]),
+    isPinned: boolean("is_pinned").notNull().default(false),
+    editedAt: timestamp("edited_at", { withTimezone: true }),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    deletedByClerkId: text("deleted_by_clerk_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("employee_chat_messages_channel_cursor_idx").on(table.channelId, table.createdAt),
+    index("employee_chat_messages_author_idx").on(table.authorClerkId, table.createdAt),
+  ],
+);
+
+export const employeeChatAttachments = pgTable(
+  "employee_chat_attachments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    channelId: uuid("channel_id").notNull().references(() => employeeChatChannels.id, { onDelete: "cascade" }),
+    messageId: uuid("message_id").references(() => employeeChatMessages.id, { onDelete: "cascade" }),
+    uploaderClerkId: text("uploader_clerk_id").notNull(),
+    pathname: text("pathname").notNull(),
+    filename: text("filename").notNull(),
+    mimeType: text("mime_type").notNull(),
+    size: integer("size").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("employee_chat_attachments_path_idx").on(table.pathname),
+    index("employee_chat_attachments_message_idx").on(table.messageId),
+  ],
+);
+
+export const employeeChatReports = pgTable(
+  "employee_chat_reports",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    messageId: uuid("message_id").notNull().references(() => employeeChatMessages.id, { onDelete: "cascade" }),
+    reporterClerkId: text("reporter_clerk_id").notNull(),
+    reason: text("reason").notNull(),
+    status: text("status").notNull().default("open"),
+    resolvedByClerkId: text("resolved_by_clerk_id"),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("employee_chat_reports_message_reporter_idx").on(table.messageId, table.reporterClerkId),
+    index("employee_chat_reports_status_idx").on(table.status, table.createdAt),
+  ],
+);
+
+export const employeePresence = pgTable(
+  "employee_presence",
+  {
+    userClerkId: text("user_clerk_id").primaryKey(),
+    status: text("status").notNull().default("online"),
+    typingChannelId: uuid("typing_channel_id").references(() => employeeChatChannels.id, { onDelete: "set null" }),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    typingExpiresAt: timestamp("typing_expires_at", { withTimezone: true }),
+  },
+);
+
+export const employeePushDevices = pgTable(
+  "employee_push_devices",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    token: text("token").notNull(),
+    userClerkId: text("user_clerk_id").notNull(),
+    platform: text("platform").notNull(),
+    appVersion: text("app_version"),
+    isActive: boolean("is_active").notNull().default(true),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("employee_push_devices_token_idx").on(table.token),
+    index("employee_push_devices_user_idx").on(table.userClerkId, table.isActive),
+  ],
+);
+
+export const employeeNotifications = pgTable(
+  "employee_notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    recipientClerkId: text("recipient_clerk_id").notNull(),
+    kind: text("kind").notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    destination: text("destination"),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("employee_notifications_recipient_idx").on(table.recipientClerkId, table.createdAt),
+    index("employee_notifications_unread_idx").on(table.recipientClerkId, table.readAt),
+  ],
+);
+
+export const employeeAuditLogs = pgTable(
+  "employee_audit_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    actorClerkId: text("actor_clerk_id").notNull(),
+    action: text("action").notNull(),
+    targetType: text("target_type"),
+    targetId: text("target_id"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    ipAddress: text("ip_address"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("employee_audit_actor_idx").on(table.actorClerkId, table.createdAt),
+    index("employee_audit_action_idx").on(table.action, table.createdAt),
+  ],
+);
+
+export const platformOrganizations = pgTable("platform_organizations", { id: uuid("id").primaryKey().defaultRandom(), name: text("name").notNull(), status: text("status").notNull().default("active"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() });
+export const platformCustomers = pgTable("platform_customers", { id: uuid("id").primaryKey().defaultRandom(), organizationId: uuid("organization_id").notNull().references(() => platformOrganizations.id, { onDelete: "restrict" }), externalId: text("external_id"), email: text("email"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (table) => [index("platform_customers_org_idx").on(table.organizationId)]);
+export const platformProducts = pgTable("platform_products", { id: uuid("id").primaryKey().defaultRandom(), slug: text("slug").notNull(), name: text("name").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (table) => [uniqueIndex("platform_products_slug_idx").on(table.slug)]);
+export const platformFeatureModules = pgTable("platform_feature_modules", { id: uuid("id").primaryKey().defaultRandom(), featureId: text("feature_id").notNull(), version: text("version").notNull(), manifest: jsonb("manifest").notNull(), checksum: text("checksum").notNull(), status: text("status").notNull().default("active"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (table) => [uniqueIndex("platform_feature_modules_id_version_idx").on(table.featureId, table.version)]);
+export const platformApplications = pgTable("platform_applications", { id: uuid("id").primaryKey().defaultRandom(), organizationId: uuid("organization_id").notNull().references(() => platformOrganizations.id, { onDelete: "restrict" }), productId: uuid("product_id").notNull().references(() => platformProducts.id, { onDelete: "restrict" }), name: text("name").notNull(), status: text("status").notNull().default("active"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (table) => [index("platform_applications_org_idx").on(table.organizationId)]);
+export const platformApplicationIdentities = pgTable("platform_application_identities", { id: uuid("id").primaryKey().defaultRandom(), applicationId: uuid("application_id").notNull().references(() => platformApplications.id, { onDelete: "cascade" }), platform: text("platform").notNull(), environment: platformEnvironment("environment").notNull(), buildId: text("build_id").notNull(), bundleOrPackageId: text("bundle_or_package_id"), signingIdentity: text("signing_identity"), host: text("host"), attestationRequired: boolean("attestation_required").notNull().default(true), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (table) => [uniqueIndex("platform_app_identity_unique_idx").on(table.applicationId, table.platform, table.environment, table.buildId)]);
+export const platformPlans = pgTable("platform_plans", { id: uuid("id").primaryKey().defaultRandom(), productId: uuid("product_id").notNull().references(() => platformProducts.id, { onDelete: "restrict" }), slug: text("slug").notNull(), name: text("name").notNull(), seatLimit: integer("seat_limit").notNull().default(1), deviceLimit: integer("device_limit").notNull().default(1), onlineLeaseSeconds: integer("online_lease_seconds").notNull().default(3600), offlineLeaseSeconds: integer("offline_lease_seconds").notNull().default(86400), graceSeconds: integer("grace_seconds").notNull().default(300), usageLimits: jsonb("usage_limits").$type<Record<string, number>>().notNull().default({}), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (table) => [uniqueIndex("platform_plans_product_slug_idx").on(table.productId, table.slug)]);
+export const platformPlanEntitlements = pgTable("platform_plan_entitlements", { id: uuid("id").primaryKey().defaultRandom(), planId: uuid("plan_id").notNull().references(() => platformPlans.id, { onDelete: "cascade" }), featureId: text("feature_id").notNull(), configuration: jsonb("configuration").notNull().default({}), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (table) => [uniqueIndex("platform_plan_entitlements_unique_idx").on(table.planId, table.featureId)]);
+export const platformLicenses = pgTable("platform_licenses", { id: uuid("id").primaryKey().defaultRandom(), organizationId: uuid("organization_id").notNull().references(() => platformOrganizations.id, { onDelete: "restrict" }), customerId: uuid("customer_id").notNull().references(() => platformCustomers.id, { onDelete: "restrict" }), productId: uuid("product_id").notNull().references(() => platformProducts.id, { onDelete: "restrict" }), applicationId: uuid("application_id").notNull().references(() => platformApplications.id, { onDelete: "restrict" }), planId: uuid("plan_id").notNull().references(() => platformPlans.id, { onDelete: "restrict" }), kind: platformLicenseKind("kind").notNull(), status: platformLicenseStatus("status").notNull().default("active"), version: integer("version").notNull().default(1), keyPrefix: text("key_prefix"), keyHash: text("key_hash"), startsAt: timestamp("starts_at", { withTimezone: true }).notNull().defaultNow(), expiresAt: timestamp("expires_at", { withTimezone: true }), suspendedAt: timestamp("suspended_at", { withTimezone: true }), revokedAt: timestamp("revoked_at", { withTimezone: true }), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow() }, (table) => [uniqueIndex("platform_licenses_key_prefix_idx").on(table.keyPrefix), index("platform_licenses_org_idx").on(table.organizationId, table.createdAt)]);
+export const platformLicenseVersions = pgTable("platform_license_versions", { id: uuid("id").primaryKey().defaultRandom(), licenseId: uuid("license_id").notNull().references(() => platformLicenses.id, { onDelete: "cascade" }), version: integer("version").notNull(), snapshot: jsonb("snapshot").notNull(), createdBy: text("created_by").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (table) => [uniqueIndex("platform_license_versions_unique_idx").on(table.licenseId, table.version)]);
+export const platformSeats = pgTable("platform_seats", { id: uuid("id").primaryKey().defaultRandom(), licenseId: uuid("license_id").notNull().references(() => platformLicenses.id, { onDelete: "cascade" }), assigneeId: text("assignee_id"), transferredAt: timestamp("transferred_at", { withTimezone: true }), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (table) => [index("platform_seats_license_idx").on(table.licenseId)]);
+export const platformInstallations = pgTable("platform_installations", { id: uuid("id").primaryKey().defaultRandom(), licenseId: uuid("license_id").notNull().references(() => platformLicenses.id, { onDelete: "restrict" }), applicationIdentityId: uuid("application_identity_id").notNull().references(() => platformApplicationIdentities.id, { onDelete: "restrict" }), pseudonymousDeviceIdHash: text("pseudonymous_device_id_hash").notNull(), activatedAt: timestamp("activated_at", { withTimezone: true }).notNull().defaultNow(), deactivatedAt: timestamp("deactivated_at", { withTimezone: true }), lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow() }, (table) => [index("platform_installations_license_idx").on(table.licenseId, table.deactivatedAt), uniqueIndex("platform_installations_device_idx").on(table.licenseId, table.pseudonymousDeviceIdHash)]);
+export const platformActivations = pgTable("platform_activations", { id: uuid("id").primaryKey().defaultRandom(), licenseId: uuid("license_id").notNull().references(() => platformLicenses.id, { onDelete: "restrict" }), installationId: uuid("installation_id").notNull().references(() => platformInstallations.id, { onDelete: "restrict" }), status: text("status").notNull().default("active"), ipHash: text("ip_hash"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (table) => [index("platform_activations_license_idx").on(table.licenseId, table.createdAt)]);
+export const platformOfflineLeases = pgTable("platform_offline_leases", { id: uuid("id").primaryKey().defaultRandom(), licenseId: uuid("license_id").notNull().references(() => platformLicenses.id, { onDelete: "restrict" }), installationId: uuid("installation_id").notNull().references(() => platformInstallations.id, { onDelete: "restrict" }), keyId: text("key_id").notNull(), receiptHash: text("receipt_hash").notNull(), expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(), graceEndsAt: timestamp("grace_ends_at", { withTimezone: true }).notNull(), revokedAt: timestamp("revoked_at", { withTimezone: true }), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (table) => [index("platform_offline_leases_install_idx").on(table.installationId, table.expiresAt)]);
+export const platformSigningKeys = pgTable("platform_signing_keys", { id: text("id").primaryKey(), algorithm: text("algorithm").notNull().default("Ed25519"), publicKeyPem: text("public_key_pem").notNull(), privateKeyReference: text("private_key_reference").notNull(), status: text("status").notNull().default("active"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), retiredAt: timestamp("retired_at", { withTimezone: true }) });
+export const platformLicenseAudit = pgTable("platform_license_audit", { id: uuid("id").primaryKey().defaultRandom(), actor: text("actor").notNull(), action: text("action").notNull(), targetType: text("target_type").notNull(), targetId: text("target_id").notNull(), metadata: jsonb("metadata").notNull().default({}), ipHash: text("ip_hash"), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (table) => [index("platform_license_audit_target_idx").on(table.targetType, table.targetId, table.createdAt)]);
+export const platformWebhooks = pgTable("platform_webhooks", { id: uuid("id").primaryKey().defaultRandom(), organizationId: uuid("organization_id").notNull().references(() => platformOrganizations.id, { onDelete: "cascade" }), url: text("url").notNull(), secretReference: text("secret_reference").notNull(), events: jsonb("events").$type<string[]>().notNull().default([]), isActive: boolean("is_active").notNull().default(true), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() });
+export const platformIdempotencyRecords = pgTable("platform_idempotency_records", { id: uuid("id").primaryKey().defaultRandom(), scope: text("scope").notNull(), key: text("key").notNull(), requestHash: text("request_hash").notNull(), response: jsonb("response").notNull(), expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (table) => [uniqueIndex("platform_idempotency_scope_key_idx").on(table.scope, table.key), index("platform_idempotency_expiry_idx").on(table.expiresAt)]);
+export const platformUsageReports = pgTable("platform_usage_reports", { id: uuid("id").primaryKey().defaultRandom(), installationId: uuid("installation_id").notNull().references(() => platformInstallations.id, { onDelete: "restrict" }), periodStart: timestamp("period_start", { withTimezone: true }).notNull(), periodEnd: timestamp("period_end", { withTimezone: true }).notNull(), counters: jsonb("counters").$type<Record<string, number>>().notNull(), signature: text("signature").notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() }, (table) => [uniqueIndex("platform_usage_reports_period_idx").on(table.installationId, table.periodStart, table.periodEnd)]);

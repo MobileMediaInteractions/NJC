@@ -1,0 +1,43 @@
+import { useCallback, useEffect, useMemo, useReducer } from "react";
+
+type History = { past: string[]; present: string; future: string[] };
+type Action = { type: "edit"; value: string } | { type: "undo" } | { type: "redo" } | { type: "reset"; value: string };
+
+function reducer(state: History, action: Action): History {
+  if (action.type === "reset") return { past: [], present: action.value, future: [] };
+  if (action.type === "edit") {
+    if (action.value === state.present) return state;
+    return { past: [...state.past.slice(-99), state.present], present: action.value, future: [] };
+  }
+  if (action.type === "undo") {
+    const previous = state.past.at(-1);
+    return previous === undefined ? state : { past: state.past.slice(0, -1), present: previous, future: [state.present, ...state.future] };
+  }
+  const next = state.future[0];
+  return next === undefined ? state : { past: [...state.past, state.present], present: next, future: state.future.slice(1) };
+}
+
+export function useDocumentHistory(initial: string, recoveryKey: string) {
+  const recovered = useMemo(() => {
+    try { return localStorage.getItem(recoveryKey) ?? initial; } catch { return initial; }
+  }, [initial, recoveryKey]);
+  const [state, dispatch] = useReducer(reducer, { past: [], present: recovered, future: [] });
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try { localStorage.setItem(recoveryKey, state.present); } catch { /* Recovery is best effort when storage is unavailable. */ }
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [recoveryKey, state.present]);
+
+  return {
+    source: state.present,
+    setSource: useCallback((value: string) => dispatch({ type: "edit", value }), []),
+    reset: useCallback((value: string) => dispatch({ type: "reset", value }), []),
+    undo: useCallback(() => dispatch({ type: "undo" }), []),
+    redo: useCallback(() => dispatch({ type: "redo" }), []),
+    canUndo: state.past.length > 0,
+    canRedo: state.future.length > 0,
+    historyDepth: state.past.length,
+  };
+}

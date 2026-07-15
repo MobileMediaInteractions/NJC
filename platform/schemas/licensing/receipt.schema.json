@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://platform.invalid/schemas/license-receipt-v1.json",
+  "title": "Signed license receipt claims v1",
+  "type": "object",
+  "required": [
+    "receiptVersion",
+    "licenseId",
+    "licenseVersion",
+    "licenseKind",
+    "issuer",
+    "audience",
+    "organizationId",
+    "productId",
+    "application",
+    "entitledFeatures",
+    "installationId",
+    "issuedAt",
+    "notBefore",
+    "leaseExpiresAt",
+    "graceEndsAt",
+    "offline",
+    "usageLimits"
+  ],
+  "properties": {
+    "receiptVersion": { "const": 1 },
+    "licenseId": { "type": "string", "minLength": 1 },
+    "licenseVersion": { "type": "integer", "minimum": 1 },
+    "licenseKind": {
+      "enum": ["commercial", "trial", "development", "first_party"]
+    },
+    "issuer": { "type": "string", "minLength": 1 },
+    "audience": { "type": "string", "minLength": 1 },
+    "organizationId": { "type": "string", "minLength": 1 },
+    "productId": { "type": "string", "minLength": 1 },
+    "application": {
+      "type": "object",
+      "required": ["applicationId", "platform", "environment", "buildId"],
+      "properties": {
+        "applicationId": { "type": "string", "minLength": 1 },
+        "platform": {
+          "enum": ["web", "ios", "android", "tvos", "androidtv", "roku", "node"]
+        },
+        "environment": {
+          "enum": ["development", "preview", "staging", "production"]
+        },
+        "buildId": { "type": "string", "minLength": 1 },
+        "bundleOrPackageId": { "type": "string", "minLength": 1 },
+        "signingIdentity": { "type": "string", "minLength": 1 },
+        "host": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "entitledFeatures": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "installationId": { "type": "string", "minLength": 1 },
+    "issuedAt": { "type": "string", "format": "date-time" },
+    "notBefore": { "type": "string", "format": "date-time" },
+    "leaseExpiresAt": { "type": "string", "format": "date-time" },
+    "graceEndsAt": { "type": "string", "format": "date-time" },
+    "offline": { "type": "boolean" },
+    "usageLimits": {
+      "type": "object",
+      "additionalProperties": { "type": "number", "minimum": 0 }
+    }
+  },
+  "additionalProperties": false
+}

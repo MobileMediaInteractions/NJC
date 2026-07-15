@@ -1,0 +1,35 @@
+{
+  "name": "@platform/runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./core": "./src/core/index.ts",
+    "./licensing": "./src/licensing/index.ts",
+    "./animation": "./src/animation/index.ts"
+    ,"./importers": "./src/importers/index.ts",
+    "./tooling": "./src/tooling/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "test": "tsx --test tests/**/*.test.ts",
+    "check": "pnpm test && pnpm typecheck && pnpm build",
+    "demo": "tsx examples/run-vertical-slice.ts",
+    "benchmark": "tsx tools/benchmarks/runtime.ts"
+    ,"conformance": "tsx tools/check-conformance.ts"
+  },
+  "dependencies": {
+    "flatbuffers": "25.9.23",
+    "vscode-languageserver": "9.0.1",
+    "vscode-languageserver-textdocument": "1.0.12",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsx": "^4.23.0",
+    "typescript": "^5.9.3"
+  }
+}

@@ -80,7 +80,7 @@ export default function PairScreen() {
   function onScan(data: string) {
     const parsed = parsePairing(data);
     if (!parsed) {
-      setNotice("That QR code is not a Harborline sign-in request.");
+      setNotice("That QR code is not an NJ Courier sign-in request.");
       return;
     }
     setSession(parsed.session);
@@ -122,7 +122,7 @@ export default function PairScreen() {
       <View style={styles.center}>
         <Text style={styles.title}>Sign in first</Text>
         <Text style={styles.copy}>
-          Only an authenticated Harborline account can approve a browser or
+          Only an authenticated Courier account can approve a browser or
           television.
         </Text>
         <Link href="/account" asChild>
@@ -137,7 +137,7 @@ export default function PairScreen() {
     return (
       <View style={styles.cameraPage}>
         <View style={styles.cameraHeader}>
-          <Text style={styles.cameraTitle}>Scan Harborline QR</Text>
+          <Text style={styles.cameraTitle}>Scan NJ Courier QR</Text>
           <Text style={styles.cameraCopy}>
             The QR should be visible on the browser or television you want to
             connect.

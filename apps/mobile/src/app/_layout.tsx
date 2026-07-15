@@ -34,10 +34,6 @@ function AppStack({ getToken }: { getToken?: GetToken }) {
           name="pair"
           options={{ title: "Quick sign-in scanner" }}
         />
-        <Stack.Screen
-          name="admin/index"
-          options={{ title: "Newsroom quick controls" }}
-        />
       </Stack>
     </>
   );

@@ -1,13 +1,15 @@
-# Harborline platform architecture
+# New Jersey Courier platform architecture
 
-Harborline is organized by deployable target first, then by shared capability.
+The Courier is organized by deployable target first, then by shared capability.
 
 ```text
 apps/
   web/                 Next.js public site, CMS, legal pages and Vercel route handlers
   mobile/              One Expo codebase for iOS and Android
+  employee/            Separate privileged Expo codebase for employee iOS and Android
   tv/                  Shared react-native-tvos Apple TV and Android TV application
   roku/                Native SceneGraph/BrightScript Roku application
+  cdn/                 Canonical versioned assets; optional standalone Vercel origin
 packages/
   api-client/          Typed, platform-neutral HTTP requester used by native clients
   backend/             Database connection and Drizzle schema
@@ -21,9 +23,19 @@ The public and authenticated API routes remain under `apps/web/src/app/api`. The
 
 Domain and persistence code is still separated from the route layer. Route handlers validate HTTP input and authorization; `@harborline/backend` owns database access; `@harborline/contracts` owns the public shapes; and `@harborline/api-client` owns cross-platform HTTP behavior.
 
+## Privileged employee boundary
+
+`apps/employee` is a distinct application target with its own package, bundle/application ID, scheme, EAS profiles, navigation, push registry, and release configuration. It shares the identity provider, API requester, contracts, and visual tokens, but not reader screens or client-side administrative authority. The reader app only checks eligibility, requests access, and hands a versioned allow-listed destination to the employee app.
+
+Every employee request recomputes effective capabilities from the active database user, role defaults, explicit allow/deny grants, expiry, and revocation. Private/direct channel access additionally requires current membership. Deep links and notification taps resolve through the same server authorization path.
+
+Internal chat uses Postgres-backed cursor polling at launch. This is a near-real-time, reconnectable transport chosen to fit the existing Neon and Vercel deployment without introducing a second real-time vendor. The mobile transport is isolated behind API calls so WebSockets or a managed pub/sub transport can replace polling later without changing stored messages or authorization rules.
+
 ## Vercel
 
-Create the Vercel project from this repository and set its Root Directory to `apps/web`. Vercel will detect Next.js there and still resolve workspace packages from the repository root. The project-specific `vercel.json`, Drizzle migrations and portable-backup scripts live with that deployment.
+Start with one Vercel project whose Root Directory is `apps/web`. Vercel supplies production and preview `*.vercel.app` URLs, which the server detects automatically. Brand assets are mirrored into the web deployment and use same-origin `/assets` paths. No DNS or public URL environment variable is required.
+
+The `apps/cdn` project is an optional later split. It can first use its own Vercel-generated hostname and eventually receive `cdn.<domain>`. `NEXT_PUBLIC_ASSET_ORIGIN` switches clients to that origin without changing versioned paths. When a primary custom domain is attached, `NEXT_PUBLIC_SITE_URL` establishes it as the canonical metadata, sitemap and API-documentation origin.
 
 ## Native C and C++ policy
 

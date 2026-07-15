@@ -20,9 +20,9 @@ export async function getLiveSnapshot() {
     title: siteConfig.live.label,
     streamUrl: siteConfig.live.streamUrl || null,
     schedule: [
-      { startsAt: "15:30", title: "Harborline Afternoon" },
+      { startsAt: "15:30", title: "The New Jersey Courier Afternoon" },
       { startsAt: "16:00", title: "The County Desk" },
-      { startsAt: "18:00", title: "Harborline at Six" },
+      { startsAt: "18:00", title: "The New Jersey Courier at Six" },
     ],
   };
 }

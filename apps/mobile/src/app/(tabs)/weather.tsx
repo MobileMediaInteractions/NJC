@@ -15,7 +15,7 @@ export default function WeatherScreen() {
   }, []);
   return (
     <View style={styles.screen}>
-      <BrandHeader eyebrow="HARBORLINE WEATHER" />
+      <BrandHeader eyebrow="NJ COURIER WEATHER" />
       <ScrollView contentContainerStyle={styles.content}>
         {!weather ? (
           <LoadingState />

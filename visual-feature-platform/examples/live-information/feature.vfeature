@@ -1,0 +1,20 @@
+feature LiveInformation version 1.0.0 id "studio.live-information"
+
+requires
+  network
+  media
+  animation
+  accessibility
+  entitlement "data.live"
+
+data LiveScore id "data.live-score"
+  total number id "field.score.total"
+  image image? id "field.score.image"
+
+screen LiveDashboard route "/live" id "screen.live"
+  stack LiveLayout id "component.live-layout"
+    heading LiveTitle showing "Live information" id "component.live-title"
+    heading ScoreText showing "42" id "component.live-score"
+    image RemoteImage showing "https://images.example.test/score.jpg" id "component.live-image"
+    video LiveVideo showing "fixture://live-video" id "component.live-video"
+    badge ConnectionState id "component.connection"

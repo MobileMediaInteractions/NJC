@@ -1,4 +1,4 @@
-# Harborline Mobile and Developer API v1
+# The New Jersey Courier Mobile and Developer API v1
 
 The public web application and future native clients use the same versioned JSON surface under `/api/v1`. Page components do not define mobile contracts.
 
@@ -66,9 +66,24 @@ Apple TV, Android TV and Roku do not collect a Clerk password. They create a ten
 
 Browser pairing returns a 90-second, one-time Clerk sign-in ticket. Apple TV, Android TV and Roku pairing return first-party tokens that are HMAC-hashed at rest, expire after 90 days and are only accepted by device-session endpoints. Pairing codes and raw device tokens are never stored. Configure `DEVICE_PAIRING_PEPPER` independently from `API_KEY_PEPPER`.
 
-## Limited mobile newsroom endpoints
+## Employee app endpoints
 
-These routes require a valid Clerk bearer token and an `admin`, `editor` or `producer` role. Full story editing stays in the web Studio.
+The separate Employee App uses `/api/v1/employee/*`. All routes require Clerk authentication and fine-grained capabilities. Channel resources additionally enforce membership. The reader app does not contain these interfaces.
+
+| Area | Endpoints |
+| --- | --- |
+| Eligibility/bootstrap | `/employee/eligibility`, `/employee/bootstrap`, `/employee/directory` |
+| Access requests | `/employee/access-requests`, `/employee/access-requests/review/*` |
+| Chat | `/employee/chat/channels`, channel messages/members/read/attachments, message edit/delete/report, presence |
+| Notifications | `/employee/notifications`, `/employee/push/register` |
+| Deep links | `/employee/deep-links/resolve` |
+| Tools | `/employee/tools/metrics`, `/editorial`, `/alerts`, `/live` |
+
+Chat history is cursor-paginated and polled every three seconds while a conversation is active. Client IDs make message retries idempotent, read timestamps produce unread counts, and the server filters channel access, mentions, attachments, and notification recipients. Push previews intentionally contain generic text.
+
+## Compatibility mobile newsroom endpoints
+
+These prior routes remain as backward-compatible aliases but now enforce the corresponding fine-grained employee capability. New releases use `/api/v1/employee/tools/*`; full story editing stays in the web Studio.
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |

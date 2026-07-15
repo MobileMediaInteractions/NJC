@@ -97,7 +97,7 @@ export function TvPairingApproval({
         </h1>
         <p className="mt-5 max-w-xl text-lg leading-8 text-white/70">
           Only approve when the code below exactly matches the one on your
-          television. Harborline never sends your password through the QR code.
+          television. The New Jersey Courier never sends your password through the QR code.
         </p>
         <div className="mt-8 flex items-start gap-3 rounded-xl border border-amber-300/25 bg-amber-300/10 p-4 text-sm leading-6 text-amber-50">
           <ShieldAlert className="mt-0.5 size-5 shrink-0 text-brand-yellow" />
@@ -151,7 +151,7 @@ export function TvPairingApproval({
               <Link href={signInUrl}>Sign in to verify this code</Link>
             </Button>
             <p className="mt-4 text-center text-xs text-slate-500">
-              A verified Harborline account is required.
+              A verified Courier account is required.
             </p>
           </>
         )}

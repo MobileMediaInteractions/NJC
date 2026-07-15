@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { type AppColors } from "@/constants/theme";
 import { ThemeSetting } from "@/components/theme-setting";
+import { EmployeeHandoff } from "@/components/employee-handoff";
 import { useAppTheme } from "@/providers/theme-provider";
 import { apiBaseUrl } from "@/lib/api";
 import { registerForAlerts } from "@/lib/notifications";
@@ -22,7 +23,6 @@ import {
 } from "@/lib/audience";
 
 type Mode = "sign-in" | "sign-up" | "verify";
-const staffRoles = ["admin", "editor", "producer", "reporter", "contributor"];
 
 function messageFrom(error: unknown) {
   if (error && typeof error === "object" && "message" in error)
@@ -66,7 +66,6 @@ function ConfiguredAccount() {
     (user?.publicMetadata as Record<string, unknown> | undefined)?.role ??
       "reader",
   );
-  const isStaff = staffRoles.includes(role);
 
   async function submit() {
     setBusy(true);
@@ -133,7 +132,7 @@ function ConfiguredAccount() {
         <Text style={styles.title}>
           {user?.fullName ??
             user?.primaryEmailAddress?.emailAddress ??
-            "Harborline reader"}
+            "Courier reader"}
         </Text>
         <Text style={styles.copy}>
           Role: {role}. Your saved stories stay on this device; account services
@@ -151,13 +150,7 @@ function ConfiguredAccount() {
         >
           <Text style={styles.secondaryText}>Enable breaking-news alerts</Text>
         </Pressable>
-        {isStaff ? (
-          <Link href="/admin" asChild>
-            <Pressable style={styles.staff}>
-              <Text style={styles.staffText}>Open newsroom quick controls</Text>
-            </Pressable>
-          </Link>
-        ) : null}
+        <EmployeeHandoff getToken={getToken} />
         {notice ? (
           <Text accessibilityLiveRegion="polite" style={styles.notice}>
             {notice}
@@ -181,7 +174,7 @@ function ConfiguredAccount() {
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={styles.content}
     >
-      <Text style={styles.eyebrow}>HARBORLINE ACCOUNT</Text>
+      <Text style={styles.eyebrow}>NJ COURIER ACCOUNT</Text>
       <Text style={styles.title}>
         {mode === "sign-up"
           ? "Create your account"
@@ -255,7 +248,7 @@ function ConfiguredAccount() {
         >
           <Text style={styles.switch}>
             {mode === "sign-in"
-              ? "New to Harborline? Create an account"
+              ? "New to the Courier? Create an account"
               : "Already have an account? Sign in"}
           </Text>
         </Pressable>

@@ -14,16 +14,20 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 
 const categories = [
-  ["local", "Local"], ["weather", "Weather"], ["investigates", "Harborline Investigates"], ["sports", "Sports"], ["culture", "Things to Do"],
+  ["middlesex", "Middlesex County"], ["statehouse", "Statehouse Desk"], ["public-square", "Public Square"], ["opinion", "Garden State Forum"], ["sports", "Jersey Gridiron & Court"], ["jersey-laurels", "Jersey Laurels"], ["investigates", "Courier Watch"], ["weather", "Weather"],
 ];
 
 export function StoryEditor() {
   const [headline, setHeadline] = useState("");
   const [dek, setDek] = useState("");
   const [body, setBody] = useState("");
-  const [category, setCategory] = useState("local");
-  const [location, setLocation] = useState("Port Alder");
+  const [category, setCategory] = useState("middlesex");
+  const [location, setLocation] = useState("New Brunswick");
   const [tags, setTags] = useState("");
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoDescription, setSeoDescription] = useState("");
+  const [canonicalUrl, setCanonicalUrl] = useState("");
+  const [noIndex, setNoIndex] = useState(false);
   const [breaking, setBreaking] = useState(false);
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -32,9 +36,9 @@ export function StoryEditor() {
 
   async function save(status: "draft" | "review" | "published") {
     setState("saving"); setMessage("");
-    const categoryLabel = categories.find(([value]) => value === category)?.[1] ?? "Local";
+    const categoryLabel = categories.find(([value]) => value === category)?.[1] ?? "Middlesex County";
     try {
-      const response = await fetch("/api/v1/studio/stories", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ headline, slug, dek, body: body.split(/\n\n+/).map((item) => item.trim()).filter(Boolean), categorySlug: category, categoryLabel, location, imageUrl: "", imageAlt: "", tags: tags.split(",").map((item) => item.trim()).filter(Boolean), status, isBreaking: breaking }) });
+      const response = await fetch("/api/v1/studio/stories", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ headline, slug, dek, body: body.split(/\n\n+/).map((item) => item.trim()).filter(Boolean), categorySlug: category, categoryLabel, location, imageUrl: "", imageAlt: "", tags: tags.split(",").map((item) => item.trim()).filter(Boolean), seoTitle, seoDescription, canonicalUrl, noIndex, status, isBreaking: breaking }) });
       const payload = await response.json().catch(() => null);
       if (response.ok) { setState("saved"); setMessage(status === "published" ? "Published successfully." : "Story saved to the newsroom."); }
       else { setState("error"); setMessage(payload?.error?.message ?? "Could not save the story."); }
@@ -57,6 +61,7 @@ export function StoryEditor() {
         </CardContent></Card>
         <div className="space-y-6">
           <Card><CardHeader><CardTitle className="text-base">Publishing</CardTitle></CardHeader><CardContent className="space-y-5"><div className="space-y-2"><Label>Section</Label><Select value={category} onValueChange={setCategory}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{categories.map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div><div className="space-y-2"><Label htmlFor="location">Dateline</Label><Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} /></div><div className="space-y-2"><Label htmlFor="tags">Tags</Label><Input id="tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="housing, city hall" /></div><Separator /><div className="flex items-center justify-between"><div><Label htmlFor="breaking">Breaking news</Label><p className="mt-1 text-xs text-muted-foreground">Adds urgent public treatment.</p></div><Switch id="breaking" checked={breaking} onCheckedChange={setBreaking} /></div><Button className="w-full" variant="secondary" onClick={() => save("published")} disabled={state === "saving"}>Publish now</Button></CardContent></Card>
+          <Card><CardHeader><CardTitle className="text-base">Search appearance</CardTitle><CardDescription>Defaults are generated from the story. Override only when the search result needs clearer wording.</CardDescription></CardHeader><CardContent className="space-y-4"><div className="space-y-2"><div className="flex justify-between"><Label htmlFor="seo-title">SEO title</Label><span className="text-xs text-muted-foreground">{seoTitle.length}/70</span></div><Input id="seo-title" value={seoTitle} onChange={(event) => setSeoTitle(event.target.value)} maxLength={70} placeholder={headline || "Uses headline by default"} /></div><div className="space-y-2"><div className="flex justify-between"><Label htmlFor="seo-description">Search description</Label><span className="text-xs text-muted-foreground">{seoDescription.length}/180</span></div><Textarea id="seo-description" value={seoDescription} onChange={(event) => setSeoDescription(event.target.value)} maxLength={180} placeholder={dek || "Uses summary by default"} /></div><div className="space-y-2"><Label htmlFor="canonical-url">Canonical URL</Label><Input id="canonical-url" type="url" value={canonicalUrl} onChange={(event) => setCanonicalUrl(event.target.value)} placeholder="Leave blank for this story URL" /></div><Separator /><div className="flex items-center justify-between gap-4"><div><Label htmlFor="no-index">Exclude from search</Label><p className="mt-1 text-xs text-muted-foreground">Adds noindex and removes the story from sitemaps.</p></div><Switch id="no-index" checked={noIndex} onCheckedChange={setNoIndex} /></div></CardContent></Card>
           <Card><CardHeader><CardTitle className="text-base">Lead media</CardTitle><CardDescription>JPEG, PNG or WebP up to 4 MB.</CardDescription></CardHeader><CardContent><button type="button" className="flex min-h-36 w-full flex-col items-center justify-center rounded-md border border-dashed text-center text-muted-foreground hover:border-primary hover:text-primary"><CloudUpload className="size-6" /><span className="mt-2 text-sm font-medium">Upload image</span><span className="mt-1 text-xs">or choose from media</span></button></CardContent></Card>
           <Card><CardContent className="p-5"><div className="flex items-center justify-between"><span className="text-sm font-medium">Workflow</span><Badge variant="secondary">Draft</Badge></div><div className="mt-4 flex items-center gap-2 text-[0.7rem] text-muted-foreground"><span className="size-2 rounded-full bg-primary" /> Draft <span>→</span> Review <span>→</span> Scheduled <span>→</span> Published</div></CardContent></Card>
         </div>

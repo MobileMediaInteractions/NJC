@@ -128,7 +128,7 @@ export async function POST(
     await db.insert(deviceSessions).values({
       tokenHash: access.tokenHash,
       userClerkId: claimed.approvedByClerkId,
-      displayName: claimed.approvedByName ?? "Harborline reader",
+      displayName: claimed.approvedByName ?? "The New Jersey Courier reader",
       platform,
       deviceName: claimed.deviceName,
       expiresAt,
@@ -139,7 +139,7 @@ export async function POST(
           status: "approved",
           accessToken: access.rawToken,
           account: {
-            name: claimed.approvedByName ?? "Harborline reader",
+            name: claimed.approvedByName ?? "The New Jersey Courier reader",
             platform,
           },
           expiresAt: expiresAt.toISOString(),

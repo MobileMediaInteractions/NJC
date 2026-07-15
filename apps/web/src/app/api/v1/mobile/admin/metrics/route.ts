@@ -3,10 +3,10 @@ import { NextResponse } from "next/server";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import { alerts, pushDevices, stories } from "@harborline/backend/schema";
 import { getAudienceSummary } from "@/lib/audience";
-import { canUseMobileAdmin } from "@/lib/auth";
+import { requireEmployeeCapability } from "@/lib/employee-auth";
 
 export async function GET() {
-  const viewer = await canUseMobileAdmin();
+  const viewer = await requireEmployeeCapability("tools:metrics");
   if (!viewer) return NextResponse.json({ error: { code: "forbidden", message: "Editor authorization required" } }, { status: 403 });
   const audience = await getAudienceSummary();
   if (!hasDatabase()) return NextResponse.json({ data: { review: 0, scheduled: 0, publishedToday: 0, activeAlerts: 0, pushDevices: 0, audience, database: "not configured" }, meta: { apiVersion: "1" } });

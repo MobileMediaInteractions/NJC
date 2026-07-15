@@ -21,7 +21,7 @@ export function GET() {
         comments: true,
         newsletters: true,
         alerts: true,
-        liveVideo: true,
+        liveVideo: siteConfig.live.enabled,
         weather: true,
       },
     },

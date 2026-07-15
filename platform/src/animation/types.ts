@@ -1,0 +1,17 @@
+export type SourcePosition = { offset: number; line: number; column: number };
+export type SourceSpan = { start: SourcePosition; end: SourcePosition };
+export type Diagnostic = { severity: "error" | "warning"; code: string; message: string; span: SourceSpan };
+export type Unit = "number" | "ms" | "s" | "percent" | "dp" | "sp" | "deg";
+export type ScalarValue = { kind: "number"; value: number; unit: Unit } | { kind: "string"; value: string } | { kind: "boolean"; value: boolean } | { kind: "color"; value: string };
+export type InputNode = { name: string; type: "number" | "integer" | "boolean" | "string" | "duration" | "percentage" | "angle" | "color"; defaultValue: ScalarValue; span: SourceSpan };
+export type ComponentNode = { id: string; kind: "text" | "rect" | "path" | "image" | "group" | "host"; properties: Record<string, ScalarValue>; span: SourceSpan };
+export type KeyframeNode = { timeMs: number; value: number; easing: string; span: SourceSpan };
+export type TrackNode = { target: string; keyframes: KeyframeNode[]; span: SourceSpan };
+export type TimelineNode = { name: string; durationMs: number; tracks: TrackNode[]; span: SourceSpan };
+export type TransitionNode = { from: string; to: string; event: string; timeline?: string; emittedEvent?: string; span: SourceSpan };
+export type MachineNode = { name: string; initialState: string; states: string[]; transitions: TransitionNode[]; span: SourceSpan };
+export type SceneNode = { name: string; inputs: InputNode[]; components: ComponentNode[]; timelines: TimelineNode[]; machines: MachineNode[]; reducedMotionTimeline?: string; span: SourceSpan };
+export type AnimationProgram = { languageVersion: 1; packageName: string; scenes: SceneNode[]; span: SourceSpan };
+export type CompiledAnimation = { schemaVersion: 1; minimumRuntime: string; compilerVersion: string; sourceHash: string; scenes: SceneNode[]; requiredFeatures: string[] };
+export type RenderNode = { id: string; kind: ComponentNode["kind"]; properties: Record<string, string | number | boolean> };
+export type RenderFrame = { scene: string; timeMs: number; nodes: RenderNode[]; activeStateMachines: Record<string, string>; emittedEvents: string[] };

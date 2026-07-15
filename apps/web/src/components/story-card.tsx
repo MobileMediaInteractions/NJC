@@ -110,7 +110,7 @@ function StoryCopy({
       </div>
       <h2
         className={cn(
-          "font-editorial headline-balance font-semibold leading-[1.04] tracking-[-0.035em] text-brand-navy",
+          "headline-balance font-black leading-[1.04] tracking-[-0.04em] text-brand-navy",
           large
             ? "text-3xl sm:text-4xl lg:text-[3.15rem]"
             : compact

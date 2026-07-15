@@ -1,0 +1,122 @@
+language 1
+package showcase;
+
+scene Welcome {
+  input userName: string = "Guest";
+  input count: number = 42;
+  input themeColor: string = "#173E32";
+
+  component title text {
+    text: "Welcome, ${userName}";
+    x: 32dp;
+    y: 72dp;
+    opacity: 0;
+    scale: 0.92;
+    color: "${themeColor}";
+  }
+
+  component counter text {
+    text: "${count} updates";
+    x: 32dp;
+    y: 132dp;
+    opacity: 0;
+  }
+
+  component mark path {
+    path: "M0 24 L24 0 L48 24 L24 48 Z";
+    x: 32dp;
+    y: 190dp;
+    scale: 0.8;
+    opacity: 0;
+    fill: "${themeColor}";
+  }
+
+  component continueButton host {
+    hostId: "continue-button";
+    opacity: 0;
+    scale: 0.94;
+    y: 18dp;
+    cornerRadius: 18dp;
+  }
+
+  component details rect {
+    x: 420dp;
+    y: 40dp;
+    width: 300dp;
+    height: 420dp;
+    opacity: 0;
+    fill: "${themeColor}";
+    cornerRadius: 24dp;
+  }
+
+  timeline entrance 620ms {
+    track title.opacity {
+      0ms: 0;
+      240ms: 1 ease outCubic;
+    }
+    track title.scale {
+      0ms: 0.92;
+      620ms: 1 ease spring;
+    }
+    track counter.opacity {
+      120ms: 0;
+      420ms: 1 ease outCubic;
+    }
+    track mark.opacity {
+      180ms: 0;
+      520ms: 1 ease outCubic;
+    }
+    track mark.scale {
+      180ms: 0.8;
+      620ms: 1 ease spring;
+    }
+    track continueButton.opacity {
+      140ms: 0;
+      420ms: 1 ease outCubic;
+    }
+    track continueButton.y {
+      140ms: 18;
+      620ms: 0 ease spring;
+    }
+  }
+
+  timeline exit 520ms {
+    track title.opacity {
+      0ms: 1;
+      260ms: 0 ease outCubic;
+    }
+    track details.x {
+      0ms: 420;
+      520ms: 32 ease outCubic;
+    }
+    track details.opacity {
+      120ms: 0;
+      420ms: 1 ease outCubic;
+    }
+  }
+
+  timeline reduced 180ms {
+    track title.opacity {
+      0ms: 0;
+      180ms: 1 ease linear;
+    }
+    track counter.opacity {
+      0ms: 0;
+      180ms: 1 ease linear;
+    }
+    track continueButton.opacity {
+      0ms: 0;
+      180ms: 1 ease linear;
+    }
+  }
+
+  machine WelcomeFlow initial loading {
+    state loading;
+    state ready;
+    state leaving;
+    transition loading -> ready on ready play entrance emit welcomeReady;
+    transition ready -> leaving on continue play exit emit continueRequested;
+  }
+
+  reducedMotion: reduced;
+}

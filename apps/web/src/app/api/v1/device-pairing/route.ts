@@ -9,6 +9,7 @@ import {
   pairingHash,
   requesterAddress,
 } from "@/lib/device-pairing";
+import { getRequestOrigin } from "@/lib/origin";
 
 export const runtime = "nodejs";
 
@@ -77,9 +78,7 @@ export async function POST(request: Request) {
     })
     .returning({ id: devicePairingRequests.id });
 
-  const origin = process.env.NEXT_PUBLIC_SITE_URL
-    ? new URL(process.env.NEXT_PUBLIC_SITE_URL).origin
-    : new URL(request.url).origin;
+  const origin = getRequestOrigin(request);
   const verificationBase = `${origin}/login/tv`;
   const verificationUri = ["androidtv", "roku"].includes(parsed.data.target)
     ? `${verificationBase}?target=${parsed.data.target}`

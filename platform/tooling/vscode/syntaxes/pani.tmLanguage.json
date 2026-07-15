@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Platform Animation",
+  "scopeName": "source.pani",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#colors" },
+    { "include": "#keywords" }
+  ],
+  "repository": {
+    "comments": { "patterns": [{ "name": "comment.line.double-slash.pani", "match": "//.*$" }] },
+    "strings": { "patterns": [{ "name": "string.quoted.double.pani", "begin": "\"", "end": "\"", "patterns": [{ "name": "constant.character.escape.pani", "match": "\\\\." }] }] },
+    "numbers": { "patterns": [{ "name": "constant.numeric.pani", "match": "(?<![A-Za-z_])-?\\b\\d+(?:\\.\\d+)?(?:ms|s|dp|sp|deg|%)?\\b" }] },
+    "colors": { "patterns": [{ "name": "constant.other.color.pani", "match": "#[0-9A-Fa-f]{3,8}\\b" }] },
+    "keywords": { "patterns": [{ "name": "keyword.control.pani", "match": "\\b(language|package|scene|input|component|timeline|track|machine|state|transition|initial|on|play|emit|ease|reducedMotion)\\b" }] }
+  }
+}

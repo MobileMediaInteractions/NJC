@@ -1,3 +1,27 @@
-import { eq } from "drizzle-orm"; import { NextResponse } from "next/server"; import { z } from "zod"; import { getDb, hasDatabase } from "@harborline/backend/db"; import { alerts, pushDevices } from "@harborline/backend/schema"; import { canUseMobileAdmin } from "@/lib/auth";
-const input = z.object({ title: z.string().trim().min(5).max(120), body: z.string().trim().min(8).max(240), severity: z.enum(['info', 'breaking', 'weather']).default('breaking'), link: z.string().max(300).optional() });
-export async function POST(request: Request) { const viewer = await canUseMobileAdmin(); if (!viewer) return NextResponse.json({ error: { code: 'forbidden', message: 'Editor authorization required' } }, { status: 403 }); if (!hasDatabase()) return NextResponse.json({ error: { code: 'service_not_configured', message: 'Postgres is not configured' } }, { status: 503 }); const parsed = input.safeParse(await request.json().catch(() => null)); if (!parsed.success) return NextResponse.json({ error: { code: 'invalid_request', message: 'Use a concise alert headline and summary' } }, { status: 400 }); const [record] = await getDb().insert(alerts).values({ title: parsed.data.title, body: parsed.data.body, severity: parsed.data.severity, link: parsed.data.link ?? null }).returning(); const devices = await getDb().select({ token: pushDevices.token }).from(pushDevices).where(eq(pushDevices.isActive, true)); let sent = 0; for (let index = 0; index < devices.length; index += 100) { const messages = devices.slice(index, index + 100).map(({ token }) => ({ to: token, title: parsed.data.title, body: parsed.data.body, data: { url: parsed.data.link ?? '/', alertId: record.id }, priority: 'high', channelId: 'breaking-news' })); if (!messages.length) continue; const response = await fetch('https://exp.host/--/api/v2/push/send', { method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json', ...(process.env.EXPO_ACCESS_TOKEN ? { Authorization: `Bearer ${process.env.EXPO_ACCESS_TOKEN}` } : {}) }, body: JSON.stringify(messages) }); if (!response.ok) console.error('Expo push batch failed', await response.text()); else sent += messages.length; } return NextResponse.json({ data: { alert: record, attemptedDevices: devices.length, acceptedMessages: sent }, meta: { apiVersion: '1' } }, { status: 201 }); }
+import { eq } from "drizzle-orm";
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { getDb, hasDatabase } from "@harborline/backend/db";
+import { alerts, pushDevices } from "@harborline/backend/schema";
+import { requireEmployeeCapability } from "@/lib/employee-auth";
+
+const input = z.object({ title: z.string().trim().min(5).max(120), body: z.string().trim().min(8).max(240), severity: z.enum(["info", "breaking", "weather"]).default("breaking"), link: z.string().max(300).optional() });
+
+export async function POST(request: Request) {
+  const viewer = await requireEmployeeCapability("tools:alerts");
+  if (!viewer) return NextResponse.json({ error: { code: "forbidden", message: "Alert-tools permission required" } }, { status: 403 });
+  if (!hasDatabase()) return NextResponse.json({ error: { code: "service_not_configured", message: "Postgres is not configured" } }, { status: 503 });
+  const parsed = input.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) return NextResponse.json({ error: { code: "invalid_request", message: "Use a concise alert headline and summary" } }, { status: 400 });
+  const [record] = await getDb().insert(alerts).values({ title: parsed.data.title, body: parsed.data.body, severity: parsed.data.severity, link: parsed.data.link ?? null }).returning();
+  const devices = await getDb().select({ token: pushDevices.token }).from(pushDevices).where(eq(pushDevices.isActive, true));
+  let sent = 0;
+  for (let index = 0; index < devices.length; index += 100) {
+    const messages = devices.slice(index, index + 100).map(({ token }) => ({ to: token, title: parsed.data.title, body: parsed.data.body, data: { url: parsed.data.link ?? "/", alertId: record.id }, priority: "high", channelId: "breaking-news" }));
+    if (!messages.length) continue;
+    const response = await fetch("https://exp.host/--/api/v2/push/send", { method: "POST", headers: { Accept: "application/json", "Content-Type": "application/json", ...(process.env.EXPO_ACCESS_TOKEN ? { Authorization: `Bearer ${process.env.EXPO_ACCESS_TOKEN}` } : {}) }, body: JSON.stringify(messages) });
+    if (!response.ok) console.error("Expo push batch failed", response.status);
+    else sent += messages.length;
+  }
+  return NextResponse.json({ data: { alert: record, attemptedDevices: devices.length, acceptedMessages: sent }, meta: { apiVersion: "1" } }, { status: 201 });
+}

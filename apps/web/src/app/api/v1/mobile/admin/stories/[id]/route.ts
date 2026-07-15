@@ -3,12 +3,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import { stories, storyRevisions } from "@harborline/backend/schema";
-import { canUseMobileAdmin } from "@/lib/auth";
+import { requireEmployeeCapability } from "@/lib/employee-auth";
 
 const input = z.object({ status: z.enum(["draft", "review", "scheduled", "published", "archived"]) });
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
-  const viewer = await canUseMobileAdmin();
+  const viewer = await requireEmployeeCapability("tools:editorial");
   if (!viewer) return NextResponse.json({ error: { code: "forbidden", message: "Editor authorization required" } }, { status: 403 });
   if (!hasDatabase()) return NextResponse.json({ error: { code: "service_not_configured", message: "Postgres is not configured" } }, { status: 503 });
   const parsed = input.safeParse(await request.json().catch(() => null));

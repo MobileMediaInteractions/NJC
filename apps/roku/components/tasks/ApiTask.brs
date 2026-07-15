@@ -95,7 +95,7 @@ function apiRequest(path as String, method as String, body as Dynamic) as Object
   transfer.SetUrl(m.top.apiBase + path)
   transfer.AddHeader("Accept", "application/json")
   transfer.AddHeader("Content-Type", "application/json")
-  transfer.AddHeader("User-Agent", "Harborline-Roku/" + m.top.appVersion)
+  transfer.AddHeader("User-Agent", "NJCourier-Roku/" + m.top.appVersion)
   if m.top.accessToken <> "" transfer.AddHeader("Authorization", "Bearer " + m.top.accessToken)
 
   responseText = ""
@@ -107,7 +107,7 @@ function apiRequest(path as String, method as String, body as Dynamic) as Object
   status = transfer.GetResponseCode()
 
   if responseText = invalid or responseText = ""
-    return { ok: false, message: "Harborline could not reach the news service." }
+    return { ok: false, message: "The Courier could not reach the news service." }
   end if
 
   payload = ParseJson(responseText)
