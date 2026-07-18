@@ -8,7 +8,7 @@
   "scripts": {
     "predev": "node ../../scripts/sync-cdn-assets.mjs",
     "dev": "next dev",
-    "prebuild": "node ../../scripts/sync-cdn-assets.mjs",
+    "prebuild": "node scripts/migrate-production.mjs && node ../../scripts/sync-cdn-assets.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

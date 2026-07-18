@@ -71,7 +71,7 @@ Create one Vercel project from this repository:
 2. Vercel will provide an HTTPS production alias such as `https://new-jersey-courier.vercel.app`, plus unique preview URLs for branches and pull requests.
 3. Leave `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_ASSET_ORIGIN` unset. The app detects Vercel’s URL and serves assets from `/assets` automatically.
 
-Install Neon, Clerk, Vercel Blob and Upstash for the web project, pull its environment values, and run the committed migrations. Production starts empty; publish verified reporting through Studio instead of seeding preview content. Vercel automatically CDN-caches static deployment assets; public newsroom uploads use Vercel Blob.
+Install Neon, Clerk, Vercel Blob and Upstash for the web project. Production deployments apply the committed Drizzle migrations before Next.js builds and fail closed if the database is missing or outdated; preview and local builds never mutate the production schema. Production starts empty, so publish verified reporting through Studio instead of seeding preview content. Vercel automatically CDN-caches static deployment assets; public newsroom uploads use Vercel Blob.
 
 The Hobby deployment runs `/api/cron/publish-scheduled` once daily at `10:00 UTC`, which complies with Vercel's Hobby cron limit. Upgrade the project before restoring a more frequent schedule; Studio can still publish time-sensitive stories manually at any time.
 
