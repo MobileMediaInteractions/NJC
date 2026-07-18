@@ -1,17 +1,17 @@
 import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
 import type { DeveloperScope } from "@harborline/contracts";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb } from "@harborline/backend/db";
 import { apiKeys } from "@harborline/backend/schema";
 import { verifyApiKey, writeApiAudit } from "@/lib/api-keys";
+import { createRedisClient } from "@/lib/redis";
 
 let limiters: { minute: Ratelimit; day: Ratelimit } | null = null;
 function getLimiters() {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) return null;
+  const redis = createRedisClient();
+  if (!redis) return null;
   if (!limiters) {
-    const redis = Redis.fromEnv();
     limiters = {
       minute: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(60, "1 m"), analytics: true, prefix: "harborline:api:minute" }),
       day: new Ratelimit({ redis, limiter: Ratelimit.fixedWindow(10000, "1 d"), analytics: true, prefix: "harborline:api:day" }),

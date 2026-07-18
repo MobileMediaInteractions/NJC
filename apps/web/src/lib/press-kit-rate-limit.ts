@@ -1,5 +1,5 @@
 import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
+import { createRedisClient } from "@/lib/redis";
 
 const maxRequests = 3;
 const windowMs = 60 * 60 * 1_000;
@@ -7,10 +7,11 @@ const localWindows = new Map<string, { count: number; reset: number }>();
 let limiter: Ratelimit | null = null;
 
 function getLimiter() {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) return null;
+  const redis = createRedisClient();
+  if (!redis) return null;
   if (!limiter) {
     limiter = new Ratelimit({
-      redis: Redis.fromEnv(),
+      redis,
       limiter: Ratelimit.slidingWindow(maxRequests, "1 h"),
       analytics: true,
       prefix: "njcourier:press-kit",

@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
 import { NextResponse } from "next/server";
+import { createRedisClient } from "@/lib/redis";
 
 type Bucket = "activate" | "lease" | "validate";
 const definitions: Record<Bucket, { max: number; interval: "1 m" }> = {
@@ -19,11 +19,12 @@ function clientId(request: Request) {
 export async function enforcePlatformRateLimit(request: Request, bucket: Bucket) {
   const definition = definitions[bucket];
   const id = clientId(request);
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+  const redis = createRedisClient();
+  if (redis) {
     let limiter = limiters.get(bucket);
     if (!limiter) {
       limiter = new Ratelimit({
-        redis: Redis.fromEnv(),
+        redis,
         limiter: Ratelimit.slidingWindow(definition.max, definition.interval),
         prefix: `platform:license:${bucket}`,
       });

@@ -11,6 +11,10 @@ const validRoles: StaffRole[] = [
   "contributor",
 ];
 
+export function resolveStaffRole(value: unknown): StaffRole | null {
+  return validRoles.includes(value as StaffRole) ? (value as StaffRole) : null;
+}
+
 export function isClerkConfigured() {
   return Boolean(
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
@@ -27,10 +31,8 @@ export async function getStudioUser(): Promise<StudioUser | null> {
   const user = await currentUser();
   if (!user) return null;
 
-  const metadataRole = user.publicMetadata.role;
-  const role = validRoles.includes(metadataRole as StaffRole)
-    ? (metadataRole as StaffRole)
-    : "contributor";
+  const role = resolveStaffRole(user.publicMetadata.role);
+  if (!role) return null;
 
   const studioUser: StudioUser = {
     id: user.id,
