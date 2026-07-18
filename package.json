@@ -46,7 +46,8 @@
     "db:migrate": "pnpm --dir apps/web db:migrate",
     "db:push": "pnpm --dir apps/web db:push",
     "backup:export": "pnpm --dir apps/web backup:export",
-    "backup:restore": "pnpm --dir apps/web backup:restore"
+    "backup:restore": "pnpm --dir apps/web backup:restore",
+    "domain:verify": "node apps/web/scripts/verify-domain-readiness.mjs"
   },
   "devDependencies": {
     "turbo": "^2.8.10"

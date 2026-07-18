@@ -75,7 +75,7 @@ Install Neon, Clerk, Vercel Blob and Upstash for the web project. Production dep
 
 The Hobby deployment runs `/api/cron/publish-scheduled` once daily at `10:00 UTC`, which complies with Vercel's Hobby cron limit. Upgrade the project before restoring a more frequent schedule; Studio can still publish time-sensitive stories manually at any time.
 
-When a domain is purchased, attach it to the same project and set `NEXT_PUBLIC_SITE_URL` to the canonical HTTPS URL. A second `apps/cdn` project remains optional; it can first use its own `*.vercel.app` alias and later receive `cdn.<domain>` without code changes.
+When a domain is purchased, follow the [custom-domain launch runbook](docs/DOMAIN_LAUNCH.md). It covers the Vercel primary-domain redirect, `NEXT_PUBLIC_SITE_URL`, Clerk production keys and DNS, canonical/SEO checks, optional `cdn.<domain>`, native-app follow-up and rollback. A second `apps/cdn` project remains optional.
 
 Copy [`apps/web/.env.example`](apps/web/.env.example) for configuration names. Never commit `.env.local`.
 
