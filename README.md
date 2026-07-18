@@ -123,9 +123,11 @@ pnpm composer:check
 
 The separate animation playground runs with `pnpm playground:start` on port 3010. Platform architecture, licensing, language/SDK guides and explicit native limitations are indexed from [`platform/README.md`](platform/README.md).
 
-## Desktop animation Studio
+## NJC Studio
 
-The repository includes a Tauri 2 desktop Studio with Monaco source editing, structured visual and timeline edits, the real animation compiler/runtime, an integrated virtual-device preview, project detection, workspace trust, allow-listed tasks, package inspection, state-machine tracing and toolchain diagnostics.
+The repository includes **NJC Studio**, a Tauri 2 desktop environment with Monaco source editing, structured visual and timeline edits, the real animation compiler/runtime, an integrated virtual-device preview, project detection, workspace trust, allow-listed tasks, package inspection, state-machine tracing and toolchain diagnostics. Its VS Code-inspired information architecture is original to The New Jersey Courier, and its create → edit → build → preview workflow is functional in both the browser fixture and native desktop shell.
+
+![NJC Studio source workbench and runtime preview](tools/studio/docs/screenshots/studio-workbench.png)
 
 ```bash
 pnpm studio:start
@@ -135,4 +137,6 @@ pnpm studio:build
 
 See [`tools/studio/README.md`](tools/studio/README.md) for the working workflow, security boundary, screenshot and explicit remaining milestones.
 
-The Studio's **Feature** tab provides synchronized Design, Behavior, Data, Motion, Test and controlled-English Code modes. Its extraction-ready compiler/runtime workspace and standalone playground are documented in [`visual-feature-platform/README.md`](visual-feature-platform/README.md).
+NJC Studio's **Feature** tab provides synchronized Design, NJC Blueprints, Data, Motion, Test and readable English-programming Source modes. Its extraction-ready compiler/runtime workspace and standalone playground are documented in [`visual-feature-platform/README.md`](visual-feature-platform/README.md). Release gates and the signing work that still requires owner credentials are documented in [`tools/studio/docs/PRODUCTION_READINESS.md`](tools/studio/docs/PRODUCTION_READINESS.md).
+
+![NJC Studio Visual Feature Composer](docs/screenshots/visual-feature-composer.png)

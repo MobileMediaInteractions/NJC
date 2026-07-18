@@ -25,6 +25,7 @@
     "studio:start": "pnpm --dir tools/studio tauri:dev",
     "studio:web": "pnpm --dir tools/studio dev",
     "studio:check": "pnpm --dir tools/studio check",
+    "studio:production": "pnpm --dir tools/studio production:check",
     "studio:build": "pnpm --dir tools/studio tauri:build:no-bundle",
     "composer:check": "pnpm --dir visual-feature-platform check && pnpm studio:check",
     "composer:demo": "pnpm --dir visual-feature-platform demo",

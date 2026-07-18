@@ -1,7 +1,7 @@
 [package]
-name = "platform-studio"
+name = "njc-studio"
 version = "0.1.0"
-description = "Desktop Studio for the repository animation and feature platform"
+description = "NJC Studio desktop environment for animation and visual features"
 authors = ["Mobile Media Interactions"]
 edition = "2021"
 rust-version = "1.77.2"
@@ -22,3 +22,10 @@ walkdir = "2"
 [features]
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

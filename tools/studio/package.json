@@ -1,5 +1,5 @@
 {
-  "name": "@platform/studio",
+  "name": "@njcourier/studio",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "rust:test": "cargo test --manifest-path src-tauri/Cargo.toml",
-    "check": "pnpm test && pnpm typecheck && pnpm lint && pnpm build && pnpm rust:test",
+    "production:check": "node scripts/production-readiness.mjs",
+    "check": "pnpm production:check && pnpm test && pnpm typecheck && pnpm lint && pnpm build && pnpm rust:test",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build:no-bundle": "tauri build --no-bundle"

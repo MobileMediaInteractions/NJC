@@ -1,15 +1,17 @@
 import { invoke } from "@tauri-apps/api/core";
-import { open } from "@tauri-apps/plugin-dialog";
-import type { TaskResult, TextFile, ToolchainDiagnostic, WorkspaceSnapshot } from "../model/protocol";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { open, save } from "@tauri-apps/plugin-dialog";
+import type { BlueprintLayoutEdge, BlueprintLayoutNode, BlueprintLayoutResult, ExportResult, TaskResult, TextFile, ToolchainDiagnostic, WorkspaceSnapshot } from "../model/protocol";
+import { layoutBlueprintGraphFallback } from "./blueprint-layout";
 import demoSource from "../demo/onboarding.pani?raw";
 import demoManifest from "../demo/licensed-feature.json?raw";
 
 export const inDesktop = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
-const browserRoot = "/demo/platform-studio";
+const browserRoot = "/demo/njc-studio";
 
 const browserSnapshot: WorkspaceSnapshot = {
   root: browserRoot,
-  name: "studio-demo",
+  name: "njc-studio-demo",
   trusted: true,
   detections: [
     { id: "animation-platform", label: "Animation and feature platform", confidence: 1, evidence: ["Built-in .pani project", "Feature manifest"] },
@@ -32,7 +34,7 @@ const browserSnapshot: WorkspaceSnapshot = {
 const browserFiles: Record<string, string> = {
   "animations/onboarding.pani": demoSource,
   "features/licensed-feature.json": demoManifest,
-  "README.md": "# Built-in Studio project\n\nThis browser-safe fixture demonstrates the real compiler and runtime. Native filesystem and process commands require the Tauri desktop shell.",
+  "README.md": "# Built-in NJC Studio project\n\nThis browser-safe fixture demonstrates the real compiler and runtime. Native filesystem and process commands require the Tauri desktop shell.",
 };
 
 async function digest(content: string) {
@@ -42,7 +44,7 @@ async function digest(content: string) {
 
 export async function chooseWorkspace() {
   if (!inDesktop) return browserRoot;
-  const selected = await open({ directory: true, multiple: false, title: "Open a Studio workspace" });
+  const selected = await open({ directory: true, multiple: false, title: "Open an NJC Studio workspace" });
   return typeof selected === "string" ? selected : null;
 }
 
@@ -71,6 +73,19 @@ export async function writeWorkspaceFile(root: string, relative: string, content
   return { path: relative, content, size: content.length, sha256: await digest(content) };
 }
 
+export async function createWorkspaceFile(root: string, relative: string, content: string): Promise<TextFile> {
+  if (inDesktop) return invoke<TextFile>("create_workspace_file", { root, relative, content });
+  if (browserFiles[relative] !== undefined) throw new Error("A file with that name already exists.");
+  browserFiles[relative] = content;
+  const directory = relative.split("/").slice(0, -1).join("/");
+  if (directory && !browserSnapshot.files.some((entry) => entry.path === directory)) {
+    browserSnapshot.files = [...browserSnapshot.files, { path: directory, name: directory.split("/").at(-1) ?? directory, kind: "directory" as const, depth: directory.split("/").length - 1, size: 0 }];
+  }
+  browserSnapshot.files = [...browserSnapshot.files, { path: relative, name: relative.split("/").at(-1) ?? relative, kind: "file" as const, depth: relative.split("/").length - 1, size: content.length }]
+    .sort((left, right) => left.path.localeCompare(right.path));
+  return { path: relative, content, size: content.length, sha256: await digest(content) };
+}
+
 export async function getToolchains(): Promise<ToolchainDiagnostic[]> {
   if (inDesktop) return invoke<ToolchainDiagnostic[]>("toolchain_diagnostics");
   return [
@@ -93,4 +108,73 @@ export async function executeTask(root: string, taskId: string): Promise<TaskRes
 
 export async function getGitStatus(root: string) {
   return inDesktop ? invoke<string>("git_status", { root }) : "## demo/browser-preview\n M animations/onboarding.pani";
+}
+
+export async function layoutBlueprintGraph(nodes: BlueprintLayoutNode[], edges: BlueprintLayoutEdge[]): Promise<BlueprintLayoutResult> {
+  return inDesktop
+    ? invoke<BlueprintLayoutResult>("layout_blueprint_graph", { nodes, edges })
+    : layoutBlueprintGraphFallback(nodes, edges);
+}
+
+function browserDownload(name: string, type: string, bytes: BlobPart[]) {
+  const url = URL.createObjectURL(new Blob(bytes, { type }));
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = name;
+  anchor.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+function browserFile(): Promise<File | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".pani,text/plain";
+    input.addEventListener("change", () => resolve(input.files?.[0] ?? null), { once: true });
+    input.click();
+  });
+}
+
+export async function importAnimationFile(root: string): Promise<TextFile | null> {
+  if (inDesktop) {
+    const selected = await open({ multiple: false, directory: false, title: "Import an NJC animation", filters: [{ name: "NJC animation source", extensions: ["pani"] }] });
+    if (typeof selected !== "string") return null;
+    return invoke<TextFile>("import_animation_file", { root, sourcePath: selected });
+  }
+  const selected = await browserFile();
+  if (!selected) return null;
+  const safeName = selected.name.replace(/[^A-Za-z0-9._-]/g, "-");
+  if (!safeName.toLowerCase().endsWith(".pani")) throw new Error("Imported animation must use the .pani extension.");
+  return createWorkspaceFile(root, `animations/${safeName}`, await selected.text());
+}
+
+export async function exportAnimationSource(defaultName: string, content: string): Promise<ExportResult | null> {
+  if (!inDesktop) {
+    browserDownload(defaultName, "text/plain;charset=utf-8", [content]);
+    return { path: defaultName, size: new TextEncoder().encode(content).length, durationMs: 0 };
+  }
+  const destination = await save({ title: "Export animation source", defaultPath: defaultName, filters: [{ name: "NJC animation source", extensions: ["pani"] }] });
+  return destination ? invoke<ExportResult>("export_animation_source", { destination, content }) : null;
+}
+
+export async function exportAnimationPackage(defaultName: string, bytes: Uint8Array): Promise<ExportResult | null> {
+  if (!inDesktop) {
+    const copy = new Uint8Array(bytes.byteLength);
+    copy.set(bytes);
+    browserDownload(defaultName, "application/octet-stream", [copy.buffer]);
+    return { path: defaultName, size: bytes.length, durationMs: 0 };
+  }
+  const destination = await save({ title: "Export verified runtime package", defaultPath: defaultName, filters: [{ name: "PANI runtime container", extensions: ["pani.bin"] }] });
+  return destination ? invoke<ExportResult>("export_animation_package", { destination, bytes: Array.from(bytes) }) : null;
+}
+
+export async function exportAnimationVideo(defaultName: string, frames: Uint8Array[], width: number, height: number, fps: number): Promise<ExportResult | null> {
+  if (!inDesktop) throw new Error("Rendered MP4 export requires NJC Studio Desktop and FFmpeg.");
+  const destination = await save({ title: "Export rendered MP4", defaultPath: defaultName, filters: [{ name: "MPEG-4 video", extensions: ["mp4"] }] });
+  return destination ? invoke<ExportResult>("export_animation_video", { destination, frames: frames.map((frame) => Array.from(frame)), width, height, fps }) : null;
+}
+
+export async function onStudioMenu(handler: (command: string) => void): Promise<UnlistenFn> {
+  if (!inDesktop) return () => undefined;
+  return listen<string>("studio-menu", (event) => handler(event.payload));
 }

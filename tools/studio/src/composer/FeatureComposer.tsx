@@ -9,13 +9,14 @@ import { ComposerData } from "./ComposerData";
 import { ComposerDesign } from "./ComposerDesign";
 import { ComposerMotion } from "./ComposerMotion";
 import { ComposerTest } from "./ComposerTest";
+import { layoutBlueprintGraph } from "../lib/desktop";
 import type { ComposerMode, ComposerSession, SimulationOutcome } from "./types";
 import { createSessionRuntime, findComponent, mutateComponent } from "./utilities";
 import "./composer.css";
 
 const language = new FeatureLanguageService();
 const modes: { id: ComposerMode; label: string; icon: string }[] = [
-  { id: "design", label: "Design", icon: "▱" }, { id: "behavior", label: "Behavior", icon: "⌁" }, { id: "data", label: "Data", icon: "◫" },
+  { id: "design", label: "Design", icon: "▱" }, { id: "behavior", label: "Blueprints", icon: "⌁" }, { id: "data", label: "Data", icon: "◫" },
   { id: "motion", label: "Motion", icon: "◇" }, { id: "test", label: "Test", icon: "▷" }, { id: "code", label: "Code", icon: "⌘" },
 ];
 
@@ -31,6 +32,8 @@ export function FeatureComposer() {
   const [selectedMotionId, setSelectedMotionId] = useState("motion.purchase-success");
   const [sourceDraft, setSourceDraft] = useState(() => formatFeatureSource(createPurchaseFeature()));
   const [testResult, setTestResult] = useState<{ passed: boolean; failures: string[] }>();
+  const [arrangingBlueprint, setArrangingBlueprint] = useState(false);
+  const [blueprintLayoutStatus, setBlueprintLayoutStatus] = useState<string>();
   const idCounter = useRef(0);
 
   const commit = (feature: FeatureIR, options: { preserveSourceDraft?: boolean; diagnostics?: ComposerSession["diagnostics"] } = {}) => {
@@ -82,6 +85,38 @@ export function FeatureComposer() {
     Object.assign(keyframe, patch); commit(next);
   };
 
+  const moveBehaviorNode = (nodeId: string, position: { x: number; y: number }) => {
+    const next = structuredClone(session.feature); const node = next.behaviors.flatMap((behavior) => behavior.nodes).find((item) => item.id === nodeId); if (!node) return;
+    node.position = position; commit(next);
+  };
+
+  const autoArrangeBehavior = async () => {
+    const behavior = session.feature.behaviors.find((item) => item.trigger.componentId === selectedId);
+    if (!behavior || arrangingBlueprint) return;
+    setArrangingBlueprint(true);
+    try {
+      const result = await layoutBlueprintGraph(
+        behavior.nodes.map((node) => ({ id: node.id, width: 190, height: 60 })),
+        behavior.edges.map((edge) => ({ fromNodeId: edge.fromNodeId, toNodeId: edge.toNodeId })),
+      );
+      const positionById = new Map(result.positions.map((position) => [position.id, position]));
+      const next = structuredClone(session.feature);
+      const nextBehavior = next.behaviors.find((item) => item.id === behavior.id);
+      if (!nextBehavior) return;
+      for (const node of nextBehavior.nodes) {
+        const position = positionById.get(node.id);
+        if (position) node.position = { x: position.x, y: position.y };
+      }
+      commit(next);
+      const engine = result.engine.startsWith("rust") ? "Rust native" : "TypeScript preview";
+      setBlueprintLayoutStatus(`${engine} · ${result.durationMicros.toLocaleString()} µs${result.cyclic ? " · cycles grouped" : ""}`);
+    } catch (error) {
+      setBlueprintLayoutStatus(error instanceof Error ? error.message : "Blueprint layout failed");
+    } finally {
+      setArrangingBlueprint(false);
+    }
+  };
+
   const replaceRuntime = (outcome: SimulationOutcome, reducedMotion: boolean) => setSession(buildSession(session.feature, outcome, reducedMotion));
   const updateSnapshot = (runtime: ComposerSession["runtime"], snapshot: ComposerSession["snapshot"]) => setSession((current) => current.runtime === runtime ? { ...current, snapshot } : current);
   const startPurchase = async () => { const runtime = session.runtime; try { updateSnapshot(runtime, await runtime.dispatch("BuyButton", "tapped")); } catch { /* Selected feature may not have the demo flow. */ } };
@@ -97,7 +132,7 @@ export function FeatureComposer() {
     <header className="composer-modebar"><div><span className="composer-mark">FC</span><strong>{session.feature.name}</strong><small>Canonical Feature IR · {session.feature.version}</small></div><nav aria-label="Composer modes">{modes.map((item) => <button type="button" key={item.id} aria-label={item.label} className={mode === item.id ? "active" : ""} aria-current={mode === item.id ? "page" : undefined} onClick={() => setMode(item.id)}><i aria-hidden="true">{item.icon}</i>{item.label}</button>)}</nav><aside><span className={session.diagnostics.some((item) => item.severity === "error") ? "invalid" : "valid"}>{session.diagnostics.some((item) => item.severity === "error") ? "! Needs attention" : "✓ Compiled"}</span><b>{(session.compilation.packageBytes.length / 1024).toFixed(1)} KiB</b></aside></header>
     <div className="composer-body">
       {mode === "design" && <ComposerDesign feature={session.feature} snapshot={session.snapshot} selectedId={selectedId} onSelect={setSelectedId} onAdd={addComponent} onProperty={updateProperty} onTrigger={() => void startPurchase()} onConfirm={(accepted) => void confirmPurchase(accepted)} />}
-      {mode === "behavior" && <ComposerBehavior selected={selected} flow={flow} source={formatFeatureSource(session.feature).split("\n").slice(-45).join("\n")} onAddAction={addGuidedAction} />}
+      {mode === "behavior" && <ComposerBehavior selected={selected} flow={flow} source={formatFeatureSource(session.feature).split("\n").slice(-45).join("\n")} onAddAction={addGuidedAction} onMoveNode={moveBehaviorNode} onAutoArrange={autoArrangeBehavior} arranging={arrangingBlueprint} layoutStatus={blueprintLayoutStatus} />}
       {mode === "data" && <ComposerData feature={session.feature} onMockName={updateMockName} />}
       {mode === "motion" && <ComposerMotion feature={session.feature} selectedMotionId={selectedMotionId} onSelectMotion={setSelectedMotionId} onKeyframe={updateKeyframe} />}
       {mode === "test" && <ComposerTest feature={session.feature} snapshot={session.snapshot} outcome={session.outcome} reducedMotion={session.reducedMotion} packageBytes={session.compilation.packageBytes.length} testResult={testResult} onOutcome={(value) => replaceRuntime(value, session.reducedMotion)} onReducedMotion={(value) => replaceRuntime(session.outcome, value)} onStart={() => void startPurchase()} onConfirm={(accepted) => void confirmPurchase(accepted)} onRunTest={() => void runTest()} onReset={() => replaceRuntime(session.outcome, session.reducedMotion)} />}

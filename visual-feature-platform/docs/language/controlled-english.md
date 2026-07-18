@@ -1,53 +1,65 @@
-# Controlled feature English
+# Readable feature language
 
-The temporary `.vfeature` language is a deterministic projection over Feature IR. It reads like instructions but is not natural-language interpretation.
+For the complete top-to-bottom reference covering readable source, every current component/type, NJC Blueprints, node/port semantics, examples, validation, security and implementation boundaries, see [NJC feature language and Blueprints](authoring-language-and-blueprints.md).
 
-## Initial grammar
+The `.vfeature` language is a deterministic, English-forward projection over Feature IR. It deliberately mixes readable phrases with programming concepts such as stable IDs, typed references, state, calls, results, branches and scoped values. It is not free-form natural-language or AI interpretation.
+
+## Authoring styles
+
+NJC Studio exposes the same canonical model through two equivalent authoring styles:
+
+- **Readable Source** for keyboard-first editing with statements such as `Create feature`, `When`, `Set`, `Call`, `If`, `Otherwise`, `Show` and `Play animation`.
+- **NJC Blueprints** for visual node-and-wire editing with schema-filtered nodes, typed ports, inspectable configuration and draggable layout.
+
+Edits in either style update Feature IR and are immediately reflected in Design, Data, Motion and Test. Existing controlled-source files remain accepted for backward compatibility.
+
+## Grammar overview
 
 ```ebnf
-feature       = "feature", Identifier, "version", Semver, "id", String, Newline,
-                requirements, { data | state | screen | behavior | motion } ;
-requirements  = "requires", Newline, Indent, { Capability, Newline },
+feature       = "Create feature", Identifier, "version", Semver,
+                "with id", String, Newline, requirements,
+                { data | state | screen | behavior | motion } ;
+requirements  = "This feature requires:", Newline,
+                Indent, { "capability", Capability, Newline },
                 "entitlement", String, Newline, Dedent ;
-data          = "data", Identifier, "id", String, Newline,
-                Indent, { Identifier, Type, ["?"], "id", String, Newline }, Dedent ;
-screen        = "screen", Identifier, "route", String, "id", String, Newline,
-                component ;
-component     = ComponentKind, Identifier, [content], ["hidden"], "id", String, Newline,
-                [Indent, { component }, Dedent] ;
-behavior      = "when", ComponentReference, "is", Event, Newline,
+data          = "Define data", Identifier, "with id", String, Newline,
+                Indent, { "field", Identifier, "is", Type,
+                "with id", String, Newline }, Dedent ;
+screen        = "Show screen", Identifier, "at route", String,
+                "with id", String, Newline, component ;
+component     = "Add", ComponentKind, Identifier, [content], ["hidden"],
+                "with id", String, Newline, [Indent, { component }, Dedent] ;
+behavior      = "When", ComponentReference, "is", Event, ":", Newline,
                 Indent, { statement }, Dedent ;
 statement     = set | ask | call | show | hide | play | navigate | wait | conditional ;
-conditional   = "if", Condition, Newline, Indent, { statement }, Dedent,
-                ["otherwise", Newline, Indent, { statement }, Dedent] ;
-motion        = "motion", Identifier, "duration", Duration, "id", String, Newline,
-                Indent, { track }, Dedent ;
-track         = "animate", Reference, "id", String, Newline,
-                Indent, { "at", Duration, "value", Number, "using", Interpolation, "id", String, Newline }, Dedent ;
+conditional   = "If", Condition, ":", Newline, Indent, { statement }, Dedent,
+                ["Otherwise:", Newline, Indent, { statement }, Dedent] ;
+motion        = "Define motion", Identifier, "lasting", Duration,
+                "with id", String, Newline, Indent, { track }, Dedent ;
 ```
 
-Indentation is two spaces. Strings are quoted JSON strings. References are declared identifiers. Stable identity annotations are explicit so formatting, movement and rename do not replace object identity.
-
-## Implemented statements
+## Example
 
 ```text
-when BuyButton is tapped
-  set PurchaseStatus = confirming
-  ask "Purchase {SelectedProduct.name}?" using component.purchase-confirmation
-    title "Confirm purchase"
-    confirm "Purchase"
-    cancel "Cancel"
-  if confirmed
-    call connector.purchase.operation.purchase using SelectedProduct as purchase
-    if purchase succeeds
-      play purchase-success
-      show purchase-success
-    otherwise
-      show purchase-error
+When BuyButton is tapped:
+  Set PurchaseStatus to confirming
+  Ask "Purchase {SelectedProduct.name}?" with modal component.purchase-confirmation
+    Use title "Review order"
+    Use confirm button "Purchase"
+    Use cancel button "Cancel"
+  If the reader confirms:
+    Call connector.purchase.operation.purchase with SelectedProduct -> purchase
+    If purchase succeeds:
+      Play animation purchase-success
+      Show purchase-success
+    Otherwise:
+      Show purchase-error
 ```
 
-The language service implements formatting, keywords, symbol indexing and definition ranges. The current source-to-IR parser safely updates declarations already represented by the vertical-slice model. Adding arbitrary new graph structure from source remains a documented next milestone and produces diagnostics when unsupported.
+Indentation is two spaces. Strings are quoted JSON strings. `with id` clauses preserve object identity across formatting, movement and rename operations.
 
-## Safety
+## Safety and current edit boundary
 
-There are no imports, reflection, dynamic native calls, process access, filesystem access, network access, recursion or executable expressions. Network and native operations are declared graph actions resolved through typed host contracts after capability and entitlement checks.
+The language has no imports, reflection, arbitrary native calls, process access, filesystem access, direct networking, recursion or executable expressions. Connector and host operations resolve only through typed runtime contracts after capability and entitlement checks.
+
+The source-to-IR parser currently permits safe changes to existing declarations, component content and confirmation configuration. Visual Blueprints are the supported path for adding graph nodes. Unsupported source-level structural additions produce diagnostics instead of executing or silently changing behavior.

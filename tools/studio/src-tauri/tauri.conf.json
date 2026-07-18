@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Platform Studio",
+  "productName": "NJC Studio",
   "version": "0.1.0",
-  "identifier": "com.mobilemediainteractions.platform.studio",
+  "identifier": "com.mobilemediainteractions.njc.studio",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://127.0.0.1:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Platform Studio",
+        "title": "NJC Studio",
         "label": "main",
         "width": 1512,
         "height": 982,
@@ -30,7 +30,7 @@
     "active": true,
     "targets": "all",
     "category": "DeveloperTool",
-    "shortDescription": "Animation and feature platform development Studio",
-    "longDescription": "A project-aware desktop development environment for the repository animation language, runtime and feature platform."
+    "shortDescription": "New Jersey Courier animation and visual-feature Studio",
+    "longDescription": "NJC Studio is a project-aware desktop development environment for the New Jersey Courier animation language, runtime and visual-feature platform."
   }
 }

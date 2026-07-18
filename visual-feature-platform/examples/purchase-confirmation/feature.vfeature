@@ -1,42 +1,65 @@
-feature PurchaseConfirmation version 1.0.0 id "studio.purchase-confirmation"
+Create feature PurchaseConfirmation version 1.0.0 with id "studio.purchase-confirmation"
 
-requires
-  network
-  secure-storage
-  purchase
-  animation
-  ui-overlays
-  accessibility
-  localization
+This feature requires:
+  capability network
+  capability secure-storage
+  capability purchase
+  capability animation
+  capability ui-overlays
+  capability accessibility
+  capability localization
   entitlement "commerce.purchase"
 
-data Product id "data.product"
-  id text id "field.product.id"
-  name text id "field.product.name"
-  price money id "field.product.price"
-  image image id "field.product.image"
+Define data Product with id "data.product"
+  field id is text with id "field.product.id"
+  field name is text with id "field.product.name"
+  field price is money with id "field.product.price"
+  field image is image with id "field.product.image"
 
-screen ProductScreen route "/products/:productId" id "screen.product"
-  stack PurchaseLayout id "component.purchase-layout"
-    image ProductImage showing "asset://headphones" id "component.product-image"
-    heading ProductTitle showing "Studio Headphones" id "component.product-title"
-    text ProductPrice showing "$129.00" id "component.product-price"
-    button BuyButton saying "Purchase" id "component.buy-button"
-    modal PurchaseConfirmation showing "Confirm purchase" hidden id "component.purchase-confirmation"
+Remember these state values:
+  state SelectedProduct is Product? scoped to feature = {"id":"studio-headphones","name":"Studio Headphones","price":"$129.00","image":"asset://headphones"} with id "state.selected-product"
+  state PurchaseStatus is idle | confirming | purchasing | success | failure scoped to screen = "idle" with id "state.purchase-status"
+  state PurchaseError is text? scoped to screen = null with id "state.purchase-error"
 
-when BuyButton is tapped
-  set PurchaseStatus = confirming
-  ask "Purchase {SelectedProduct.name} for {SelectedProduct.price}?" using component.purchase-confirmation
-    title "Confirm purchase"
-    confirm "Purchase"
-    cancel "Cancel"
-  if confirmed
-    set PurchaseStatus = purchasing
-    call connector.purchase.operation.purchase using SelectedProduct as purchase
-    if purchase succeeds
-      set PurchaseStatus = success
-      play purchase-success
-      show purchase-success
-    otherwise
-      set PurchaseStatus = failure
-      show purchase-error
+Show screen ProductScreen at route "/products/:productId" with id "screen.product"
+  Add stack PurchaseLayout with id "component.purchase-layout"
+    Add image ProductImage showing "asset://headphones" with id "component.product-image"
+    Add heading ProductTitle showing "Studio Headphones" with id "component.product-title"
+    Add text ProductPrice showing "$129.00" with id "component.product-price"
+    Add button BuyButton saying "Purchase" with id "component.buy-button"
+    Add modal PurchaseConfirmation showing "Confirm purchase" hidden with id "component.purchase-confirmation"
+    Add spinner PurchasingState hidden with id "component.purchase-spinner"
+    Add card PurchaseSuccess hidden with id "component.purchase-success"
+    Add card PurchaseError hidden with id "component.purchase-error"
+
+When BuyButton is tapped:
+  Set PurchaseStatus to confirming
+  Ask "Purchase {SelectedProduct.name} for {SelectedProduct.price}?" with modal component.purchase-confirmation
+    Use title "Confirm purchase"
+    Use confirm button "Purchase"
+    Use cancel button "Cancel"
+  If the reader confirms:
+    Set PurchaseStatus to purchasing
+    Show purchase-spinner
+    Call connector.purchase.operation.purchase with SelectedProduct -> purchase
+    If purchase succeeds:
+      Set PurchaseStatus to success
+      Play animation purchase-success
+      Show purchase-success
+    Otherwise:
+      Set PurchaseStatus to failure
+      Show purchase-error
+
+Define motion PurchaseSuccessAnimation lasting 900ms with id "motion.purchase-success"
+  Animate PurchaseSuccess.scale with id "track.success-scale"
+    At 0ms set value to 0.72 using bezier with id "key.success-scale.0"
+    At 520ms set value to 1.08 using spring with id "key.success-scale.1"
+    At 900ms set value to 1 using bezier with id "key.success-scale.2"
+  Animate PurchaseSuccess.opacity with id "track.success-opacity"
+    At 0ms set value to 0 using linear with id "key.success-opacity.0"
+    At 220ms set value to 1 using bezier with id "key.success-opacity.1"
+
+Define motion PurchaseSuccessReduced lasting 120ms with id "motion.purchase-success-reduced"
+  Animate PurchaseSuccess.opacity with id "track.success-opacity-reduced"
+    At 0ms set value to 0 using linear with id "key.reduced.0"
+    At 120ms set value to 1 using linear with id "key.reduced.1"

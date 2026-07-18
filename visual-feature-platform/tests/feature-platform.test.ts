@@ -17,9 +17,9 @@ test("purchase feature has stable typed identities and no semantic errors", () =
   assert.ok(feature.behaviors[0]?.nodes.every((node) => node.id.startsWith("behavior.")));
 });
 
-test("controlled English round trip updates both visual properties and graph configuration", () => {
+test("readable feature English round trip updates both visual properties and graph configuration", () => {
   const feature = createPurchaseFeature(); const source = formatFeatureSource(feature);
-  const edited = source.replace('button BuyButton saying "Purchase"', 'button BuyButton saying "Buy now"').replace('title "Confirm purchase"', 'title "Review order"');
+  const edited = source.replace('Add button BuyButton saying "Purchase"', 'Add button BuyButton saying "Buy now"').replace('Use title "Confirm purchase"', 'Use title "Review order"');
   const parsed = parseFeatureSource(edited, feature);
   assert.equal(parsed.diagnostics.filter((item) => item.severity === "error").length, 0);
   const buy = parsed.feature.screens[0]?.root.children.find((item) => item.name === "BuyButton");
@@ -27,6 +27,18 @@ test("controlled English round trip updates both visual properties and graph con
   assert.equal(buy?.properties.label, "Buy now");
   assert.equal(ask?.config.title, "Review order");
   assert.match(formatFeatureSource(parsed.feature), /saying "Buy now"/);
+  assert.match(source, /Create feature PurchaseConfirmation/);
+  assert.match(source, /When BuyButton is tapped:/);
+  assert.match(source, /Call connector\.purchase\.operation\.purchase with SelectedProduct -> purchase/);
+});
+
+test("legacy controlled source remains backward compatible", () => {
+  const feature = createPurchaseFeature();
+  const legacy = `feature PurchaseConfirmation version 1.0.0 id "studio.purchase-confirmation"\n\nbutton BuyButton saying "Legacy purchase" id "component.buy-button"\nask "Continue?" using component.purchase-confirmation\n  title "Legacy title"\n`;
+  const parsed = parseFeatureSource(legacy, feature);
+  assert.equal(parsed.diagnostics.filter((item) => item.severity === "error").length, 0);
+  assert.equal(parsed.feature.screens[0]?.root.children.find((item) => item.name === "BuyButton")?.properties.label, "Legacy purchase");
+  assert.equal(parsed.feature.behaviors[0]?.nodes.find((item) => item.kind === "ask")?.config.title, "Legacy title");
 });
 
 test("language service formats, completes, indexes symbols and resolves definitions", () => {

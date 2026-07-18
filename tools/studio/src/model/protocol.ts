@@ -57,6 +57,34 @@ export type TaskResult = {
   output: string;
 };
 
+export type BlueprintLayoutNode = {
+  id: string;
+  width?: number;
+  height?: number;
+};
+
+export type BlueprintLayoutEdge = {
+  fromNodeId: string;
+  toNodeId: string;
+};
+
+export type BlueprintLayoutResult = {
+  positions: { id: string; x: number; y: number; layer: number }[];
+  width: number;
+  height: number;
+  durationMicros: number;
+  cyclic: boolean;
+  engine: "rust-scc-layered-v1" | "typescript-scc-layered-v1";
+};
+
+export type ExportResult = {
+  path: string;
+  size: number;
+  frames?: number;
+  durationMs: number;
+  encoder?: string;
+};
+
 export type BottomPanel = "problems" | "output" | "terminal" | "performance" | "git" | "package" | "license" | "devices";
 export type EditorMode = "source" | "visual" | "state" | "composer";
 export type ThemeMode = "dark" | "light";
