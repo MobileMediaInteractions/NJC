@@ -8,6 +8,7 @@ import { get, list } from "@vercel/blob";
 import pack from "tar-stream";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import * as schema from "@harborline/backend/schema";
+import { getPrivateBlobToken, getPublicBlobToken } from "@/lib/blob-storage";
 import { siteConfig } from "@/lib/site";
 
 const gzipAsync = promisify(gzip); const gunzipAsync = promisify(gunzip);
@@ -83,16 +84,41 @@ export async function createPortableBackup(options: { passphrase: string; includ
   const datasets = await readDatasets(); const archive = pack.pack();
   const manifest = { format, createdAt: new Date().toISOString(), site: siteConfig, database: { engine: "PostgreSQL", tables: datasets.map((item) => ({ name: item.name, rows: item.rows.length })) }, security: { encrypted: true, apiKeys: "Raw keys are never stored. Restored hashed keys are disabled and must be rotated.", environment: "Variable names only; secret values excluded." }, media: { included: Boolean(options.includeMedia) } };
   entry(archive, "manifest.json", jsonValue(manifest)); entry(archive, "config/site.json", jsonValue(siteConfig));
-  entry(archive, "config/environment-keys.txt", ["DATABASE_URL", "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "CLERK_SECRET_KEY", "BLOB_READ_WRITE_TOKEN", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN", "API_KEY_PEPPER", "DEVICE_PAIRING_PEPPER", "CRON_SECRET", "EXPO_PUBLIC_API_URL", "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY", "EXPO_PUBLIC_TV_API_URL", "EXPO_PUBLIC_EMPLOYEE_API_URL", "EXPO_PUBLIC_EMPLOYEE_LINK_HOST", "EMPLOYEE_MIN_APP_VERSION", "EMPLOYEE_IOS_INSTALL_URL", "EMPLOYEE_ANDROID_INSTALL_URL", "EMPLOYEE_INTERNAL_INSTALL_URL", "EMPLOYEE_IOS_APP_ID", "EMPLOYEE_ANDROID_PACKAGE", "EMPLOYEE_ANDROID_SHA256_CERT_FINGERPRINTS", "PLATFORM_LICENSE_ISSUER", "PLATFORM_LICENSE_AUDIENCE", "PLATFORM_LICENSE_KEY_ID", "PLATFORM_ED25519_PRIVATE_KEY_PEM", "PLATFORM_ED25519_PUBLIC_KEY_PEM", "PLATFORM_ED25519_PREVIOUS_PUBLIC_KEYS_JSON", "PLATFORM_LICENSE_KEY_PEPPER", "PLATFORM_INSTALLATION_PEPPER"].join("\n"));
+  entry(archive, "config/environment-keys.txt", ["DATABASE_URL", "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY", "CLERK_SECRET_KEY", "BLOB_READ_WRITE_TOKEN", "PRIVATE_BLOB_READ_WRITE_TOKEN", "PRIVATE_BLOB_STORE_ID", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN", "API_KEY_PEPPER", "DEVICE_PAIRING_PEPPER", "CRON_SECRET", "EXPO_PUBLIC_API_URL", "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY", "EXPO_PUBLIC_TV_API_URL", "EXPO_PUBLIC_EMPLOYEE_API_URL", "EXPO_PUBLIC_EMPLOYEE_LINK_HOST", "EMPLOYEE_MIN_APP_VERSION", "EMPLOYEE_IOS_INSTALL_URL", "EMPLOYEE_ANDROID_INSTALL_URL", "EMPLOYEE_INTERNAL_INSTALL_URL", "EMPLOYEE_IOS_APP_ID", "EMPLOYEE_ANDROID_PACKAGE", "EMPLOYEE_ANDROID_SHA256_CERT_FINGERPRINTS", "PLATFORM_LICENSE_ISSUER", "PLATFORM_LICENSE_AUDIENCE", "PLATFORM_LICENSE_KEY_ID", "PLATFORM_ED25519_PRIVATE_KEY_PEM", "PLATFORM_ED25519_PUBLIC_KEY_PEM", "PLATFORM_ED25519_PREVIOUS_PUBLIC_KEYS_JSON", "PLATFORM_LICENSE_KEY_PEPPER", "PLATFORM_INSTALLATION_PEPPER"].join("\n"));
   for (const dataset of datasets) { entry(archive, `database/json/${dataset.name}.json`, jsonValue(dataset.rows)); entry(archive, `database/csv/${dataset.name}.csv`, datasetCsv(dataset)); }
   entry(archive, "database/data.sql", ["BEGIN;", ...datasets.map(datasetSql), "COMMIT;"].join("\n\n"));
   try { const migrationDir = path.join(process.cwd(), "drizzle"); for (const filename of (await readdir(migrationDir)).filter((name) => name.endsWith(".sql")).sort()) entry(archive, `database/migrations/${filename}`, await readFile(path.join(migrationDir, filename))); } catch { entry(archive, "database/migrations/README.txt", "Migration source files were unavailable in this runtime. Use the repository drizzle directory."); }
   let mediaBytes = 0; const maxBytes = options.maxBytes ?? Number(process.env.BACKUP_MAX_BYTES ?? 100_000_000);
-  if (options.includeMedia && process.env.BLOB_READ_WRITE_TOKEN) {
-    let cursor: string | undefined;
-    do { const page = await list({ cursor, limit: 1000 }); for (const blob of page.blobs.filter((item) => !item.pathname.startsWith("backups/"))) { if (mediaBytes + blob.size > maxBytes) throw new Error(`Media exceeds the configured ${maxBytes} byte backup limit`); let body: Buffer; if (blob.pathname.startsWith("employee-chat/")) { const privateBlob = await get(blob.pathname, { access: "private" }); if (!privateBlob || privateBlob.statusCode !== 200) throw new Error(`Could not download private Blob media: ${blob.pathname}`); body = Buffer.from(await new Response(privateBlob.stream).arrayBuffer()); } else { const response = await fetch(blob.url); if (!response.ok) throw new Error(`Could not download Blob media: ${blob.pathname}`); body = Buffer.from(await response.arrayBuffer()); } mediaBytes += body.length; entry(archive, `media/files/${blob.pathname}`, body); entry(archive, `media/metadata/${encodeURIComponent(blob.pathname)}.json`, jsonValue(blob)); } cursor = page.hasMore ? page.cursor : undefined; } while (cursor);
+  if (options.includeMedia) {
+    const stores = [
+      { access: "public" as const, token: getPublicBlobToken() },
+      { access: "private" as const, token: getPrivateBlobToken() },
+    ].filter((store): store is { access: "public" | "private"; token: string } => Boolean(store.token));
+    for (const store of stores) {
+      let cursor: string | undefined;
+      do {
+        const page = await list({ cursor, limit: 1000, token: store.token });
+        for (const blob of page.blobs.filter((item) => !item.pathname.startsWith("backups/"))) {
+          if (mediaBytes + blob.size > maxBytes) throw new Error(`Media exceeds the configured ${maxBytes} byte backup limit`);
+          let body: Buffer;
+          if (store.access === "private") {
+            const privateBlob = await get(blob.pathname, { access: "private", token: store.token });
+            if (!privateBlob || privateBlob.statusCode !== 200) throw new Error(`Could not download private Blob media: ${blob.pathname}`);
+            body = Buffer.from(await new Response(privateBlob.stream).arrayBuffer());
+          } else {
+            const response = await fetch(blob.url);
+            if (!response.ok) throw new Error(`Could not download public Blob media: ${blob.pathname}`);
+            body = Buffer.from(await response.arrayBuffer());
+          }
+          mediaBytes += body.length;
+          entry(archive, `media/files/${store.access}/${blob.pathname}`, body);
+          entry(archive, `media/metadata/${store.access}/${encodeURIComponent(blob.pathname)}.json`, jsonValue({ ...blob, access: store.access }));
+        }
+        cursor = page.hasMore ? page.cursor : undefined;
+      } while (cursor);
+    }
   }
-  entry(archive, "RESTORE.md", `# The New Jersey Courier restore\n\n1. Decrypt and unpack with \`pnpm backup:restore -- --input <file> --output <directory>\`.\n2. Create a PostgreSQL database and apply database/migrations in order.\n3. Apply database/data.sql with psql, or import the JSON/CSV files.\n4. Upload media/files to any object store and update media URLs if the host changes.\n5. Recreate the environment variables listed in config/environment-keys.txt with new secret values.\n6. Rotate every API key, Clerk secret, Blob token, database credential, cron secret and signing pepper.\n7. Run migrations, validation checks and a private preview before changing DNS.\n`);
+  entry(archive, "RESTORE.md", `# The New Jersey Courier restore\n\n1. Decrypt and unpack with \`pnpm backup:restore -- --input <file> --output <directory>\`.\n2. Create a PostgreSQL database and apply database/migrations in order.\n3. Apply database/data.sql with psql, or import the JSON/CSV files.\n4. Upload media/files/public to a public object store and media/files/private to an authenticated private store, then update media URLs if the host changes.\n5. Recreate the environment variables listed in config/environment-keys.txt with new secret values.\n6. Rotate every API key, Clerk secret, Blob token, database credential, cron secret and signing pepper.\n7. Run migrations, validation checks and a private preview before changing DNS.\n`);
   const tar = await collectArchive(archive); const compressed = await gzipAsync(tar, { level: 9 }); const plaintextChecksum = createHash("sha256").update(compressed).digest("hex");
   const salt = randomBytes(16); const iv = randomBytes(12); const key = scryptSync(options.passphrase, salt, 32); const cipher = createCipheriv("aes-256-gcm", key, iv); const ciphertext = Buffer.concat([cipher.update(compressed), cipher.final()]); const header = { format, cipher: "aes-256-gcm", kdf: "scrypt", salt: salt.toString("base64"), iv: iv.toString("base64"), tag: cipher.getAuthTag().toString("base64"), plaintextSha256: plaintextChecksum, createdAt: manifest.createdAt }; const output = Buffer.concat([Buffer.from(`${JSON.stringify(header)}\n`), ciphertext]);
   return { buffer: output, checksumSha256: createHash("sha256").update(output).digest("hex"), manifest, mediaBytes };
