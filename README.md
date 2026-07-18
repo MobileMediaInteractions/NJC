@@ -73,6 +73,8 @@ Create one Vercel project from this repository:
 
 Install Neon, Clerk, Vercel Blob and Upstash for the web project, pull its environment values, and run the committed migrations. Production starts empty; publish verified reporting through Studio instead of seeding preview content. Vercel automatically CDN-caches static deployment assets; public newsroom uploads use Vercel Blob.
 
+The Hobby deployment runs `/api/cron/publish-scheduled` once daily at `10:00 UTC`, which complies with Vercel's Hobby cron limit. Upgrade the project before restoring a more frequent schedule; Studio can still publish time-sensitive stories manually at any time.
+
 When a domain is purchased, attach it to the same project and set `NEXT_PUBLIC_SITE_URL` to the canonical HTTPS URL. A second `apps/cdn` project remains optional; it can first use its own `*.vercel.app` alias and later receive `cdn.<domain>` without code changes.
 
 Copy [`apps/web/.env.example`](apps/web/.env.example) for configuration names. Never commit `.env.local`.
