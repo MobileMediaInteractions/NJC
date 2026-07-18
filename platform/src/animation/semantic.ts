@@ -1,7 +1,11 @@
 import type { AnimationProgram, Diagnostic, ScalarValue } from "./types";
 
-const componentKinds = new Set(["text", "rect", "path", "image", "group", "host"]);
-const sharedProperties = new Set(["opacity", "x", "y", "scale", "rotation", "width", "height", "fill", "color", "cornerRadius", "text", "path", "hostId"]);
+const componentKinds = new Set(["text", "rect", "path", "image", "lottie", "group", "host"]);
+const sharedProperties = new Set([
+  "opacity", "x", "y", "scale", "rotation", "width", "height", "fill", "color",
+  "cornerRadius", "text", "path", "hostId", "source", "fontSize", "fontWeight",
+  "strokeWidth", "pathMode", "lottieData", "lottieFrameRate", "lottieVersion",
+]);
 function diagnostic(code: string, message: string, span: Diagnostic["span"]): Diagnostic { return { severity: "error", code, message, span }; }
 function scalarMatches(type: string, value: ScalarValue) { if (type === "string") return value.kind === "string"; if (type === "boolean") return value.kind === "boolean"; if (type === "color") return value.kind === "color"; if (["number", "integer", "duration", "percentage", "angle"].includes(type)) return value.kind === "number"; return false; }
 export function analyzeAnimation(program: AnimationProgram, targetHostProperties: ReadonlySet<string> = sharedProperties) {

@@ -1,6 +1,6 @@
 import { Image } from "expo-image";
 import { useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -15,7 +15,7 @@ import { EmptyState, LoadingState } from "@/components/states";
 import { type AppColors } from "@/constants/theme";
 import { useAppTheme } from "@/providers/theme-provider";
 import { apiBaseUrl, getStory } from "@/lib/api";
-import { isBookmarked, toggleBookmark } from "@/lib/bookmarks";
+import { getBookmark, toggleBookmark } from "@/lib/bookmarks";
 
 export default function StoryScreen() {
   const { colors } = useAppTheme();
@@ -23,32 +23,88 @@ export default function StoryScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const [story, setStory] = useState<Story | null | undefined>();
   const [saved, setSaved] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!slug) {
+      setStory(null);
+      setNotice("This story link is incomplete.");
+      return;
+    }
+
+    setStory(undefined);
+    const [storyResult, bookmarkResult] = await Promise.allSettled([
+      getStory(slug),
+      getBookmark(slug),
+    ]);
+    const bookmark =
+      bookmarkResult.status === "fulfilled" ? bookmarkResult.value : null;
+    setSaved(Boolean(bookmark));
+
+    if (storyResult.status === "fulfilled") {
+      setStory(storyResult.value ?? bookmark);
+      setNotice(
+        !storyResult.value && bookmark
+          ? "This story is no longer available from the service. Showing the copy saved on this device."
+          : null,
+      );
+      return;
+    }
+
+    setStory(bookmark);
+    setNotice(
+      bookmark
+        ? "Could not refresh this story. Showing the copy saved on this device."
+        : storyResult.reason instanceof Error
+          ? storyResult.reason.message
+          : "This story could not be loaded.",
+    );
+  }, [slug]);
 
   useEffect(() => {
-    if (!slug) return;
-    let active = true;
-    void Promise.all([getStory(slug), isBookmarked(slug)]).then(
-      ([value, bookmarked]) => {
-        if (!active) return;
-        setStory(value);
-        setSaved(bookmarked);
-      },
-    );
-    return () => {
-      active = false;
-    };
-  }, [slug]);
+    const timer = setTimeout(() => void load(), 0);
+    return () => clearTimeout(timer);
+  }, [load]);
+
+  const save = useCallback(async () => {
+    if (!story) return;
+    try {
+      setSaved(await toggleBookmark(story));
+      setNotice(null);
+    } catch {
+      setNotice("The saved-story list could not be updated on this device.");
+    }
+  }, [story]);
+
+  const share = useCallback(async () => {
+    if (!story) return;
+    try {
+      await Share.share({
+        title: story.headline,
+        message: `${story.headline}\n${apiBaseUrl}/story/${story.slug}`,
+      });
+    } catch {
+      setNotice("This story could not be shared from the device.");
+    }
+  }, [story]);
 
   if (story === undefined) return <LoadingState />;
   if (!story)
     return (
       <EmptyState
         title="Story unavailable"
-        body="This story may have moved or is not saved on this device."
+        body={notice ?? "This story may have moved or is not saved on this device."}
+        action="Try again"
+        onPress={() => void load()}
       />
     );
   return (
     <ScrollView style={styles.screen}>
+      {notice ? (
+        <View style={styles.notice}>
+          <Text style={styles.noticeText}>{notice}</Text>
+        </View>
+      ) : null}
       <Image
         source={{ uri: story.image }}
         style={styles.image}
@@ -73,7 +129,7 @@ export default function StoryScreen() {
         <View style={styles.actions}>
           <Pressable
             accessibilityLabel={saved ? "Remove bookmark" : "Save story"}
-            onPress={() => void toggleBookmark(story).then(setSaved)}
+            onPress={() => void save()}
             style={styles.action}
           >
             <AppIcon
@@ -85,12 +141,7 @@ export default function StoryScreen() {
           </Pressable>
           <Pressable
             accessibilityLabel="Share story"
-            onPress={() =>
-              void Share.share({
-                title: story.headline,
-                message: `${story.headline}\n${apiBaseUrl}/story/${story.slug}`,
-              })
-            }
+            onPress={() => void share()}
             style={styles.action}
           >
             <AppIcon name="share-outline" size={19} color={colors.blue} />
@@ -117,6 +168,8 @@ export default function StoryScreen() {
 const makeStyles = (colors: AppColors) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: colors.surface },
+    notice: { backgroundColor: colors.sky, padding: 12 },
+    noticeText: { color: colors.navy, textAlign: "center", fontWeight: "700" },
     image: { width: "100%", height: 245, backgroundColor: colors.sky },
     content: { padding: 20, paddingBottom: 50 },
     labels: { flexDirection: "row", alignItems: "center", gap: 9 },

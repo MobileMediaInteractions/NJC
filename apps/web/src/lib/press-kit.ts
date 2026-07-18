@@ -42,11 +42,11 @@ function hash(body: Buffer | string) {
 }
 
 function publicationFiles(): ArchiveFile[] {
-  const pressContact = process.env.PRESS_CONTACT_EMAIL?.trim() || "Press contact pending public launch";
+  const pressContact = process.env.PRESS_CONTACT_EMAIL?.trim() || "Press contact has not been configured";
   return [
     {
       path: "publication/fact-sheet.txt",
-      body: `${siteConfig.name}\n${siteConfig.tagline}\n\nCoverage model\nA county-first digital newspaper pairing statewide public-service journalism with hyper-local reporting. The launch desk focuses on Middlesex County before expanding statewide.\n\nCore desks\n- Politics & Statehouse\n- Garden State Forum opinions and op-eds\n- Jersey Laurels reader-nominated awards\n- Polling & Public Square, including The Weekly Pulse\n- Jersey Gridiron & Court high-school sports\n\nLaunch status\nPre-launch preview identity. Publication dates, legal entity details and audience figures must be confirmed before external use.\n`,
+      body: `${siteConfig.name}\n${siteConfig.tagline}\n\nCoverage model\nA county-first digital newspaper pairing statewide public-service journalism with hyper-local reporting. The launch desk focuses on Middlesex County before expanding statewide.\n\nCore desks\n- Politics & Statehouse\n- Garden State Forum opinions and op-eds\n- Jersey Laurels reader-nominated awards\n- Polling & Public Square, including The Weekly Pulse\n- Jersey Gridiron & Court high-school sports\n\nPublication status\n${siteConfig.launchStatus}. Publication dates, legal entity details and audience figures must be confirmed by the publisher before external use.\n`,
     },
     {
       path: "publication/boilerplate.txt",
@@ -54,7 +54,7 @@ function publicationFiles(): ArchiveFile[] {
     },
     {
       path: "publication/press-contacts.txt",
-      body: `Media contact\n${pressContact}\n\nThis launch-preview package does not establish a monitored contact unless PRESS_CONTACT_EMAIL has been configured by the publisher.\n`,
+      body: `Media contact\n${pressContact}\n\nA monitored contact exists only when PRESS_CONTACT_EMAIL is configured by the publisher.\n`,
     },
     {
       path: "brand/brand-guide.txt",
@@ -64,7 +64,7 @@ function publicationFiles(): ArchiveFile[] {
 }
 
 function packageTerms() {
-  return `PRESS KIT LICENSE AND USAGE\n\nThe files in this package may be used by news, broadcast, podcast, research and event organizations for accurate editorial identification of ${siteConfig.name}. They may not be used for merchandise, political advocacy, paid endorsements, misleading composites, or standalone redistribution.\n\nDo not alter logos except for proportional sizing. Do not use an asset in a way that implies endorsement, partnership or sponsorship. The editorial illustration is a brand atmosphere image, not documentary evidence of an event. All rights not expressly granted are reserved.\n\nThis pre-launch package contains provisional publication and legal details. Verify names, contacts, statistics and launch claims with the publisher before release.\n`;
+  return `PRESS KIT LICENSE AND USAGE\n\nThe files in this package may be used by news, broadcast, podcast, research and event organizations for accurate editorial identification of ${siteConfig.name}. They may not be used for merchandise, political advocacy, paid endorsements, misleading composites, or standalone redistribution.\n\nDo not alter logos except for proportional sizing. Do not use an asset in a way that implies endorsement, partnership or sponsorship. The editorial illustration is a brand atmosphere image, not documentary evidence of an event. All rights not expressly granted are reserved.\n\nVerify names, contacts, statistics, publication status and legal details with the publisher before release.\n`;
 }
 
 function requestSummary(input: PressKitRequest, requestId: string, generatedAt: string) {

@@ -16,7 +16,7 @@ Roku does not currently expose a documented app-facing light/dark appearance pre
 
 ## Validate and build
 
-The repository build compiles against the placeholder manifest URL so CI can validate the SceneGraph source:
+The repository build compiles with an intentionally unconfigured manifest so CI can validate the SceneGraph source without producing a client that contacts a placeholder host:
 
 ```bash
 pnpm roku:check
@@ -26,10 +26,10 @@ pnpm roku:build
 Create the production ZIP with the real public Vercel origin. The command copies the source to a temporary staging directory and substitutes the URL without changing the committed manifest.
 
 ```bash
-ROKU_API_URL=https://your-project.vercel.app pnpm roku:package
+ROKU_API_URL=https://your-actual-deployment.vercel.app pnpm roku:package
 ```
 
-The result is `apps/roku/dist/harborline-roku.zip`. Its root contains `manifest`, `source/` and `components/`, as required by the Roku Developer Application Installer.
+The result is `apps/roku/dist/njcourier-roku.zip`. Its root contains `manifest`, `source/` and `components/`, as required by the Roku Developer Application Installer. Production packaging rejects placeholder hosts and URLs containing credentials, paths, queries or fragments.
 
 For LAN testing only, an HTTP origin can be packaged with `ROKU_ALLOW_HTTP=1`. Production should always use HTTPS.
 
@@ -38,7 +38,7 @@ For LAN testing only, an HTTP origin can be packaged with `ROKU_ALLOW_HTTP=1`. P
 Enable developer mode on the Roku, record its LAN IP and developer password, then run:
 
 ```bash
-ROKU_API_URL=https://your-project.vercel.app pnpm roku:package
+ROKU_API_URL=https://your-actual-deployment.vercel.app pnpm roku:package
 ROKU_DEV_TARGET=192.168.1.50 DEVPASSWORD='your-device-password' pnpm roku:install
 ```
 

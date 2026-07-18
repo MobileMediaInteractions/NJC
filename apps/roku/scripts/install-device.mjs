@@ -9,7 +9,7 @@ if (!host || !password) {
   process.exit(1);
 }
 
-const archive = resolve(import.meta.dirname, "../dist/harborline-roku.zip");
+const archive = resolve(import.meta.dirname, "../dist/njcourier-roku.zip");
 if (!existsSync(archive)) {
   console.error("Package the production ZIP first with pnpm roku:package.");
   process.exit(1);

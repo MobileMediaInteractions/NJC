@@ -1,8 +1,9 @@
 import { and, desc, eq, gte, ilike, isNull, or } from "drizzle-orm";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import { stories } from "@harborline/backend/schema";
-import { seedStories } from "@/lib/seed";
 import type { Story } from "@/lib/types";
+
+const DEFAULT_STORY_IMAGE = "/assets/editorial/v1/garden-state-engraving.png";
 
 export function normalizeStory(row: typeof stories.$inferSelect): Story {
   const fallbackAuthor = {
@@ -24,7 +25,7 @@ export function normalizeStory(row: typeof stories.$inferSelect): Story {
     publishedAt: (row.publishedAt ?? row.createdAt).toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     readingMinutes: row.readingMinutes,
-    image: row.imageUrl ?? seedStories[0].image,
+    image: row.imageUrl ?? DEFAULT_STORY_IMAGE,
     imageAlt: row.imageAlt ?? "Middlesex County news",
     author: row.authorSnapshot ?? fallbackAuthor,
     tags: row.tags,
@@ -53,11 +54,7 @@ export async function getPublishedStoryIndex(options?: {
   const limit = Math.min(options?.limit ?? 50_000, 50_000);
 
   if (!hasDatabase()) {
-    return seedStories
-      .filter((story) => !story.noIndex && !story.canonicalUrl)
-      .filter((story) => !options?.since || new Date(story.publishedAt) >= options.since)
-      .slice(0, limit)
-      .map(({ slug, headline, publishedAt, updatedAt, noIndex }) => ({ slug, headline, publishedAt, updatedAt, noIndex }));
+    return [];
   }
 
   try {
@@ -89,8 +86,8 @@ export async function getPublishedStoryIndex(options?: {
       noIndex: row.noIndex,
     }));
   } catch (error) {
-    console.error("Falling back to seeded story index", error);
-    return seedStories.filter((story) => !story.noIndex && !story.canonicalUrl).slice(0, limit).map(({ slug, headline, publishedAt, updatedAt, noIndex }) => ({ slug, headline, publishedAt, updatedAt, noIndex }));
+    console.error("Published story index lookup failed", error);
+    return [];
   }
 }
 
@@ -102,17 +99,7 @@ export async function getPublishedStories(options?: {
   const limit = Math.min(options?.limit ?? 24, 100);
 
   if (!hasDatabase()) {
-    return seedStories
-      .filter((story) => !options?.category || story.category === options.category)
-      .filter((story) => {
-        if (!options?.query) return true;
-        const needle = options.query.toLowerCase();
-        return [story.headline, story.dek, story.location, ...story.tags]
-          .join(" ")
-          .toLowerCase()
-          .includes(needle);
-      })
-      .slice(0, limit);
+    return [];
   }
 
   try {
@@ -139,14 +126,14 @@ export async function getPublishedStories(options?: {
 
     return rows.map(normalizeStory);
   } catch (error) {
-    console.error("Falling back to seeded stories", error);
-    return seedStories.slice(0, limit);
+    console.error("Published stories lookup failed", error);
+    return [];
   }
 }
 
 export async function getStoryBySlug(slug: string): Promise<Story | null> {
   if (!hasDatabase()) {
-    return seedStories.find((story) => story.slug === slug) ?? null;
+    return null;
   }
 
   try {
@@ -158,8 +145,8 @@ export async function getStoryBySlug(slug: string): Promise<Story | null> {
 
     return row ? normalizeStory(row) : null;
   } catch (error) {
-    console.error("Falling back to seeded story", error);
-    return seedStories.find((story) => story.slug === slug) ?? null;
+    console.error("Published story lookup failed", error);
+    return null;
   }
 }
 

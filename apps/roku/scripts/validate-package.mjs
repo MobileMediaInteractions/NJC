@@ -8,6 +8,7 @@ for (const key of ["title", "major_version", "minor_version", "build_version", "
   if (!new RegExp(`^${key}=.+$`, "m").test(manifest)) throw new Error(`Missing manifest field: ${key}`);
 }
 if (!manifest.endsWith("\n")) throw new Error("Roku manifest must end with a newline.");
+if (!/^api_url=unconfigured$/m.test(manifest)) throw new Error("The source Roku manifest must remain unconfigured; use package:production to inject a public origin.");
 
 const xmlFiles = [];
 function collect(directory) {
@@ -27,4 +28,5 @@ const source = [
 if (!source.includes('platform: "roku"')) throw new Error("Roku audience presence is missing.");
 if (!source.includes('target: "roku"')) throw new Error("Roku pairing target is missing.");
 if (!source.includes("streamFormat = \"hls\"")) throw new Error("HLS live playback is missing.");
+if (!source.includes('m.apiBase = "unconfigured"')) throw new Error("The Roku runtime must fail safely when its API origin is unconfigured.");
 console.log(`Validated ${xmlFiles.length} SceneGraph components and Roku integration invariants.`);

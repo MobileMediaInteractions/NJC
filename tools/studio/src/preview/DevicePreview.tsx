@@ -1,5 +1,6 @@
 import { AnimationRuntime, type RenderFrame } from "@platform/runtime/animation";
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { LottieSurface } from "../components/LottieSurface";
 import type { DeviceProfile, ThemeMode } from "../model/protocol";
 
 export type PreviewHandle = {
@@ -110,7 +111,11 @@ export const DevicePreview = forwardRef<PreviewHandle, Props>(function DevicePre
                 transformOrigin: "center",
                 borderRadius: cssValue(props.cornerRadius),
               };
-              if (node.kind === "text") common.color = String(props.color ?? (theme === "dark" ? "#f5f2eb" : "#17231f"));
+              if (node.kind === "text") {
+                common.color = String(props.color ?? (theme === "dark" ? "#f5f2eb" : "#17231f"));
+                common.fontSize = cssValue(props.fontSize, 28);
+                common.fontWeight = String(props.fontWeight ?? "600");
+              }
               if (node.kind === "rect") common.background = String(props.fill ?? "#d7ded9");
               if (node.kind === "host") common.background = String(props.fill ?? "#172f28");
               return (
@@ -125,8 +130,10 @@ export const DevicePreview = forwardRef<PreviewHandle, Props>(function DevicePre
                   {node.kind === "text" && <span>{String(props.text ?? node.id)}</span>}
                   {node.kind === "host" && <span>Continue <b>→</b></span>}
                   {node.kind === "path" && (
-                    <svg viewBox="0 0 320 140" aria-hidden="true"><path d={String(props.path ?? "")} fill="none" stroke={String(props.fill ?? "#2d6a55")} strokeWidth="5" strokeLinecap="round" /></svg>
+                    <svg viewBox={`0 0 ${cssValue(props.width, 320)} ${cssValue(props.height, 140)}`} aria-hidden="true"><path d={String(props.path ?? "")} fill={props.pathMode === "stroke" ? "none" : String(props.fill ?? "#2d6a55")} stroke={props.pathMode === "stroke" ? String(props.fill ?? "#2d6a55") : "none"} strokeWidth={cssValue(props.strokeWidth, 1)} strokeLinecap="round" /></svg>
                   )}
+                  {node.kind === "image" && <img src={String(props.source ?? "")} alt="" draggable={false} />}
+                  {node.kind === "lottie" && <LottieSurface encodedData={String(props.lottieData ?? "")} timeMs={frame.timeMs} frameRate={cssValue(props.lottieFrameRate, 30)} label={`Lottie animation ${node.id}`} />}
                 </button>
               );
             })}

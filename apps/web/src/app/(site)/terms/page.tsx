@@ -53,7 +53,7 @@ export default function TermsPage() {
         <p className="mt-3">
           The New Jersey Courier and its licensors retain rights in original reporting,
           design and media. You retain ownership of lawful submissions but grant{" "}
-          <strong>[legal entity]</strong> a worldwide, nonexclusive,
+          the publication operator a worldwide, nonexclusive,
           royalty-free license to host, review, display and distribute them for
           operating and reporting the service. Do not submit confidential tips
           through comments; use the designated secure channel.
@@ -104,9 +104,7 @@ export default function TermsPage() {
       <section>
         <h2 className="text-2xl font-black text-brand-navy">Contact</h2>
         <p className="mt-3">
-          Legal notices: <strong>legal@njcourier.com</strong>,{" "}
-          <strong>[registered street address]</strong>. Both must be replaced
-          before launch. Copyright notices follow the{" "}
+          A monitored legal-notice address has not been established and will be published only after the operating entity and domain are finalized. Copyright notices follow the{" "}
           <Link className="font-bold text-primary underline" href="/dmca">
             DMCA process
           </Link>

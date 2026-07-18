@@ -42,6 +42,7 @@ export async function POST(request: Request) {
     scheduledAt: parsed.data.scheduledAt ? new Date(parsed.data.scheduledAt) : null,
     publishedAt: parsed.data.status === "published" ? now : null,
     readingMinutes: Math.max(1, Math.ceil(parsed.data.body.join(" ").split(/\s+/).length / 220)),
+    authorId: viewer.databaseId ?? null,
     authorSnapshot: { id: viewer.id, name: viewer.name, role: viewer.role, initials: viewer.name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase() },
   }).returning();
   await getDb().insert(storyRevisions).values({ storyId: story.id, version: 1, snapshot: story, note: "Initial newsroom save" });

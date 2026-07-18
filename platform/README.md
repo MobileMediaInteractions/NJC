@@ -17,7 +17,7 @@ Start with `pnpm platform:demo`, `pnpm platform:check`, `pnpm platform:benchmark
 - `src/core`: manifests, semver checks, lifecycle, capability broker, event bus, portable SHA-256.
 - `src/licensing`: canonical receipts, Ed25519 signing/verification, reference service.
 - `src/animation`: language, formatter, compiler, binary verifier, runtime and renderer boundary.
-- `src/importers`: SVG, Lottie/dotLottie compatibility reporting, image validation.
+- `src/importers`: SVG conversion, validated Lottie-to-PANI translation, dotLottie compatibility reporting and image validation.
 - `src/tooling`: editor language service; `tools/lsp` is the stdio LSP server.
 - `schemas`: public JSON/FlatBuffers schemas.
 - `sdks`: tested C ABI plus Swift/Kotlin ownership wrappers.

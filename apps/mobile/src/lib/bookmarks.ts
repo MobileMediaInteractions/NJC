@@ -9,8 +9,12 @@ export async function getBookmarks(): Promise<Story[]> {
   try { return JSON.parse(value) as Story[]; } catch { return []; }
 }
 
+export async function getBookmark(slug: string) {
+  return (await getBookmarks()).find((story) => story.slug === slug) ?? null;
+}
+
 export async function isBookmarked(slug: string) {
-  return (await getBookmarks()).some((story) => story.slug === slug);
+  return Boolean(await getBookmark(slug));
 }
 
 export async function toggleBookmark(story: Story) {

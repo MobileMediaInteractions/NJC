@@ -10,13 +10,8 @@ export default function PrivacyPage() {
       intro="This US-first launch baseline explains The New Jersey Courier’s planned data practices. The real legal entity, address, contacts, vendors and markets must be finalized with qualified counsel before launch."
     >
       <section className="rounded-md border border-amber-400/50 bg-amber-50 p-5 text-amber-950">
-        <h2 className="font-black">Pre-launch legal placeholders</h2>
-        <p className="mt-2">
-          Controller/operator: <strong>[The New Jersey Courier legal entity name]</strong>,{" "}
-          <strong>[registered street address]</strong>. Privacy contact:{" "}
-          <strong>privacy@njcourier.com</strong>. These are fictional
-          placeholders and do not create a real business contact.
-        </p>
+        <h2 className="font-black">Operator details pending</h2>
+        <p className="mt-2">The operating entity, registered address and monitored privacy contact have not been established. The site therefore does not publish invented contact details. Use the privacy-request form for application testing; do not treat this draft policy as launch approval.</p>
       </section>
       <section>
         <h2 className="text-2xl font-black text-brand-navy">
@@ -132,9 +127,8 @@ export default function PrivacyPage() {
         </h2>
         <p className="mt-3">
           Material changes will be dated and, when appropriate, notified
-          in-product. Questions and appeals should go to{" "}
-          <strong>privacy@njcourier.com</strong>; replace this address
-          before launch.
+          in-product. A monitored privacy contact will be published after the operating entity and domain are established. Until then, use the{" "}
+          <Link href="/data-requests" className="font-bold text-primary underline">privacy-request form</Link>.
         </p>
       </section>
     </InfoPage>

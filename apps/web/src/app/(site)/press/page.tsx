@@ -26,7 +26,7 @@ export default function PressPage() {
           <Feature icon={<FileArchive />} title="One organized ZIP" detail="Brand, editorial, publication and request folders use stable filenames." />
           <Feature icon={<FileText />} title="Editorial background" detail="Boilerplate, fact sheet, brand guide and request summary are plain-text and easy to quote or share internally." />
           <Feature icon={<ShieldCheck />} title="Verification built in" detail="A JSON manifest records the request ID, creation time, selected groups, file sizes and SHA-256 checksums." />
-          <div className="border-l-4 border-brand-yellow bg-brand-sky/60 p-5 text-sm leading-6 text-brand-navy"><strong>Launch-preview notice:</strong> Publication contacts and legal details remain provisional until the publisher establishes the final entity and domain.</div>
+          <div className="border-l-4 border-brand-yellow bg-brand-sky/60 p-5 text-sm leading-6 text-brand-navy"><strong>Operational notice:</strong> A monitored press contact and final legal-entity details have not yet been configured. Generated packages disclose that status and do not invent contact information.</div>
         </div>
         <PressKitForm />
       </section>

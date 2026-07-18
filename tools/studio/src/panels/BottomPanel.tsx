@@ -1,8 +1,9 @@
 import type { Diagnostic } from "@platform/runtime/animation";
-import type { BottomPanel as PanelName, Detection, TaskDefinition, ToolchainDiagnostic } from "../model/protocol";
+import type { BottomPanel as PanelName, Detection, ImportConsoleLine, TaskDefinition, ToolchainDiagnostic } from "../model/protocol";
+import { ImportConsole } from "../components/ImportConsole";
 
 const panelNames: { id: PanelName; label: string }[] = [
-  { id: "problems", label: "Problems" }, { id: "output", label: "Output" }, { id: "terminal", label: "Terminal" },
+  { id: "problems", label: "Problems" }, { id: "output", label: "Output" }, { id: "import", label: "Import Console" }, { id: "terminal", label: "Terminal" },
   { id: "performance", label: "Performance" }, { id: "git", label: "Source Control" }, { id: "package", label: "Package" },
   { id: "license", label: "License Lab" }, { id: "devices", label: "Devices" },
 ];
@@ -10,10 +11,12 @@ const panelNames: { id: PanelName; label: string }[] = [
 export type PerformanceSample = { fps: number; frameMs: number; evaluationMs: number; packageBytes: number; compilerMs: number; frames: number };
 export type PackageInfo = { minimumRuntime: string; compilerVersion: string; sourceHash: string; features: string[]; scenes: number; timelines: number; machines: number; packageBytes: number } | null;
 
-export function BottomPanel({ active, diagnostics, output, git, performance, packageInfo, detections, tasks, toolchains, trusted, runningTask, onActive, onTask, onTrust, onRefreshGit }: {
+export function BottomPanel({ active, diagnostics, output, importLines, importRunning, git, performance, packageInfo, detections, tasks, toolchains, trusted, runningTask, onActive, onTask, onTrust, onRefreshGit, onClearImport }: {
   active: PanelName;
   diagnostics: Diagnostic[];
   output: string[];
+  importLines: ImportConsoleLine[];
+  importRunning: boolean;
   git: string;
   performance: PerformanceSample;
   packageInfo: PackageInfo;
@@ -26,6 +29,7 @@ export function BottomPanel({ active, diagnostics, output, git, performance, pac
   onTask: (id: string) => void;
   onTrust: () => void;
   onRefreshGit: () => void;
+  onClearImport: () => void;
 }) {
   return (
     <section className="bottom-panel" aria-label="Development tools">
@@ -35,6 +39,7 @@ export function BottomPanel({ active, diagnostics, output, git, performance, pac
       <div className="bottom-content">
         {active === "problems" && <div className="problems-list">{diagnostics.length === 0 ? <div className="empty-row"><i className="ok-ring">✓</i> No compiler or semantic problems</div> : diagnostics.map((item, index) => <button key={`${item.code}-${index}`}><i className={item.severity} /> <span><b>{item.code}</b>{item.message}</span><small>Ln {item.span.start.line}, Col {item.span.start.column}</small></button>)}</div>}
         {active === "output" && <pre className="output-log">{output.join("\n\n") || "Compile and task output will appear here."}</pre>}
+        {active === "import" && <ImportConsole lines={importLines} running={importRunning} onClear={onClearImport} />}
         {active === "terminal" && <div className="task-terminal"><div className="trust-banner"><div><strong>{trusted ? "Trusted workspace" : "Restricted mode"}</strong><span>{trusted ? "Allow-listed project adapters may execute." : "Inspecting is safe; trust is required before any project command runs."}</span></div>{!trusted && <button onClick={onTrust}>Review & trust</button>}</div><div className="task-grid">{tasks.map((task) => <button key={task.id} onClick={() => onTask(task.id)} disabled={!trusted || Boolean(runningTask)}><span className={`task-kind ${task.kind}`}>{task.kind}</span><strong>{runningTask === task.id ? "Running…" : task.label}</strong><code>{task.program} {task.arguments.join(" ")}</code></button>)}</div></div>}
         {active === "performance" && <div className="metric-grid">{[
           ["FPS", performance.fps.toFixed(0), "Target 60"], ["Frame", `${performance.frameMs.toFixed(2)} ms`, "UI interval"], ["Evaluation", `${performance.evaluationMs.toFixed(3)} ms`, "Runtime"], ["Compiler", `${performance.compilerMs.toFixed(2)} ms`, "Latest build"], ["Package", `${(performance.packageBytes / 1024).toFixed(1)} KB`, "Verified bytes"], ["Frames", String(performance.frames), "This session"],

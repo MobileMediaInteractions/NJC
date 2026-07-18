@@ -47,7 +47,9 @@ pnpm studio:build
 - Read Git status after trust without exposing a general shell.
 - Recover unsaved source from a local snapshot and save with hash-based external-change detection plus atomic replacement.
 - Autosave trusted workspace changes to disk after 1.2 seconds of editing inactivity, retain crash recovery until that write succeeds, and expose Save, Import, autosave and export controls in both the workbench and native macOS File menu.
-- Import editable `.pani` source into the workspace; export editable source, a verifier-compatible `.pani.bin` runtime container, or an actual runtime-rendered MP4 timeline at 24, 30 or 60 FPS.
+- Import editable `.pani` source or validate a Lottie `.json` animation without needing its After Effects project. Supported objects become granular components; advanced parenting, masks, precompositions and shape operators stay intact inside a lossless Lottie component with real-time preview and rendered-video support. Every import includes a per-feature compatibility report.
+- On macOS, launch the focused Finder workflow directly from **Lottie → Import and Translate…** or `Command-Shift-L`; successful translations open as normal editable source.
+- Follow import work in the auto-opening **Import Console**, which streams selection, validation, per-feature compatibility, translation, safe write and deterministic compiler verification stages with timestamps and explicit success/warning/error states.
 - Add typed components through drag-and-drop or keyboard-accessible add controls, attach schema-suggested behavior, inspect the typed graph and edit its controlled-English projection.
 - Author behavior either as readable English-programming source or through draggable NJC Blueprint nodes with typed ports, schema-filtered actions and synchronized node inspection.
 - Auto-arrange large NJC Blueprints with a deterministic, cycle-safe Rust graph engine in the desktop build and a clearly identified contract-compatible browser fallback.

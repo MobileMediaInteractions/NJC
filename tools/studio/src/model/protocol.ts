@@ -39,6 +39,23 @@ export type TextFile = {
   size: number;
 };
 
+export type SelectedTextFile = {
+  name: string;
+  content: string;
+  size: number;
+};
+
+export type ImportProgressEvent = {
+  phase: "select" | "read" | "validate" | "translate" | "write" | "complete";
+  status: "running" | "success" | "warning" | "error" | "info";
+  message: string;
+};
+
+export type ImportConsoleLine = ImportProgressEvent & {
+  id: number;
+  timestamp: string;
+};
+
 export type ToolchainDiagnostic = {
   id: string;
   label: string;
@@ -85,7 +102,7 @@ export type ExportResult = {
   encoder?: string;
 };
 
-export type BottomPanel = "problems" | "output" | "terminal" | "performance" | "git" | "package" | "license" | "devices";
+export type BottomPanel = "problems" | "output" | "import" | "terminal" | "performance" | "git" | "package" | "license" | "devices";
 export type EditorMode = "source" | "visual" | "state" | "composer";
 export type ThemeMode = "dark" | "light";
 export type DeviceProfile = { id: string; label: string; width: number; height: number; radius: number; density: number; safeTop: number };

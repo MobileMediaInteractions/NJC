@@ -1,4 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { getDb, hasDatabase } from "@harborline/backend/db";
+import { users } from "@harborline/backend/schema";
 import type { StaffRole, StudioUser } from "@/lib/types";
 
 const validRoles: StaffRole[] = [
@@ -17,18 +19,6 @@ export function isClerkConfigured() {
 }
 
 export async function getStudioUser(): Promise<StudioUser | null> {
-  if (
-    process.env.CMS_DEMO_MODE === "true" &&
-    process.env.NODE_ENV !== "production"
-  ) {
-    return {
-      id: "demo-admin",
-      name: "Alex Morgan",
-      email: "admin@harborline.local",
-      role: "admin",
-    };
-  }
-
   if (!isClerkConfigured()) return null;
 
   const { userId } = await auth();
@@ -42,7 +32,7 @@ export async function getStudioUser(): Promise<StudioUser | null> {
     ? (metadataRole as StaffRole)
     : "contributor";
 
-  return {
+  const studioUser: StudioUser = {
     id: user.id,
     name:
       user.fullName ??
@@ -52,6 +42,35 @@ export async function getStudioUser(): Promise<StudioUser | null> {
     email: user.primaryEmailAddress?.emailAddress ?? "",
     role,
   };
+
+  if (hasDatabase() && studioUser.email) {
+    try {
+      const [databaseUser] = await getDb()
+        .insert(users)
+        .values({
+          clerkId: studioUser.id,
+          email: studioUser.email,
+          displayName: studioUser.name,
+          role: studioUser.role,
+        })
+        .onConflictDoUpdate({
+          target: users.clerkId,
+          set: {
+            email: studioUser.email,
+            displayName: studioUser.name,
+            role: studioUser.role,
+            isActive: true,
+            updatedAt: new Date(),
+          },
+        })
+        .returning({ id: users.id });
+      studioUser.databaseId = databaseUser?.id;
+    } catch (error) {
+      console.error("Newsroom identity synchronization failed", error);
+    }
+  }
+
+  return studioUser;
 }
 
 export async function canPublish() {

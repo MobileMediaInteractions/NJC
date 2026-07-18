@@ -8,6 +8,6 @@ This repository demonstrates a complete TypeScript/web/headless first milestone,
 - Mobile, employee, TV and Roku production animation integration is not complete. The current web app and standalone playground are the verified hosts.
 - Package v1 lacks embedded assets/chunks/compression/signature/partial loading. TypeScript FlatBuffers accessors are hand-aligned until pinned `flatc` generation lands.
 - Language/runtime v1 lacks many planned types, constraints, accessibility/localization declarations, gestures, advanced easing/composition and native render-thread work.
-- Lottie/dotLottie conversion is compatibility reporting, not a complete converter.
+- Lottie `.json` import uses granular editable translation for its safe subset and lossless embedded-engine playback for valid advanced documents. Embedded advanced internals are editable as source data rather than reconstructed as native PANI layers. Expressions and unresolved companion assets remain blocked; dotLottie archive/manifest extraction is still compatibility reporting only.
 - Playground gaps are listed in its guide.
 - Java, Android SDK and `flatc` are absent locally, so those builds are not claimed.

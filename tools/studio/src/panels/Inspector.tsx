@@ -24,6 +24,7 @@ export function Inspector({ component, inputs, toolchains, onProperty, onInput }
           <details open><summary>Appearance & content</summary><div className="property-grid full">
             {Object.entries(component.properties).filter(([name]) => !["x", "y", "width", "height", "scale", "rotation", "opacity", "cornerRadius", "hostId"].includes(name)).map(([name, value]) => {
               const current = scalarValue(value);
+              if (name === "lottieData" && typeof current === "string") return <div className="embedded-lottie-property" key={name}><span>Embedded Lottie JSON</span><strong>{Math.ceil(current.length * 0.75 / 1_024).toLocaleString()} KiB</strong><small>Lossless source data is editable in the PANI source editor.</small></div>;
               const color = typeof current === "string" && /^#[0-9a-f]{3,8}$/i.test(current);
               return <label key={name}><span>{name}</span>{color && <input className="color-input" type="color" value={current.slice(0, 7)} onChange={(event) => onProperty(name, event.target.value)} />}<input value={String(current)} onChange={(event) => onProperty(name, event.target.value)} /><button title={`Reveal ${name} in source`}>⌁</button></label>;
             })}

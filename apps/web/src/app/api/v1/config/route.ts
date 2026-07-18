@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
+import { hasDatabase } from "@harborline/backend/db";
+import { getLiveSnapshot } from "@/lib/live";
 import { siteConfig } from "@/lib/site";
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
-export function GET() {
+export async function GET() {
+  const databaseAvailable = hasDatabase();
+  const newsletterAvailable = databaseAvailable || Boolean(process.env.NEWSLETTER_WEBHOOK_URL);
+  const live = await getLiveSnapshot();
+
   return NextResponse.json({
     data: {
       name: siteConfig.name,
@@ -16,12 +22,12 @@ export function GET() {
       station: siteConfig.station,
       timezone: siteConfig.timezone,
       navigation: siteConfig.navigation,
-      live: siteConfig.live,
+      live: { enabled: live.isLive, label: live.title, streamUrl: live.streamUrl ?? "" },
       features: {
-        comments: true,
-        newsletters: true,
-        alerts: true,
-        liveVideo: siteConfig.live.enabled,
+        comments: databaseAvailable,
+        newsletters: newsletterAvailable,
+        alerts: databaseAvailable,
+        liveVideo: live.isLive && Boolean(live.streamUrl),
         weather: true,
       },
     },

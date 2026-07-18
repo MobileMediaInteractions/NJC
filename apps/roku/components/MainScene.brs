@@ -54,7 +54,7 @@ sub init()
   if registry.Exists("deviceToken") then m.accessToken = registry.Read("deviceToken")
   applyTheme()
 
-  if Instr(1, m.apiBase, ".example") > 0
+  if m.apiBase = "" or m.apiBase = "unconfigured" or Instr(1, m.apiBase, ".example") > 0 or Instr(1, m.apiBase, "your-project.vercel.app") > 0
     m.statusLabel.text = "Setup required: package this app with the public Courier API URL."
     m.heroHeadline.text = "Connect this Roku build to the Courier"
     m.heroDek.text = "See apps/roku/README.md for the one-command production packaging workflow."

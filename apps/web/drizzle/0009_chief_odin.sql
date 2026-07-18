@@ -1,0 +1,1 @@
+ALTER TABLE "stories" ALTER COLUMN "location" SET DEFAULT 'Middlesex County';

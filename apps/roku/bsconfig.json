@@ -5,7 +5,7 @@
     "source/**/*",
     "components/**/*"
   ],
-  "outFile": "dist/harborline-roku.zip",
+  "outFile": "dist/njcourier-roku.zip",
   "stagingFolderPath": "dist/staging",
   "createPackage": true,
   "retainStagingFolder": false,

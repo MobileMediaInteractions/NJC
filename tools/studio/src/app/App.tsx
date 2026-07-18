@@ -9,14 +9,15 @@ import { Inspector } from "../panels/Inspector";
 import { BottomPanel, type PackageInfo, type PerformanceSample } from "../panels/BottomPanel";
 import { VisualCanvas } from "../canvas/VisualCanvas";
 import { useDocumentHistory } from "../hooks/use-document-history";
-import { chooseWorkspace, createWorkspaceFile, defaultWorkspace, executeTask, exportAnimationPackage, exportAnimationSource, exportAnimationVideo, getGitStatus, getToolchains, importAnimationFile, inspectWorkspace, onStudioMenu, readWorkspaceFile, trustWorkspace, writeWorkspaceFile } from "../lib/desktop";
+import { chooseWorkspace, createWorkspaceFile, defaultWorkspace, executeTask, exportAnimationPackage, exportAnimationSource, exportAnimationVideo, getGitStatus, getToolchains, importAnimationFile, importLottieFile, inspectWorkspace, onStudioMenu, readWorkspaceFile, trustWorkspace, writeWorkspaceFile, type AnimationImportOutcome } from "../lib/desktop";
 import { updateComponentProperty, updateKeyframe } from "../lib/structured-edits";
-import type { BottomPanel as BottomPanelName, DeviceProfile, EditorMode, TextFile, ThemeMode, ToolchainDiagnostic, WorkspaceSnapshot } from "../model/protocol";
+import type { BottomPanel as BottomPanelName, DeviceProfile, EditorMode, ImportConsoleLine, ImportProgressEvent, TextFile, ThemeMode, ToolchainDiagnostic, WorkspaceSnapshot } from "../model/protocol";
 import demoSource from "../demo/onboarding.pani?raw";
 import { FeatureComposer } from "../composer/FeatureComposer";
 import { CommandPalette, type StudioCommand } from "../components/CommandPalette";
 import { NewAnimationDialog } from "../components/NewAnimationDialog";
 import { ExportDialog, type AnimationExportKind } from "../components/ExportDialog";
+import { ImportReportDialog } from "../components/ImportReportDialog";
 import { createAnimationSource, type AnimationTemplateId } from "../lib/animation-templates";
 import { renderAnimationVideoFrames } from "../lib/animation-video";
 
@@ -66,6 +67,9 @@ export default function App() {
   const [initialExportKind, setInitialExportKind] = useState<AnimationExportKind>("source");
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState<string | null>(null);
+  const [importOutcome, setImportOutcome] = useState<AnimationImportOutcome | null>(null);
+  const [importLines, setImportLines] = useState<ImportConsoleLine[]>([]);
+  const [importRunning, setImportRunning] = useState(false);
   const [autosaveEnabled, setAutosaveEnabled] = useState(() => {
     try { return localStorage.getItem("njc-studio:autosave-enabled") !== "false"; } catch { return true; }
   });
@@ -83,6 +87,7 @@ export default function App() {
   const failedAutosaveSourceRef = useRef<string | null>(null);
   const frameTimes = useRef<number[]>([]);
   const frameCount = useRef(0);
+  const importLineId = useRef(0);
   const [performanceSample, setPerformanceSample] = useState<PerformanceSample>({ fps: 60, frameMs: 16.7, evaluationMs: 0, packageBytes: 0, compilerMs: 0, frames: 0 });
 
   const isAnimation = (file?.path ?? "").endsWith(".pani");
@@ -262,23 +267,45 @@ export default function App() {
     } finally { setCreatingAnimation(false); }
   }, [resetDocument, workspace]);
 
-  const importAnimation = useCallback(async () => {
+  const appendImportProgress = useCallback((event: ImportProgressEvent) => {
+    const timestamp = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+    setImportLines((current) => [...current, { ...event, timestamp, id: ++importLineId.current }].slice(-500));
+  }, []);
+
+  const runImport = useCallback(async (lottieOnly: boolean) => {
     if (!workspace) return;
     if (!workspace.trusted) {
-      setNotice("Trust this workspace before importing an animation.");
+      setNotice(`Trust this workspace before importing ${lottieOnly ? "a Lottie animation" : "an animation"}.`);
       return;
     }
+    setImportLines([]); setImportRunning(true); setBottomPanel("import"); setShowBottom(true);
     try {
-      const imported = await importAnimationFile(workspace.root);
-      if (!imported) return;
+      const outcome = await (lottieOnly ? importLottieFile(workspace.root, appendImportProgress) : importAnimationFile(workspace.root, appendImportProgress));
+      if (!outcome) return;
+      setImportOutcome(outcome);
+      const imported = outcome.file;
+      if (!imported) {
+        setOutput((current) => [...current, `Lottie translation blocked for ${outcome.sourceName}; review the compatibility report.`]);
+        setNotice("Lottie translation stopped; review the compatibility report.");
+        return;
+      }
+      appendImportProgress({ phase: "validate", status: "running", message: "$ pani compile --verify --deterministic" });
+      const importedCompilation = compileSource(imported.content);
+      if (!importedCompilation.result || importedCompilation.error) throw new Error(importedCompilation.error ?? "Generated PANI source did not compile");
+      appendImportProgress({ phase: "validate", status: "success", message: `Compiler verified ${importedCompilation.result.packageBytes.length.toLocaleString()} runtime bytes in ${importedCompilation.duration.toFixed(2)} ms.` });
       const refreshed = await inspectWorkspace(workspace.root);
       setWorkspace(refreshed); setFile(imported); setBaseHash(imported.sha256); setSavedSource(imported.content); resetDocument(imported.content);
       setMode("source"); setSaveState("saved"); setOutput((current) => [...current, `Imported ${imported.path}.`]); setNotice(`Imported ${imported.path}`);
+      appendImportProgress({ phase: "complete", status: "success", message: `READY ${imported.path} · editable code opened.` });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      appendImportProgress({ phase: "complete", status: "error", message: `Import failed: ${message}` });
       setOutput((current) => [...current, `Import failed: ${message}`]); setNotice(`Import failed: ${message}`);
-    }
-  }, [resetDocument, workspace]);
+    } finally { setImportRunning(false); }
+  }, [appendImportProgress, resetDocument, workspace]);
+
+  const importAnimation = useCallback(() => runImport(false), [runImport]);
+  const importLottieAnimation = useCallback(() => runImport(true), [runImport]);
 
   const showExport = useCallback((kind: AnimationExportKind = "source") => {
     if (!isAnimation) { setNotice("Open or create a .pani animation before exporting."); return; }
@@ -371,7 +398,8 @@ export default function App() {
   const commands = useMemo<StudioCommand[]>(() => [
     { id: "new", label: "Animation: Create New", detail: "Create a valid .pani file from a template", shortcut: "⌘ N", run: () => setNewAnimationOpen(true) },
     { id: "workspace", label: "Workspace: Open Folder", detail: "Choose another project folder", run: () => void chooseWorkspace().then((root) => { if (root) return loadWorkspace(root); }) },
-    { id: "import", label: "File: Import Animation", detail: "Copy a .pani source file into this workspace", shortcut: "⇧⌘ I", run: () => void importAnimation() },
+    { id: "import", label: "File: Import or Translate Animation", detail: "Import .pani source or validate and translate Lottie .json", shortcut: "⇧⌘ I", run: () => void importAnimation() },
+    { id: "import-lottie", label: "Lottie: Import and Translate", detail: "Open Finder for a Lottie .json file, validate it, and create editable PANI code", shortcut: "⇧⌘ L", run: () => void importLottieAnimation() },
     { id: "refresh", label: "Workspace: Refresh Explorer", run: () => void refreshWorkspace() },
     { id: "save", label: "File: Save", shortcut: "⌘ S", disabled: !dirty, run: () => void save() },
     { id: "autosave", label: `File: ${autosaveEnabled ? "Disable" : "Enable"} Autosave`, run: () => setAutosaveEnabled((value) => !value) },
@@ -387,7 +415,7 @@ export default function App() {
     { id: "package", label: "View: Animation Package", run: () => { setBottomPanel("package"); setShowBottom(true); } },
     { id: "tasks", label: "View: Workspace Tasks", run: () => { setBottomPanel("terminal"); setShowBottom(true); } },
     { id: "trust", label: "Workspace: Trust This Folder", disabled: !workspace || workspace.trusted, run: () => void trust() },
-  ], [autosaveEnabled, buildCurrent, compilation.result, dirty, importAnimation, isAnimation, loadWorkspace, refreshWorkspace, runPreview, save, showExport, trust, workspace]);
+  ], [autosaveEnabled, buildCurrent, compilation.result, dirty, importAnimation, importLottieAnimation, isAnimation, loadWorkspace, refreshWorkspace, runPreview, save, showExport, trust, workspace]);
 
   useEffect(() => {
     const handleWorkflowShortcut = (event: KeyboardEvent) => {
@@ -395,13 +423,14 @@ export default function App() {
       if (command && event.key.toLowerCase() === "n") { event.preventDefault(); setNewAnimationOpen(true); }
       if (command && event.key.toLowerCase() === "o") { event.preventDefault(); void chooseWorkspace().then((root) => { if (root) return loadWorkspace(root); }); }
       if (command && event.shiftKey && event.key.toLowerCase() === "i") { event.preventDefault(); void importAnimation(); }
+      if (command && event.shiftKey && event.key.toLowerCase() === "l") { event.preventDefault(); void importLottieAnimation(); }
       if (command && event.shiftKey && event.key.toLowerCase() === "e") { event.preventDefault(); showExport("source"); }
       if (command && event.shiftKey && event.key.toLowerCase() === "b") { event.preventDefault(); buildCurrent(); }
       if (command && event.key === "Enter") { event.preventDefault(); runPreview(); }
     };
     window.addEventListener("keydown", handleWorkflowShortcut);
     return () => window.removeEventListener("keydown", handleWorkflowShortcut);
-  }, [buildCurrent, importAnimation, loadWorkspace, runPreview, showExport]);
+  }, [buildCurrent, importAnimation, importLottieAnimation, loadWorkspace, runPreview, showExport]);
 
   useEffect(() => {
     let disposed = false;
@@ -410,6 +439,7 @@ export default function App() {
       if (command === "studio.new-animation") setNewAnimationOpen(true);
       if (command === "studio.open-workspace") void chooseWorkspace().then((root) => { if (root) return loadWorkspace(root); });
       if (command === "studio.import-animation") void importAnimation();
+      if (command === "studio.import-lottie") void importLottieAnimation();
       if (command === "studio.save") void save();
       if (command === "studio.toggle-autosave") setAutosaveEnabled((value) => !value);
       if (command === "studio.export-source") showExport("source");
@@ -417,14 +447,14 @@ export default function App() {
       if (command === "studio.export-mp4") showExport("mp4");
     }).then((cleanup) => { if (disposed) cleanup(); else unlisten = cleanup; });
     return () => { disposed = true; unlisten(); };
-  }, [importAnimation, loadWorkspace, save, showExport]);
+  }, [importAnimation, importLottieAnimation, loadWorkspace, save, showExport]);
 
   return (
     <div className={`studio ${theme} ${showBottom ? "" : "bottom-hidden"} ${mode === "composer" ? "composer-workbench" : ""}`} style={{ "--explorer-width": `${showExplorer ? explorerWidth : 0}px`, "--inspector-width": `${showInspector && mode !== "composer" ? inspectorWidth : 0}px` } as React.CSSProperties}>
       <header className="toolbar">
         <div className="window-mark"><span /><span /><span /></div><button className="project-switcher" onClick={async () => { const root = await chooseWorkspace(); if (root) await loadWorkspace(root); }}><i>NJ</i><span><strong>NJC Studio</strong><small>{workspace?.name ?? "Opening workspace"} · {workspace?.detections[0]?.label ?? "Detecting project"}</small></span><b>⌄</b></button>
         <div className="toolbar-center"><button onClick={buildCurrent} disabled={!isAnimation}>▣ Build</button><button className="primary" onClick={runPreview} disabled={!isAnimation}>▶ Preview</button><span className="toolbar-divider" /><select value={device.id} onChange={(event) => setDevice(devices.find((item) => item.id === event.target.value) ?? devices[0]!)}>{devices.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}</select><button onClick={() => setOrientation((value) => value === "portrait" ? "landscape" : "portrait")} title="Rotate device">↻</button></div>
-        <div className="toolbar-end"><button className="file-action" onClick={() => void save()} disabled={!dirty} title="Save current file">Save</button><button className="file-action" onClick={() => void importAnimation()} title="Import .pani animation">Import</button><button onClick={() => setReducedMotion((value) => !value)} className={reducedMotion ? "active" : ""} title="Reduced motion">◒</button><button onClick={() => setTheme((value) => value === "dark" ? "light" : "dark")} title="Toggle theme">{theme === "dark" ? "☼" : "◐"}</button><button onClick={() => setPaletteOpen(true)} title="Command palette">⌘</button><button className="publish" onClick={() => showExport("source")}>Export</button></div>
+        <div className="toolbar-end"><button className="file-action" onClick={() => void save()} disabled={!dirty} title="Save current file">Save</button><button className="file-action" onClick={() => void importAnimation()} title="Import .pani or translate Lottie .json">Import</button><button onClick={() => setReducedMotion((value) => !value)} className={reducedMotion ? "active" : ""} title="Reduced motion">◒</button><button onClick={() => setTheme((value) => value === "dark" ? "light" : "dark")} title="Toggle theme">{theme === "dark" ? "☼" : "◐"}</button><button onClick={() => setPaletteOpen(true)} title="Command palette">⌘</button><button className="publish" onClick={() => showExport("source")}>Export</button></div>
       </header>
       <div className="activity-bar"><button className={showExplorer ? "active" : ""} onClick={() => setShowExplorer((value) => !value)} title="Explorer">▱</button><button className={mode === "composer" ? "active" : ""} onClick={() => setMode("composer")} title="Visual Feature Composer">◆</button><button onClick={() => { setBottomPanel("git"); setShowBottom(true); }} title="Source control">⑂</button><button onClick={() => { setBottomPanel("devices"); setShowBottom(true); }} title="Devices">▣</button><button onClick={() => { setBottomPanel("license"); setShowBottom(true); }} title="Licensing">◇</button><span /><button onClick={() => setShowInspector((value) => !value)} title="Inspector">⚙</button></div>
       <main className="workspace-grid">
@@ -441,11 +471,12 @@ export default function App() {
         </section>
         {showInspector && mode !== "composer" && <><div className="resize-handle right" onPointerDown={(event) => startResize("right", event)} /><div className="right-sidebar"><DevicePreview ref={preview} packageBytes={compilation.result?.packageBytes ?? null} sceneName={scene?.name ?? "Onboarding"} selectedId={selectedId} device={device} orientation={orientation} theme={theme} reducedMotion={reducedMotion} onSelect={setSelectedId} onFrame={onFrame} onEvent={onRuntimeEvent} /><Inspector component={selectedComponent} inputs={scene?.inputs ?? []} toolchains={toolchains} onProperty={setProperty} onInput={(name, value) => { try { preview.current?.setInput(name, value); } catch (error) { setOutput((current) => [...current, `Input rejected: ${error instanceof Error ? error.message : String(error)}`]); } }} /></div></>}
       </main>
-      {showBottom && <BottomPanel active={bottomPanel} diagnostics={diagnostics} output={output} git={git} performance={performanceSample} packageInfo={packageInfo} detections={workspace?.detections ?? []} tasks={workspace?.tasks ?? []} toolchains={toolchains} trusted={workspace?.trusted ?? false} runningTask={runningTask} onActive={setBottomPanel} onTask={(id) => void runTask(id)} onTrust={() => void trust()} onRefreshGit={() => void refreshGit()} />}
+      {showBottom && <BottomPanel active={bottomPanel} diagnostics={diagnostics} output={output} importLines={importLines} importRunning={importRunning} git={git} performance={performanceSample} packageInfo={packageInfo} detections={workspace?.detections ?? []} tasks={workspace?.tasks ?? []} toolchains={toolchains} trusted={workspace?.trusted ?? false} runningTask={runningTask} onActive={setBottomPanel} onTask={(id) => void runTask(id)} onTrust={() => void trust()} onRefreshGit={() => void refreshGit()} onClearImport={() => !importRunning && setImportLines([])} />}
       <footer className="status-bar"><button onClick={() => { setBottomPanel("git"); setShowBottom(true); }}>⑂ {branch}</button><button className={diagnostics.length ? "status-error" : "status-ok"} onClick={() => { setBottomPanel("problems"); setShowBottom(true); }}>{diagnostics.length ? `× ${diagnostics.length}` : "✓ 0"}</button><span>{workspace?.trusted ? "Trusted" : "Restricted"}</span><button className={saveState === "error" ? "status-error" : ""} onClick={() => setAutosaveEnabled((value) => !value)} title="Toggle disk autosave">{autosaveStatus}</button><span /><button>{mode === "composer" ? "Feature Composer" : scene?.name ?? "No scene"}</button><button>Runtime 0.1.0</button><button>{mode === "composer" || compilation.result ? "License: dev ✓" : "Not compiled"}</button><button>TS + Rust</button><button>{performanceSample.fps.toFixed(0)} FPS</button><button onClick={() => setShowBottom((value) => !value)}>⌃</button></footer>
       <CommandPalette open={paletteOpen} commands={commands} onClose={() => setPaletteOpen(false)} />
       <NewAnimationDialog open={newAnimationOpen} busy={creatingAnimation} onClose={() => setNewAnimationOpen(false)} onCreate={(name, template) => void createAnimation(name, template)} />
       <ExportDialog key={`${initialExportKind}-${exportOpen}`} open={exportOpen} busy={exporting} progress={exportProgress} initialKind={initialExportKind} timelines={scene?.timelines ?? []} selectedTimeline={selectedTimeline} width={orientation === "portrait" ? device.width : device.height} height={orientation === "portrait" ? device.height : device.width} onClose={() => !exporting && setExportOpen(false)} onExport={(kind, timeline, fps) => void handleExport(kind, timeline, fps)} />
+      <ImportReportDialog outcome={importOutcome} onClose={() => setImportOutcome(null)} />
       {!workspace?.trusted && <div className="workspace-trust-banner" role="status"><span><strong>Restricted workspace</strong> Files are readable, but creation, saves and project tasks need your approval.</span><button onClick={() => void trust()}>Trust workspace</button></div>}
       {notice && <div className="studio-notice" role="status"><span>{notice}</span><button onClick={() => setNotice(null)} aria-label="Dismiss notification">×</button></div>}
       {mode !== "composer" && compilation.error && <div className="compile-toast" role="alert"><b>Compilation paused</b><span>{compilation.error.split("\n")[0]}</span><button onClick={() => { setBottomPanel("problems"); setShowBottom(true); }}>View problems</button></div>}

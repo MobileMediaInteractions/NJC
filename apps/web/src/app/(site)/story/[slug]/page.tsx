@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Bookmark, ExternalLink, Link2, Mail, MessageCircle, Share2 } from "lucide-react";
+import { Bookmark, ExternalLink, Link2, Mail, Share2 } from "lucide-react";
 import { AdSlot } from "@/components/ad-slot";
 import { JsonLd } from "@/components/json-ld";
 import { NewsletterForm } from "@/components/newsletter-form";
@@ -97,10 +97,9 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
       </header>
       <figure className="container-news max-w-[76rem]">
         <div className="relative aspect-[16/9] overflow-hidden bg-muted"><Image src={story.image} alt={story.imageAlt} fill priority sizes="100vw" className="object-cover" /></div>
-        <figcaption className="mt-2 text-xs text-muted-foreground">{story.imageAlt}. Launch-preview illustrative image.</figcaption>
+        <figcaption className="mt-2 text-xs text-muted-foreground">{story.imageAlt}</figcaption>
       </figure>
-      <div className="container-news grid max-w-[70rem] gap-10 py-10 lg:grid-cols-[4.25rem_minmax(0,42rem)_1fr]">
-        <aside className="hidden lg:block"><div className="sticky top-4 flex flex-col gap-2"><Button variant="outline" size="icon" aria-label="Open comments"><MessageCircle /></Button><span className="text-center text-[0.65rem] text-muted-foreground">12</span></div></aside>
+      <div className="container-news grid max-w-[65rem] gap-10 py-10 lg:grid-cols-[minmax(0,42rem)_1fr]">
         <div>
           <p className="mb-6 text-xs font-bold uppercase tracking-wider text-brand-blue">{story.location}</p>
           <div className="space-y-6 text-[1.08rem] leading-[1.85] text-foreground/90">{story.body.map((paragraph, index) => <p key={index} className={index === 0 ? "first-letter:float-left first-letter:mr-2 first-letter:text-6xl first-letter:font-black first-letter:leading-[0.85] first-letter:text-brand-blue" : ""}>{paragraph}</p>)}</div>

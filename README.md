@@ -61,13 +61,7 @@ pnpm install
 pnpm dev
 ```
 
-Open `http://localhost:3000`. To review Studio locally without authentication:
-
-```bash
-CMS_DEMO_MODE=true pnpm dev
-```
-
-This bypass is ignored in production.
+Open `http://localhost:3000`. To review Studio locally, connect Clerk in `apps/web/.env.local` and sign in with an approved newsroom account. Studio intentionally has no demo authentication bypass.
 
 ## Vercel deployment
 
@@ -77,7 +71,7 @@ Create one Vercel project from this repository:
 2. Vercel will provide an HTTPS production alias such as `https://new-jersey-courier.vercel.app`, plus unique preview URLs for branches and pull requests.
 3. Leave `NEXT_PUBLIC_SITE_URL` and `NEXT_PUBLIC_ASSET_ORIGIN` unset. The app detects Vercel’s URL and serves assets from `/assets` automatically.
 
-Install Neon, Clerk, Vercel Blob and Upstash for the web project, pull its environment values, run migrations and seed only non-production preview data. Vercel automatically CDN-caches static deployment assets; public newsroom uploads use Vercel Blob.
+Install Neon, Clerk, Vercel Blob and Upstash for the web project, pull its environment values, and run the committed migrations. Production starts empty; publish verified reporting through Studio instead of seeding preview content. Vercel automatically CDN-caches static deployment assets; public newsroom uploads use Vercel Blob.
 
 When a domain is purchased, attach it to the same project and set `NEXT_PUBLIC_SITE_URL` to the canonical HTTPS URL. A second `apps/cdn` project remains optional; it can first use its own `*.vercel.app` alias and later receive `cdn.<domain>` without code changes.
 
@@ -100,7 +94,7 @@ The public `/press` workflow generates a tailored ZIP from the approved brand li
 
 ## Search visibility
 
-The web app includes canonical metadata, `NewsArticle` and publisher structured data, general and Google News sitemaps, RSS, social previews, search-engine verification hooks and CMS-level SEO controls. Indexing is intentionally disabled while fictional preview stories remain; follow the [SEO launch and measurement guide](docs/SEO.md) before enabling it in production.
+The web app includes canonical metadata, `NewsArticle` and publisher structured data, general and Google News sitemaps, RSS, social previews, search-engine verification hooks and CMS-level SEO controls. Indexing remains intentionally disabled until editorial, legal and operational launch review is complete; follow the [SEO launch and measurement guide](docs/SEO.md) before enabling it in production.
 
 ## Verification
 

@@ -1,7 +1,8 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import type { BlueprintLayoutEdge, BlueprintLayoutNode, BlueprintLayoutResult, ExportResult, TaskResult, TextFile, ToolchainDiagnostic, WorkspaceSnapshot } from "../model/protocol";
+import { importLottie, type CompatibilityItem, type LottieImportSummary } from "@platform/runtime/importers";
+import type { BlueprintLayoutEdge, BlueprintLayoutNode, BlueprintLayoutResult, ExportResult, ImportProgressEvent, SelectedTextFile, TaskResult, TextFile, ToolchainDiagnostic, WorkspaceSnapshot } from "../model/protocol";
 import { layoutBlueprintGraphFallback } from "./blueprint-layout";
 import demoSource from "../demo/onboarding.pani?raw";
 import demoManifest from "../demo/licensed-feature.json?raw";
@@ -125,27 +126,99 @@ function browserDownload(name: string, type: string, bytes: BlobPart[]) {
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-function browserFile(): Promise<File | null> {
+function browserFile(accept = ".pani,.json,application/json,text/plain"): Promise<File | null> {
   return new Promise((resolve) => {
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = ".pani,text/plain";
+    input.accept = accept;
     input.addEventListener("change", () => resolve(input.files?.[0] ?? null), { once: true });
     input.click();
   });
 }
 
-export async function importAnimationFile(root: string): Promise<TextFile | null> {
-  if (inDesktop) {
-    const selected = await open({ multiple: false, directory: false, title: "Import an NJC animation", filters: [{ name: "NJC animation source", extensions: ["pani"] }] });
-    if (typeof selected !== "string") return null;
-    return invoke<TextFile>("import_animation_file", { root, sourcePath: selected });
+export type AnimationImportOutcome = {
+  file: TextFile | null;
+  format: "pani" | "lottie";
+  sourceName: string;
+  report: CompatibilityItem[];
+  summary?: LottieImportSummary;
+};
+export type ImportProgressHandler = (event: ImportProgressEvent) => void;
+
+async function publishImportProgress(handler: ImportProgressHandler | undefined, event: ImportProgressEvent) {
+  handler?.(event);
+  if (handler) await new Promise<void>((resolve) => window.setTimeout(resolve, 16));
+}
+
+function translatedName(name: string) {
+  const stem = name.replace(/\.json$/i, "").replace(/[^A-Za-z0-9._-]/g, "-").replace(/^[-.]+|[-.]+$/g, "") || "imported-lottie";
+  return `${stem}.pani`;
+}
+
+async function translateLottieSelection(root: string, selected: SelectedTextFile | File, onProgress?: ImportProgressHandler): Promise<AnimationImportOutcome> {
+  if (!selected.name.toLowerCase().endsWith(".json")) throw new Error("Choose a Lottie .json file.");
+  await publishImportProgress(onProgress, { phase: "read", status: "running", message: `$ lottie read ${selected.name}` });
+  const content = selected instanceof File ? await selected.text() : selected.content;
+  await publishImportProgress(onProgress, { phase: "read", status: "success", message: `Loaded ${new TextEncoder().encode(content).length.toLocaleString()} bytes of bounded UTF-8 JSON.` });
+  await publishImportProgress(onProgress, { phase: "validate", status: "running", message: "$ lottie validate --schema --security --compatibility" });
+  const translated = importLottie(content, { packageName: selected.name.replace(/\.json$/i, ""), sceneName: selected.name.replace(/\.json$/i, ""), sourceName: selected.name });
+  await publishImportProgress(onProgress, { phase: "validate", status: translated.summary.errors ? "error" : "success", message: `Canvas ${translated.summary.width}×${translated.summary.height} · ${translated.summary.frameRate} FPS · ${translated.summary.layers} layers · ${translated.summary.errors} blocking errors.` });
+  for (const item of translated.report) {
+    const status = item.disposition === "unsupported_with_error" ? "error" : item.disposition === "approximated" || item.disposition === "ignored_with_warning" ? "warning" : item.disposition === "fully_supported" ? "success" : "info";
+    await publishImportProgress(onProgress, { phase: item.disposition === "fully_supported" ? "validate" : "translate", status, message: `[${item.source}] ${item.message}` });
   }
-  const selected = await browserFile();
-  if (!selected) return null;
-  const safeName = selected.name.replace(/[^A-Za-z0-9._-]/g, "-");
-  if (!safeName.toLowerCase().endsWith(".pani")) throw new Error("Imported animation must use the .pani extension.");
-  return createWorkspaceFile(root, `animations/${safeName}`, await selected.text());
+  if (!translated.source) {
+    await publishImportProgress(onProgress, { phase: "complete", status: "error", message: "Translation stopped safely. No partial project was written." });
+    return { file: null, format: "lottie", sourceName: selected.name, report: translated.report, summary: translated.summary };
+  }
+  await publishImportProgress(onProgress, { phase: "translate", status: "success", message: `Generated ${translated.summary.components} editable PANI components and deterministic timeline source.` });
+  const destination = `animations/${translatedName(selected.name)}`;
+  await publishImportProgress(onProgress, { phase: "write", status: "running", message: `$ pani write ${destination}` });
+  const file = await createWorkspaceFile(root, destination, translated.source);
+  await publishImportProgress(onProgress, { phase: "write", status: "success", message: `Wrote ${file.size.toLocaleString()} bytes with SHA-256 ${file.sha256.slice(0, 12)}…` });
+  await publishImportProgress(onProgress, { phase: "write", status: "success", message: "Translation and workspace write complete; handing source to the PANI compiler." });
+  return { file, format: "lottie", sourceName: selected.name, report: translated.report, summary: translated.summary };
+}
+
+export async function importLottieFile(root: string, onProgress?: ImportProgressHandler): Promise<AnimationImportOutcome | null> {
+  let selected: SelectedTextFile | File | null;
+  await publishImportProgress(onProgress, { phase: "select", status: "running", message: "$ lottie select --finder --type json" });
+  if (inDesktop) {
+    const path = await open({ multiple: false, directory: false, title: "Select a Lottie animation to validate and translate", filters: [{ name: "Lottie JSON animation", extensions: ["json"] }] });
+    if (typeof path !== "string") { await publishImportProgress(onProgress, { phase: "complete", status: "info", message: "Import cancelled before a file was selected." }); return null; }
+    await publishImportProgress(onProgress, { phase: "select", status: "success", message: `Selected ${path.split("/").at(-1) ?? "Lottie JSON"}.` });
+    selected = await invoke<SelectedTextFile>("read_lottie_file", { sourcePath: path });
+  } else selected = await browserFile(".json,application/json");
+  if (!selected) { await publishImportProgress(onProgress, { phase: "complete", status: "info", message: "Import cancelled before a file was selected." }); return null; }
+  return translateLottieSelection(root, selected, onProgress);
+}
+
+export async function importAnimationFile(root: string, onProgress?: ImportProgressHandler): Promise<AnimationImportOutcome | null> {
+  let selected: SelectedTextFile | File | null;
+  await publishImportProgress(onProgress, { phase: "select", status: "running", message: "$ animation import --finder --type pani,json" });
+  if (inDesktop) {
+    const path = await open({ multiple: false, directory: false, title: "Import an animation or translate Lottie JSON", filters: [{ name: "Editable animation", extensions: ["pani", "json"] }] });
+    if (typeof path !== "string") { await publishImportProgress(onProgress, { phase: "complete", status: "info", message: "Import cancelled before a file was selected." }); return null; }
+    await publishImportProgress(onProgress, { phase: "select", status: "success", message: `Selected ${path.split("/").at(-1) ?? "animation"}.` });
+    if (path.toLowerCase().endsWith(".pani")) {
+      await publishImportProgress(onProgress, { phase: "write", status: "running", message: "$ pani import --copy --no-overwrite" });
+      const file = await invoke<TextFile>("import_animation_file", { root, sourcePath: path });
+      await publishImportProgress(onProgress, { phase: "write", status: "success", message: `Copied ${file.path}; handing source to the PANI compiler.` });
+      return { file, format: "pani", sourceName: file.path.split("/").at(-1) ?? "animation.pani", report: [{ source: "document", disposition: "fully_supported", message: "PANI source copied into this workspace without translation" }] };
+    }
+    selected = await invoke<SelectedTextFile>("read_lottie_file", { sourcePath: path });
+  } else {
+    selected = await browserFile();
+    if (!selected) { await publishImportProgress(onProgress, { phase: "complete", status: "info", message: "Import cancelled before a file was selected." }); return null; }
+    if (selected.name.toLowerCase().endsWith(".pani")) {
+      const safeName = selected.name.replace(/[^A-Za-z0-9._-]/g, "-");
+      await publishImportProgress(onProgress, { phase: "write", status: "running", message: "$ pani import --copy --no-overwrite" });
+      const file = await createWorkspaceFile(root, `animations/${safeName}`, await selected.text());
+      await publishImportProgress(onProgress, { phase: "write", status: "success", message: `Copied ${file.path}; handing source to the PANI compiler.` });
+      return { file, format: "pani", sourceName: selected.name, report: [{ source: "document", disposition: "fully_supported", message: "PANI source copied into this workspace without translation" }] };
+    }
+  }
+  return translateLottieSelection(root, selected, onProgress);
 }
 
 export async function exportAnimationSource(defaultName: string, content: string): Promise<ExportResult | null> {

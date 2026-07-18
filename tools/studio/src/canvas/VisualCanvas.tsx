@@ -1,4 +1,5 @@
 import type { RenderFrame } from "@platform/runtime/animation";
+import { LottieSurface } from "../components/LottieSurface";
 
 export function VisualCanvas({ frame, selectedId, onSelect }: { frame: RenderFrame | null; selectedId: string | null; onSelect: (id: string) => void }) {
   return (
@@ -16,16 +17,18 @@ export function VisualCanvas({ frame, selectedId, onSelect }: { frame: RenderFra
               width: Number(props.width ?? (node.kind === "text" ? 330 : 80)), height: node.kind === "text" ? "auto" : Number(props.height ?? 80),
               opacity: Number(props.opacity ?? 1), transform: `scale(${Number(props.scale ?? 1)})`, borderRadius: Number(props.cornerRadius ?? 0),
               color: String(props.color ?? "#17231f"), background: node.kind === "rect" || node.kind === "host" ? String(props.fill ?? (node.kind === "host" ? "#173e32" : "transparent")) : undefined,
+              fontSize: node.kind === "text" ? Number(props.fontSize ?? 28) : undefined,
+              fontWeight: node.kind === "text" ? String(props.fontWeight ?? "600") : undefined,
             };
             return <button key={node.id} className={`canvas-node ${node.kind} ${selectedId === node.id ? "selected" : ""}`} style={style} onClick={() => onSelect(node.id)} aria-label={`Select ${node.id} on visual canvas`}>
-              {node.kind === "text" ? String(props.text ?? node.id) : node.kind === "host" ? "Continue →" : node.kind === "path" ? <svg viewBox="0 0 320 140"><path d={String(props.path ?? "")} fill="none" stroke={String(props.fill ?? "#2d6a55")} strokeWidth="5" /></svg> : null}
+              {node.kind === "text" ? String(props.text ?? node.id) : node.kind === "host" ? "Continue →" : node.kind === "path" ? <svg viewBox={`0 0 ${Number(props.width ?? 320)} ${Number(props.height ?? 140)}`}><path d={String(props.path ?? "")} fill={props.pathMode === "stroke" ? "none" : String(props.fill ?? "#2d6a55")} stroke={props.pathMode === "stroke" ? String(props.fill ?? "#2d6a55") : "none"} strokeWidth={Number(props.strokeWidth ?? 1)} /></svg> : node.kind === "image" ? <img src={String(props.source ?? "")} alt="" draggable={false} /> : node.kind === "lottie" ? <LottieSurface encodedData={String(props.lottieData ?? "")} timeMs={frame.timeMs} frameRate={Number(props.lottieFrameRate ?? 30)} label={`Lottie animation ${node.id}`} /> : null}
               {selectedId === node.id && <><i className="handle nw" /><i className="handle ne" /><i className="handle sw" /><i className="handle se" /><span className="node-tag">{node.id}</span></>}
             </button>;
           })}
           <div className="canvas-safe top" /><div className="canvas-safe bottom" />
         </div>
       </div>
-      <div className="layers-float"><strong>LAYERS</strong>{frame?.nodes.map((node) => <button className={selectedId === node.id ? "active" : ""} key={node.id} onClick={() => onSelect(node.id)}><span>{node.kind === "text" ? "T" : node.kind === "host" ? "H" : "◇"}</span>{node.id}<small>◉</small></button>)}</div>
+      <div className="layers-float"><strong>LAYERS</strong>{frame?.nodes.map((node) => <button className={selectedId === node.id ? "active" : ""} key={node.id} onClick={() => onSelect(node.id)}><span>{node.kind === "text" ? "T" : node.kind === "host" ? "H" : node.kind === "lottie" ? "L" : "◇"}</span>{node.id}<small>◉</small></button>)}</div>
     </div>
   );
 }

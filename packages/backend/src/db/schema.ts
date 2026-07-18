@@ -100,7 +100,7 @@ export const stories = pgTable(
     body: jsonb("body").$type<string[]>().notNull().default([]),
     categorySlug: text("category_slug").notNull().default("local"),
     categoryLabel: text("category_label").notNull().default("Local"),
-    location: text("location").notNull().default("Harbor County"),
+    location: text("location").notNull().default("Middlesex County"),
     status: storyStatus("status").notNull().default("draft"),
     authorId: uuid("author_id").references(() => users.id, {
       onDelete: "set null",

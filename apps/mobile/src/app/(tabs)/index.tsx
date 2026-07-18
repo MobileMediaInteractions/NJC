@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import type { Story } from "@harborline/contracts";
 import { BrandHeader } from "@/components/brand-header";
-import { LoadingState } from "@/components/states";
+import { EmptyState, LoadingState } from "@/components/states";
 import { StoryCard } from "@/components/story-card";
 import { type AppColors } from "@/constants/theme";
 import { useAppTheme } from "@/providers/theme-provider";
@@ -20,22 +20,44 @@ export default function HomeScreen() {
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
-    const data = await getStories();
-    setStories(data);
-    setLoading(false);
-    setRefreshing(false);
+    try {
+      setStories(await getStories());
+      setError(null);
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error
+          ? loadError.message
+          : "Local coverage could not be loaded.",
+      );
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
 
   useEffect(() => {
     let active = true;
-    void getStories().then((data) => {
-      if (!active) return;
-      setStories(data);
-      setLoading(false);
-    });
+    void (async () => {
+      try {
+        const data = await getStories();
+        if (!active) return;
+        setStories(data);
+        setError(null);
+      } catch (loadError) {
+        if (!active) return;
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Local coverage could not be loaded.",
+        );
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
     return () => {
       active = false;
     };
@@ -53,14 +75,29 @@ export default function HomeScreen() {
           />
         }
       >
-        <View style={styles.alert}>
-          <Text style={styles.alertLabel}>DEVELOPING</Text>
-          <Text style={styles.alertText}>
-            Coastal storm watch begins Tuesday at 6 a.m.
-          </Text>
-        </View>
+        {error && stories.length ? (
+          <View style={styles.notice}>
+            <Text style={styles.noticeText}>
+              Could not refresh. Showing coverage saved on this device.
+            </Text>
+          </View>
+        ) : null}
         {loading ? (
           <LoadingState />
+        ) : error && !stories.length ? (
+          <EmptyState
+            title="Coverage unavailable"
+            body={error}
+            action="Try again"
+            onPress={() => void refresh()}
+          />
+        ) : !stories.length ? (
+          <EmptyState
+            title="No published stories yet"
+            body="New local reporting will appear here after it is published by the newsroom."
+            action="Refresh"
+            onPress={() => void refresh()}
+          />
         ) : (
           <>
             {stories[0] ? <StoryCard story={stories[0]} featured /> : null}
@@ -81,24 +118,12 @@ export default function HomeScreen() {
 const makeStyles = (colors: AppColors) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: colors.background },
-    alert: {
+    notice: {
       backgroundColor: colors.sky,
       paddingHorizontal: 16,
-      paddingVertical: 10,
-      flexDirection: "row",
-      gap: 10,
-      alignItems: "center",
+      paddingVertical: 12,
     },
-    alertLabel: {
-      backgroundColor: colors.yellow,
-      color: colors.brandNavy,
-      fontSize: 9,
-      fontWeight: "900",
-      paddingHorizontal: 7,
-      paddingVertical: 4,
-      letterSpacing: 0.9,
-    },
-    alertText: { color: colors.navy, fontSize: 12, fontWeight: "700", flex: 1 },
+    noticeText: { color: colors.navy, fontSize: 12, fontWeight: "700" },
     section: { padding: 16 },
     kicker: {
       color: colors.red,

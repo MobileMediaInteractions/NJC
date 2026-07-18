@@ -1,46 +1,64 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AlertTriangle, CloudRain, Droplets, Map, Navigation, Wind } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AlertTriangle, CloudRain, Droplets, Wind } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { weatherSeed } from "@/lib/seed";
+import { getWeatherSnapshot } from "@/lib/weather";
 
 export const metadata: Metadata = { title: "Weather" };
+export const revalidate = 900;
 
-export default function WeatherPage() {
+export default async function WeatherPage() {
+  let weather;
+  try {
+    weather = await getWeatherSnapshot();
+  } catch (error) {
+    console.error("Weather page lookup failed", error);
+    return <WeatherUnavailable />;
+  }
+
+  const updated = weather.observedAt
+    ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "America/New_York" }).format(new Date(weather.observedAt))
+    : "recently";
+
   return (
     <div>
       <section className="bg-brand-navy py-10 text-white">
         <div className="container-news">
           <div className="flex flex-col justify-between gap-7 md:flex-row md:items-end">
-            <div><p className="eyebrow text-brand-yellow">The New Jersey Courier Weather</p><h1 className="mt-2 text-5xl font-black tracking-[-0.055em] sm:text-6xl">{weatherSeed.location}</h1><p className="mt-2 text-white/60">Monday, July 13 · Updated 3:14 p.m.</p></div>
-            <Button variant="outline" className="w-fit border-white/25 bg-transparent text-white hover:bg-white hover:text-brand-navy"><Navigation /> Use my location</Button>
+            <div>
+              <p className="eyebrow text-brand-yellow">The New Jersey Courier Weather</p>
+              <h1 className="mt-2 text-5xl font-black tracking-[-0.055em] sm:text-6xl">{weather.location}</h1>
+              <p className="mt-2 text-white/60">Updated {updated} · {weather.source}</p>
+            </div>
+            <Link href="https://www.weather.gov/phi/" className="w-fit border border-white/25 px-4 py-2 text-sm font-bold hover:bg-white hover:text-brand-navy">Official NWS details</Link>
           </div>
           <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_1.5fr]">
-            <div className="flex items-center gap-8"><p className="text-8xl font-black tracking-[-0.08em]">{weatherSeed.temperature}°</p><div><CloudRain className="size-10 text-brand-yellow" /><p className="mt-2 text-xl font-bold">{weatherSeed.condition}</p><p className="mt-1 text-sm text-white/60">Feels like {weatherSeed.feelsLike}°</p></div></div>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <WeatherMetric icon={<CloudRain />} label="High / Low" value={`${weatherSeed.high}° / ${weatherSeed.low}°`} />
-              <WeatherMetric icon={<Wind />} label="Wind" value={weatherSeed.wind} />
-              <WeatherMetric icon={<Droplets />} label="Humidity" value={`${weatherSeed.humidity}%`} />
-              <WeatherMetric icon={<Map />} label="Tide" value="High 9:18a" />
+            <div className="flex items-center gap-8">
+              <p className="text-8xl font-black tracking-[-0.08em]">{weather.temperature}°</p>
+              <div><CloudRain className="size-10 text-brand-yellow" /><p className="mt-2 text-xl font-bold">{weather.condition}</p></div>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <WeatherMetric icon={<CloudRain />} label="24-hour high / low" value={`${weather.high}° / ${weather.low}°`} />
+              <WeatherMetric icon={<Wind />} label="Wind" value={weather.wind} />
+              <WeatherMetric icon={<Droplets />} label="Humidity" value={weather.humidity ? `${weather.humidity}%` : "Unavailable"} />
             </div>
           </div>
         </div>
       </section>
-      {weatherSeed.alert && <section className="bg-brand-yellow py-4 text-brand-navy"><div className="container-news flex items-start gap-3"><AlertTriangle className="mt-0.5 size-5 shrink-0" /><div><p className="font-black uppercase tracking-wide">Coastal storm watch</p><p className="text-sm">{weatherSeed.alert} <Link href="/story/coastal-storm-watch-tuesday-high-tide" className="font-bold underline">See impacts and timing</Link></p></div></div></section>}
+      {weather.alert ? <section className="bg-brand-yellow py-4 text-brand-navy"><div className="container-news flex items-start gap-3"><AlertTriangle className="mt-0.5 size-5 shrink-0" /><div><p className="font-black uppercase tracking-wide">Active weather alert</p><p className="text-sm">{weather.alert}</p></div></div></section> : null}
       <section className="container-news py-10">
         <h2 className="text-3xl font-black tracking-[-0.04em] text-brand-navy">Hour by hour</h2>
-        <div className="mt-6 grid grid-cols-3 gap-px overflow-hidden border bg-border sm:grid-cols-6">{weatherSeed.hourly.map((hour) => <div key={hour.time} className="bg-card p-5 text-center"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{hour.time}</p><CloudRain className="mx-auto my-4 size-6 text-brand-blue" /><p className="text-2xl font-black text-brand-navy">{hour.temperature}°</p><p className="mt-1 text-xs text-muted-foreground">{hour.condition}</p></div>)}</div>
-        <div className="mt-10 grid gap-8 lg:grid-cols-[1.4fr_0.6fr]">
-          <div className="relative min-h-[24rem] overflow-hidden bg-[linear-gradient(145deg,#dbeaf2_0%,#c4dce8_45%,#a9cbdc_100%)] p-8">
-            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(#0a4b78 1px, transparent 1px)", backgroundSize: "18px 18px" }} />
-            <div className="relative"><p className="eyebrow text-brand-blue">Interactive radar placeholder</p><h2 className="mt-2 text-3xl font-black text-brand-navy">Precipitation approaching from the southwest</h2><p className="mt-3 max-w-md text-sm leading-6 text-brand-navy/65">Connect a preferred radar provider before launch. The product surface, alerts and mobile API contract are ready.</p><div className="mt-10 flex items-center gap-2"><span className="h-2 w-16 bg-emerald-400" /><span className="h-2 w-16 bg-yellow-400" /><span className="h-2 w-16 bg-orange-500" /><span className="h-2 w-16 bg-red-600" /></div></div>
-          </div>
-          <Card><CardContent className="p-6"><p className="eyebrow text-brand-blue">7-day outlook</p><div className="mt-4 divide-y">{[["Tue","68°","58°","Rain"],["Wed","75°","60°","Clearing"],["Thu","79°","63°","Sunny"],["Fri","81°","65°","Sunny"],["Sat","77°","62°","Cloudy"]].map(([day,high,low,condition]) => <div key={day} className="grid grid-cols-[3rem_1fr_auto] items-center py-4"><p className="font-bold text-brand-navy">{day}</p><p className="text-sm text-muted-foreground">{condition}</p><p className="font-bold">{high} <span className="font-normal text-muted-foreground">{low}</span></p></div>)}</div></CardContent></Card>
+        <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden border bg-border sm:grid-cols-3 lg:grid-cols-6">
+          {weather.hourly.map((hour, index) => <div key={`${hour.time}-${index}`} className="bg-card p-5 text-center"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{hour.time}</p><CloudRain className="mx-auto my-4 size-6 text-brand-blue" /><p className="text-2xl font-black text-brand-navy">{hour.temperature}°</p><p className="mt-1 text-xs text-muted-foreground">{hour.condition}</p></div>)}
         </div>
+        {weather.daily?.length ? <Card className="mt-10"><CardContent className="p-6"><p className="eyebrow text-brand-blue">Extended outlook</p><div className="mt-4 divide-y">{weather.daily.map((period, index) => <div key={`${period.name}-${index}`} className="grid grid-cols-[7rem_1fr_auto] items-center gap-4 py-4"><p className="font-bold text-brand-navy">{period.name}</p><p className="text-sm text-muted-foreground">{period.condition}</p><p className="font-bold">{period.temperature}°{period.temperatureUnit}</p></div>)}</div></CardContent></Card> : null}
       </section>
     </div>
   );
+}
+
+function WeatherUnavailable() {
+  return <div className="container-news py-24"><div className="mx-auto max-w-2xl border-t-4 border-brand-yellow bg-card p-8 text-center"><AlertTriangle className="mx-auto size-9 text-brand-yellow" /><h1 className="mt-4 text-4xl font-black tracking-[-0.04em] text-brand-navy">Live weather is temporarily unavailable.</h1><p className="mt-4 leading-7 text-muted-foreground">The site does not substitute sample forecasts when the National Weather Service cannot be reached.</p><Link href="https://www.weather.gov/phi/" className="mt-6 inline-flex bg-brand-navy px-5 py-3 text-sm font-bold text-white">Open the National Weather Service</Link></div></div>;
 }
 
 function WeatherMetric({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {

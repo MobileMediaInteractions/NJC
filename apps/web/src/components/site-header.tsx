@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   Bell,
   CloudSun,
@@ -22,8 +23,31 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { siteConfig } from "@/lib/site";
+import type { Story, WeatherSnapshot } from "@harborline/contracts";
 
 export function SiteHeader() {
+  const [weather, setWeather] = useState<WeatherSnapshot | null>(null);
+  const [latestStory, setLatestStory] = useState<Story | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    void Promise.allSettled([
+      fetch("/api/v1/weather").then(async (response) => {
+        if (!response.ok) throw new Error("Weather unavailable");
+        return (await response.json() as { data: WeatherSnapshot }).data;
+      }),
+      fetch("/api/v1/stories?limit=1").then(async (response) => {
+        if (!response.ok) throw new Error("Stories unavailable");
+        return (await response.json() as { data: Story[] }).data[0] ?? null;
+      }),
+    ]).then(([weatherResult, storyResult]) => {
+      if (!active) return;
+      if (weatherResult.status === "fulfilled") setWeather(weatherResult.value);
+      if (storyResult.status === "fulfilled") setLatestStory(storyResult.value);
+    });
+    return () => { active = false; };
+  }, []);
+
   return (
     <header className="bg-card text-card-foreground">
       <a
@@ -84,7 +108,7 @@ export function SiteHeader() {
               <Search className="size-3.5" /> Search
             </Link>
             <Link href="/weather" className="flex shrink-0 items-center gap-1.5 text-[0.69rem] font-bold uppercase tracking-[0.065em] text-white/90 hover:text-brand-yellow">
-              <CloudSun className="size-3.5" /> 81° New Brunswick
+              <CloudSun className="size-3.5" /> {weather ? `${weather.temperature}° ${weather.location.split(",")[0]}` : "Local weather"}
             </Link>
             <span className="hidden h-4 w-px bg-white/20 lg:block" />
             <ThemeMenu />
@@ -95,18 +119,18 @@ export function SiteHeader() {
         </div>
       </nav>
 
-      <div className="border-b bg-secondary/75">
+      {latestStory ? <div className="border-b bg-secondary/75">
         <div className="container-news flex min-h-9 items-center gap-3 overflow-hidden text-[0.72rem]">
-          <span className="shrink-0 font-black uppercase tracking-[0.12em] text-brand-red">Preview</span>
+          <span className="shrink-0 font-black uppercase tracking-[0.12em] text-brand-red">Latest</span>
           <span className="h-3.5 w-px shrink-0 bg-border" />
-          <Link href="/story/middlesex-transit-corridor-plan-enters-public-review" className="truncate font-semibold hover:underline">
-            Sample coverage: Middlesex transit corridor plan enters public review
+          <Link href={`/story/${latestStory.slug}`} className="truncate font-semibold hover:underline">
+            {latestStory.headline}
           </Link>
-          <Link href="/category/public-square" className="ml-auto hidden shrink-0 font-semibold text-brand-blue hover:underline md:block">
-            Vote in The Weekly Pulse
+          <Link href="/latest" className="ml-auto hidden shrink-0 font-semibold text-brand-blue hover:underline md:block">
+            All local coverage
           </Link>
         </div>
-      </div>
+      </div> : null}
     </header>
   );
 }

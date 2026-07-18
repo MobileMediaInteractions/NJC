@@ -2,6 +2,9 @@
   "name": "new-jersey-courier-platform",
   "version": "0.2.0",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
   "packageManager": "pnpm@11.7.0",
   "scripts": {
     "dev": "turbo run dev --filter=@njcourier/web",
@@ -42,7 +45,6 @@
     "db:generate": "pnpm --dir apps/web db:generate",
     "db:migrate": "pnpm --dir apps/web db:migrate",
     "db:push": "pnpm --dir apps/web db:push",
-    "db:seed": "pnpm --dir apps/web db:seed",
     "backup:export": "pnpm --dir apps/web backup:export",
     "backup:restore": "pnpm --dir apps/web backup:restore"
   },

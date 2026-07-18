@@ -14,18 +14,38 @@ export default function LatestScreen() {
   const [query, setQuery] = useState("");
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reload, setReload] = useState(0);
   useEffect(() => {
+    let active = true;
     const handle = setTimeout(() => {
       setLoading(true);
-      void getStories(
-        query ? `q=${encodeURIComponent(query)}&limit=40` : "limit=40",
-      ).then((value) => {
-        setStories(value);
-        setLoading(false);
-      });
+      setStories([]);
+      void (async () => {
+        try {
+          const value = await getStories(
+            query ? `q=${encodeURIComponent(query)}&limit=40` : "limit=40",
+          );
+          if (!active) return;
+          setStories(value);
+          setError(null);
+        } catch (loadError) {
+          if (!active) return;
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : "The latest coverage could not be loaded.",
+          );
+        } finally {
+          if (active) setLoading(false);
+        }
+      })();
     }, 250);
-    return () => clearTimeout(handle);
-  }, [query]);
+    return () => {
+      active = false;
+      clearTimeout(handle);
+    };
+  }, [query, reload]);
   return (
     <View style={styles.screen}>
       <BrandHeader eyebrow="LATEST COVERAGE" />
@@ -42,6 +62,13 @@ export default function LatestScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         {loading ? (
           <LoadingState />
+        ) : error ? (
+          <EmptyState
+            title="Latest coverage unavailable"
+            body={error}
+            action="Try again"
+            onPress={() => setReload((value) => value + 1)}
+          />
         ) : stories.length ? (
           <>
             <Text style={styles.count}>{stories.length} STORIES</Text>
@@ -51,8 +78,12 @@ export default function LatestScreen() {
           </>
         ) : (
           <EmptyState
-            title="No local results"
-            body="Try a broader topic or location."
+            title={query ? "No local results" : "No published stories yet"}
+            body={
+              query
+                ? "Try a broader topic or location."
+                : "New local reporting will appear here after it is published by the newsroom."
+            }
           />
         )}
       </ScrollView>

@@ -14,6 +14,7 @@ use walkdir::WalkDir;
 
 const MAX_ENTRIES: usize = 2_500;
 const MAX_TEXT_BYTES: u64 = 2 * 1024 * 1024;
+const MAX_LOTTIE_BYTES: u64 = 10 * 1024 * 1024;
 const MAX_OUTPUT_BYTES: usize = 512 * 1024;
 const MAX_BLUEPRINT_NODES: usize = 10_000;
 const MAX_BLUEPRINT_EDGES: usize = 50_000;
@@ -78,6 +79,14 @@ struct TextFile {
     path: String,
     content: String,
     sha256: String,
+    size: usize,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SelectedTextFile {
+    name: String,
+    content: String,
     size: usize,
 }
 
@@ -821,7 +830,11 @@ fn import_animation_file(
 ) -> Result<TextFile, String> {
     let source = fs::canonicalize(&source_path)
         .map_err(|error| format!("Cannot open selected animation: {error}"))?;
-    if source.extension().and_then(|value| value.to_str()) != Some("pani") {
+    if !source
+        .extension()
+        .and_then(|value| value.to_str())
+        .is_some_and(|value| value.eq_ignore_ascii_case("pani"))
+    {
         return Err("Imported animation must use the .pani extension".into());
     }
     let metadata = fs::metadata(&source)
@@ -836,6 +849,34 @@ fn import_animation_file(
         .and_then(|value| value.to_str())
         .ok_or("Imported animation needs a valid file name")?;
     create_workspace_file_inner(root, format!("animations/{name}"), content, &state)
+}
+
+#[tauri::command]
+fn read_lottie_file(source_path: String) -> Result<SelectedTextFile, String> {
+    let source = fs::canonicalize(&source_path)
+        .map_err(|error| format!("Cannot open selected Lottie file: {error}"))?;
+    if !source
+        .extension()
+        .and_then(|value| value.to_str())
+        .is_some_and(|value| value.eq_ignore_ascii_case("json"))
+    {
+        return Err("Lottie import requires a .json file".into());
+    }
+    let metadata = fs::metadata(&source)
+        .map_err(|error| format!("Cannot inspect selected Lottie file: {error}"))?;
+    if !metadata.is_file() || metadata.len() > MAX_LOTTIE_BYTES {
+        return Err("Lottie JSON is not a bounded file (10 MiB maximum)".into());
+    }
+    let bytes = fs::read(&source)
+        .map_err(|error| format!("Cannot read selected Lottie file: {error}"))?;
+    let content = String::from_utf8(bytes)
+        .map_err(|_| "Lottie JSON must use UTF-8 encoding".to_string())?;
+    let name = source
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or("Lottie JSON needs a valid file name")?
+        .to_string();
+    Ok(SelectedTextFile { name, size: content.len(), content })
 }
 
 #[tauri::command]
@@ -1171,9 +1212,16 @@ fn main() {
             let import_animation = MenuItem::with_id(
                 app,
                 "studio.import-animation",
-                "Import Animation…",
+                "Import Animation or Lottie JSON…",
                 true,
                 Some("CmdOrCtrl+Shift+I"),
+            )?;
+            let import_lottie = MenuItem::with_id(
+                app,
+                "studio.import-lottie",
+                "Import and Translate…",
+                true,
+                Some("CmdOrCtrl+Shift+L"),
             )?;
             let save = MenuItem::with_id(app, "studio.save", "Save", true, Some("CmdOrCtrl+S"))?;
             let toggle_autosave = MenuItem::with_id(
@@ -1239,6 +1287,12 @@ fn main() {
                     &PredefinedMenuItem::select_all(app, None)?,
                 ],
             )?;
+            let lottie = Submenu::with_items(
+                app,
+                "Lottie",
+                true,
+                &[&import_lottie],
+            )?;
             let view = Submenu::with_items(
                 app,
                 "View",
@@ -1273,6 +1327,7 @@ fn main() {
                 ],
             )?)?;
             menu.append(&file)?;
+            menu.append(&lottie)?;
             menu.append(&edit)?;
             menu.append(&view)?;
             menu.append(&window)?;
@@ -1292,6 +1347,7 @@ fn main() {
             write_workspace_file,
             create_workspace_file,
             import_animation_file,
+            read_lottie_file,
             export_animation_source,
             export_animation_package,
             export_animation_video,
@@ -1350,6 +1406,19 @@ mod tests {
         );
         assert!(created.is_ok());
         assert!(root.join("animations/first-test.pani").is_file());
+    }
+
+    #[test]
+    fn lottie_selection_is_extension_scoped_bounded_utf8() {
+        let directory = tempdir().unwrap();
+        let lottie = directory.path().join("pulse.JSON");
+        fs::write(&lottie, r#"{"v":"5.12.2","w":100,"h":100}"#).unwrap();
+        let selected = read_lottie_file(lottie.to_string_lossy().into_owned()).unwrap();
+        assert_eq!(selected.name, "pulse.JSON");
+        assert!(selected.content.contains("5.12.2"));
+        let wrong_extension = directory.path().join("pulse.txt");
+        fs::write(&wrong_extension, "{}").unwrap();
+        assert!(read_lottie_file(wrong_extension.to_string_lossy().into_owned()).is_err());
     }
 
     #[test]

@@ -1,5 +1,7 @@
 import { AnimationRuntime, type RenderFrame, type RenderNode } from "@platform/runtime/animation";
+import lottie, { type AnimationItem } from "lottie-web/build/player/lottie_light";
 import type { ThemeMode } from "../model/protocol";
+import { decodeEmbeddedLottie } from "./lottie-data";
 
 const maximumVideoFrames = 3_600;
 
@@ -12,6 +14,7 @@ export function videoFrameTimes(durationMs: number, fps: number) {
 }
 
 const imageCache = new Map<string, Promise<HTMLImageElement | null>>();
+type LottieCanvasEntry = { animation: AnimationItem; canvas: HTMLCanvasElement };
 
 function loadImage(source: string) {
   const cached = imageCache.get(source);
@@ -50,7 +53,32 @@ function drawWrappedText(context: CanvasRenderingContext2D, text: string, width:
   lines.slice(0, 8).forEach((value, index) => context.fillText(value, 0, index * 34));
 }
 
-async function drawNode(context: CanvasRenderingContext2D, node: RenderNode, theme: ThemeMode) {
+function lottieCanvas(encodedData: string, cache: Map<string, LottieCanvasEntry>) {
+  const cached = cache.get(encodedData);
+  if (cached) return cached;
+  const animationData = decodeEmbeddedLottie(encodedData);
+  if (!animationData) return null;
+  const sourceWidth = typeof animationData.w === "number" ? animationData.w : 1;
+  const sourceHeight = typeof animationData.h === "number" ? animationData.h : 1;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, sourceWidth); canvas.height = Math.max(1, sourceHeight);
+  const drawingContext = canvas.getContext("2d");
+  if (!drawingContext) return null;
+  const container = document.createElement("div");
+  const animation = lottie.loadAnimation({
+    container,
+    renderer: "canvas",
+    loop: false,
+    autoplay: false,
+    animationData,
+    rendererSettings: { context: drawingContext, clearCanvas: true, progressiveLoad: false, preserveAspectRatio: "xMidYMid meet", dpr: 1 },
+  });
+  const entry = { animation, canvas };
+  cache.set(encodedData, entry);
+  return entry;
+}
+
+async function drawNode(context: CanvasRenderingContext2D, node: RenderNode, theme: ThemeMode, timeMs: number, lottieCache: Map<string, LottieCanvasEntry>) {
   const width = numberProperty(node, "width", node.kind === "text" ? 330 : 80);
   const height = numberProperty(node, "height", node.kind === "text" ? 80 : 80);
   const x = numberProperty(node, "x", 0);
@@ -78,8 +106,15 @@ async function drawNode(context: CanvasRenderingContext2D, node: RenderNode, the
     context.textBaseline = "top";
     drawWrappedText(context, String(node.properties.text ?? node.id), width);
   } else if (node.kind === "path") {
-    context.strokeStyle = String(node.properties.fill ?? "#2d6a55"); context.lineWidth = numberProperty(node, "strokeWidth", 5); context.lineCap = "round";
-    try { context.stroke(new Path2D(String(node.properties.path ?? ""))); } catch { /* Invalid paths are already compiler diagnostics; omit defensively. */ }
+    try {
+      const path = new Path2D(String(node.properties.path ?? ""));
+      if (node.properties.pathMode === "stroke") {
+        context.strokeStyle = String(node.properties.fill ?? "#2d6a55"); context.lineWidth = numberProperty(node, "strokeWidth", 1); context.lineCap = "round";
+        context.stroke(path);
+      } else {
+        context.fillStyle = String(node.properties.fill ?? "#2d6a55"); context.fill(path);
+      }
+    } catch { /* Invalid paths are already compiler diagnostics; omit defensively. */ }
   } else if (node.kind === "image") {
     const source = String(node.properties.source ?? "");
     const image = await loadImage(source);
@@ -88,18 +123,24 @@ async function drawNode(context: CanvasRenderingContext2D, node: RenderNode, the
       context.fillStyle = theme === "dark" ? "#26312c" : "#e1e5e2"; roundedRect(context, 0, 0, width, height, radius); context.fill();
       context.fillStyle = theme === "dark" ? "#9eaaa4" : "#66716b"; context.font = "14px system-ui, sans-serif"; context.fillText("Image", 12, 24);
     }
+  } else if (node.kind === "lottie") {
+    const entry = lottieCanvas(String(node.properties.lottieData ?? ""), lottieCache);
+    if (entry) {
+      entry.animation.goToAndStop(Math.max(0, timeMs) * numberProperty(node, "lottieFrameRate", 30) / 1_000, true);
+      context.drawImage(entry.canvas, 0, 0, width, height);
+    }
   }
   context.restore();
 }
 
-async function framePng(frame: RenderFrame, width: number, height: number, theme: ThemeMode) {
+async function framePng(frame: RenderFrame, width: number, height: number, theme: ThemeMode, lottieCache: Map<string, LottieCanvasEntry>) {
   const canvas = document.createElement("canvas");
   canvas.width = width; canvas.height = height;
   const context = canvas.getContext("2d");
   if (!context) throw new Error("This webview cannot create the 2D canvas required for MP4 export.");
   context.fillStyle = theme === "dark" ? "#101512" : "#f6f1e8";
   context.fillRect(0, 0, width, height);
-  for (const node of frame.nodes) await drawNode(context, node, theme);
+  for (const node of frame.nodes) await drawNode(context, node, theme, frame.timeMs, lottieCache);
   const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error("Could not render an MP4 frame.")), "image/png"));
   return new Uint8Array(await blob.arrayBuffer());
 }
@@ -122,9 +163,14 @@ export async function renderAnimationVideoFrames(options: {
   const times = videoFrameTimes(timeline.durationMs, options.fps);
   runtime.play(requested, 0, "replace");
   const frames: Uint8Array[] = [];
-  for (let index = 0; index < times.length; index += 1) {
-    frames.push(await framePng(runtime.seek(times[index]!, 0), options.width, options.height, options.theme));
-    options.onProgress?.(index + 1, times.length);
+  const lottieCache = new Map<string, LottieCanvasEntry>();
+  try {
+    for (let index = 0; index < times.length; index += 1) {
+      frames.push(await framePng(runtime.seek(times[index]!, 0), options.width, options.height, options.theme, lottieCache));
+      options.onProgress?.(index + 1, times.length);
+    }
+  } finally {
+    for (const entry of lottieCache.values()) entry.animation.destroy();
   }
   return frames;
 }

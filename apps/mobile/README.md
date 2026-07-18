@@ -27,7 +27,7 @@ pnpm mobile:check
 pnpm --dir apps/mobile export:web
 ```
 
-The app remains useful without connected services: published demo coverage, weather, bookmarks and cached content work offline. Accounts, push registration and newsroom quick controls activate when Clerk, EAS and the deployed API are configured.
+The app does not ship fictional news or weather. Previously loaded API responses and user bookmarks remain available offline; first-run news, weather, and live screens show a retryable service state until the deployed API is reachable. Accounts, push registration and newsroom quick controls activate when Clerk, EAS and the deployed API are configured.
 
 The app reports a random installation identifier, platform, version and last-active time for CMS platform totals. Readers can disable this under Account → Privacy and support; disabling removes the corresponding server record when the API is reachable.
 

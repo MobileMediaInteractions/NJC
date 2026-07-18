@@ -13,7 +13,7 @@ export const siteConfig = {
   assetDomain: "Same-origin /assets",
   plannedDomain: "njcourier.com",
   plannedAssetDomain: "cdn.njcourier.com",
-  launchStatus: "preview",
+  launchStatus: "prelaunch",
   timezone: "America/New_York",
   primaryColor: "#173E32",
   accentColor: "#C49545",
@@ -26,11 +26,6 @@ export const siteConfig = {
     { label: "Gridiron & Court", href: "/category/sports" },
     { label: "Jersey Laurels", href: "/category/jersey-laurels" },
   ],
-  social: {
-    instagram: "#",
-    youtube: "#",
-    facebook: "#",
-  },
   monetization: {
     adsEnabled: false,
     membershipEnabled: false,

@@ -61,6 +61,14 @@ export interface WeatherSnapshot {
   humidity: number;
   alert?: string;
   hourly: Array<{ time: string; temperature: number; condition: string }>;
+  daily?: Array<{
+    name: string;
+    temperature: number;
+    temperatureUnit: string;
+    condition: string;
+  }>;
+  observedAt?: string;
+  source?: string;
 }
 
 export interface PublicConfig {

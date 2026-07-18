@@ -4,5 +4,5 @@ major_version=1
 minor_version=0
 build_version=0
 ui_resolutions=fhd
-api_url=https://your-project.vercel.app
+api_url=unconfigured
 supports_input_launch=1
