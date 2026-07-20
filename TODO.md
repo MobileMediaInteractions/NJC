@@ -40,6 +40,17 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 - [ ] Replace remaining placeholder contact, legal-entity, newsroom and distribution details after those decisions are finalized.
 - [ ] Complete a launch-day checklist covering rollback, incident response, editorial escalation, backups and status communication.
 
+## Cross-platform appearance
+
+- [ ] Fix system-theme detection and theme controls on every platform: web, iOS, Android, employee/admin mobile, Apple TV, Android TV and Roku.
+  - The control currently shows only `Theme: System` and then the next theme that the device is not currently using, which does not clearly communicate the active appearance or all available choices.
+  - Keep the saved preference (`System`, `Light` or `Dark`) separate from the effective appearance resolved from the device (`Light` or `Dark`).
+  - When `System` is selected, display both the preference and resolved appearance, such as `System · Dark`.
+  - Make all three modes directly selectable or cycle them in a predictable `System → Light → Dark` order.
+  - React to device appearance changes while the application is open when the platform supports it.
+  - Persist the selection across restarts and synchronize it across a signed-in user's devices where appropriate.
+  - Verify readable colors, imagery, focus states and contrast in every mode on every supported platform.
+
 ## Measurement and advertising — complete last
 
 - [ ] Connect Google Analytics after the final domain, consent behavior and privacy disclosures are approved; validate events without collecting unnecessary personal or sensitive data.
