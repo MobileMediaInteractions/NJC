@@ -5,16 +5,18 @@ import { getDb, hasDatabase } from "@harborline/backend/db";
 import { stories } from "@harborline/backend/schema";
 import { StudioGate } from "@/components/studio/studio-gate";
 import { StudioShell } from "@/components/studio/studio-shell";
+import { StoryDeleteButton } from "@/components/studio/story-delete-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getStudioUser } from "@/lib/auth";
+import { canDeleteStory, getStudioUser } from "@/lib/auth";
 import { siteConfig } from "@/lib/site";
 
 export default async function StudioStoriesPage() {
   const viewer = await getStudioUser();
   if (!viewer) return <StudioGate><></></StudioGate>;
+  const showDeleteActions = canDeleteStory(viewer.role);
 
   let databaseConnected = hasDatabase();
   let rows: Array<typeof stories.$inferSelect> = [];
@@ -43,10 +45,10 @@ export default async function StudioStoriesPage() {
           <CardContent>
             {rows.length ? (
               <Table>
-                <TableHeader><TableRow><TableHead>Headline</TableHead><TableHead>Section</TableHead><TableHead>Owner</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Updated</TableHead></TableRow></TableHeader>
+                <TableHeader><TableRow><TableHead>Headline</TableHead><TableHead>Section</TableHead><TableHead>Owner</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Updated</TableHead>{showDeleteActions ? <TableHead className="w-12"><span className="sr-only">Actions</span></TableHead> : null}</TableRow></TableHeader>
                 <TableBody>{rows.map((story) => {
                   const headline = story.status === "published" ? <Link href={`/story/${story.slug}`} className="font-medium hover:underline">{story.headline}</Link> : <span className="font-medium">{story.headline}</span>;
-                  return <TableRow key={story.id}><TableCell>{headline}</TableCell><TableCell className="text-muted-foreground">{story.categoryLabel}</TableCell><TableCell>{story.authorSnapshot?.name ?? "Unassigned"}</TableCell><TableCell><Badge variant={story.status === "review" ? "default" : "secondary"} className="capitalize">{story.status}</Badge></TableCell><TableCell className="text-right text-xs text-muted-foreground">{formatUpdated(story.updatedAt)}</TableCell></TableRow>;
+                  return <TableRow key={story.id}><TableCell>{headline}</TableCell><TableCell className="text-muted-foreground">{story.categoryLabel}</TableCell><TableCell>{story.authorSnapshot?.name ?? "Unassigned"}</TableCell><TableCell><Badge variant={story.status === "review" ? "default" : "secondary"} className="capitalize">{story.status}</Badge></TableCell><TableCell className="text-right text-xs text-muted-foreground">{formatUpdated(story.updatedAt)}</TableCell>{showDeleteActions ? <TableCell><StoryDeleteButton id={story.id} headline={story.headline} published={story.status === "published"} /></TableCell> : null}</TableRow>;
                 })}</TableBody>
               </Table>
             ) : (

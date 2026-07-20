@@ -15,6 +15,10 @@ export function resolveStaffRole(value: unknown): StaffRole | null {
   return validRoles.includes(value as StaffRole) ? (value as StaffRole) : null;
 }
 
+export function canDeleteStory(role: StaffRole) {
+  return role === "admin" || role === "editor";
+}
+
 export function isClerkConfigured() {
   return Boolean(
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&
