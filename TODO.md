@@ -37,16 +37,23 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 ## Domains and launch
 
 - [ ] Connect the final publication domain and CDN subdomain, then verify redirects, canonical URLs, feeds, sitemaps, email links, Universal Links and Android App Links.
+- [ ] Connect the final domain to Google Search Console so Google can discover and index the publication.
+  - Verify domain ownership using the DNS method after the domain is selected.
+  - Submit the production XML sitemap and news sitemap, and confirm robots, canonical URLs and structured news metadata use the final domain.
+  - Request indexing for key launch pages and monitor indexing coverage, crawl errors, removals, Core Web Vitals and search performance.
+  - Treat Search Console as an indexing and diagnostics tool; do not claim or guarantee a particular search-result ranking.
 - [ ] Replace remaining placeholder contact, legal-entity, newsroom and distribution details after those decisions are finalized.
 - [ ] Complete a launch-day checklist covering rollback, incident response, editorial escalation, backups and status communication.
 
 ## Cross-platform appearance
 
 - [ ] Fix system-theme detection and theme controls on every platform: web, iOS, Android, employee/admin mobile, Apple TV, Android TV and Roku.
-  - The control currently shows only `Theme: System` and then the next theme that the device is not currently using, which does not clearly communicate the active appearance or all available choices.
   - Keep the saved preference (`System`, `Light` or `Dark`) separate from the effective appearance resolved from the device (`Light` or `Dark`).
   - When `System` is selected, display both the preference and resolved appearance, such as `System · Dark`.
-  - Make all three modes directly selectable or cycle them in a predictable `System → Light → Dark` order.
+  - Make the quick theme control adaptive and skip the explicit mode that matches the device's current system appearance.
+  - If System resolves to Dark, toggle only `System (Dark) → Light → System (Dark)`; do not add a redundant Dark step.
+  - If System resolves to Light, toggle only `System (Light) → Dark → System (Light)`; do not add a redundant Light step.
+  - Recalculate the opposing quick-toggle option when the device's system appearance changes.
   - React to device appearance changes while the application is open when the platform supports it.
   - Persist the selection across restarts and synchronize it across a signed-in user's devices where appropriate.
   - Verify readable colors, imagery, focus states and contrast in every mode on every supported platform.
