@@ -24,6 +24,7 @@ sub init()
   m.themeButton = m.top.findNode("themeButton")
   m.pairRetry = m.top.findNode("pairRetry")
   m.pairClose = m.top.findNode("pairClose")
+  m.navButtons = [m.homeButton, m.liveButton, m.weatherButton, m.connectButton, m.themeButton]
 
   m.homeButton.observeField("buttonSelected", "onHomeSelected")
   m.liveButton.observeField("buttonSelected", "onLiveSelected")
@@ -46,6 +47,7 @@ sub init()
   m.weather = invalid
   m.pairSession = invalid
   m.pairPollInFlight = false
+  m.bootstrapInFlight = false
 
   registry = CreateObject("roRegistrySection", "Harborline")
   m.themePreference = "system"
@@ -65,7 +67,11 @@ sub init()
 end sub
 
 sub loadContent()
+  if m.bootstrapInFlight return
+  m.bootstrapInFlight = true
   m.statusLabel.text = "Refreshing local coverage…"
+  m.heroHeadline.text = "Loading the Courier…"
+  m.heroDek.text = "Local reporting is on the way."
   task = createApiTask("bootstrap", "onBootstrap")
   task.control = "RUN"
 end sub
@@ -85,25 +91,50 @@ end function
 sub onBootstrap(event as Object)
   result = event.GetData()
   removeTask(event)
+  m.bootstrapInFlight = false
   if result = invalid or not result.ok
     message = "The Courier is temporarily unavailable. Select Latest to try again."
     if result <> invalid and result.DoesExist("message") then message = result.message
     m.statusLabel.text = message
+    m.heroHeadline.text = "The Courier could not refresh"
+    m.heroDek.text = "Select Latest to try the connection again."
     return
   end if
 
-  m.live = result.live
-  m.weather = result.weather
   showStories(result.stories)
   m.statusLabel.text = "The Courier is current · Select a story for more"
+  loadSecondaryContent()
   reportPresence()
   if m.accessToken <> "" then validateSession()
 end sub
 
+sub loadSecondaryContent()
+  liveTask = createApiTask("live", "onLiveLoaded")
+  liveTask.control = "RUN"
+  weatherTask = createApiTask("weather", "onWeatherLoaded")
+  weatherTask.control = "RUN"
+end sub
+
+sub onLiveLoaded(event as Object)
+  result = event.GetData()
+  removeTask(event)
+  if result <> invalid and result.ok then m.live = result
+end sub
+
+sub onWeatherLoaded(event as Object)
+  result = event.GetData()
+  removeTask(event)
+  if result <> invalid and result.ok then m.weather = result
+end sub
+
 sub showStories(stories as Dynamic)
   if stories = invalid or type(stories) <> "roArray" or stories.Count() = 0
+    m.storyList.content = invalid
+    m.heroImage.uri = ""
+    m.heroCategory.text = "LATEST"
     m.heroHeadline.text = "No published stories yet"
     m.heroDek.text = "Editors can publish the first story from Courier Studio."
+    m.heroMeta.text = ""
     return
   end if
 
@@ -117,7 +148,7 @@ sub showStories(stories as Dynamic)
     item.description = safeString(story.dek)
     item.shortDescriptionLine1 = safeString(story.categoryLabel)
     item.shortDescriptionLine2 = safeString(story.location)
-    item.HDPosterUrl = safeString(story.image)
+    item.HDPosterUrl = absoluteMediaUrl(story.image)
     item.releaseDate = safeString(story.publishedAt)
     item.AddField("storyBody", "string", false)
     item.storyBody = firstBody(story)
@@ -380,6 +411,13 @@ function safeString(value as Dynamic) as String
   return value.ToStr()
 end function
 
+function absoluteMediaUrl(value as Dynamic) as String
+  uri = safeString(value)
+  if uri = "" return ""
+  if Left(uri, 1) = "/" then return m.apiBase + uri
+  return uri
+end function
+
 function firstBody(story as Object) as String
   if story.body <> invalid and type(story.body) = "roArray" and story.body.Count() > 0
     return safeString(story.body[0])
@@ -413,5 +451,57 @@ function onKeyEvent(key as String, press as Boolean) as Boolean
       return true
     end if
   end if
+
+  if m.pairOverlay.visible
+    if key = "left" and m.pairRetry.visible
+      m.pairRetry.setFocus(true)
+      return true
+    else if key = "right"
+      m.pairClose.setFocus(true)
+      return true
+    end if
+    return false
+  end if
+
+  navIndex = focusedNavigationIndex()
+  if navIndex >= 0
+    if key = "left"
+      focusNavigation(navIndex - 1)
+      return true
+    else if key = "right"
+      focusNavigation(navIndex + 1)
+      return true
+    else if key = "down"
+      if hasStoryItems()
+        m.storyList.setFocus(true)
+      else
+        m.statusLabel.text = "No published stories yet. Weather and account tools are available above."
+      end if
+      return true
+    end if
+  else if m.storyList.hasFocus() and key = "up"
+    m.homeButton.setFocus(true)
+    return true
+  end if
   return false
+end function
+
+function focusedNavigationIndex() as Integer
+  for index = 0 to m.navButtons.Count() - 1
+    if m.navButtons[index].hasFocus() then return index
+  end for
+  return -1
+end function
+
+sub focusNavigation(index as Integer)
+  lastIndex = m.navButtons.Count() - 1
+  if index < 0 then index = lastIndex
+  if index > lastIndex then index = 0
+  m.navButtons[index].setFocus(true)
+end sub
+
+function hasStoryItems() as Boolean
+  if m.storyList.content = invalid return false
+  row = m.storyList.content.GetChild(0)
+  return row <> invalid and row.GetChildCount() > 0
 end function

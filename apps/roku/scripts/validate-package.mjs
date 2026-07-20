@@ -8,7 +8,9 @@ for (const key of ["title", "major_version", "minor_version", "build_version", "
   if (!new RegExp(`^${key}=.+$`, "m").test(manifest)) throw new Error(`Missing manifest field: ${key}`);
 }
 if (!manifest.endsWith("\n")) throw new Error("Roku manifest must end with a newline.");
-if (!/^api_url=unconfigured$/m.test(manifest)) throw new Error("The source Roku manifest must remain unconfigured; use package:production to inject a public origin.");
+if (!/^api_url=https:\/\/njc-web\.vercel\.app$/m.test(manifest)) {
+  throw new Error("The source Roku manifest must use the permanent Courier Vercel origin.");
+}
 
 const xmlFiles = [];
 function collect(directory) {
@@ -29,4 +31,16 @@ if (!source.includes('platform: "roku"')) throw new Error("Roku audience presenc
 if (!source.includes('target: "roku"')) throw new Error("Roku pairing target is missing.");
 if (!source.includes("streamFormat = \"hls\"")) throw new Error("HLS live playback is missing.");
 if (!source.includes('m.apiBase = "unconfigured"')) throw new Error("The Roku runtime must fail safely when its API origin is unconfigured.");
+if (!source.includes("transfer.AsyncGetToString()") || !source.includes("event.GetResponseCode()")) {
+  throw new Error("Roku requests must obtain HTTP status from asynchronous roUrlEvent responses.");
+}
+if (!source.includes("Wait(10000, port)") || !source.includes("transfer.AsyncCancel()")) {
+  throw new Error("Roku requests must have a bounded timeout and cancellation path.");
+}
+if (!source.includes("focusedNavigationIndex()") || !source.includes("focusNavigation(navIndex")) {
+  throw new Error("Roku D-pad navigation must explicitly route focus across the top controls.");
+}
+if (!source.includes("absoluteMediaUrl(story.image)") || !source.includes('m.apiBase + uri')) {
+  throw new Error("Roku story artwork must resolve site-relative media against the configured API origin.");
+}
 console.log(`Validated ${xmlFiles.length} SceneGraph components and Roku integration invariants.`);

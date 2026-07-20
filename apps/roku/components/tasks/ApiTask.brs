@@ -6,6 +6,10 @@ sub execute()
   operation = m.top.operation
   if operation = "bootstrap"
     loadBootstrap()
+  else if operation = "live"
+    loadLive()
+  else if operation = "weather"
+    loadWeather()
   else if operation = "presence"
     reportPresence()
   else if operation = "pairStart"
@@ -21,23 +25,21 @@ end sub
 
 sub loadBootstrap()
   stories = apiRequest("/api/v1/stories?limit=14", "GET", invalid)
-  live = apiRequest("/api/v1/live", "GET", invalid)
-  weather = apiRequest("/api/v1/weather", "GET", invalid)
-
   if not stories.ok
     m.top.response = { ok: false, message: stories.message }
     return
   end if
+  m.top.response = { ok: true, stories: unwrap(stories.payload) }
+end sub
 
-  result = {
-    ok: true,
-    stories: unwrap(stories.payload),
-    live: invalid,
-    weather: invalid
-  }
-  if live.ok then result.live = unwrap(live.payload)
-  if weather.ok then result.weather = unwrap(weather.payload)
-  m.top.response = result
+sub loadLive()
+  result = apiRequest("/api/v1/live", "GET", invalid)
+  m.top.response = normalizeResult(result)
+end sub
+
+sub loadWeather()
+  result = apiRequest("/api/v1/weather", "GET", invalid)
+  m.top.response = normalizeResult(result)
 end sub
 
 sub reportPresence()
@@ -90,24 +92,47 @@ end function
 
 function apiRequest(path as String, method as String, body as Dynamic) as Object
   transfer = CreateObject("roUrlTransfer")
+  port = CreateObject("roMessagePort")
+  transfer.SetMessagePort(port)
   transfer.SetCertificatesFile("common:/certs/ca-bundle.crt")
   transfer.InitClientCertificates()
   transfer.SetUrl(m.top.apiBase + path)
+  transfer.RetainBodyOnError(true)
   transfer.AddHeader("Accept", "application/json")
   transfer.AddHeader("Content-Type", "application/json")
   transfer.AddHeader("User-Agent", "NJCourier-Roku/" + m.top.appVersion)
   if m.top.accessToken <> "" transfer.AddHeader("Authorization", "Bearer " + m.top.accessToken)
 
-  responseText = ""
+  started = false
   if method = "POST"
-    responseText = transfer.PostFromString(FormatJson(body))
+    started = transfer.AsyncPostFromString(FormatJson(body))
   else
-    responseText = transfer.GetToString()
+    started = transfer.AsyncGetToString()
   end if
-  status = transfer.GetResponseCode()
+  if not started
+    print "[NJC API] request could not start: "; path
+    return { ok: false, message: "The Courier could not start a network request." }
+  end if
+
+  event = Wait(10000, port)
+  if event = invalid
+    transfer.AsyncCancel()
+    print "[NJC API] request timed out: "; path
+    return { ok: false, message: "The news service took too long to respond. Please try again." }
+  end if
+  if type(event) <> "roUrlEvent"
+    transfer.AsyncCancel()
+    print "[NJC API] unexpected network event: "; type(event); " "; path
+    return { ok: false, message: "The Courier received an unexpected network response." }
+  end if
+
+  status = event.GetResponseCode()
+  responseText = event.GetString()
+  failureReason = event.GetFailureReason()
+  print "[NJC API] "; status; " "; path; " "; failureReason
 
   if responseText = invalid or responseText = ""
-    return { ok: false, message: "The Courier could not reach the news service." }
+    return { ok: false, message: "The Courier could not reach the news service (" + status.ToStr() + ")." }
   end if
 
   payload = ParseJson(responseText)
@@ -119,5 +144,25 @@ function apiRequest(path as String, method as String, body as Dynamic) as Object
     return { ok: false, message: message, status: status }
   end if
   if payload = invalid return { ok: false, message: "The news service returned invalid data." }
-  return { ok: true, payload: payload, status: status }
+  return { ok: true, payload: sanitizeForSceneGraph(payload), status: status }
+end function
+
+function sanitizeForSceneGraph(value as Dynamic) as Dynamic
+  if value = invalid return ""
+  valueType = type(value)
+  if valueType = "roArray"
+    cleanArray = []
+    for each item in value
+      cleanArray.Push(sanitizeForSceneGraph(item))
+    end for
+    return cleanArray
+  end if
+  if valueType = "roAssociativeArray"
+    cleanObject = {}
+    for each key in value
+      cleanObject[key] = sanitizeForSceneGraph(value[key])
+    end for
+    return cleanObject
+  end if
+  return value
 end function

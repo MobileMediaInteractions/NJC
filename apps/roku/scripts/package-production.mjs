@@ -2,9 +2,12 @@ import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 
-const apiUrl = (process.env.ROKU_API_URL ?? process.argv[2] ?? "").replace(/\/$/, "");
+const appRoot = resolve(import.meta.dirname, "..");
+const sourceManifest = readFileSync(resolve(appRoot, "manifest"), "utf8");
+const manifestApiUrl = sourceManifest.match(/^api_url=(.+)$/m)?.[1] ?? "";
+const apiUrl = (process.env.ROKU_API_URL ?? process.argv[2] ?? manifestApiUrl).replace(/\/$/, "");
 if (!apiUrl) {
-  console.error("Set ROKU_API_URL to the public HTTPS origin of the Courier web app.");
+  console.error("Set api_url in the Roku manifest or ROKU_API_URL to the public HTTPS origin of the Courier web app.");
   process.exit(1);
 }
 
@@ -34,7 +37,6 @@ if (
   process.exit(1);
 }
 
-const appRoot = resolve(import.meta.dirname, "..");
 const configuredRoot = resolve(appRoot, "dist/configured");
 const outFile = resolve(appRoot, "dist/njcourier-roku.zip");
 rmSync(configuredRoot, { recursive: true, force: true });
@@ -42,7 +44,6 @@ mkdirSync(configuredRoot, { recursive: true });
 cpSync(resolve(appRoot, "source"), resolve(configuredRoot, "source"), { recursive: true });
 cpSync(resolve(appRoot, "components"), resolve(configuredRoot, "components"), { recursive: true });
 
-const sourceManifest = readFileSync(resolve(appRoot, "manifest"), "utf8");
 const manifest = sourceManifest.replace(/^api_url=.*$/m, `api_url=${apiUrl}`);
 writeFileSync(resolve(configuredRoot, "manifest"), manifest);
 

@@ -28,8 +28,6 @@
     <RowList
       id="storyList"
       translation="[72,790]"
-      width="1776"
-      height="230"
       numRows="1"
       rowItemSize="[[424,224]]"
       rowItemSpacing="[[24,0]]"
