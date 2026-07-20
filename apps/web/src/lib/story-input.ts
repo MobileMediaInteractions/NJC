@@ -18,6 +18,10 @@ export const storyInput = z.object({
   isBreaking: z.boolean().default(false),
   status: z.enum(["draft", "review", "scheduled", "published"]),
   scheduledAt: z.iso.datetime().optional().or(z.literal("")),
+}).superRefine((value, context) => {
+  if (value.imageUrl && !value.imageAlt?.trim()) {
+    context.addIssue({ code: "custom", path: ["imageAlt"], message: "Describe the lead image for readers using screen readers." });
+  }
 });
 
 export type StoryInput = z.infer<typeof storyInput>;

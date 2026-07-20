@@ -25,6 +25,12 @@ test("accepts a complete publish request with optional URLs left blank", () => {
   assert.equal(storyInput.safeParse(validStory).success, true);
 });
 
+test("requires accessible alt text when a lead image is present", () => {
+  const result = storyInput.safeParse({ ...validStory, imageUrl: "https://example.com/photo.jpg", imageAlt: "" });
+  assert.equal(result.success, false);
+  if (!result.success) assert.match(result.error.flatten().fieldErrors.imageAlt?.[0] ?? "", /Describe/);
+});
+
 test("returns actionable errors for incomplete stories", () => {
   const result = storyInput.safeParse({ ...validStory, headline: "Short", dek: "Too short", body: [] });
   assert.equal(result.success, false);
