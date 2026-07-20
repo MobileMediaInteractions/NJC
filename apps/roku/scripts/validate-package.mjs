@@ -40,6 +40,9 @@ if (!source.includes("Wait(10000, port)") || !source.includes("transfer.AsyncCan
 if (!source.includes("focusedNavigationIndex()") || !source.includes("focusNavigation(navIndex")) {
   throw new Error("Roku D-pad navigation must explicitly route focus across the top controls.");
 }
+if (!source.includes("updateAccountNavigation(true)") || !source.includes("m.connectButton.visible = not connected")) {
+  throw new Error("Roku must remove the account connection control after sign-in.");
+}
 if (!source.includes("absoluteMediaUrl(story.image)") || !source.includes('m.apiBase + uri')) {
   throw new Error("Roku story artwork must resolve site-relative media against the configured API origin.");
 }
@@ -47,5 +50,12 @@ for (const key of ["deviceName", "deviceSecret", "installationId", "appVersion"]
   if (!source.includes(`body["${key}"]`)) {
     throw new Error(`Roku JSON payloads must preserve the ${key} wire key.`);
   }
+}
+const mainSceneXml = readFileSync(resolve(root, "components/MainScene.xml"), "utf8");
+if (!mainSceneXml.includes('drawFocusFeedback="false"') || !mainSceneXml.includes('itemSize="[1776,224]"')) {
+  throw new Error("The Roku story rail must use its custom, bounded focus renderer.");
+}
+if (mainSceneXml.includes('id="heroScrim"')) {
+  throw new Error("The unused hero image scrim must not obscure story artwork.");
 }
 console.log(`Validated ${xmlFiles.length} SceneGraph components and Roku integration invariants.`);

@@ -3,6 +3,8 @@ sub init()
   m.image = m.top.findNode("image")
   m.category = m.top.findNode("category")
   m.headline = m.top.findNode("headline")
+  m.top.scaleRotateCenter = [212, 112]
+  if m.top.itemContent <> invalid then showContent()
 end sub
 
 sub showContent()

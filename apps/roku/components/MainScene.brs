@@ -24,7 +24,6 @@ sub init()
   m.themeButton = m.top.findNode("themeButton")
   m.pairRetry = m.top.findNode("pairRetry")
   m.pairClose = m.top.findNode("pairClose")
-  m.navButtons = [m.homeButton, m.liveButton, m.weatherButton, m.connectButton, m.themeButton]
 
   m.homeButton.observeField("buttonSelected", "onHomeSelected")
   m.liveButton.observeField("buttonSelected", "onLiveSelected")
@@ -54,6 +53,7 @@ sub init()
   if registry.Exists("theme") then m.themePreference = registry.Read("theme")
   m.accessToken = ""
   if registry.Exists("deviceToken") then m.accessToken = registry.Read("deviceToken")
+  updateAccountNavigation(m.accessToken <> "")
   applyTheme()
 
   if m.apiBase = "" or m.apiBase = "unconfigured" or Instr(1, m.apiBase, ".example") > 0 or Instr(1, m.apiBase, "your-project.vercel.app") > 0
@@ -296,6 +296,7 @@ sub onPairPoll(event as Object)
     name = "Courier reader"
     if result.account <> invalid and result.account.name <> invalid then name = result.account.name
     m.accountLabel.text = "Connected as " + name
+    updateAccountNavigation(true)
     m.top.findNode("pairStatus").text = "Connected as " + name + ". You may close this screen."
     m.pairSession = invalid
     reportPresence()
@@ -316,7 +317,11 @@ end sub
 sub onPairClose()
   m.pairTimer.control = "stop"
   m.pairOverlay.visible = false
-  m.connectButton.setFocus(true)
+  if m.accessToken <> ""
+    m.homeButton.setFocus(true)
+  else
+    m.connectButton.setFocus(true)
+  end if
 end sub
 
 sub validateSession()
@@ -329,12 +334,23 @@ sub onSession(event as Object)
   removeTask(event)
   if result <> invalid and result.ok
     m.accountLabel.text = "Connected as " + safeString(result.name)
+    updateAccountNavigation(true)
   else
     m.accessToken = ""
     registry = CreateObject("roRegistrySection", "Harborline")
     registry.Delete("deviceToken")
     registry.Flush()
     m.accountLabel.text = "Public access"
+    updateAccountNavigation(false)
+  end if
+end sub
+
+sub updateAccountNavigation(connected as Boolean)
+  m.connectButton.visible = not connected
+  if connected
+    m.navButtons = [m.homeButton, m.liveButton, m.weatherButton, m.themeButton]
+  else
+    m.navButtons = [m.homeButton, m.liveButton, m.weatherButton, m.connectButton, m.themeButton]
   end if
 end sub
 
