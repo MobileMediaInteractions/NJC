@@ -4,6 +4,15 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 
 ## Roku — highest priority
 
+- [ ] Create a ground-up Roku UI/UX redesign that feels like the NJ Courier website was placed directly on the television while remaining a Roku-native, remote-first application.
+  - Match the site's publication identity, colors, typography hierarchy, spacing, dividers, imagery, story prominence and editorial section structure instead of using a generic Roku template.
+  - Recreate the site's major experiences for a ten-foot interface: front page, latest news, sections, live coverage, weather, article reading, account state and settings.
+  - Use polished, content-rich layouts and rails comparable in quality to leading streaming applications while keeping the design original to NJ Courier rather than copying Netflix or another product.
+  - Pull from the same production APIs and content model as the website so placement, labels, images, breaking-news treatment and publication state remain consistent.
+  - Translate hover and pointer interactions into obvious Roku focus states, predictable directional navigation and remote shortcuts without losing the site's visual character.
+  - Eliminate blank cards, unexplained translucent bars, clipped labels, focus on invisible elements and layouts that appear unfinished when content is missing.
+  - Create responsive Roku layouts for 720p, 1080p and 4K with television safe areas, readable long-distance typography and performant image loading.
+  - Validate the redesign on real Roku hardware, not only screenshots or a simulator.
 - [ ] Make full articles vertically scrollable with the Roku remote. Article body text is currently cut off below the visible screen and cannot be reached.
   - Up and Down must scroll the article without unexpectedly moving focus back to the navigation or another story.
   - Fast Forward and Rewind may provide page-sized scrolling if that matches Roku interaction conventions.
@@ -16,6 +25,20 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 - [ ] Add clear Roku loading, offline, retry, empty-feed and API-error states instead of leaving partially populated layouts on screen.
 - [ ] Verify account pairing survives channel restarts, expires safely and removes all sign-in prompts after connection.
 - [ ] Verify newly published, updated and deleted stories refresh correctly on Roku without reinstalling the channel.
+
+## Secure QR and code pairing — all platforms
+
+- [ ] Add an explicit secure processing state after a QR code is scanned on Roku, Apple TV, Android TV, web quick sign-in and every other pairing surface.
+  - Generate a new QR code and human-readable sync code every 60 seconds while the code is waiting to be scanned, with a visible countdown where appropriate.
+  - As soon as the server recognizes a legitimate scan, freeze that QR code, sync code and countdown so the on-screen identity cannot rotate during authentication.
+  - Blur the frozen QR code and place a loading spinner inside its bounds to clearly show that authentication is being processed.
+  - Disable repeated scans, code reuse and conflicting pairing attempts while that frozen request is pending.
+  - Bound the frozen processing state with a secure server-controlled timeout; if authentication fails or expires, explain the failure and issue a fresh single-use code.
+  - Validate pairing state, code lifetime, nonce and requesting device on the server; never trust a client-only scanned or authenticated flag.
+  - After successful authentication, replace the entire screen with an unambiguous authenticated-success view.
+  - Keep the success screen visible for five seconds, then refresh the account/session state and return to the exact screen, selected item and navigation position shown before pairing began.
+  - If the original destination no longer exists, return to the closest safe landing screen and explain what changed.
+  - Test success, denial, expiration, network loss, app restart, duplicate scan and revoked-account behavior without exposing credentials or sensitive account information.
 
 ## Newsroom and publishing
 
