@@ -27,8 +27,8 @@ const source = [
   readFileSync(resolve(root, "components/tasks/ApiTask.brs"), "utf8"),
   readFileSync(resolve(root, "components/MainScene.brs"), "utf8"),
 ].join("\n");
-if (!source.includes('platform: "roku"')) throw new Error("Roku audience presence is missing.");
-if (!source.includes('target: "roku"')) throw new Error("Roku pairing target is missing.");
+if (!source.includes('body["platform"] = "roku"')) throw new Error("Roku audience presence is missing.");
+if (!source.includes('body["target"] = "roku"')) throw new Error("Roku pairing target is missing.");
 if (!source.includes("streamFormat = \"hls\"")) throw new Error("HLS live playback is missing.");
 if (!source.includes('m.apiBase = "unconfigured"')) throw new Error("The Roku runtime must fail safely when its API origin is unconfigured.");
 if (!source.includes("transfer.AsyncGetToString()") || !source.includes("event.GetResponseCode()")) {
@@ -42,5 +42,10 @@ if (!source.includes("focusedNavigationIndex()") || !source.includes("focusNavig
 }
 if (!source.includes("absoluteMediaUrl(story.image)") || !source.includes('m.apiBase + uri')) {
   throw new Error("Roku story artwork must resolve site-relative media against the configured API origin.");
+}
+for (const key of ["deviceName", "deviceSecret", "installationId", "appVersion"]) {
+  if (!source.includes(`body["${key}"]`)) {
+    throw new Error(`Roku JSON payloads must preserve the ${key} wire key.`);
+  }
 }
 console.log(`Validated ${xmlFiles.length} SceneGraph components and Roku integration invariants.`);

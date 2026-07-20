@@ -4,7 +4,10 @@ import { z } from "zod";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import { audienceInstallations } from "@harborline/backend/schema";
 import { getOptionalAccountId } from "@/lib/auth";
-import { authenticateDeviceRequest } from "@/lib/device-pairing";
+import {
+  authenticateDeviceRequest,
+  normalizeDevicePayload,
+} from "@/lib/device-pairing";
 
 const inputSchema = z.object({
   installationId: z.string().regex(/^[A-Za-z0-9_-]{20,100}$/),
@@ -34,7 +37,14 @@ export function OPTIONS() {
 
 export async function POST(request: Request) {
   const startedAt = Date.now();
-  const parsed = inputSchema.safeParse(await request.json().catch(() => null));
+  const parsed = inputSchema.safeParse(
+    normalizeDevicePayload(await request.json().catch(() => null), [
+      "installationId",
+      "platform",
+      "source",
+      "appVersion",
+    ]),
+  );
   if (!parsed.success)
     return json(
       {

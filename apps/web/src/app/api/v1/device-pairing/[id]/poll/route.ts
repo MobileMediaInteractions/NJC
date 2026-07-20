@@ -7,6 +7,7 @@ import { devicePairingRequests, deviceSessions } from "@harborline/backend/schem
 import {
   createDeviceAccessToken,
   isDevicePairingConfigured,
+  normalizeDevicePayload,
   safePairingHashEqual,
 } from "@/lib/device-pairing";
 
@@ -27,7 +28,11 @@ export async function POST(
       },
       { status: 503 },
     );
-  const parsed = inputSchema.safeParse(await request.json().catch(() => null));
+  const parsed = inputSchema.safeParse(
+    normalizeDevicePayload(await request.json().catch(() => null), [
+      "deviceSecret",
+    ]),
+  );
   if (!parsed.success)
     return NextResponse.json(
       {

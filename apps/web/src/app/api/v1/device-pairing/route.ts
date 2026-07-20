@@ -6,6 +6,7 @@ import { devicePairingRequests } from "@harborline/backend/schema";
 import {
   createPairingCredentials,
   isDevicePairingConfigured,
+  normalizeDevicePayload,
   pairingHash,
   requesterAddress,
 } from "@/lib/device-pairing";
@@ -19,8 +20,17 @@ const inputSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const parsed = inputSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success)
+  const body = await request.json().catch(() => null);
+  const parsed = inputSchema.safeParse(
+    normalizeDevicePayload(body, ["target", "deviceName"]),
+  );
+  if (!parsed.success) {
+    console.warn("[device-pairing] invalid start payload", {
+      keys:
+        body && typeof body === "object" && !Array.isArray(body)
+          ? Object.keys(body)
+          : [],
+    });
     return NextResponse.json(
       {
         error: {
@@ -30,6 +40,7 @@ export async function POST(request: Request) {
       },
       { status: 400 },
     );
+  }
   if (!isDevicePairingConfigured())
     return NextResponse.json(
       {

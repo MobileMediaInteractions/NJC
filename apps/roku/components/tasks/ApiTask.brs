@@ -43,12 +43,11 @@ sub loadWeather()
 end sub
 
 sub reportPresence()
-  body = {
-    installationId: m.top.installationId,
-    platform: "roku",
-    source: "roku-app",
-    appVersion: m.top.appVersion
-  }
+  body = {}
+  body["installationId"] = m.top.installationId
+  body["platform"] = "roku"
+  body["source"] = "roku-app"
+  body["appVersion"] = m.top.appVersion
   result = apiRequest("/api/v1/audience/presence", "POST", body)
   if result.ok
     m.top.response = { ok: true }
@@ -58,16 +57,18 @@ sub reportPresence()
 end sub
 
 sub startPairing()
-  result = apiRequest("/api/v1/device-pairing", "POST", {
-    target: "roku",
-    deviceName: "Roku"
-  })
+  body = {}
+  body["target"] = "roku"
+  body["deviceName"] = "Roku"
+  result = apiRequest("/api/v1/device-pairing", "POST", body)
   m.top.response = normalizeResult(result)
 end sub
 
 sub pollPairing()
   path = "/api/v1/device-pairing/" + m.top.sessionId + "/poll"
-  result = apiRequest(path, "POST", { deviceSecret: m.top.deviceSecret })
+  body = {}
+  body["deviceSecret"] = m.top.deviceSecret
+  result = apiRequest(path, "POST", body)
   m.top.response = normalizeResult(result)
 end sub
 

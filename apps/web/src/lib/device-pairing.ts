@@ -5,6 +5,26 @@ import { apiAuditLogs, deviceSessions } from "@harborline/backend/schema";
 
 const codeAlphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
 
+export function normalizeDevicePayload(
+  value: unknown,
+  expectedKeys: readonly string[],
+) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return value;
+  const input = value as Record<string, unknown>;
+  const normalized: Record<string, unknown> = { ...input };
+
+  for (const key of expectedKeys) {
+    if (normalized[key] !== undefined) continue;
+    const snakeCase = key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+    const alias = [key.toLowerCase(), snakeCase].find(
+      (candidate) => input[candidate] !== undefined,
+    );
+    if (alias) normalized[key] = input[alias];
+  }
+
+  return normalized;
+}
+
 function pairingPepper() {
   const value = process.env.DEVICE_PAIRING_PEPPER;
   if (!value) throw new Error("DEVICE_PAIRING_PEPPER is not configured");

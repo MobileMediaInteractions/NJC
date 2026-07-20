@@ -231,8 +231,8 @@ end sub
 
 sub onConnectSelected()
   m.pairOverlay.visible = true
-  m.top.findNode("pairCode").text = ""
-  m.top.findNode("pairUri").text = ""
+  m.top.findNode("pairCode").text = "CREATING…"
+  m.top.findNode("pairUri").text = m.apiBase + "/login/tv?target=roku"
   m.top.findNode("pairQr").uri = ""
   m.top.findNode("pairStatus").text = "Creating a secure request…"
   m.pairRetry.visible = false
@@ -255,6 +255,7 @@ sub onPairStart(event as Object)
     message = "Account linking could not start."
     if result <> invalid and result.DoesExist("message") then message = result.message
     m.top.findNode("pairStatus").text = message
+    m.top.findNode("pairCode").text = "NO CODE"
     m.pairRetry.visible = true
     m.pairRetry.setFocus(true)
     return

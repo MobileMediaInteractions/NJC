@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { pairingTargets } from "@harborline/contracts";
-import { createPairingCredentials, formatUserCode, normalizeUserCode, safePairingHashEqual } from "../src/lib/device-pairing";
+import {
+  createPairingCredentials,
+  formatUserCode,
+  normalizeDevicePayload,
+  normalizeUserCode,
+  safePairingHashEqual,
+} from "../src/lib/device-pairing";
 
 process.env.DEVICE_PAIRING_PEPPER = "test-only-pairing-pepper-with-more-than-32-characters";
 
@@ -21,4 +27,35 @@ test("pairing secrets are high entropy and only hashes compare", () => {
   assert.notEqual(pairing.deviceSecret, pairing.deviceSecretHash);
   assert.equal(safePairingHashEqual(pairing.deviceSecret, pairing.deviceSecretHash), true);
   assert.equal(safePairingHashEqual(`${pairing.deviceSecret}x`, pairing.deviceSecretHash), false);
+});
+
+test("normalizes lowercase Roku JSON keys without changing values", () => {
+  assert.deepEqual(
+    normalizeDevicePayload(
+      { target: "roku", devicename: "Roku", devicesecret: "secret" },
+      ["target", "deviceName", "deviceSecret"],
+    ),
+    {
+      target: "roku",
+      devicename: "Roku",
+      devicesecret: "secret",
+      deviceName: "Roku",
+      deviceSecret: "secret",
+    },
+  );
+});
+
+test("normalizes snake-case device payload aliases", () => {
+  assert.deepEqual(
+    normalizeDevicePayload(
+      { installation_id: "roku_installation", app_version: "1.0.2" },
+      ["installationId", "appVersion"],
+    ),
+    {
+      installation_id: "roku_installation",
+      app_version: "1.0.2",
+      installationId: "roku_installation",
+      appVersion: "1.0.2",
+    },
+  );
 });
