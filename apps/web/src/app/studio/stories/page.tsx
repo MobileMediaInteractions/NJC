@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { desc } from "drizzle-orm";
-import { Database, FilePlus2 } from "lucide-react";
+import { Database, ExternalLink, FilePlus2, FileSearch } from "lucide-react";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import { stories } from "@harborline/backend/schema";
 import { StudioGate } from "@/components/studio/studio-gate";
@@ -12,11 +12,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { canDeleteStory, getStudioUser } from "@/lib/auth";
 import { siteConfig } from "@/lib/site";
+import { canPublishStory } from "@/lib/story-workflow";
 
 export default async function StudioStoriesPage() {
   const viewer = await getStudioUser();
   if (!viewer) return <StudioGate><></></StudioGate>;
   const showDeleteActions = canDeleteStory(viewer.role);
+  const showReviewActions = canPublishStory(viewer.role);
 
   let databaseConnected = hasDatabase();
   let rows: Array<typeof stories.$inferSelect> = [];
@@ -45,10 +47,10 @@ export default async function StudioStoriesPage() {
           <CardContent>
             {rows.length ? (
               <Table>
-                <TableHeader><TableRow><TableHead>Headline</TableHead><TableHead>Section</TableHead><TableHead>Owner</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Updated</TableHead>{showDeleteActions ? <TableHead className="w-12"><span className="sr-only">Actions</span></TableHead> : null}</TableRow></TableHeader>
+                <TableHeader><TableRow><TableHead>Headline</TableHead><TableHead>Section</TableHead><TableHead>Owner</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Updated</TableHead><TableHead className="text-right"><span className="sr-only">Actions</span></TableHead></TableRow></TableHeader>
                 <TableBody>{rows.map((story) => {
-                  const headline = story.status === "published" ? <Link href={`/story/${story.slug}`} className="font-medium hover:underline">{story.headline}</Link> : <span className="font-medium">{story.headline}</span>;
-                  return <TableRow key={story.id}><TableCell>{headline}</TableCell><TableCell className="text-muted-foreground">{story.categoryLabel}</TableCell><TableCell>{story.authorSnapshot?.name ?? "Unassigned"}</TableCell><TableCell><Badge variant={story.status === "review" ? "default" : "secondary"} className="capitalize">{story.status}</Badge></TableCell><TableCell className="text-right text-xs text-muted-foreground">{formatUpdated(story.updatedAt)}</TableCell>{showDeleteActions ? <TableCell><StoryDeleteButton id={story.id} headline={story.headline} published={story.status === "published"} /></TableCell> : null}</TableRow>;
+                  const actionLabel = story.status === "review" && showReviewActions ? "Review" : "Open";
+                  return <TableRow key={story.id}><TableCell><Link href={`/studio/stories/${story.id}`} className="font-medium hover:underline">{story.headline}</Link></TableCell><TableCell className="text-muted-foreground">{story.categoryLabel}</TableCell><TableCell>{story.authorSnapshot?.name ?? "Unassigned"}</TableCell><TableCell><Badge variant={story.status === "review" ? "default" : "secondary"} className="capitalize">{story.status}</Badge></TableCell><TableCell className="text-right text-xs text-muted-foreground">{formatUpdated(story.updatedAt)}</TableCell><TableCell><div className="flex justify-end gap-1"><Button variant={story.status === "review" && showReviewActions ? "default" : "ghost"} size="sm" asChild><Link href={`/studio/stories/${story.id}`}><FileSearch /> {actionLabel}</Link></Button>{story.status === "published" ? <Button variant="ghost" size="icon-sm" asChild><Link href={`/story/${story.slug}`} aria-label={`View ${story.headline} live`}><ExternalLink /></Link></Button> : null}{showDeleteActions ? <StoryDeleteButton id={story.id} headline={story.headline} published={story.status === "published"} /> : null}</div></TableCell></TableRow>;
                 })}</TableBody>
               </Table>
             ) : (

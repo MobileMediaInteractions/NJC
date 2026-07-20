@@ -1,5 +1,6 @@
 import { and, count, desc, eq, gte, inArray } from "drizzle-orm";
 import { Activity, Database, FileText, Radio, Users } from "lucide-react";
+import Link from "next/link";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import { stories } from "@harborline/backend/schema";
 import { StudioGate } from "@/components/studio/studio-gate";
@@ -60,7 +61,7 @@ export default async function StudioDashboard() {
                   <TableHeader><TableRow><TableHead>Story</TableHead><TableHead>Owner</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Updated</TableHead></TableRow></TableHeader>
                   <TableBody>{data.queue.map((story) => {
                     const owner = story.authorSnapshot?.name ?? "Unassigned";
-                    return <TableRow key={story.id}><TableCell><p className="max-w-sm font-medium">{story.headline}</p><p className="mt-0.5 text-xs text-muted-foreground">{story.categoryLabel}</p></TableCell><TableCell className="text-xs">{owner}</TableCell><TableCell><Badge variant={story.status === "review" ? "default" : "secondary"} className="capitalize">{story.status}</Badge></TableCell><TableCell className="text-right text-xs text-muted-foreground">{formatUpdated(story.updatedAt)}</TableCell></TableRow>;
+                    return <TableRow key={story.id}><TableCell><Link href={`/studio/stories/${story.id}`} className="max-w-sm font-medium hover:underline">{story.headline}</Link><p className="mt-0.5 text-xs text-muted-foreground">{story.categoryLabel}</p></TableCell><TableCell className="text-xs">{owner}</TableCell><TableCell><Badge variant={story.status === "review" ? "default" : "secondary"} className="capitalize">{story.status}</Badge></TableCell><TableCell className="text-right text-xs text-muted-foreground">{formatUpdated(story.updatedAt)}</TableCell></TableRow>;
                   })}</TableBody>
                 </Table>
               ) : (

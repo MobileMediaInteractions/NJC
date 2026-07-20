@@ -2,6 +2,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import { users } from "@harborline/backend/schema";
 import type { StaffRole, StudioUser } from "@/lib/types";
+import { canPublishStory } from "@/lib/story-workflow";
 
 const validRoles: StaffRole[] = [
   "admin",
@@ -81,7 +82,7 @@ export async function getStudioUser(): Promise<StudioUser | null> {
 
 export async function canPublish() {
   const user = await getStudioUser();
-  return Boolean(user && ["admin", "editor", "producer"].includes(user.role));
+  return Boolean(user && canPublishStory(user.role));
 }
 
 export async function getAccountIdentity() {
