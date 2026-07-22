@@ -96,7 +96,7 @@ The public `/press` workflow generates a tailored ZIP from the approved brand li
 
 ## Search visibility
 
-The web app includes canonical metadata, `NewsArticle` and publisher structured data, general and Google News sitemaps, RSS, social previews, search-engine verification hooks and CMS-level SEO controls. Indexing remains intentionally disabled until editorial, legal and operational launch review is complete; follow the [SEO launch and measurement guide](docs/SEO.md) before enabling it in production.
+The web app includes canonical metadata, `NewsArticle` and publisher structured data, general and Google News sitemaps, RSS, social previews, search-engine verification hooks and CMS-level SEO controls. Indexing remains disabled by default for local and preview deployments. The current Vercel production alias was verified in Google Search Console and explicitly enabled for indexing on July 22, 2026; follow the [SEO launch and measurement guide](docs/SEO.md) for the crawler-cache status, publishing cautions and future custom-domain migration.
 
 ## Verification
 

@@ -59,6 +59,8 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 
 ## Domains and launch
 
+- [x] Verify the interim `https://njc-web.vercel.app/` URL-prefix property in Google Search Console and submit its XML and Google News sitemaps.
+- [ ] Confirm Google has refreshed the production `robots.txt`, successfully read both submitted sitemaps and made homepage indexing requests available.
 - [ ] Connect the final publication domain and CDN subdomain, then verify redirects, canonical URLs, feeds, sitemaps, email links, Universal Links and Android App Links.
 - [ ] Connect the final domain to Google Search Console so Google can discover and index the publication.
   - Verify domain ownership using the DNS method after the domain is selected.

@@ -4,13 +4,23 @@ The Courier’s SEO system is designed to make verified reporting easy to crawl,
 
 ## Launch safety
 
-The repository currently contains fictional preview stories. Search indexing is therefore disabled by default:
+Search indexing is disabled by default in the repository:
 
 ```dotenv
 NEXT_PUBLIC_SEO_INDEXING_ENABLED=false
 ```
 
-Do not enable indexing until demo reporting, authors, dates and claims have been replaced with sourced newsroom content. For launch, set the value to `true` in the Vercel production environment only. Keep it false for preview deployments.
+The current `njc-web.vercel.app` production environment was explicitly enabled for indexing on July 22, 2026, after its Google Search Console URL-prefix property was verified. Preview and local deployments remain blocked by default. Anything published to production can now be discovered by search engines, so test reporting must be removed or marked non-indexable before Google processes it.
+
+## Current Google integration
+
+- Property: `https://njc-web.vercel.app/` (URL-prefix property)
+- Verification: Google HTML-tag verification supplied through the Vercel Production environment
+- Submitted feeds: `sitemap.xml` and `news-sitemap.xml`
+- Production crawl policy: public pages are allowed; APIs, Studio, authentication, pairing and internal search remain blocked
+- Custom domain: not configured yet; add a separate DNS-verified Domain property when the publication domain is selected
+
+Google initially fetched the pre-activation `robots.txt` that blocked all crawling. The live production file now permits public crawling and both sitemap endpoints return HTTP 200 with XML content. Search Console may continue to show the earlier fetch result until Google refreshes its cached robots file. A manual robots recrawl was attempted twice on July 22, 2026 and Search Console returned an unspecified Google-side error both times; monitor the robots and sitemap reports until the automatic refresh completes.
 
 ## Technical system
 
@@ -28,9 +38,9 @@ Do not enable indexing until demo reporting, authors, dates and claims have been
 
 1. Deploy the web project and choose its stable `*.vercel.app` production alias.
 2. Replace all fictional preview content and complete editorial/legal launch review.
-3. Add the site to Google Search Console and Bing Webmaster Tools.
-4. Set `GOOGLE_SITE_VERIFICATION` and `BING_SITE_VERIFICATION` from those services.
-5. Set `NEXT_PUBLIC_SEO_INDEXING_ENABLED=true` in Vercel Production only and redeploy.
+3. Add the site to Google Search Console and Bing Webmaster Tools. Google is connected for the current Vercel production alias; Bing remains pending.
+4. Set `GOOGLE_SITE_VERIFICATION` and `BING_SITE_VERIFICATION` from those services. Google verification is configured in Vercel Production; Bing remains pending.
+5. Set `NEXT_PUBLIC_SEO_INDEXING_ENABLED=true` in Vercel Production only and redeploy. This is active for the current production alias.
 6. Confirm `/robots.txt`, `/sitemap.xml`, `/news-sitemap.xml` and `/feed.xml` use the production origin.
 7. Submit `sitemap.xml` and `news-sitemap.xml` in Search Console.
 8. Validate representative stories with Google’s Rich Results Test and URL Inspection tool.
