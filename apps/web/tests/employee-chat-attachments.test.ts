@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   canArchiveEmployeeChatChannel,
+  createEmployeeChatDeletionCode,
   formatEmployeeChatAttachmentSize,
   validateEmployeeChatAttachment,
 } from "../src/lib/employee-chat-attachments";
@@ -19,6 +20,13 @@ test("channel deletion archives managed channels only", () => {
   assert.equal(canArchiveEmployeeChatChannel("private"), true);
   assert.equal(canArchiveEmployeeChatChannel("direct"), false);
   assert.equal(canArchiveEmployeeChatChannel("group"), false);
+});
+
+test("channel deletion codes are explicit, readable, and exact", () => {
+  const code = createEmployeeChatDeletionCode(new Uint8Array([0, 1, 2, 3, 4, 5]));
+  assert.equal(code, "DELETE-ABCDEF");
+  assert.notEqual(code, code.toLowerCase());
+  assert.throws(() => createEmployeeChatDeletionCode(new Uint8Array([1, 2, 3])));
 });
 
 test("chat attachment sizes use readable decimal units", () => {

@@ -25,3 +25,11 @@ export function formatEmployeeChatAttachmentSize(size: number) {
 export function canArchiveEmployeeChatChannel(kind: string) {
   return kind === "public" || kind === "private";
 }
+
+const deletionCodeAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+export function createEmployeeChatDeletionCode(randomBytes: Uint8Array) {
+  const characters = Array.from(randomBytes.slice(0, 6), (value) => deletionCodeAlphabet[value % deletionCodeAlphabet.length]).join("");
+  if (characters.length !== 6) throw new Error("Six random bytes are required for a channel deletion code");
+  return `DELETE-${characters}`;
+}

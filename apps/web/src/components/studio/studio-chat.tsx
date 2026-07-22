@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FileText, Hash, ImageIcon, Loader2, MessageCircle, MessageSquarePlus, MoreHorizontal, Paperclip, Plus, Reply, Search, Send, Trash2, UsersRound, X } from "lucide-react";
 import type { EmployeeCapability, StaffRole } from "@harborline/contracts";
 import { PresenceIndicator } from "@/components/studio/presence-indicator";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { EMPLOYEE_CHAT_ATTACHMENT_MAX_COUNT, employeeChatAttachmentTypes, formatEmployeeChatAttachmentSize, validateEmployeeChatAttachment } from "@/lib/employee-chat-attachments";
+import { createEmployeeChatDeletionCode, EMPLOYEE_CHAT_ATTACHMENT_MAX_COUNT, employeeChatAttachmentTypes, formatEmployeeChatAttachmentSize, validateEmployeeChatAttachment } from "@/lib/employee-chat-attachments";
 import { detectBrowserPresencePlatform, employeePresenceStatuses, resolveEmployeePresence, type EmployeePresencePlatform, type EmployeePresenceStatus } from "@/lib/employee-presence";
 
 type Viewer = { id: string; name: string; email: string; role: StaffRole; capabilities: EmployeeCapability[] };
@@ -43,6 +43,11 @@ export function StudioChat({ viewer, initialChannelId }: { viewer: Viewer; initi
   const [channelDialogOpen, setChannelDialogOpen] = useState(false);
   const [deleteChannelOpen, setDeleteChannelOpen] = useState(false);
   const [deletingChannel, setDeletingChannel] = useState(false);
+  const [channelPendingDeletion, setChannelPendingDeletion] = useState<Channel | null>(null);
+  const [deleteStep, setDeleteStep] = useState<"warning" | "code">("warning");
+  const [deletionCode, setDeletionCode] = useState("");
+  const [deletionCodeInput, setDeletionCodeInput] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [channelName, setChannelName] = useState("");
   const cursorRef = useRef<string | null>(null);
   const requestRunning = useRef(false);
@@ -209,22 +214,53 @@ export function StudioChat({ viewer, initialChannelId }: { viewer: Viewer; initi
     }
   }
 
-  async function deleteSelectedChannel() {
-    if (!selected || !canManage || (selected.kind !== "public" && selected.kind !== "private")) return;
+  function beginDeleteChannel(channel: Channel) {
+    if (!canManage || (channel.kind !== "public" && channel.kind !== "private")) return;
+    setChannelPendingDeletion(channel);
+    setDeleteStep("warning");
+    setDeletionCode(createEmployeeChatDeletionCode(crypto.getRandomValues(new Uint8Array(6))));
+    setDeletionCodeInput("");
+    setDeleteError(null);
+    setDeleteChannelOpen(true);
+  }
+
+  function closeDeleteChannel() {
+    if (deletingChannel) return;
+    setDeleteChannelOpen(false);
+    setChannelPendingDeletion(null);
+    setDeleteStep("warning");
+    setDeletionCode("");
+    setDeletionCodeInput("");
+    setDeleteError(null);
+  }
+
+  async function deleteChannel() {
+    const channel = channelPendingDeletion;
+    if (!channel || !canManage || deletionCodeInput !== deletionCode || (channel.kind !== "public" && channel.kind !== "private")) return;
     setDeletingChannel(true);
     try {
-      if (pendingAttachments.length) await discardPendingAttachments();
-      await request<Channel>(`/api/v1/employee/chat/channels/${selected.id}`, { method: "DELETE" });
-      const nextChannel = channels.find((channel) => channel.id !== selected.id) ?? null;
-      setChannels((current) => current.filter((channel) => channel.id !== selected.id));
-      setSelectedId(nextChannel?.id ?? null);
-      setMessages([]);
-      setReplyTo(null);
+      const deletesSelectedChannel = selectedId === channel.id;
+      if (deletesSelectedChannel && pendingAttachments.length) await discardPendingAttachments();
+      await request<Channel>(`/api/v1/employee/chat/channels/${channel.id}`, { method: "DELETE" });
+      const nextChannel = channels.find((item) => item.id !== channel.id) ?? null;
+      setChannels((current) => current.filter((item) => item.id !== channel.id));
+      if (deletesSelectedChannel) {
+        setSelectedId(nextChannel?.id ?? null);
+        setMessages([]);
+        setReplyTo(null);
+      }
       setDeleteChannelOpen(false);
+      setChannelPendingDeletion(null);
+      setDeleteStep("warning");
+      setDeletionCode("");
+      setDeletionCodeInput("");
+      setDeleteError(null);
       setNotice(null);
       await refreshWorkspace();
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "The channel could not be deleted.");
+      const message = error instanceof Error ? error.message : "The channel could not be deleted.";
+      setDeleteError(message);
+      setNotice(message);
     } finally {
       setDeletingChannel(false);
     }
@@ -258,14 +294,14 @@ export function StudioChat({ viewer, initialChannelId }: { viewer: Viewer; initi
         <div className="flex h-16 items-center justify-between border-b border-white/10 px-4"><div><p className="text-sm font-bold">Courier newsroom</p><p className="text-[0.65rem] uppercase tracking-widest text-white/45">Team communication</p></div>{canManage ? <Dialog open={channelDialogOpen} onOpenChange={setChannelDialogOpen}><DialogTrigger asChild><Button size="icon-sm" variant="ghost" aria-label="Create channel"><Plus /></Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle>Create a public channel</DialogTitle><DialogDescription>Everyone with newsroom chat access can find and join this conversation.</DialogDescription></DialogHeader><Input value={channelName} onChange={(event) => setChannelName(event.target.value)} placeholder="Channel name" maxLength={80} onKeyDown={(event) => { if (event.key === "Enter") void createChannel(); }} /><DialogFooter><Button onClick={() => void createChannel()} disabled={!channelName.trim()}>Create channel</Button></DialogFooter></DialogContent></Dialog> : null}</div>
         <div className="max-h-52 overflow-y-auto p-2 lg:max-h-[calc(100vh-8rem)]">
           <p className="px-2 pb-2 pt-1 text-[0.65rem] font-bold uppercase tracking-widest text-white/40">Channels & messages</p>
-          {loading ? <div className="flex items-center gap-2 px-2 py-3 text-xs text-white/50"><Loader2 className="size-3.5 animate-spin" /> Loading conversations</div> : channels.length ? channels.map((channel) => <button key={channel.id} type="button" onClick={() => void selectChannel(channel.id)} disabled={uploading} className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm disabled:cursor-wait ${channel.id === selectedId ? "bg-white/12 text-white" : "text-white/60 hover:bg-white/7 hover:text-white"}`}><span className="shrink-0">{channel.kind === "public" ? <Hash className="size-4" /> : <MessageCircle className="size-4" />}</span><span className="min-w-0 flex-1 truncate">{channel.name}</span>{channel.unread ? <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[0.65rem] font-black text-white">{channel.unread > 9 ? "9+" : channel.unread}</span> : null}</button>) : <p className="px-2 py-4 text-xs leading-5 text-white/45">No conversations yet. A channel manager can create the first one.</p>}
+          {loading ? <div className="flex items-center gap-2 px-2 py-3 text-xs text-white/50"><Loader2 className="size-3.5 animate-spin" /> Loading conversations</div> : channels.length ? channels.map((channel) => <div key={channel.id} className={`group flex w-full items-center rounded-md text-sm ${channel.id === selectedId ? "bg-white/12 text-white" : "text-white/60 hover:bg-white/7 hover:text-white"}`}><button type="button" onClick={() => void selectChannel(channel.id)} disabled={uploading} className="flex min-w-0 flex-1 items-center gap-2 px-2.5 py-2 text-left disabled:cursor-wait"><span className="shrink-0">{channel.kind === "public" ? <Hash className="size-4" /> : <MessageCircle className="size-4" />}</span><span className="min-w-0 flex-1 truncate">{channel.name}</span>{channel.unread ? <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[0.65rem] font-black text-white">{channel.unread > 9 ? "9+" : channel.unread}</span> : null}</button>{canManage && (channel.kind === "public" || channel.kind === "private") ? <button type="button" onClick={() => beginDeleteChannel(channel)} disabled={uploading} className={`mr-1 inline-flex size-7 shrink-0 items-center justify-center rounded text-red-300 transition hover:bg-red-500/20 hover:text-red-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-300 disabled:cursor-wait ${channel.id === selectedId ? "opacity-100" : "opacity-60 group-hover:opacity-100 group-focus-within:opacity-100"}`} aria-label={`Delete ${channel.name}`} title={`Delete ${channel.name}`}><Trash2 className="size-3.5" /></button> : null}</div>) : <p className="px-2 py-4 text-xs leading-5 text-white/45">No conversations yet. A channel manager can create the first one.</p>}
         </div>
       </aside>
 
       <section className="flex min-h-[34rem] min-w-0 flex-col bg-background">
         <header className="flex min-h-16 flex-wrap items-center justify-between gap-3 border-b px-4 py-3 sm:px-5">
           <div className="min-w-0"><h1 className="flex items-center gap-2 truncate text-base font-bold">{selected?.kind === "public" ? <Hash className="size-4" /> : <MessageCircle className="size-4" />}{selected?.name ?? "Team chat"}</h1><p className="truncate text-xs text-muted-foreground">{selected?.topic ?? (selected ? "Internal newsroom conversation" : "Choose a conversation to begin")}</p></div>
-          {selected ? <div className="flex items-center gap-1"><form onSubmit={(event) => { event.preventDefault(); cursorRef.current = null; void loadMessages(true, search); }} className="flex gap-1"><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search messages" className="h-8 w-40" aria-label="Search conversation" /><Button type="submit" size="icon-sm" variant="ghost" aria-label="Search"><Search /></Button></form>{canManage && (selected.kind === "public" || selected.kind === "private") ? <Button type="button" size="icon-sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDeleteChannelOpen(true)} aria-label={`Delete ${selected.name}`}><Trash2 /></Button> : null}</div> : null}
+          {selected ? <form onSubmit={(event) => { event.preventDefault(); cursorRef.current = null; void loadMessages(true, search); }} className="flex gap-1"><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search messages" className="h-8 w-40" aria-label="Search conversation" /><Button type="submit" size="icon-sm" variant="ghost" aria-label="Search"><Search /></Button></form> : null}
         </header>
         {notice ? <div className="border-b border-red-500/30 bg-red-500/10 px-4 py-2 text-xs text-red-300" role="status">{notice}</div> : null}
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
@@ -283,7 +319,7 @@ export function StudioChat({ viewer, initialChannelId }: { viewer: Viewer; initi
         <div className="flex h-16 items-center gap-2 border-b px-4"><UsersRound className="size-4" /><h2 className="text-sm font-bold">Newsroom activity</h2></div>
         <div className="max-h-[calc(100vh-8rem)] overflow-y-auto p-2">{directory.map((person) => { const activity = resolveEmployeePresence(presence.find((item) => item.userClerkId === person.clerkId)); const initials = person.displayName.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase(); return <div key={person.clerkId} className="group flex items-center gap-3 rounded-md p-2 hover:bg-muted/60"><Avatar size="sm"><AvatarImage src={person.avatarUrl ?? undefined} alt="" /><AvatarFallback>{initials}</AvatarFallback></Avatar><div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold">{person.displayName}{person.clerkId === viewer.id ? " (you)" : ""}</p><PresenceIndicator status={activity.status} platform={activity.platform} lastSeenAt={activity.lastSeenAt} /></div>{person.clerkId !== viewer.id && canWrite ? <Button size="icon-xs" variant="ghost" className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100" onClick={() => void openDirectMessage(person)} aria-label={`Message ${person.displayName}`}><MessageCircle /></Button> : null}</div>; })}</div>
       </aside>
-      <AlertDialog open={deleteChannelOpen} onOpenChange={setDeleteChannelOpen}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete #{selected?.name}?</AlertDialogTitle><AlertDialogDescription>The channel will disappear for everyone. Its messages and private media remain preserved in the newsroom audit record.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={deletingChannel}>Keep channel</AlertDialogCancel><AlertDialogAction variant="destructive" disabled={deletingChannel} onClick={() => void deleteSelectedChannel()}>{deletingChannel ? <Loader2 className="animate-spin" /> : <Trash2 />} Delete channel</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+      <AlertDialog open={deleteChannelOpen} onOpenChange={(open) => { if (!open) closeDeleteChannel(); }}><AlertDialogContent>{deleteStep === "warning" ? <><AlertDialogHeader><AlertDialogTitle>Delete #{channelPendingDeletion?.name}?</AlertDialogTitle><AlertDialogDescription>This removes the channel from every newsroom account. Its messages and private media remain preserved in the audit record, but the conversation will no longer be available in Team Chat.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Keep channel</AlertDialogCancel><Button variant="destructive" onClick={() => setDeleteStep("code")}><Trash2 /> Continue</Button></AlertDialogFooter></> : <><AlertDialogHeader><AlertDialogTitle>Type the deletion code</AlertDialogTitle><AlertDialogDescription>This is the final confirmation for #{channelPendingDeletion?.name}. Enter the case-sensitive code exactly as shown.</AlertDialogDescription></AlertDialogHeader><div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-center"><code className="select-all font-mono text-lg font-black tracking-widest text-destructive">{deletionCode}</code></div><Input autoFocus value={deletionCodeInput} onChange={(event) => { setDeletionCodeInput(event.target.value); setDeleteError(null); }} placeholder="Type the exact code" aria-label="Channel deletion confirmation code" autoComplete="off" spellCheck={false} onPaste={(event) => event.preventDefault()} onKeyDown={(event) => { if (event.key === "Enter" && deletionCodeInput === deletionCode) void deleteChannel(); }} /><p className="text-xs text-muted-foreground">For safety, the code must be typed manually. Pasting is disabled.</p>{deleteError ? <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive" role="alert">{deleteError}</p> : null}<AlertDialogFooter><Button variant="outline" onClick={() => { setDeleteStep("warning"); setDeletionCodeInput(""); setDeleteError(null); }} disabled={deletingChannel}>Back</Button><Button variant="destructive" disabled={deletionCodeInput !== deletionCode || deletingChannel} onClick={() => void deleteChannel()}>{deletingChannel ? <Loader2 className="animate-spin" /> : <Trash2 />} Permanently delete channel</Button></AlertDialogFooter></>}</AlertDialogContent></AlertDialog>
     </div>
   );
 }
