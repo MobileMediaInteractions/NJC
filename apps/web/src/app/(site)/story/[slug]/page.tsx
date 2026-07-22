@@ -14,15 +14,16 @@ import { formatStoryDate } from "@/lib/format";
 import { getSiteOrigin } from "@/lib/origin";
 import { isSearchIndexingEnabled, storyPageJsonLd } from "@/lib/seo";
 import { getSiteConfiguration } from "@/lib/site-settings";
-import { getStoryShareLinks } from "@/lib/story-sharing";
+import { getStoryShareLinks, getStorySocialImageUrl } from "@/lib/story-sharing";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const story = await getStoryBySlug(slug);
+  const [story, configuration] = await Promise.all([getStoryBySlug(slug), getSiteConfiguration()]);
   if (!story) return {};
   const title = story.seoTitle || story.headline;
   const description = story.seoDescription || story.dek;
   const canonical = story.canonicalUrl || `/story/${story.slug}`;
+  const socialImage = getStorySocialImageUrl({ siteOrigin: getSiteOrigin(), slug: story.slug, updatedAt: story.updatedAt });
   const index = isSearchIndexingEnabled() && !story.noIndex;
   return {
     title,
@@ -44,6 +45,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     },
     openGraph: {
       type: "article",
+      locale: "en_US",
+      siteName: configuration.publication.name,
       url: canonical,
       title,
       description,
@@ -52,13 +55,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       authors: [story.author.name],
       section: story.categoryLabel,
       tags: story.tags,
-      images: [{ url: story.image, alt: story.imageAlt }],
+      images: [{ url: socialImage, width: 1200, height: 630, type: "image/png", alt: story.imageAlt }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [{ url: story.image, alt: story.imageAlt }],
+      images: [{ url: socialImage, alt: story.imageAlt }],
     },
   };
 }
@@ -77,6 +80,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     headline: story.headline,
     siteOrigin: getSiteOrigin(),
     slug: story.slug,
+    updatedAt: story.updatedAt,
   });
 
   return (

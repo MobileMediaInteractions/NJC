@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getStoryShareLinks, getStoryShareUrl } from "../src/lib/story-sharing";
+import { getStoryShareLinks, getStoryShareUrl, getStorySocialImageUrl } from "../src/lib/story-sharing";
 
 test("X share intent includes the article headline and canonical URL", () => {
   const shareUrl = new URL(getStoryShareUrl({
@@ -48,4 +48,26 @@ test("article action links create a prefilled email and preserve the article URL
     email.searchParams.get("body"),
     "Library renovation begins Monday\n\nhttps://www.thejerseycourier.com/story/library-renovation",
   );
+});
+
+test("updated stories use versioned share and social-image URLs for crawler cache refresh", () => {
+  const updatedAt = "2026-07-22T20:30:00.000Z";
+  const links = getStoryShareLinks({
+    headline: "Council adopts the revised budget",
+    siteOrigin: "https://www.thejerseycourier.com",
+    slug: "revised-budget",
+    updatedAt,
+  });
+  const shareUrl = new URL(links.shareUrl);
+  const socialImageUrl = new URL(getStorySocialImageUrl({
+    siteOrigin: "https://www.thejerseycourier.com",
+    slug: "revised-budget",
+    updatedAt,
+  }));
+
+  assert.equal(links.articleUrl, "https://www.thejerseycourier.com/story/revised-budget");
+  assert.ok(shareUrl.searchParams.get("share"));
+  assert.equal(socialImageUrl.pathname, "/social/story/revised-budget/image");
+  assert.equal(socialImageUrl.searchParams.get("v"), shareUrl.searchParams.get("share"));
+  assert.match(decodeURIComponent(new URL(links.xUrl).searchParams.get("text") ?? ""), /\?share=/);
 });

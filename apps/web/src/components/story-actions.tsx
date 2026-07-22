@@ -10,6 +10,7 @@ type StoryActionsProps = {
   articleUrl: string;
   emailUrl: string;
   headline: string;
+  shareUrl: string;
   xUrl: string;
 };
 
@@ -44,7 +45,7 @@ async function copyToClipboard(value: string) {
   if (!copied) throw new Error("Clipboard access is unavailable");
 }
 
-export function StoryActions({ articleUrl, emailUrl, headline, xUrl }: StoryActionsProps) {
+export function StoryActions({ articleUrl, emailUrl, headline, shareUrl, xUrl }: StoryActionsProps) {
   const [isSaved, setIsSaved] = useState(false);
   const [notice, setNotice] = useState("");
   const noticeTimer = useRef<number | null>(null);
@@ -84,7 +85,7 @@ export function StoryActions({ articleUrl, emailUrl, headline, xUrl }: StoryActi
   async function openShareOptions() {
     if (navigator.share) {
       try {
-        await navigator.share({ title: headline, text: headline, url: articleUrl });
+        await navigator.share({ title: headline, text: headline, url: shareUrl });
         showNotice("Article shared.");
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return;
@@ -94,7 +95,7 @@ export function StoryActions({ articleUrl, emailUrl, headline, xUrl }: StoryActi
     }
 
     try {
-      await copyToClipboard(articleUrl);
+      await copyToClipboard(shareUrl);
       showNotice("Share options are unavailable, so the link was copied.");
     } catch {
       showNotice("Share options are unavailable in this browser.");
@@ -103,7 +104,7 @@ export function StoryActions({ articleUrl, emailUrl, headline, xUrl }: StoryActi
 
   async function copyLink() {
     try {
-      await copyToClipboard(articleUrl);
+      await copyToClipboard(shareUrl);
       showNotice("Article link copied.");
     } catch {
       showNotice("The article link could not be copied.");
