@@ -1,0 +1,1 @@
+ALTER TABLE "employee_presence" ADD COLUMN "platform" text DEFAULT 'web' NOT NULL;

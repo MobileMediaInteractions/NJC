@@ -34,7 +34,7 @@ async function readDatasets(): Promise<Dataset[]> {
   const data = await Promise.all([
     db.select().from(schema.users), db.select().from(schema.categories), db.select().from(schema.stories), db.select().from(schema.storyRevisions),
     db.select().from(schema.mediaAssets), db.select().from(schema.assignments), db.select().from(schema.comments), db.select().from(schema.newsletterSubscribers),
-    db.select().from(schema.alerts), db.select().from(schema.liveEvents), db.select().from(schema.newsTips), db.select().from(schema.pressKitRequests), db.select().from(schema.apiKeys),
+    db.select().from(schema.alerts), db.select().from(schema.liveEvents), db.select().from(schema.newsTips), db.select().from(schema.pressKitRequests), db.select().from(schema.pressReleases), db.select().from(schema.apiKeys),
     db.select().from(schema.apiAuditLogs), db.select().from(schema.pushDevices), db.select().from(schema.audienceInstallations), db.select().from(schema.siteSettings), db.select().from(schema.dataRequests),
     db.select().from(schema.portableExports), db.select().from(schema.devicePairingRequests), db.select().from(schema.deviceSessions),
     db.select().from(schema.employeeCapabilityGrants), db.select().from(schema.employeeAccessRequests), db.select().from(schema.employeeChatChannels),
@@ -52,7 +52,7 @@ async function readDatasets(): Promise<Dataset[]> {
   const definitions = [
     ["users", schema.users], ["categories", schema.categories], ["stories", schema.stories], ["story_revisions", schema.storyRevisions],
     ["media_assets", schema.mediaAssets], ["assignments", schema.assignments], ["comments", schema.comments], ["newsletter_subscribers", schema.newsletterSubscribers],
-    ["alerts", schema.alerts], ["live_events", schema.liveEvents], ["news_tips", schema.newsTips], ["press_kit_requests", schema.pressKitRequests], ["api_keys", schema.apiKeys],
+    ["alerts", schema.alerts], ["live_events", schema.liveEvents], ["news_tips", schema.newsTips], ["press_kit_requests", schema.pressKitRequests], ["press_releases", schema.pressReleases], ["api_keys", schema.apiKeys],
     ["api_audit_logs", schema.apiAuditLogs], ["push_devices", schema.pushDevices], ["audience_installations", schema.audienceInstallations], ["site_settings", schema.siteSettings], ["data_requests", schema.dataRequests],
     ["portable_exports", schema.portableExports], ["device_pairing_requests", schema.devicePairingRequests], ["device_sessions", schema.deviceSessions],
     ["employee_capability_grants", schema.employeeCapabilityGrants], ["employee_access_requests", schema.employeeAccessRequests], ["employee_chat_channels", schema.employeeChatChannels],

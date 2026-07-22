@@ -222,6 +222,7 @@ export const employeeCapabilities = [
   "chat:moderate",
   "tools:metrics",
   "tools:editorial",
+  "tools:press",
   "tools:alerts",
   "tools:live",
   "access:review",

@@ -1,8 +1,9 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, or, sql } from "drizzle-orm";
 import { getDb } from "@harborline/backend/db";
 import {
   employeeChatChannels,
   employeeChatMembers,
+  employeeChatMessages,
 } from "@harborline/backend/schema";
 import type { EmployeeViewer } from "@/lib/employee-auth";
 
@@ -41,4 +42,15 @@ export async function getAuthorizedEmployeeChannel(
 
 export function isValidEmployeeUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+export async function getEmployeeUnreadChatCount(viewer: EmployeeViewer) {
+  if (!viewer.capabilities.includes("chat:read")) return 0;
+  const [result] = await getDb()
+    .select({ count: sql<number>`count(${employeeChatMessages.id}) filter (where ${employeeChatMessages.createdAt} > coalesce(${employeeChatMembers.lastReadAt}, to_timestamp(0)) and ${employeeChatMessages.authorClerkId} <> ${viewer.id})::int` })
+    .from(employeeChatChannels)
+    .leftJoin(employeeChatMembers, and(eq(employeeChatMembers.channelId, employeeChatChannels.id), eq(employeeChatMembers.userClerkId, viewer.id), isNull(employeeChatMembers.leftAt)))
+    .leftJoin(employeeChatMessages, eq(employeeChatMessages.channelId, employeeChatChannels.id))
+    .where(and(eq(employeeChatChannels.isArchived, false), or(eq(employeeChatChannels.kind, "public"), sql`${employeeChatMembers.id} is not null`)));
+  return Number(result?.count ?? 0);
 }

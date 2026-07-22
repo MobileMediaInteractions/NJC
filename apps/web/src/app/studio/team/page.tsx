@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, Search, ShieldCheck, UsersRound } from "lucide-react";
 import { StudioGate } from "@/components/studio/studio-gate";
 import { StudioShell } from "@/components/studio/studio-shell";
+import { PresenceIndicator } from "@/components/studio/presence-indicator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getStudioUser } from "@/lib/auth";
+import { getEmployeePresenceMap } from "@/lib/employee-presence-server";
 import { listStudioAccounts } from "@/lib/studio-accounts";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +32,10 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
   } catch (error) {
     console.error("Studio Clerk directory lookup failed", error);
   }
+  const presence = await getEmployeePresenceMap(directory?.accounts.map((account) => account.id) ?? []).catch((error) => {
+    console.error("Studio presence directory lookup failed", error);
+    return new Map();
+  });
 
   return (
     <StudioShell viewer={viewer}>
@@ -55,12 +61,14 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
               <>
                 <div className="overflow-x-auto">
                   <Table>
-                    <TableHeader><TableRow><TableHead>Account</TableHead><TableHead>Role</TableHead><TableHead>Security</TableHead><TableHead>Last active</TableHead><TableHead>Status</TableHead><TableHead><span className="sr-only">Open</span></TableHead></TableRow></TableHeader>
+                    <TableHeader><TableRow><TableHead>Account</TableHead><TableHead>Role</TableHead><TableHead>Activity</TableHead><TableHead>Security</TableHead><TableHead>Last active</TableHead><TableHead>Status</TableHead><TableHead><span className="sr-only">Open</span></TableHead></TableRow></TableHeader>
                     <TableBody>{directory.accounts.map((account) => {
                       const initials = account.displayName.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+                      const activity = presence.get(account.id) ?? { status: "offline" as const, platform: "unknown" as const, lastSeenAt: null };
                       return <TableRow key={account.id}>
                         <TableCell><Link href={`/studio/team/${account.id}`} className="flex items-center gap-3 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"><Avatar><AvatarImage src={account.imageUrl} alt="" /><AvatarFallback>{initials}</AvatarFallback></Avatar><div><p className="font-medium group-hover:underline">{account.displayName}</p><p className="text-xs text-muted-foreground">{account.primaryEmail ?? "No primary email"}</p>{account.title ? <p className="mt-0.5 text-xs text-muted-foreground">{account.title}</p> : null}</div></Link></TableCell>
                         <TableCell>{account.role ? <Badge variant="secondary" className="capitalize">{account.role}</Badge> : <Badge variant="outline">Reader</Badge>}</TableCell>
+                        <TableCell><PresenceIndicator status={activity.status} platform={activity.platform} lastSeenAt={activity.lastSeenAt} /></TableCell>
                         <TableCell>{account.twoFactorEnabled ? <span className="flex items-center gap-1.5 text-sm text-emerald-400"><ShieldCheck className="size-4" /> 2FA</span> : <span className="text-sm text-muted-foreground">Standard</span>}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">{formatDate(account.lastActiveAt)}</TableCell>
                         <TableCell><StatusBadge status={account.status} /></TableCell>

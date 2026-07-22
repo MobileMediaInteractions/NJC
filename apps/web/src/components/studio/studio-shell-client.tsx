@@ -8,9 +8,11 @@ import {
   BookOpenText,
   ChevronLeft,
   FilePlus2,
+  FileText,
   Inbox,
   LayoutDashboard,
   Library,
+  MessageCircleMore,
   Newspaper,
   Settings,
   Users,
@@ -19,6 +21,7 @@ import { BrandMark } from "@/components/brand-mark";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { StudioCommunicationControls, formatUnread, useStudioCommunication } from "@/components/studio/studio-communication-controls";
 import { formatTipBadge } from "@/lib/newsroom-tips";
 import { cn } from "@/lib/utils";
 import type { StudioUser } from "@/lib/types";
@@ -26,9 +29,11 @@ import type { StudioUser } from "@/lib/types";
 const navigation = [
   { label: "Dashboard", href: "/studio", icon: LayoutDashboard },
   { label: "Stories", href: "/studio/stories", icon: BookOpenText },
+  { label: "Team chat", href: "/studio/chat", icon: MessageCircleMore, requiresChat: true },
   { label: "News tips", href: "/studio/tips", icon: Inbox, excludesContributor: true },
   { label: "Media", href: "/studio/media", icon: Library },
   { label: "Press requests", href: "/studio/press", icon: Newspaper },
+  { label: "Press releases", href: "/studio/press-releases", icon: FileText, requiresPress: true },
   { label: "Analytics", href: "/studio/analytics", icon: BarChart3 },
   { label: "Team & roles", href: "/studio/team", icon: Users },
   { label: "Portable exports", href: "/studio/exports", icon: Archive },
@@ -39,13 +44,21 @@ export function StudioShellClient({
   children,
   viewer,
   newTipCount,
+  unreadChatCount,
+  chatEnabled,
+  pressEnabled,
 }: {
   children: React.ReactNode;
   viewer: StudioUser;
   newTipCount: number;
+  unreadChatCount: number;
+  chatEnabled: boolean;
+  pressEnabled: boolean;
 }) {
   const pathname = usePathname();
   const tipBadge = formatTipBadge(newTipCount);
+  const communication = useStudioCommunication({ enabled: chatEnabled, initialUnread: unreadChatCount });
+  const chatBadge = communication.unreadChat ? formatUnread(communication.unreadChat) : null;
   return (
     <div className="dark min-h-screen bg-background text-foreground">
       <div className="grid min-h-screen lg:grid-cols-[16rem_1fr]">
@@ -65,7 +78,7 @@ export function StudioShellClient({
             {navigation
               .filter(
                 (item) =>
-                  !item.excludesContributor || viewer.role !== "contributor",
+                  (!item.excludesContributor || viewer.role !== "contributor") && (!item.requiresChat || chatEnabled) && (!item.requiresPress || pressEnabled),
               )
               .map((item) => {
                 const active =
@@ -73,6 +86,7 @@ export function StudioShellClient({
                     ? pathname === item.href
                     : pathname.startsWith(item.href);
                 const showTipBadge = item.href === "/studio/tips" && tipBadge;
+                const showChatBadge = item.href === "/studio/chat" && chatBadge;
                 return (
                   <Link
                     key={item.href}
@@ -92,6 +106,7 @@ export function StudioShellClient({
                         {tipBadge}
                       </span>
                     ) : null}
+                    {showChatBadge ? <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[0.65rem] font-black leading-none text-white" aria-label={`${communication.unreadChat} unread team messages`}>{chatBadge}</span> : null}
                   </Link>
                 );
               })}
@@ -120,11 +135,13 @@ export function StudioShellClient({
                   </Link>
                 </Button>
               ) : null}
+              {chatEnabled ? <Button asChild variant="ghost" size="sm"><Link href="/studio/chat" aria-label={`${communication.unreadChat} unread team messages`}><MessageCircleMore />{chatBadge ? <span className="rounded-full bg-red-600 px-1.5 py-0.5 text-[0.65rem] font-black leading-none text-white">{chatBadge}</span> : null}</Link></Button> : null}
             </div>
             <p className="hidden text-sm font-medium text-muted-foreground lg:block">
               Middlesex County desk
             </p>
             <div className="flex items-center gap-3">
+              <StudioCommunicationControls enabled={chatEnabled} unreadNotifications={communication.unreadNotifications} notifications={communication.notifications} status={communication.status} setStatus={communication.setStatus} markNotificationRead={communication.markNotificationRead} />
               <Button asChild size="sm">
                 <Link href="/studio/stories/new">
                   <FilePlus2 /> New story

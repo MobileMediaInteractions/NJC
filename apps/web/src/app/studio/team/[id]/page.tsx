@@ -3,11 +3,13 @@ import { ArrowLeft, CheckCircle2, KeyRound, Link2, Mail, Phone, ShieldCheck, Use
 import { UserProfileEditor } from "@/components/studio/user-profile-editor";
 import { StudioGate } from "@/components/studio/studio-gate";
 import { StudioShell } from "@/components/studio/studio-shell";
+import { PresenceIndicator } from "@/components/studio/presence-indicator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getStudioUser } from "@/lib/auth";
+import { getEmployeePresenceMap } from "@/lib/employee-presence-server";
 import { getStudioAccount } from "@/lib/studio-accounts";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +34,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
   }
 
   const initials = account.displayName.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+  const presence = (await getEmployeePresenceMap([account.id]).catch(() => new Map())).get(account.id) ?? { status: "offline" as const, platform: "unknown" as const, lastSeenAt: null };
   return (
     <StudioShell viewer={viewer}>
       <div className="max-w-6xl">
@@ -39,7 +42,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
         <header className="flex flex-wrap items-start justify-between gap-5 border-b pb-6">
           <div className="flex min-w-0 items-center gap-4">
             <Avatar className="size-16"><AvatarImage src={account.imageUrl} alt="" /><AvatarFallback className="text-lg">{initials}</AvatarFallback></Avatar>
-            <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h1 className="truncate text-3xl font-bold tracking-tight">{account.displayName}</h1><StatusBadge status={account.status} /></div><p className="mt-1 text-sm text-muted-foreground">{account.primaryEmail ?? "No primary email"}</p><p className="mt-1 break-all font-mono text-[0.68rem] text-muted-foreground">{account.id}</p></div>
+            <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h1 className="truncate text-3xl font-bold tracking-tight">{account.displayName}</h1><StatusBadge status={account.status} /></div><div className="mt-1"><PresenceIndicator status={presence.status} platform={presence.platform} lastSeenAt={presence.lastSeenAt} /></div><p className="mt-1 text-sm text-muted-foreground">{account.primaryEmail ?? "No primary email"}</p><p className="mt-1 break-all font-mono text-[0.68rem] text-muted-foreground">{account.id}</p></div>
           </div>
           <Badge variant={account.role ? "secondary" : "outline"} className="capitalize">{account.role ?? "Reader"}</Badge>
         </header>
@@ -56,6 +59,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
           </div>
 
           <div className="space-y-6">
+            <Card><CardHeader><CardTitle>Newsroom activity</CardTitle><CardDescription>Live employee presence and the most recently active platform.</CardDescription></CardHeader><CardContent><PresenceIndicator status={presence.status} platform={presence.platform} lastSeenAt={presence.lastSeenAt} /></CardContent></Card>
             <Card><CardHeader><CardTitle>Security</CardTitle><CardDescription>Current account security posture reported by Clerk.</CardDescription></CardHeader><CardContent className="space-y-3">
               <BooleanRow label="Primary email verified" value={account.emailVerified} />
               <BooleanRow label="Password enabled" value={account.passwordEnabled} />

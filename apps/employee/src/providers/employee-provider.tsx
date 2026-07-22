@@ -1,7 +1,7 @@
 import { useAuth } from "@clerk/expo";
 import type { EmployeeCapability, StaffRole } from "@harborline/contracts";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { AppState } from "react-native";
+import { AppState, Platform } from "react-native";
 import { employeeRequest } from "@/lib/api";
 import { reportEmployeeAudience } from "@/lib/audience";
 
@@ -17,6 +17,13 @@ export function EmployeeProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [offline, setOffline] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const reportPresence = useCallback(async (status: "online" | "away" | "offline") => {
+    if (!isSignedIn) return;
+    const token = await getToken();
+    if (!token) return;
+    const platform = Platform.OS === "ios" ? "ios" : Platform.OS === "android" ? "android" : "web";
+    await employeeRequest("/api/v1/employee/chat/presence", token, { method: "POST", body: JSON.stringify({ status, platform }) });
+  }, [getToken, isSignedIn]);
   const refresh = useCallback(async () => {
     if (!isSignedIn) { setData(null); setLoading(false); return; }
     try {
@@ -24,20 +31,21 @@ export function EmployeeProvider({ children }: { children: ReactNode }) {
       if (!token) throw new Error("Your session expired. Sign in again.");
       const next = await employeeRequest<Bootstrap>("/api/v1/employee/bootstrap", token);
       void reportEmployeeAudience(token).catch(() => undefined);
+      void reportPresence("online").catch(() => undefined);
       dataRef.current = next; setData(next); setError(null); setOffline(false);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Employee services are unavailable.");
       setOffline(Boolean(dataRef.current));
       if (!dataRef.current) setData(null);
     } finally { setLoading(false); }
-  }, [getToken, isSignedIn]);
+  }, [getToken, isSignedIn, reportPresence]);
 
   useEffect(() => { const timer = setTimeout(() => void refresh(), 0); return () => clearTimeout(timer); }, [refresh]);
   useEffect(() => {
-    const subscription = AppState.addEventListener("change", (state) => { if (state === "active") void refresh(); });
+    const subscription = AppState.addEventListener("change", (state) => { if (state === "active") void refresh(); else void reportPresence("away").catch(() => undefined); });
     const timer = setInterval(() => { if (AppState.currentState === "active") void refresh(); }, 30_000);
     return () => { subscription.remove(); clearInterval(timer); };
-  }, [refresh]);
+  }, [refresh, reportPresence]);
   const has = useCallback((capability: EmployeeCapability) => Boolean(data?.viewer.capabilities.includes(capability)), [data]);
   const value = useMemo(() => ({ data, loading, offline, error, refresh, has }), [data, error, has, loading, offline, refresh]);
   return <Context.Provider value={value}>{children}</Context.Provider>;

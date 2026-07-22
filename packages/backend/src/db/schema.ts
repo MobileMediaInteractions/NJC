@@ -320,6 +320,42 @@ export const pressKitRequests = pgTable(
   ],
 );
 
+export const pressReleases = pgTable(
+  "press_releases",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    documentType: text("document_type").notNull().default("press_release"),
+    status: text("status").notNull().default("draft"),
+    headline: text("headline").notNull(),
+    subheadline: text("subheadline").notNull().default(""),
+    summary: text("summary").notNull().default(""),
+    location: text("location").notNull().default("New Brunswick, N.J."),
+    releaseTiming: text("release_timing").notNull().default("immediate"),
+    releaseAt: timestamp("release_at", { withTimezone: true }),
+    body: text("body").notNull(),
+    quote: text("quote").notNull().default(""),
+    quoteAttribution: text("quote_attribution").notNull().default(""),
+    keyPoints: jsonb("key_points").$type<string[]>().notNull().default([]),
+    boilerplate: text("boilerplate").notNull().default(""),
+    contactName: text("contact_name").notNull(),
+    contactTitle: text("contact_title").notNull().default(""),
+    contactEmail: text("contact_email").notNull(),
+    contactPhone: text("contact_phone").notNull().default(""),
+    websiteUrl: text("website_url").notNull().default(""),
+    internalNotes: text("internal_notes").notNull().default(""),
+    createdByClerkId: text("created_by_clerk_id").notNull(),
+    updatedByClerkId: text("updated_by_clerk_id").notNull(),
+    lastExportedAt: timestamp("last_exported_at", { withTimezone: true }),
+    exportCount: integer("export_count").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("press_releases_status_idx").on(table.status, table.updatedAt),
+    index("press_releases_creator_idx").on(table.createdByClerkId, table.createdAt),
+  ],
+);
+
 export const apiKeys = pgTable(
   "api_keys",
   {
@@ -623,6 +659,7 @@ export const employeePresence = pgTable(
   {
     userClerkId: text("user_clerk_id").primaryKey(),
     status: text("status").notNull().default("online"),
+    platform: text("platform").notNull().default("web"),
     typingChannelId: uuid("typing_channel_id").references(() => employeeChatChannels.id, { onDelete: "set null" }),
     lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
     typingExpiresAt: timestamp("typing_expires_at", { withTimezone: true }),
