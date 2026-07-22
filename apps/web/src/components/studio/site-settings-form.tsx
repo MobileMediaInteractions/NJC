@@ -11,7 +11,14 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { formatNavigation, parseNavigation, type AdPlacementName, type SiteConfiguration } from "@/lib/site-settings";
+import {
+  formatDatelines,
+  formatNavigation,
+  parseDatelines,
+  parseNavigation,
+  type AdPlacementName,
+  type SiteConfiguration,
+} from "@/lib/site-settings";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -32,6 +39,9 @@ export function SiteSettingsForm({
 }) {
   const [configuration, setConfiguration] = useState(initialConfiguration);
   const [navigationText, setNavigationText] = useState(formatNavigation(initialConfiguration.navigation));
+  const [datelinesText, setDatelinesText] = useState(
+    formatDatelines(initialConfiguration.editorial.datelines),
+  );
   const [state, setState] = useState<SaveState>("idle");
   const [message, setMessage] = useState("");
 
@@ -64,7 +74,11 @@ export function SiteSettingsForm({
     if (!canManage || state === "saving") return;
     setState("saving");
     setMessage("");
-    const payload = { ...configuration, navigation: parseNavigation(navigationText) };
+    const payload = {
+      ...configuration,
+      navigation: parseNavigation(navigationText),
+      editorial: { datelines: parseDatelines(datelinesText) },
+    };
     try {
       const response = await fetch("/api/v1/studio/settings", {
         method: "PATCH",
@@ -78,6 +92,7 @@ export function SiteSettingsForm({
       }
       setConfiguration(result.data);
       setNavigationText(formatNavigation(result.data.navigation));
+      setDatelinesText(formatDatelines(result.data.editorial.datelines));
       setState("saved");
       setMessage("Production configuration saved. Public pages will use the new values on their next request.");
     } catch (error) {
@@ -112,6 +127,7 @@ export function SiteSettingsForm({
       <Tabs defaultValue="publication" className="mt-7">
         <TabsList className="h-auto flex-wrap justify-start">
           <TabsTrigger value="publication" className="px-3 py-2">Publication</TabsTrigger>
+          <TabsTrigger value="editorial" className="px-3 py-2">Editorial</TabsTrigger>
           <TabsTrigger value="features" className="px-3 py-2">Features</TabsTrigger>
           <TabsTrigger value="advertising" className="px-3 py-2">Google AdSense</TabsTrigger>
         </TabsList>
@@ -130,6 +146,33 @@ export function SiteSettingsForm({
           </CardContent></Card>
 
           <Card><CardHeader><CardTitle>Primary navigation</CardTitle><CardDescription>One item per line in the format <code>Label | /local-path</code>. External and script URLs are rejected.</CardDescription></CardHeader><CardContent><Label htmlFor="site-navigation">Menu items</Label><Textarea id="site-navigation" value={navigationText} disabled={!canManage} onChange={(event) => setNavigationText(event.target.value)} className="mt-2 min-h-56 font-mono text-xs" /></CardContent></Card>
+        </TabsContent>
+
+        <TabsContent value="editorial" className="pt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Story datelines</CardTitle>
+              <CardDescription>
+                One dateline per line. These become the approved choices in the
+                story editor; the first entry is the default for new stories.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Label htmlFor="story-datelines">Approved datelines</Label>
+              <Textarea
+                id="story-datelines"
+                value={datelinesText}
+                disabled={!canManage}
+                onChange={(event) => setDatelinesText(event.target.value)}
+                className="mt-2 min-h-56"
+                placeholder={"New Brunswick\nMiddlesex County\nTrenton"}
+              />
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                Use recognizable geographic names. Changing this list does not
+                rewrite datelines on already published stories.
+              </p>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="features" className="pt-4">

@@ -6,6 +6,13 @@ import { siteSettings } from "@harborline/backend/schema";
 import { siteConfig } from "@/lib/site";
 
 export const siteConfigurationKey = "site_configuration_v1";
+export const defaultDatelines = [
+  "New Brunswick",
+  "Middlesex County",
+  "Trenton",
+  "Edison",
+  "Woodbridge",
+] as const;
 
 const navigationItemSchema = z.object({
   label: z.string().trim().min(1).max(40),
@@ -39,6 +46,18 @@ export const siteConfigurationSchema = z.object({
     membership: z.boolean(),
     donations: z.boolean(),
   }),
+  editorial: z.object({
+    datelines: z
+      .array(z.string().trim().min(2).max(80))
+      .min(1, "Add at least one newsroom dateline")
+      .max(50)
+      .refine(
+        (values) =>
+          new Set(values.map((value) => value.toLocaleLowerCase())).size ===
+          values.length,
+        "Datelines must be unique",
+      ),
+  }).default({ datelines: [...defaultDatelines] }),
   advertising: z.object({
     enabled: z.boolean(),
     provider: z.literal("google-adsense"),
@@ -97,6 +116,9 @@ export const defaultSiteConfiguration: SiteConfiguration = {
     membership: siteConfig.monetization.membershipEnabled,
     donations: siteConfig.monetization.donationsEnabled,
   },
+  editorial: {
+    datelines: [...defaultDatelines],
+  },
   advertising: {
     enabled: false,
     provider: "google-adsense",
@@ -140,6 +162,17 @@ export function parseNavigation(value: string) {
 
 export function formatNavigation(navigation: SiteConfiguration["navigation"]) {
   return navigation.map((item) => `${item.label} | ${item.href}`).join("\n");
+}
+
+export function parseDatelines(value: string) {
+  return value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+export function formatDatelines(datelines: SiteConfiguration["editorial"]["datelines"]) {
+  return datelines.join("\n");
 }
 
 export const getSiteConfiguration = cache(async function getSiteConfiguration() {

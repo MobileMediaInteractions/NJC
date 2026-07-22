@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, CheckCircle2, Loader2, RotateCcw, Send } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Loader2, Pencil, RotateCcw, Send } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -72,6 +72,7 @@ export function StoryReviewActions({
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" asChild><Link href="/studio/stories"><ArrowLeft /> All stories</Link></Button>
+        {(status === "draft" || status === "review") && canSubmitReview ? <Button variant="outline" asChild><Link href={`/studio/stories/${id}/edit`}><Pencil /> Edit story</Link></Button> : null}
         {status === "draft" && canSubmitReview ? <Button onClick={() => void transition("review")} disabled={busy !== null}>{busy === "review" ? <Loader2 className="animate-spin" /> : <Send />} Submit for review</Button> : null}
         {status === "review" && canPublish ? <>
           <Button variant="outline" onClick={() => void transition("draft")} disabled={busy !== null}>{busy === "draft" ? <Loader2 className="animate-spin" /> : <RotateCcw />} Return to draft</Button>

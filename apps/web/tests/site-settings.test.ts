@@ -2,9 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   defaultSiteConfiguration,
+  formatDatelines,
   isGoogleAdsLive,
   normalizePublisherId,
   parseNavigation,
+  parseDatelines,
   siteConfigurationSchema,
 } from "../src/lib/site-settings";
 
@@ -53,4 +55,21 @@ test("navigation accepts local paths and rejects external destinations", () => {
 
   const external = { ...configurationCopy(), navigation: parseNavigation("Bad | https://example.com") };
   assert.equal(siteConfigurationSchema.safeParse(external).success, false);
+});
+
+test("editorial datelines round trip and reject duplicates", () => {
+  const datelines = parseDatelines("New Brunswick\nTrenton\nEdison");
+  assert.deepEqual(datelines, ["New Brunswick", "Trenton", "Edison"]);
+  assert.equal(formatDatelines(datelines), "New Brunswick\nTrenton\nEdison");
+
+  const configuration = configurationCopy();
+  configuration.editorial.datelines = ["Trenton", "trenton"];
+  assert.equal(siteConfigurationSchema.safeParse(configuration).success, false);
+});
+
+test("older stored configuration receives default datelines", () => {
+  const configuration = configurationCopy() as Partial<ReturnType<typeof configurationCopy>>;
+  delete configuration.editorial;
+  const parsed = siteConfigurationSchema.parse(configuration);
+  assert.ok(parsed.editorial.datelines.includes("New Brunswick"));
 });

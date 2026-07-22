@@ -8,10 +8,12 @@ import { stories } from "@harborline/backend/schema";
 import { StudioGate } from "@/components/studio/studio-gate";
 import { StoryReviewActions } from "@/components/studio/story-review-actions";
 import { StudioShell } from "@/components/studio/studio-shell";
+import { StoryTimestampEditor } from "@/components/studio/story-timestamp-editor";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getStudioUser } from "@/lib/auth";
+import { getSiteConfiguration } from "@/lib/site-settings";
 import { canPublishStory } from "@/lib/story-workflow";
 
 const storyId = z.uuid();
@@ -33,6 +35,8 @@ export default async function StudioStoryReviewPage({ params }: { params: Promis
     return <StudioShell viewer={viewer}><ServiceUnavailable /></StudioShell>;
   }
   if (!story) notFound();
+  const canPublish = canPublishStory(viewer.role);
+  const configuration = await getSiteConfiguration();
 
   return (
     <StudioShell viewer={viewer}>
@@ -43,7 +47,7 @@ export default async function StudioStoryReviewPage({ params }: { params: Promis
             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{story.headline}</h1>
             <p className="mt-3 text-lg leading-7 text-muted-foreground">{story.dek}</p>
           </div>
-          <StoryReviewActions id={story.id} slug={story.slug} headline={story.headline} status={story.status} canPublish={canPublishStory(viewer.role)} canSubmitReview={canPublishStory(viewer.role) || story.authorSnapshot?.id === viewer.id} />
+          <StoryReviewActions id={story.id} slug={story.slug} headline={story.headline} status={story.status} canPublish={canPublish} canSubmitReview={canPublish || story.authorSnapshot?.id === viewer.id} />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -63,6 +67,7 @@ export default async function StudioStoryReviewPage({ params }: { params: Promis
               <div><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Dateline</p><p className="mt-1">{story.location}</p></div>
               <div><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Tags</p><div className="mt-2 flex flex-wrap gap-1.5">{story.tags.length ? story.tags.map((tag) => <Badge key={tag} variant="secondary">{tag}</Badge>) : <span className="text-muted-foreground">No tags</span>}</div></div>
             </CardContent></Card>
+            {story.status === "published" && story.publishedAt && canPublish ? <StoryTimestampEditor id={story.id} publishedAt={story.publishedAt.toISOString()} updatedAt={story.updatedAt.toISOString()} publicationTimezone={configuration.publication.timezone} /> : null}
             <Card><CardHeader><CardTitle className="flex items-center gap-2 text-base"><Search className="size-4" /> Search appearance</CardTitle></CardHeader><CardContent className="space-y-4 text-sm"><div><p className="font-medium">{story.seoTitle || story.headline}</p><p className="mt-1 leading-6 text-muted-foreground">{story.seoDescription || story.dek}</p></div><p className="break-all text-xs text-emerald-400">/story/{story.slug}</p>{story.noIndex ? <Badge variant="destructive">Excluded from search</Badge> : <Badge variant="secondary">Indexable</Badge>}</CardContent></Card>
           </div>
         </div>

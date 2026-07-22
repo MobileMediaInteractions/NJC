@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import { stories, storyRevisions } from "@harborline/backend/schema";
+import { writeApiAudit } from "@/lib/api-keys";
 import { getStudioUser } from "@/lib/auth";
 import { storyInput } from "@/lib/story-input";
 
@@ -23,19 +24,52 @@ export async function POST(request: Request) {
 
   const now = new Date();
   try {
+    const {
+      publishedAt,
+      publishedAtRiskAcknowledged: _publishedAtRiskAcknowledged,
+      publishedAtChangeReason,
+      ...storyValues
+    } = parsed.data;
+    void _publishedAtRiskAcknowledged;
     const [story] = await getDb().insert(stories).values({
-      ...parsed.data,
+      ...storyValues,
       imageUrl: parsed.data.imageUrl || null,
       seoTitle: parsed.data.seoTitle || null,
       seoDescription: parsed.data.seoDescription || null,
       canonicalUrl: parsed.data.canonicalUrl || null,
       scheduledAt: parsed.data.scheduledAt ? new Date(parsed.data.scheduledAt) : null,
-      publishedAt: parsed.data.status === "published" ? now : null,
+      publishedAt:
+        parsed.data.status === "published"
+          ? publishedAt
+            ? new Date(publishedAt)
+            : now
+          : null,
       readingMinutes: Math.max(1, Math.ceil(parsed.data.body.join(" ").split(/\s+/).length / 220)),
       authorId: viewer.databaseId ?? null,
       authorSnapshot: { id: viewer.id, name: viewer.name, role: viewer.role, initials: viewer.name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase() },
     }).returning();
-    await getDb().insert(storyRevisions).values({ storyId: story.id, version: 1, snapshot: story, note: "Initial newsroom save" });
+    await getDb().insert(storyRevisions).values({
+      storyId: story.id,
+      version: 1,
+      snapshot: story,
+      note: publishedAt
+        ? `Initial newsroom save with custom posted time: ${publishedAtChangeReason}`
+        : "Initial newsroom save",
+    });
+
+    if (publishedAt) {
+      await writeApiAudit({
+        actorClerkId: viewer.id,
+        event: "story.custom_published_at_created",
+        request,
+        metadata: {
+          storyId: story.id,
+          slug: story.slug,
+          publishedAt: story.publishedAt?.toISOString(),
+          reason: publishedAtChangeReason,
+        },
+      });
+    }
 
     if (story.status === "published") {
       revalidatePath("/");

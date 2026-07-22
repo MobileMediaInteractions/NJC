@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { firstStoryError, storyInput } from "../src/lib/story-input";
+import {
+  firstStoryError,
+  storyInput,
+  storyTimestampInput,
+} from "../src/lib/story-input";
 
 const validStory = {
   headline: "Council adopts a revised township budget",
@@ -46,4 +50,36 @@ test("rejects malformed canonical URLs", () => {
   const result = storyInput.safeParse({ ...validStory, canonicalUrl: "njcourier.com/story" });
   assert.equal(result.success, false);
   if (!result.success) assert.match(result.error.flatten().fieldErrors.canonicalUrl?.[0] ?? "", /complete URL/i);
+});
+
+test("custom posted times require acknowledgement and an editorial reason", () => {
+  const customTime = {
+    ...validStory,
+    publishedAt: "2025-06-15T16:30:00.000Z",
+    publishedAtChangeReason: "Restoring the timestamp from the verified print archive.",
+  };
+  assert.equal(storyInput.safeParse(customTime).success, false);
+  assert.equal(
+    storyInput.safeParse({
+      ...customTime,
+      publishedAtRiskAcknowledged: true,
+    }).success,
+    true,
+  );
+});
+
+test("timestamp overrides reject chronology errors", () => {
+  const result = storyTimestampInput.safeParse({
+    publishedAt: "2025-06-15T16:30:00.000Z",
+    updatedAt: "2025-06-14T16:30:00.000Z",
+    reason: "Correcting imported archival metadata after source verification.",
+    acknowledgeReportingRisk: true,
+  });
+  assert.equal(result.success, false);
+  if (!result.success) {
+    assert.match(
+      result.error.flatten().fieldErrors.updatedAt?.[0] ?? "",
+      /earlier than the published time/i,
+    );
+  }
 });
