@@ -12,8 +12,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getPublishedStories, getStoryBySlug } from "@/lib/content";
 import { formatStoryDate } from "@/lib/format";
+import { getSiteOrigin } from "@/lib/origin";
 import { isSearchIndexingEnabled, storyPageJsonLd } from "@/lib/seo";
 import { getSiteConfiguration } from "@/lib/site-settings";
+import { getStoryShareUrl } from "@/lib/story-sharing";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -71,6 +73,12 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     getSiteConfiguration(),
   ]);
   const related = relatedStories.filter((item) => item.slug !== story.slug).slice(0, 3);
+  const xShareUrl = getStoryShareUrl({
+    canonicalUrl: story.canonicalUrl,
+    headline: story.headline,
+    siteOrigin: getSiteOrigin(),
+    slug: story.slug,
+  });
 
   return (
     <article>
@@ -90,8 +98,12 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             <div><p className="text-sm font-bold text-brand-navy">By {story.author.name}</p><p className="text-xs text-muted-foreground">{story.author.role} · Published {formatStoryDate(story.publishedAt)}{story.updatedAt && story.updatedAt !== story.publishedAt ? ` · Updated ${formatStoryDate(story.updatedAt)}` : ""}</p></div>
           </div>
           <div className="flex items-center gap-1">
+            <Button asChild variant="outline" size="icon">
+              <a href={xShareUrl} target="_blank" rel="noopener noreferrer" aria-label="Share this article on X" title="Share on X">
+                <Share2 className="size-4" />
+              </a>
+            </Button>
             {[
-              { label: "Share", icon: Share2 },
               { label: "Save", icon: Bookmark },
               { label: "Email", icon: Mail },
               { label: "Open share options", icon: ExternalLink },
