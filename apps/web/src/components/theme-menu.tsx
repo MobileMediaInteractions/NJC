@@ -1,6 +1,10 @@
 "use client";
 
 import * as React from "react";
+import {
+  adaptiveThemePreferences,
+  type ResolvedTheme,
+} from "@harborline/contracts";
 import { Laptop, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,18 +17,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { type ThemePreference, useTheme } from "@/components/theme-provider";
 
-const choices = [
-  { value: "system", label: "Device", icon: Laptop },
-  { value: "light", label: "Light", icon: Sun },
-  { value: "dark", label: "Dark", icon: Moon },
-] satisfies Array<{
-  value: ThemePreference;
-  label: string;
-  icon: typeof Sun;
-}>;
+function themeChoice(value: ThemePreference, systemTheme: ResolvedTheme) {
+  if (value === "system") {
+    return {
+      value,
+      label: `System · ${systemTheme === "dark" ? "Dark" : "Light"}`,
+      icon: Laptop,
+    };
+  }
+  return {
+    value,
+    label: value === "dark" ? "Dark" : "Light",
+    icon: value === "dark" ? Moon : Sun,
+  };
+}
 
 export function ThemeMenu() {
-  const { preference, resolvedTheme, setPreference } = useTheme();
+  const { preference, resolvedTheme, systemTheme, setPreference } = useTheme();
+  const choices = adaptiveThemePreferences(systemTheme).map((value) =>
+    themeChoice(value, systemTheme),
+  );
   const mounted = React.useSyncExternalStore(
     () => () => undefined,
     () => true,
@@ -33,7 +45,7 @@ export function ThemeMenu() {
   const ActiveIcon = mounted ? (resolvedTheme === "dark" ? Moon : Sun) : Laptop;
   const appearanceLabel = mounted
     ? preference === "system"
-      ? "device setting"
+      ? `system ${systemTheme}`
       : preference
     : "device setting";
 

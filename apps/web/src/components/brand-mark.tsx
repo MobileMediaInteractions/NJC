@@ -2,21 +2,27 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { brandAssets } from "@/lib/assets";
+import type { SiteConfiguration } from "@/lib/site-settings";
 
 export function BrandMark({
   inverse = false,
   compact = false,
   className,
+  publication,
 }: {
   inverse?: boolean;
   compact?: boolean;
   className?: string;
+  publication?: SiteConfiguration["publication"];
 }) {
+  const shortName = publication?.shortName ?? "NJ Courier";
+  const region = publication?.region ?? "Middlesex County";
+  const accessibleName = publication?.name ?? "The New Jersey Courier";
   return (
     <Link
       href="/"
       className={cn("group inline-flex items-center gap-3", className)}
-      aria-label="The New Jersey Courier home"
+      aria-label={`${accessibleName} home`}
     >
       <Image src={brandAssets.mark} alt="" width={40} height={40} className="size-10 shrink-0 rounded-[0.2rem]" aria-hidden="true" />
       {!compact && (
@@ -27,7 +33,7 @@ export function BrandMark({
               inverse ? "text-white" : "text-brand-navy",
             )}
           >
-            NJ Courier
+            {shortName}
           </span>
           <span
             className={cn(
@@ -35,7 +41,7 @@ export function BrandMark({
               inverse ? "text-white/70" : "text-brand-blue",
             )}
           >
-            Middlesex County
+            {region}
           </span>
         </span>
       )}

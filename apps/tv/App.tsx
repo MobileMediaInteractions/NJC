@@ -1,8 +1,12 @@
-import type {
-  LiveSnapshot,
-  PairingPollResult,
-  PairingRequest,
-  Story,
+import {
+  adaptiveThemePreferences,
+  normalizeThemePreference,
+  type LiveSnapshot,
+  type PairingPollResult,
+  type PairingRequest,
+  type ResolvedTheme,
+  type Story,
+  type ThemePreference,
 } from "@harborline/contracts";
 import { requestHarborlineApi } from "@harborline/api-client";
 import Constants from "expo-constants";
@@ -67,17 +71,19 @@ const installationKey = "harborline:tv:installation";
 const themeKey = "harborline:tv:theme";
 
 type Account = { name: string; platform: string; expiresAt?: string };
-type ThemePreference = "system" | "light" | "dark";
 type ThemeContextValue = {
   colors: TvColors;
   styles: ReturnType<typeof createStyles>;
   preference: ThemePreference;
+  systemTheme: ResolvedTheme;
   setPreference: (preference: ThemePreference) => Promise<void>;
 };
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function TvThemeProvider({ children }: { children: ReactNode }) {
   const systemTheme = useColorScheme();
+  const resolvedSystemTheme: ResolvedTheme =
+    systemTheme === "light" ? "light" : "dark";
   const [preference, setPreferenceState] = useState<ThemePreference>("system");
   useEffect(() => {
     let active = true;
@@ -85,28 +91,41 @@ function TvThemeProvider({ children }: { children: ReactNode }) {
       if (
         active &&
         (value === "system" || value === "light" || value === "dark")
-      )
-        setPreferenceState(value);
+      ) {
+        const normalized = normalizeThemePreference(
+          value,
+          resolvedSystemTheme,
+        );
+        setPreferenceState(normalized);
+        if (normalized !== value) {
+          void SecureStore.setItemAsync(themeKey, normalized);
+        }
+      }
     });
     return () => {
       active = false;
     };
-  }, []);
-  const resolved =
-    preference === "system"
-      ? systemTheme === "light"
-        ? "light"
-        : "dark"
-      : preference;
+  }, [resolvedSystemTheme]);
+  const resolved = preference === "system" ? resolvedSystemTheme : preference;
   const colors = resolved === "dark" ? darkColors : lightColors;
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const setPreference = useCallback(async (next: ThemePreference) => {
-    setPreferenceState(next);
-    await SecureStore.setItemAsync(themeKey, next);
-  }, []);
+  const setPreference = useCallback(
+    async (next: ThemePreference) => {
+      const normalized = normalizeThemePreference(next, resolvedSystemTheme);
+      setPreferenceState(normalized);
+      await SecureStore.setItemAsync(themeKey, normalized);
+    },
+    [resolvedSystemTheme],
+  );
   const value = useMemo(
-    () => ({ colors, styles, preference, setPreference }),
-    [colors, preference, setPreference, styles],
+    () => ({
+      colors,
+      styles,
+      preference,
+      systemTheme: resolvedSystemTheme,
+      setPreference,
+    }),
+    [colors, preference, resolvedSystemTheme, setPreference, styles],
   );
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
@@ -625,12 +644,17 @@ function FocusButton({
 }
 
 function ThemeControls() {
-  const { preference, setPreference, styles } = useTvTheme();
-  const choices: { value: ThemePreference; label: string }[] = [
-    { value: "system", label: "Device" },
-    { value: "light", label: "Light" },
-    { value: "dark", label: "Dark" },
-  ];
+  const { preference, systemTheme, setPreference, styles } = useTvTheme();
+  const choices: { value: ThemePreference; label: string }[] =
+    adaptiveThemePreferences(systemTheme).map((value) => ({
+      value,
+      label:
+        value === "system"
+          ? `System · ${systemTheme === "dark" ? "Dark" : "Light"}`
+          : value === "dark"
+            ? "Dark"
+            : "Light",
+    }));
   return (
     <View style={styles.themeControls}>
       <Text style={styles.themeLabel}>APPEARANCE</Text>

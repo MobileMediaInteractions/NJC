@@ -10,27 +10,30 @@ import { StoryCard } from "@/components/story-card";
 import { getPublishedStories } from "@/lib/content";
 import { timeAgo } from "@/lib/format";
 import { homePageJsonLd } from "@/lib/seo";
-import { siteConfig } from "@/lib/site";
+import { getSiteConfiguration } from "@/lib/site-settings";
 import type { Story } from "@/lib/types";
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const stories = await getPublishedStories({ limit: 24 });
+  const [stories, configuration] = await Promise.all([
+    getPublishedStories({ limit: 24 }),
+    getSiteConfiguration(),
+  ]);
   const [lead, ...latest] = stories;
   const date = new Intl.DateTimeFormat("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
     year: "numeric",
-    timeZone: siteConfig.timezone,
+    timeZone: configuration.publication.timezone,
   }).format(new Date());
 
   return (
     <>
-      <JsonLd data={homePageJsonLd()} />
-      <div className="container-news py-4 sm:py-6"><AdSlot size="leaderboard" /></div>
+      <JsonLd data={homePageJsonLd(configuration.publication)} />
+      <div className="container-news py-4 sm:py-6"><AdSlot placement="homepageLeaderboard" size="leaderboard" /></div>
 
       <section className="container-news border-t-4 border-brand-navy pb-10 pt-3 sm:pb-14">
         <div className="mb-5 flex items-center justify-between gap-5">
@@ -83,7 +86,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="border-t bg-brand-navy py-12 text-white sm:py-14">
+      {configuration.features.newsletters ? <section className="border-t bg-brand-navy py-12 text-white sm:py-14">
         <div className="container-news grid items-center gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12">
           <div>
             <p className="eyebrow text-brand-yellow"><Mail className="mr-2 inline size-3.5" />The Middlesex Morning</p>
@@ -92,7 +95,7 @@ export default async function HomePage() {
           </div>
           <div className="bg-white p-5 text-foreground sm:p-7"><NewsletterForm /></div>
         </div>
-      </section>
+      </section> : null}
     </>
   );
 }

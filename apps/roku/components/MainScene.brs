@@ -49,8 +49,16 @@ sub init()
   m.bootstrapInFlight = false
 
   registry = CreateObject("roRegistrySection", "Harborline")
+  ' Roku OS does not expose a user light/dark appearance setting to channels.
+  ' Treat Roku's native dark interface as the System appearance.
+  m.systemTheme = "dark"
   m.themePreference = "system"
   if registry.Exists("theme") then m.themePreference = registry.Read("theme")
+  if m.themePreference = m.systemTheme
+    m.themePreference = "system"
+    registry.Write("theme", m.themePreference)
+    registry.Flush()
+  end if
   m.accessToken = ""
   if registry.Exists("deviceToken") then m.accessToken = registry.Read("deviceToken")
   updateAccountNavigation(m.accessToken <> "")
@@ -365,9 +373,11 @@ end sub
 
 sub onThemeSelected()
   if m.themePreference = "system"
-    m.themePreference = "light"
-  else if m.themePreference = "light"
-    m.themePreference = "dark"
+    if m.systemTheme = "dark"
+      m.themePreference = "light"
+    else
+      m.themePreference = "dark"
+    end if
   else
     m.themePreference = "system"
   end if
@@ -380,8 +390,12 @@ end sub
 sub applyTheme()
   preference = m.themePreference
   resolved = preference
-  if resolved = "system" then resolved = "dark"
-  m.themeButton.text = "Theme: " + titleCase(preference)
+  if resolved = "system" then resolved = m.systemTheme
+  if preference = "system"
+    m.themeButton.text = "Theme: System · " + titleCase(m.systemTheme)
+  else
+    m.themeButton.text = "Theme: " + titleCase(preference)
+  end if
 
   if resolved = "light"
     m.background.color = "0xF3F0E9FF"

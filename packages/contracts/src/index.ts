@@ -7,6 +7,39 @@ export type StoryStatus =
   | "published"
   | "archived";
 
+export type ResolvedTheme = "light" | "dark";
+export type ThemePreference = "system" | ResolvedTheme;
+
+export function oppositeTheme(systemTheme: ResolvedTheme): ResolvedTheme {
+  return systemTheme === "dark" ? "light" : "dark";
+}
+
+/**
+ * An explicit preference that matches the device is visually identical to
+ * System, so collapse it to System and keep only the useful override.
+ */
+export function normalizeThemePreference(
+  preference: ThemePreference,
+  systemTheme: ResolvedTheme,
+): ThemePreference {
+  return preference === systemTheme ? "system" : preference;
+}
+
+export function adaptiveThemePreferences(
+  systemTheme: ResolvedTheme,
+): readonly ["system", ResolvedTheme] {
+  return ["system", oppositeTheme(systemTheme)];
+}
+
+export function nextAdaptiveThemePreference(
+  preference: ThemePreference,
+  systemTheme: ResolvedTheme,
+): ThemePreference {
+  return normalizeThemePreference(preference, systemTheme) === "system"
+    ? oppositeTheme(systemTheme)
+    : "system";
+}
+
 export type StaffRole =
   | "admin"
   | "editor"

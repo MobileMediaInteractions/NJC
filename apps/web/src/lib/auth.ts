@@ -20,6 +20,10 @@ export function canDeleteStory(role: StaffRole) {
   return role === "admin" || role === "editor";
 }
 
+export function canManageSiteSettings(role: StaffRole) {
+  return role === "admin";
+}
+
 export function isClerkConfigured() {
   return Boolean(
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY &&

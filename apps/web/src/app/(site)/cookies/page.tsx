@@ -38,9 +38,13 @@ export default function CookiesPage() {
           article-reading history or an advertising identifier.
         </p>
         <p className="mt-3">
-          If a third-party analytics or advertising provider is added, this
-          policy and the consent controls must identify its purpose, duration
-          and recipients before activation.
+          Google AdSense is available to the publisher but remains disabled by
+          default. If the publisher activates it, Google may use cookies or
+          similar technologies to deliver, measure and protect advertising.
+          Live delivery is blocked in Studio until an administrator confirms a
+          Google-certified consent platform has been configured. The site’s
+          separate audience-measurement preference does not replace the consent
+          choices required for personalized or non-personalized advertising.
         </p>
       </section>
       <section>
@@ -49,9 +53,10 @@ export default function CookiesPage() {
           Clear the site’s local storage or browser data to reset the website
           consent banner. Use the mobile privacy switch to stop mobile
           measurement and request deletion of that installation record. A
-          production consent-management system should add granular withdrawal
-          and a “Your Privacy Choices” control in the footer for applicable
-          markets.
+          Google’s privacy message provides advertising choices when AdSense is
+          active. Clear the site’s browser data or use that message’s privacy
+          controls to revisit an advertising choice. The footer’s “Privacy
+          choices” link provides the publication’s data-request process.
         </p>
       </section>
     </InfoPage>

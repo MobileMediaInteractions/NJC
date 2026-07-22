@@ -1,6 +1,6 @@
 import { getPublishedStoryIndex } from "@/lib/content";
 import { getSiteOrigin } from "@/lib/origin";
-import { siteConfig } from "@/lib/site";
+import { getSiteConfiguration } from "@/lib/site-settings";
 
 export const revalidate = 300;
 
@@ -16,6 +16,7 @@ function escapeXml(value: string) {
 
 export async function GET() {
   const origin = getSiteOrigin();
+  const { publication } = await getSiteConfiguration();
   const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
   const stories = await getPublishedStoryIndex({ limit: 1_000, since: twoDaysAgo });
   const urls = stories.map((story) => `
@@ -23,7 +24,7 @@ export async function GET() {
     <loc>${escapeXml(`${origin}/story/${story.slug}`)}</loc>
     <news:news>
       <news:publication>
-        <news:name>${escapeXml(siteConfig.name)}</news:name>
+        <news:name>${escapeXml(publication.name)}</news:name>
         <news:language>en</news:language>
       </news:publication>
       <news:publication_date>${escapeXml(story.publishedAt)}</news:publication_date>

@@ -98,6 +98,10 @@ The public `/press` workflow generates a tailored ZIP from the approved brand li
 
 The web app includes canonical metadata, `NewsArticle` and publisher structured data, general and Google News sitemaps, RSS, social previews, search-engine verification hooks and CMS-level SEO controls. Indexing remains disabled by default for local and preview deployments. The current Vercel production alias was verified in Google Search Console and explicitly enabled for indexing on July 22, 2026; follow the [SEO launch and measurement guide](docs/SEO.md) for the crawler-cache status, publishing cautions and future custom-domain migration.
 
+## Site configuration and advertising
+
+Studio administrators can manage publication identity, navigation, reader feature switches and Google AdSense from **Studio → Settings**. Advertising is disabled by default and Preview mode never loads Google code or creates impressions. Live delivery requires an AdSense publisher ID, a confirmed Google-certified consent setup and valid ad-unit IDs for each enabled manual placement. See the [advertising operations guide](docs/ADVERTISING.md) before activation.
+
 ## Verification
 
 ```bash

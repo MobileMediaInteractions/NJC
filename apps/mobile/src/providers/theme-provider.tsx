@@ -7,15 +7,21 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import {
+  normalizeThemePreference,
+  type ResolvedTheme,
+  type ThemePreference,
+} from "@harborline/contracts";
 import { useColorScheme } from "react-native";
 import { darkColors, lightColors, type AppColors } from "@/constants/theme";
 import { deviceStorage } from "@/lib/storage";
 
-export type ThemePreference = "system" | "light" | "dark";
+export type { ThemePreference } from "@harborline/contracts";
 
 type ThemeContextValue = {
   preference: ThemePreference;
-  resolvedTheme: "light" | "dark";
+  resolvedTheme: ResolvedTheme;
+  systemTheme: ResolvedTheme;
   colors: AppColors;
   setPreference: (preference: ThemePreference) => Promise<void>;
 };
@@ -29,33 +35,43 @@ function isPreference(value: string | null): value is ThemePreference {
 
 export function AppThemeProvider({ children }: { children: ReactNode }) {
   const deviceTheme = useColorScheme();
+  const systemTheme: ResolvedTheme =
+    deviceTheme === "dark" ? "dark" : "light";
   const [preference, setPreferenceState] = useState<ThemePreference>("system");
 
   useEffect(() => {
     let active = true;
     void deviceStorage.getItem(storageKey).then((saved) => {
-      if (active && isPreference(saved)) setPreferenceState(saved);
+      if (active && isPreference(saved)) {
+        const normalized = normalizeThemePreference(saved, systemTheme);
+        setPreferenceState(normalized);
+        if (normalized !== saved) {
+          void deviceStorage.setItem(storageKey, normalized);
+        }
+      }
     });
     return () => {
       active = false;
     };
-  }, []);
+  }, [systemTheme]);
 
-  const setPreference = useCallback(async (next: ThemePreference) => {
-    setPreferenceState(next);
-    await deviceStorage.setItem(storageKey, next);
-  }, []);
+  const setPreference = useCallback(
+    async (next: ThemePreference) => {
+      const normalized = normalizeThemePreference(next, systemTheme);
+      setPreferenceState(normalized);
+      await deviceStorage.setItem(storageKey, normalized);
+    },
+    [systemTheme],
+  );
 
   const resolvedTheme =
     preference === "system"
-      ? deviceTheme === "dark"
-        ? "dark"
-        : "light"
+      ? systemTheme
       : preference;
   const colors = resolvedTheme === "dark" ? darkColors : lightColors;
   const value = useMemo(
-    () => ({ preference, resolvedTheme, colors, setPreference }),
-    [colors, preference, resolvedTheme, setPreference],
+    () => ({ preference, resolvedTheme, systemTheme, colors, setPreference }),
+    [colors, preference, resolvedTheme, systemTheme, setPreference],
   );
 
   return (

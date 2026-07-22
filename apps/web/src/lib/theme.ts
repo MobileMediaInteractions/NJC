@@ -1,4 +1,4 @@
-export type ThemePreference = "system" | "light" | "dark";
+export type { ThemePreference } from "@harborline/contracts";
 
 export const themeStorageKey = "harborline:theme";
 
@@ -6,9 +6,12 @@ export const themeBootstrapScript = `
   (() => {
     try {
       const saved = localStorage.getItem('${themeStorageKey}');
-      const preference = ['light', 'dark', 'system'].includes(saved) ? saved : 'system';
+      const systemTheme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      let preference = ['light', 'dark', 'system'].includes(saved) ? saved : 'system';
+      if (preference === systemTheme) preference = 'system';
+      if (saved !== preference) localStorage.setItem('${themeStorageKey}', preference);
       const theme = preference === 'system'
-        ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        ? systemTheme
         : preference;
       document.documentElement.classList.toggle('dark', theme === 'dark');
       document.documentElement.dataset.theme = theme;

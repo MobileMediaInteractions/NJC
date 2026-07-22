@@ -5,6 +5,7 @@ import { JsonLd } from "@/components/json-ld";
 import { StoryCard } from "@/components/story-card";
 import { getCategoryLabel, getPublishedStories } from "@/lib/content";
 import { categoryPageJsonLd } from "@/lib/seo";
+import { getSiteConfiguration } from "@/lib/site-settings";
 
 const validCategories = [
   "middlesex",
@@ -44,14 +45,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   if (!validCategories.includes(slug)) notFound();
-  const stories = await getPublishedStories({ category: slug, limit: 30 });
+  const [stories, configuration] = await Promise.all([
+    getPublishedStories({ category: slug, limit: 30 }),
+    getSiteConfiguration(),
+  ]);
   const label = getCategoryLabel(slug);
 
   return (
     <div className="container-news py-10">
-      <JsonLd data={categoryPageJsonLd(slug, label, categoryDescriptions[slug])} />
+      <JsonLd data={categoryPageJsonLd(slug, label, categoryDescriptions[slug], configuration.publication)} />
       <header className="mb-9 border-b-4 border-brand-navy pb-5">
-        <p className="eyebrow text-brand-blue">The New Jersey Courier desk</p>
+        <p className="eyebrow text-brand-blue">{configuration.publication.shortName} desk</p>
         <h1 className="mt-1 text-5xl font-black capitalize tracking-[-0.055em] text-brand-navy sm:text-6xl">{label}</h1>
         <p className="mt-3 max-w-2xl text-muted-foreground">{categoryDescriptions[slug]}</p>
       </header>
@@ -61,7 +65,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
             <StoryCard story={stories[0]} size="large" />
             <div className="space-y-6">{stories.slice(1, 4).map((story) => <StoryCard key={story.id} story={story} size="compact" className="border-b pb-6" />)}</div>
           </div>
-          <div className="my-12"><AdSlot /></div>
+          <div className="my-12"><AdSlot placement="sectionInline" /></div>
           <div className="grid gap-x-6 gap-y-10 md:grid-cols-2 lg:grid-cols-3">{stories.slice(4).map((story) => <StoryCard key={story.id} story={story} />)}</div>
         </>
       ) : <p className="py-20 text-center text-muted-foreground">No stories are published in this section yet.</p>}

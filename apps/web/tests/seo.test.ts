@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { homePageJsonLd, storyPageJsonLd } from "../src/lib/seo";
+import { defaultSiteConfiguration } from "../src/lib/site-settings";
 import type { Story } from "../src/lib/types";
 
 const testStory: Story = {
@@ -23,7 +24,7 @@ const testStory: Story = {
 };
 
 test("homepage identifies the publication and website", () => {
-  const data = homePageJsonLd();
+  const data = homePageJsonLd(defaultSiteConfiguration.publication);
   const graph = data["@graph"] as Array<Record<string, unknown>>;
   const publisher = graph.find((item) => item["@type"] === "NewsMediaOrganization");
   const website = graph.find((item) => item["@type"] === "WebSite");
@@ -33,7 +34,7 @@ test("homepage identifies the publication and website", () => {
 });
 
 test("story structured data includes news and breadcrumb entities", () => {
-  const data = storyPageJsonLd(testStory);
+  const data = storyPageJsonLd(testStory, defaultSiteConfiguration.publication);
   const graph = data["@graph"] as Array<Record<string, unknown>>;
   const article = graph.find((item) => item["@type"] === "NewsArticle");
   const breadcrumbs = graph.find((item) => item["@type"] === "BreadcrumbList");

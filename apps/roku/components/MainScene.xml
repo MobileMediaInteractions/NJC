@@ -13,7 +13,7 @@
       <Button id="liveButton" text="Watch live" minWidth="240" />
       <Button id="weatherButton" text="Weather" minWidth="220" />
       <Button id="connectButton" text="Connect account" minWidth="300" />
-      <Button id="themeButton" text="Theme: System" minWidth="300" />
+      <Button id="themeButton" text="Theme: System · Dark" minWidth="330" />
     </LayoutGroup>
     <Rectangle id="rule" translation="[72,226]" width="1776" height="2" color="0xC49545FF" />
 

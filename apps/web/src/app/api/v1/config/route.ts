@@ -1,34 +1,31 @@
 import { NextResponse } from "next/server";
 import { hasDatabase } from "@harborline/backend/db";
 import { getLiveSnapshot } from "@/lib/live";
-import { siteConfig } from "@/lib/site";
+import { getSiteConfiguration, isGoogleAdsLive } from "@/lib/site-settings";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   const databaseAvailable = hasDatabase();
-  const newsletterAvailable = databaseAvailable || Boolean(process.env.NEWSLETTER_WEBHOOK_URL);
+  const configuration = await getSiteConfiguration();
+  const { publication, features } = configuration;
+  const newsletterAvailable = features.newsletters && (databaseAvailable || Boolean(process.env.NEWSLETTER_WEBHOOK_URL));
   const live = await getLiveSnapshot();
 
   return NextResponse.json({
     data: {
-      name: siteConfig.name,
-      shortName: siteConfig.shortName,
-      tagline: siteConfig.tagline,
-      description: siteConfig.description,
-      region: siteConfig.region,
-      city: siteConfig.city,
-      state: siteConfig.state,
-      station: siteConfig.station,
-      timezone: siteConfig.timezone,
-      navigation: siteConfig.navigation,
+      ...publication,
+      navigation: configuration.navigation,
       live: { enabled: live.isLive, label: live.title, streamUrl: live.streamUrl ?? "" },
       features: {
-        comments: databaseAvailable,
+        comments: features.comments && databaseAvailable,
         newsletters: newsletterAvailable,
-        alerts: databaseAvailable,
-        liveVideo: live.isLive && Boolean(live.streamUrl),
-        weather: true,
+        alerts: features.alerts && databaseAvailable,
+        liveVideo: features.liveVideo && live.isLive && Boolean(live.streamUrl),
+        weather: features.weather,
+        membership: features.membership,
+        donations: features.donations,
+        advertising: isGoogleAdsLive(configuration),
       },
     },
     meta: { apiVersion: "1" },

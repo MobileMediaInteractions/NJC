@@ -21,7 +21,7 @@ export async function getEmployeeViewer(): Promise<EmployeeViewer | null> {
   const identity = await getStudioUser();
   if (!identity) return null;
 
-  let role = identity.role;
+  const role = identity.role;
   let grants: Array<{
     capability: string;
     effect: string;
@@ -32,12 +32,11 @@ export async function getEmployeeViewer(): Promise<EmployeeViewer | null> {
   if (hasDatabase()) {
     const db = getDb();
     const [account] = await db
-      .select({ role: users.role, isActive: users.isActive })
+      .select({ isActive: users.isActive })
       .from(users)
       .where(eq(users.clerkId, identity.id))
       .limit(1);
     if (account && !account.isActive) return null;
-    if (account) role = account.role;
     grants = await db
       .select({
         capability: employeeCapabilityGrants.capability,

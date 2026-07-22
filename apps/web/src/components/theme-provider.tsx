@@ -1,13 +1,18 @@
 "use client";
 
 import * as React from "react";
+import {
+  normalizeThemePreference,
+  type ResolvedTheme,
+} from "@harborline/contracts";
 import { themeStorageKey, type ThemePreference } from "@/lib/theme";
 
 export type { ThemePreference } from "@/lib/theme";
 
 type ThemeContextValue = {
   preference: ThemePreference;
-  resolvedTheme: "light" | "dark";
+  resolvedTheme: ResolvedTheme;
+  systemTheme: ResolvedTheme;
   setPreference: (preference: ThemePreference) => void;
 };
 
@@ -31,7 +36,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     () => {
       if (typeof window === "undefined") return "system";
       const saved = window.localStorage.getItem(themeStorageKey);
-      return isThemePreference(saved) ? saved : "system";
+      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+        .matches
+        ? "dark"
+        : "light";
+      return normalizeThemePreference(
+        isThemePreference(saved) ? saved : "system",
+        systemTheme,
+      );
     },
   );
   const [systemIsDark, setSystemIsDark] = React.useState(
@@ -39,13 +51,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-color-scheme: dark)").matches,
   );
-  const resolvedTheme =
-    preference === "system" ? (systemIsDark ? "dark" : "light") : preference;
+  const systemTheme: ResolvedTheme = systemIsDark ? "dark" : "light";
+  const resolvedTheme = preference === "system" ? systemTheme : preference;
 
   React.useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = (event: MediaQueryListEvent) => {
       setSystemIsDark(event.matches);
+      const nextSystemTheme: ResolvedTheme = event.matches ? "dark" : "light";
+      setPreferenceState((current) => {
+        const normalized = normalizeThemePreference(current, nextSystemTheme);
+        if (normalized !== current) {
+          window.localStorage.setItem(themeStorageKey, normalized);
+        }
+        return normalized;
+      });
     };
     media.addEventListener("change", handleChange);
     return () => media.removeEventListener("change", handleChange);
@@ -55,14 +75,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     applyTheme(preference, systemIsDark);
   }, [preference, systemIsDark]);
 
-  const setPreference = React.useCallback((next: ThemePreference) => {
-    window.localStorage.setItem(themeStorageKey, next);
-    setPreferenceState(next);
-  }, []);
+  const setPreference = React.useCallback(
+    (next: ThemePreference) => {
+      const normalized = normalizeThemePreference(next, systemTheme);
+      window.localStorage.setItem(themeStorageKey, normalized);
+      setPreferenceState(normalized);
+    },
+    [systemTheme],
+  );
 
   const value = React.useMemo(
-    () => ({ preference, resolvedTheme, setPreference }),
-    [preference, resolvedTheme, setPreference],
+    () => ({ preference, resolvedTheme, systemTheme, setPreference }),
+    [preference, resolvedTheme, systemTheme, setPreference],
   );
 
   return (

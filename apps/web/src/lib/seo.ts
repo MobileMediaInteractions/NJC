@@ -1,6 +1,6 @@
 import { brandAssets } from "@/lib/assets";
 import { getSiteOrigin } from "@/lib/origin";
-import { siteConfig } from "@/lib/site";
+import type { SiteConfiguration } from "@/lib/site-settings";
 import type { Story } from "@/lib/types";
 
 export function isSearchIndexingEnabled() {
@@ -15,48 +15,52 @@ export function absoluteUrl(pathOrUrl: string) {
   }
 }
 
-const publisher = {
-  "@type": "NewsMediaOrganization",
-  "@id": `${getSiteOrigin()}/#publisher`,
-  name: siteConfig.name,
-  alternateName: siteConfig.shortName,
-  url: getSiteOrigin(),
-  logo: {
-    "@type": "ImageObject",
-    url: absoluteUrl(brandAssets.appIcon),
-  },
-  description: siteConfig.description,
-  areaServed: {
-    "@type": "AdministrativeArea",
-    name: "Middlesex County, New Jersey",
-  },
-  publishingPrinciples: absoluteUrl("/standards"),
-  ethicsPolicy: absoluteUrl("/standards"),
-  correctionsPolicy: absoluteUrl("/standards"),
-};
+function publisherFor(publication: SiteConfiguration["publication"]) {
+  return {
+    "@type": "NewsMediaOrganization",
+    "@id": `${getSiteOrigin()}/#publisher`,
+    name: publication.name,
+    alternateName: publication.shortName,
+    url: getSiteOrigin(),
+    logo: {
+      "@type": "ImageObject",
+      url: absoluteUrl(brandAssets.appIcon),
+    },
+    description: publication.description,
+    areaServed: {
+      "@type": "AdministrativeArea",
+      name: `${publication.region}, ${publication.state}`,
+    },
+    publishingPrinciples: absoluteUrl("/standards"),
+    ethicsPolicy: absoluteUrl("/standards"),
+    correctionsPolicy: absoluteUrl("/standards"),
+  };
+}
 
-const website = {
-  "@type": "WebSite",
-  "@id": `${getSiteOrigin()}/#website`,
-  url: getSiteOrigin(),
-  name: siteConfig.name,
-  alternateName: [siteConfig.shortName, "New Jersey Courier"],
-  description: siteConfig.description,
-  inLanguage: "en-US",
-  publisher: { "@id": `${getSiteOrigin()}/#publisher` },
-};
+function websiteFor(publication: SiteConfiguration["publication"]) {
+  return {
+    "@type": "WebSite",
+    "@id": `${getSiteOrigin()}/#website`,
+    url: getSiteOrigin(),
+    name: publication.name,
+    alternateName: publication.shortName,
+    description: publication.description,
+    inLanguage: "en-US",
+    publisher: { "@id": `${getSiteOrigin()}/#publisher` },
+  };
+}
 
-export function homePageJsonLd() {
+export function homePageJsonLd(publication: SiteConfiguration["publication"]) {
   return {
     "@context": "https://schema.org",
     "@graph": [
-      publisher,
-      website,
+      publisherFor(publication),
+      websiteFor(publication),
     ],
   };
 }
 
-export function storyPageJsonLd(story: Story) {
+export function storyPageJsonLd(story: Story, publication: SiteConfiguration["publication"]) {
   const storyUrl = story.canonicalUrl || absoluteUrl(`/story/${story.slug}`);
   const categoryUrl = absoluteUrl(`/category/${story.category}`);
   const wordCount = story.body.join(" ").trim().split(/\s+/).filter(Boolean).length;
@@ -64,7 +68,7 @@ export function storyPageJsonLd(story: Story) {
   return {
     "@context": "https://schema.org",
     "@graph": [
-      publisher,
+      publisherFor(publication),
       {
         "@type": "NewsArticle",
         "@id": `${storyUrl}#article`,
@@ -108,12 +112,12 @@ export function storyPageJsonLd(story: Story) {
   };
 }
 
-export function categoryPageJsonLd(slug: string, label: string, description: string) {
+export function categoryPageJsonLd(slug: string, label: string, description: string, publication: SiteConfiguration["publication"]) {
   const url = absoluteUrl(`/category/${slug}`);
   return {
     "@context": "https://schema.org",
     "@graph": [
-      website,
+      websiteFor(publication),
       {
         "@type": "CollectionPage",
         "@id": `${url}#collection`,

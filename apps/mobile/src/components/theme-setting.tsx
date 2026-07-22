@@ -1,22 +1,27 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { adaptiveThemePreferences } from "@harborline/contracts";
 import { type AppColors } from "@/constants/theme";
 import { type ThemePreference, useAppTheme } from "@/providers/theme-provider";
 
-const choices: { value: ThemePreference; label: string }[] = [
-  { value: "system", label: "Device" },
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-];
-
 export function ThemeSetting() {
-  const { colors, preference, setPreference } = useAppTheme();
+  const { colors, preference, systemTheme, setPreference } = useAppTheme();
   const styles = makeStyles(colors);
+  const choices: { value: ThemePreference; label: string }[] =
+    adaptiveThemePreferences(systemTheme).map((value) => ({
+      value,
+      label:
+        value === "system"
+          ? `System · ${systemTheme === "dark" ? "Dark" : "Light"}`
+          : value === "dark"
+            ? "Dark"
+            : "Light",
+    }));
 
   return (
     <View>
       <Text style={styles.title}>Appearance</Text>
       <Text style={styles.copy}>
-        Use your device setting or keep this app light or dark.
+        Follow your device or use the available contrasting appearance.
       </Text>
       <View style={styles.options} accessibilityRole="radiogroup">
         {choices.map((choice) => {

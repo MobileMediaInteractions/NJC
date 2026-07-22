@@ -72,13 +72,14 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 
 ## Cross-platform appearance
 
-- [ ] Fix system-theme detection and theme controls on every platform: web, iOS, Android, employee/admin mobile, Apple TV, Android TV and Roku.
+- [x] Fix system-theme detection and theme controls on every platform: web, iOS, Android, employee/admin mobile, Apple TV, Android TV and Roku.
   - Keep the saved preference (`System`, `Light` or `Dark`) separate from the effective appearance resolved from the device (`Light` or `Dark`).
   - When `System` is selected, display both the preference and resolved appearance, such as `System · Dark`.
   - Make the quick theme control adaptive and skip the explicit mode that matches the device's current system appearance.
   - If System resolves to Dark, toggle only `System (Dark) → Light → System (Dark)`; do not add a redundant Dark step.
   - If System resolves to Light, toggle only `System (Light) → Dark → System (Light)`; do not add a redundant Light step.
   - Recalculate the opposing quick-toggle option when the device's system appearance changes.
+  - Roku channels do not receive an OS light/dark preference, so Roku's native dark appearance is the System baseline and Light is the only explicit override.
   - React to device appearance changes while the application is open when the platform supports it.
   - Persist the selection across restarts and synchronize it across a signed-in user's devices where appropriate.
   - Verify readable colors, imagery, focus states and contrast in every mode on every supported platform.
@@ -86,4 +87,6 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 ## Measurement and advertising — complete last
 
 - [ ] Connect Google Analytics after the final domain, consent behavior and privacy disclosures are approved; validate events without collecting unnecessary personal or sensitive data.
-- [ ] Select and integrate an advertising engine with responsive placements, consent controls, frequency limits, accessibility, performance budgets, editorial separation, ad labeling, reporting and an ad-free fallback when inventory fails.
+- [x] Add a disabled-by-default Google AdSense integration with responsive manual placements, Auto ads support, preview placeholders, `ads.txt`, Studio controls, administrator-only audited changes and fail-closed delivery gates.
+- [ ] Create and approve the external AdSense account, register the production domain, configure a Google-certified consent message, create ad units, review Google’s site approval, then enter the real publisher and slot IDs in Studio before disabling Preview mode.
+- [ ] After live inventory is approved, validate consent withdrawal, reporting, fill failures, accessibility, layout shift, Core Web Vitals, placement policy compliance and reasonable ad density on real desktop and mobile pages.
