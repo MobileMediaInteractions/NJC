@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, ilike, isNull, lt, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, ilike, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb, hasDatabase } from "@harborline/backend/db";
@@ -30,7 +30,9 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   if (after && !Number.isNaN(Date.parse(after))) conditions.push(gt(employeeChatMessages.createdAt, new Date(after)));
   if (search) conditions.push(ilike(employeeChatMessages.body, `%${search.replaceAll("%", "\\%").replaceAll("_", "\\_")}%`));
   const rows = await getDb().select().from(employeeChatMessages).where(and(...conditions)).orderBy(after ? asc(employeeChatMessages.createdAt) : desc(employeeChatMessages.createdAt)).limit(limit);
-  const data = after ? rows : rows.reverse();
+  const orderedRows = after ? rows : rows.reverse();
+  const attachments = orderedRows.length ? await getDb().select({ id: employeeChatAttachments.id, messageId: employeeChatAttachments.messageId, filename: employeeChatAttachments.filename, mimeType: employeeChatAttachments.mimeType, size: employeeChatAttachments.size, createdAt: employeeChatAttachments.createdAt }).from(employeeChatAttachments).where(inArray(employeeChatAttachments.messageId, orderedRows.map((message) => message.id))) : [];
+  const data = orderedRows.map((message) => ({ ...message, attachments: attachments.filter((attachment) => attachment.messageId === message.id).map((attachment) => ({ id: attachment.id, filename: attachment.filename, mimeType: attachment.mimeType, size: attachment.size, createdAt: attachment.createdAt })) }));
   return NextResponse.json({ data, meta: { apiVersion: "1", nextCursor: data.at(-1)?.createdAt?.toISOString() ?? null } });
 }
 
@@ -73,5 +75,5 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     await sendEmployeePush(notificationRecipients, `New team message from ${viewer.name}`, destination);
   }
   await writeEmployeeAudit(request, viewer, "chat.message.created", { type: "message", id: message.id }, { channelId: id, attachmentCount: attachments.length });
-  return NextResponse.json({ data: message, meta: { apiVersion: "1" } }, { status: 201 });
+  return NextResponse.json({ data: { ...message, attachments: attachments.map((attachment) => ({ id: attachment.id, filename: attachment.filename, mimeType: attachment.mimeType, size: attachment.size, createdAt: attachment.createdAt })) }, meta: { apiVersion: "1" } }, { status: 201 });
 }

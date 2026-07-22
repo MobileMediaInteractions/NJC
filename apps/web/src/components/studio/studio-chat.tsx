@@ -1,9 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Hash, Loader2, MessageCircle, MessageSquarePlus, MoreHorizontal, Plus, Reply, Search, Send, Trash2, UsersRound, X } from "lucide-react";
+import { FileText, Hash, ImageIcon, Loader2, MessageCircle, MessageSquarePlus, MoreHorizontal, Paperclip, Plus, Reply, Search, Send, Trash2, UsersRound, X } from "lucide-react";
 import type { EmployeeCapability, StaffRole } from "@harborline/contracts";
 import { PresenceIndicator } from "@/components/studio/presence-indicator";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,11 +14,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { EMPLOYEE_CHAT_ATTACHMENT_MAX_COUNT, employeeChatAttachmentTypes, formatEmployeeChatAttachmentSize, validateEmployeeChatAttachment } from "@/lib/employee-chat-attachments";
 import { detectBrowserPresencePlatform, employeePresenceStatuses, resolveEmployeePresence, type EmployeePresencePlatform, type EmployeePresenceStatus } from "@/lib/employee-presence";
 
 type Viewer = { id: string; name: string; email: string; role: StaffRole; capabilities: EmployeeCapability[] };
 type Channel = { id: string; kind: "public" | "private" | "direct" | "group"; name: string; topic: string | null; unread: number; updatedAt: string };
-type Message = { id: string; channelId: string; authorClerkId: string; authorName: string; body: string; replyToId: string | null; mentions: string[]; isPinned: boolean; editedAt: string | null; deletedAt: string | null; createdAt: string };
+type Attachment = { id: string; filename: string; mimeType: string; size: number; createdAt: string };
+type Message = { id: string; channelId: string; authorClerkId: string; authorName: string; body: string; replyToId: string | null; mentions: string[]; isPinned: boolean; editedAt: string | null; deletedAt: string | null; createdAt: string; attachments: Attachment[] };
 type DirectoryEntry = { clerkId: string; displayName: string; title: string | null; avatarUrl: string | null };
 type Presence = { userClerkId: string; status: EmployeePresenceStatus; platform: EmployeePresencePlatform; lastSeenAt: string | null; typingChannelId: string | null };
 type Bootstrap = { channels: Channel[] };
@@ -34,12 +38,17 @@ export function StudioChat({ viewer, initialChannelId }: { viewer: Viewer; initi
   const [loading, setLoading] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]);
   const [channelDialogOpen, setChannelDialogOpen] = useState(false);
+  const [deleteChannelOpen, setDeleteChannelOpen] = useState(false);
+  const [deletingChannel, setDeletingChannel] = useState(false);
   const [channelName, setChannelName] = useState("");
   const cursorRef = useRef<string | null>(null);
   const requestRunning = useRef(false);
   const typingSentAt = useRef(0);
   const endRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const selected = channels.find((channel) => channel.id === selectedId) ?? null;
   const canWrite = viewer.capabilities.includes("chat:write");
   const canManage = viewer.capabilities.includes("chat:manage");
@@ -102,20 +111,75 @@ export function StudioChat({ viewer, initialChannelId }: { viewer: Viewer; initi
   }, [loadMessages, selectedId]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, [messages.length]);
 
+  async function uploadAttachments(files: FileList | File[]) {
+    if (!selectedId || !canWrite || uploading) return;
+    const available = EMPLOYEE_CHAT_ATTACHMENT_MAX_COUNT - pendingAttachments.length;
+    const selectedFiles = Array.from(files).slice(0, available);
+    if (!available) {
+      setNotice(`A message can include up to ${EMPLOYEE_CHAT_ATTACHMENT_MAX_COUNT} attachments.`);
+      return;
+    }
+    const invalid = selectedFiles.map((file) => validateEmployeeChatAttachment(file)).find(Boolean);
+    if (invalid) {
+      setNotice(invalid);
+      return;
+    }
+    setUploading(true);
+    try {
+      for (const file of selectedFiles) {
+        const form = new FormData();
+        form.set("file", file);
+        const attachment = await request<Attachment>(`/api/v1/employee/chat/channels/${selectedId}/attachments`, { method: "POST", body: form });
+        setPendingAttachments((current) => [...current, attachment]);
+      }
+      if (Array.from(files).length > available) setNotice(`Only the first ${available} files were added. A message can include up to ${EMPLOYEE_CHAT_ATTACHMENT_MAX_COUNT}.`);
+      else setNotice(null);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "The attachment could not be uploaded.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function removePendingAttachment(attachment: Attachment) {
+    try {
+      await request<{ id: string; deleted: boolean }>(`/api/v1/employee/chat/attachments/${attachment.id}`, { method: "DELETE" });
+      setPendingAttachments((current) => current.filter((item) => item.id !== attachment.id));
+      setNotice(null);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "The attachment could not be removed.");
+    }
+  }
+
+  async function discardPendingAttachments() {
+    const discarded = pendingAttachments;
+    setPendingAttachments([]);
+    await Promise.allSettled(discarded.map((attachment) => request(`/api/v1/employee/chat/attachments/${attachment.id}`, { method: "DELETE" })));
+  }
+
+  async function selectChannel(channelId: string) {
+    if (channelId === selectedId || uploading) return;
+    if (pendingAttachments.length) await discardPendingAttachments();
+    setReplyTo(null);
+    setBody("");
+    setSelectedId(channelId);
+  }
+
   async function sendMessage() {
     const clean = body.trim();
-    if (!clean || !selectedId || !canWrite) return;
+    if ((!clean && !pendingAttachments.length) || !selectedId || !canWrite) return;
     setSending(true);
-    setBody("");
     try {
       const mentions = directory.filter((person) => clean.toLocaleLowerCase().includes(`@${person.displayName.toLocaleLowerCase()}`)).map((person) => person.clerkId);
-      const created = await request<Message>(`/api/v1/employee/chat/channels/${selectedId}/messages`, { method: "POST", body: JSON.stringify({ body: clean, replyToId: replyTo?.id, mentions, clientId: crypto.randomUUID() }) });
+      const created = await request<Message>(`/api/v1/employee/chat/channels/${selectedId}/messages`, { method: "POST", body: JSON.stringify({ body: clean, replyToId: replyTo?.id, mentions, attachmentIds: pendingAttachments.map((attachment) => attachment.id), clientId: crypto.randomUUID() }) });
       setMessages((current) => [...current, created]);
       cursorRef.current = created.createdAt;
+      setBody("");
+      setPendingAttachments([]);
       setReplyTo(null);
       setNotice(null);
     } catch (error) {
-      setBody(clean);
       setNotice(error instanceof Error ? error.message : "Message was not sent.");
     } finally {
       setSending(false);
@@ -145,12 +209,33 @@ export function StudioChat({ viewer, initialChannelId }: { viewer: Viewer; initi
     }
   }
 
+  async function deleteSelectedChannel() {
+    if (!selected || !canManage || (selected.kind !== "public" && selected.kind !== "private")) return;
+    setDeletingChannel(true);
+    try {
+      if (pendingAttachments.length) await discardPendingAttachments();
+      await request<Channel>(`/api/v1/employee/chat/channels/${selected.id}`, { method: "DELETE" });
+      const nextChannel = channels.find((channel) => channel.id !== selected.id) ?? null;
+      setChannels((current) => current.filter((channel) => channel.id !== selected.id));
+      setSelectedId(nextChannel?.id ?? null);
+      setMessages([]);
+      setReplyTo(null);
+      setDeleteChannelOpen(false);
+      setNotice(null);
+      await refreshWorkspace();
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "The channel could not be deleted.");
+    } finally {
+      setDeletingChannel(false);
+    }
+  }
+
   async function openDirectMessage(person: DirectoryEntry) {
     if (person.clerkId === viewer.id || !canWrite) return;
     try {
       const channel = await request<Channel>("/api/v1/employee/chat/channels", { method: "POST", body: JSON.stringify({ kind: "direct", name: person.displayName, memberClerkIds: [person.clerkId] }) });
       await refreshWorkspace();
-      setSelectedId(channel.id);
+      await selectChannel(channel.id);
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Direct conversation could not be opened.");
     }
@@ -173,33 +258,45 @@ export function StudioChat({ viewer, initialChannelId }: { viewer: Viewer; initi
         <div className="flex h-16 items-center justify-between border-b border-white/10 px-4"><div><p className="text-sm font-bold">Courier newsroom</p><p className="text-[0.65rem] uppercase tracking-widest text-white/45">Team communication</p></div>{canManage ? <Dialog open={channelDialogOpen} onOpenChange={setChannelDialogOpen}><DialogTrigger asChild><Button size="icon-sm" variant="ghost" aria-label="Create channel"><Plus /></Button></DialogTrigger><DialogContent><DialogHeader><DialogTitle>Create a public channel</DialogTitle><DialogDescription>Everyone with newsroom chat access can find and join this conversation.</DialogDescription></DialogHeader><Input value={channelName} onChange={(event) => setChannelName(event.target.value)} placeholder="Channel name" maxLength={80} onKeyDown={(event) => { if (event.key === "Enter") void createChannel(); }} /><DialogFooter><Button onClick={() => void createChannel()} disabled={!channelName.trim()}>Create channel</Button></DialogFooter></DialogContent></Dialog> : null}</div>
         <div className="max-h-52 overflow-y-auto p-2 lg:max-h-[calc(100vh-8rem)]">
           <p className="px-2 pb-2 pt-1 text-[0.65rem] font-bold uppercase tracking-widest text-white/40">Channels & messages</p>
-          {loading ? <div className="flex items-center gap-2 px-2 py-3 text-xs text-white/50"><Loader2 className="size-3.5 animate-spin" /> Loading conversations</div> : channels.length ? channels.map((channel) => <button key={channel.id} type="button" onClick={() => setSelectedId(channel.id)} className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm ${channel.id === selectedId ? "bg-white/12 text-white" : "text-white/60 hover:bg-white/7 hover:text-white"}`}><span className="shrink-0">{channel.kind === "public" ? <Hash className="size-4" /> : <MessageCircle className="size-4" />}</span><span className="min-w-0 flex-1 truncate">{channel.name}</span>{channel.unread ? <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[0.65rem] font-black text-white">{channel.unread > 9 ? "9+" : channel.unread}</span> : null}</button>) : <p className="px-2 py-4 text-xs leading-5 text-white/45">No conversations yet. A channel manager can create the first one.</p>}
+          {loading ? <div className="flex items-center gap-2 px-2 py-3 text-xs text-white/50"><Loader2 className="size-3.5 animate-spin" /> Loading conversations</div> : channels.length ? channels.map((channel) => <button key={channel.id} type="button" onClick={() => void selectChannel(channel.id)} disabled={uploading} className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm disabled:cursor-wait ${channel.id === selectedId ? "bg-white/12 text-white" : "text-white/60 hover:bg-white/7 hover:text-white"}`}><span className="shrink-0">{channel.kind === "public" ? <Hash className="size-4" /> : <MessageCircle className="size-4" />}</span><span className="min-w-0 flex-1 truncate">{channel.name}</span>{channel.unread ? <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[0.65rem] font-black text-white">{channel.unread > 9 ? "9+" : channel.unread}</span> : null}</button>) : <p className="px-2 py-4 text-xs leading-5 text-white/45">No conversations yet. A channel manager can create the first one.</p>}
         </div>
       </aside>
 
       <section className="flex min-h-[34rem] min-w-0 flex-col bg-background">
         <header className="flex min-h-16 flex-wrap items-center justify-between gap-3 border-b px-4 py-3 sm:px-5">
           <div className="min-w-0"><h1 className="flex items-center gap-2 truncate text-base font-bold">{selected?.kind === "public" ? <Hash className="size-4" /> : <MessageCircle className="size-4" />}{selected?.name ?? "Team chat"}</h1><p className="truncate text-xs text-muted-foreground">{selected?.topic ?? (selected ? "Internal newsroom conversation" : "Choose a conversation to begin")}</p></div>
-          {selected ? <form onSubmit={(event) => { event.preventDefault(); cursorRef.current = null; void loadMessages(true, search); }} className="flex gap-1"><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search messages" className="h-8 w-40" aria-label="Search conversation" /><Button type="submit" size="icon-sm" variant="ghost" aria-label="Search"><Search /></Button></form> : null}
+          {selected ? <div className="flex items-center gap-1"><form onSubmit={(event) => { event.preventDefault(); cursorRef.current = null; void loadMessages(true, search); }} className="flex gap-1"><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search messages" className="h-8 w-40" aria-label="Search conversation" /><Button type="submit" size="icon-sm" variant="ghost" aria-label="Search"><Search /></Button></form>{canManage && (selected.kind === "public" || selected.kind === "private") ? <Button type="button" size="icon-sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDeleteChannelOpen(true)} aria-label={`Delete ${selected.name}`}><Trash2 /></Button> : null}</div> : null}
         </header>
         {notice ? <div className="border-b border-red-500/30 bg-red-500/10 px-4 py-2 text-xs text-red-300" role="status">{notice}</div> : null}
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
           {!selected ? <EmptyChat icon={<MessageCircle className="size-8" />} title="Choose a conversation" body="Channels and direct messages remain private to authorized newsroom staff." /> : loadingMessages ? <div className="flex min-h-72 items-center justify-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading messages</div> : messages.length ? <div className="space-y-1">{messages.map((message) => <MessageRow key={message.id} message={message} viewerId={viewer.id} canModerate={canModerate} onReply={setReplyTo} onDelete={deleteMessage} reply={message.replyToId ? messages.find((item) => item.id === message.replyToId) : undefined} />)}<div ref={endRef} /></div> : <EmptyChat icon={<MessageSquarePlus className="size-8" />} title="Start the conversation" body="Write the first message. New replies will appear automatically." />}
         </div>
-        {selected && canWrite ? <footer className="border-t bg-card p-3 sm:p-4">{replyTo ? <div className="mb-2 flex items-center gap-2 rounded-md bg-muted px-3 py-2 text-xs"><Reply className="size-3.5" /><span className="min-w-0 flex-1 truncate">Replying to {replyTo.authorName}: {replyTo.body}</span><Button variant="ghost" size="icon-xs" onClick={() => setReplyTo(null)} aria-label="Cancel reply"><X /></Button></div> : null}<div className="flex items-end gap-2"><Textarea value={body} onChange={(event) => updateTyping(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void sendMessage(); } }} placeholder={`Message ${selected.name}`} aria-label="Message" rows={2} maxLength={8000} className="min-h-16 resize-none" /><Button onClick={() => void sendMessage()} disabled={!body.trim() || sending} size="icon" aria-label="Send message">{sending ? <Loader2 className="animate-spin" /> : <Send />}</Button></div>{typingPeople.length ? <p className="mt-2 text-[0.68rem] text-muted-foreground">{typingPeople.join(", ")} {typingPeople.length === 1 ? "is" : "are"} typing…</p> : <p className="mt-2 text-[0.68rem] text-muted-foreground">Enter to send · Shift+Enter for a new line · use @Full Name to mention</p>}</footer> : null}
+        {selected && canWrite ? <footer className="border-t bg-card p-3 sm:p-4" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); void uploadAttachments(event.dataTransfer.files); }}>
+          {replyTo ? <div className="mb-2 flex items-center gap-2 rounded-md bg-muted px-3 py-2 text-xs"><Reply className="size-3.5" /><span className="min-w-0 flex-1 truncate">Replying to {replyTo.authorName}: {replyTo.body}</span><Button variant="ghost" size="icon-xs" onClick={() => setReplyTo(null)} aria-label="Cancel reply"><X /></Button></div> : null}
+          {pendingAttachments.length ? <div className="mb-2 flex flex-wrap gap-2">{pendingAttachments.map((attachment) => <div key={attachment.id} className="flex max-w-64 items-center gap-2 rounded-md border bg-background px-2.5 py-2 text-xs">{attachment.mimeType.startsWith("image/") ? <ImageIcon className="size-4 shrink-0 text-brand-blue" /> : <FileText className="size-4 shrink-0 text-brand-blue" />}<span className="min-w-0 flex-1"><span className="block truncate font-medium">{attachment.filename}</span><span className="text-[0.65rem] text-muted-foreground">{formatEmployeeChatAttachmentSize(attachment.size)}</span></span><Button type="button" variant="ghost" size="icon-xs" onClick={() => void removePendingAttachment(attachment)} disabled={sending} aria-label={`Remove ${attachment.filename}`}><X /></Button></div>)}</div> : null}
+          <div className="flex items-end gap-2"><input ref={fileInputRef} type="file" className="sr-only" multiple accept={employeeChatAttachmentTypes.join(",")} onChange={(event) => { if (event.target.files) void uploadAttachments(event.target.files); }} /><Button type="button" variant="outline" size="icon" onClick={() => fileInputRef.current?.click()} disabled={uploading || sending || pendingAttachments.length >= EMPLOYEE_CHAT_ATTACHMENT_MAX_COUNT} aria-label="Attach media">{uploading ? <Loader2 className="animate-spin" /> : <Paperclip />}</Button><Textarea value={body} onChange={(event) => updateTyping(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void sendMessage(); } }} placeholder={`Message ${selected.name}`} aria-label="Message" rows={2} maxLength={8000} className="min-h-16 resize-none" /><Button onClick={() => void sendMessage()} disabled={(!body.trim() && !pendingAttachments.length) || sending || uploading} size="icon" aria-label="Send message">{sending ? <Loader2 className="animate-spin" /> : <Send />}</Button></div>
+          {typingPeople.length ? <p className="mt-2 text-[0.68rem] text-muted-foreground">{typingPeople.join(", ")} {typingPeople.length === 1 ? "is" : "are"} typing…</p> : <p className="mt-2 text-[0.68rem] text-muted-foreground">Attach or drop JPEG, PNG, WebP, or PDF files up to 4 MB · Enter to send · Shift+Enter for a new line</p>}
+        </footer> : null}
       </section>
 
       <aside className="hidden border-l bg-card lg:block">
         <div className="flex h-16 items-center gap-2 border-b px-4"><UsersRound className="size-4" /><h2 className="text-sm font-bold">Newsroom activity</h2></div>
         <div className="max-h-[calc(100vh-8rem)] overflow-y-auto p-2">{directory.map((person) => { const activity = resolveEmployeePresence(presence.find((item) => item.userClerkId === person.clerkId)); const initials = person.displayName.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase(); return <div key={person.clerkId} className="group flex items-center gap-3 rounded-md p-2 hover:bg-muted/60"><Avatar size="sm"><AvatarImage src={person.avatarUrl ?? undefined} alt="" /><AvatarFallback>{initials}</AvatarFallback></Avatar><div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold">{person.displayName}{person.clerkId === viewer.id ? " (you)" : ""}</p><PresenceIndicator status={activity.status} platform={activity.platform} lastSeenAt={activity.lastSeenAt} /></div>{person.clerkId !== viewer.id && canWrite ? <Button size="icon-xs" variant="ghost" className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100" onClick={() => void openDirectMessage(person)} aria-label={`Message ${person.displayName}`}><MessageCircle /></Button> : null}</div>; })}</div>
       </aside>
+      <AlertDialog open={deleteChannelOpen} onOpenChange={setDeleteChannelOpen}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete #{selected?.name}?</AlertDialogTitle><AlertDialogDescription>The channel will disappear for everyone. Its messages and private media remain preserved in the newsroom audit record.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={deletingChannel}>Keep channel</AlertDialogCancel><AlertDialogAction variant="destructive" disabled={deletingChannel} onClick={() => void deleteSelectedChannel()}>{deletingChannel ? <Loader2 className="animate-spin" /> : <Trash2 />} Delete channel</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </div>
   );
 }
 
 function MessageRow({ message, viewerId, canModerate, onReply, onDelete, reply }: { message: Message; viewerId: string; canModerate: boolean; onReply: (message: Message) => void; onDelete: (message: Message) => Promise<void>; reply?: Message }) {
   const initials = message.authorName.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-  return <article className="group flex gap-3 rounded-md px-2 py-2.5 hover:bg-muted/45"><Avatar><AvatarFallback className="bg-brand-blue text-xs text-white">{initials}</AvatarFallback></Avatar><div className="min-w-0 flex-1">{reply ? <p className="mb-1 truncate border-l-2 pl-2 text-[0.68rem] text-muted-foreground">Reply to {reply.authorName}: {reply.deletedAt ? "Deleted message" : reply.body}</p> : null}<div className="flex flex-wrap items-baseline gap-2"><p className="text-sm font-bold">{message.authorName}</p><time className="text-[0.65rem] text-muted-foreground" dateTime={message.createdAt}>{new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", month: "short", day: "numeric" }).format(new Date(message.createdAt))}</time>{message.editedAt ? <span className="text-[0.6rem] text-muted-foreground">edited</span> : null}{message.isPinned ? <Badge variant="secondary" className="h-4 px-1 text-[0.55rem]">Pinned</Badge> : null}</div><p className={`mt-1 whitespace-pre-wrap break-words text-sm leading-6 ${message.deletedAt ? "italic text-muted-foreground" : ""}`}>{message.deletedAt ? "Message deleted" : message.body}</p></div>{!message.deletedAt ? <DropdownMenu><DropdownMenuTrigger asChild><Button size="icon-xs" variant="ghost" className="opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100" aria-label="Message actions"><MoreHorizontal /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => onReply(message)}><Reply /> Reply</DropdownMenuItem>{message.authorClerkId === viewerId || canModerate ? <DropdownMenuItem variant="destructive" onSelect={() => void onDelete(message)}><Trash2 /> Delete</DropdownMenuItem> : null}</DropdownMenuContent></DropdownMenu> : null}</article>;
+  return <article className="group flex gap-3 rounded-md px-2 py-2.5 hover:bg-muted/45"><Avatar><AvatarFallback className="bg-brand-blue text-xs text-white">{initials}</AvatarFallback></Avatar><div className="min-w-0 flex-1">{reply ? <p className="mb-1 truncate border-l-2 pl-2 text-[0.68rem] text-muted-foreground">Reply to {reply.authorName}: {reply.deletedAt ? "Deleted message" : reply.body}</p> : null}<div className="flex flex-wrap items-baseline gap-2"><p className="text-sm font-bold">{message.authorName}</p><time className="text-[0.65rem] text-muted-foreground" dateTime={message.createdAt}>{new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", month: "short", day: "numeric" }).format(new Date(message.createdAt))}</time>{message.editedAt ? <span className="text-[0.6rem] text-muted-foreground">edited</span> : null}{message.isPinned ? <Badge variant="secondary" className="h-4 px-1 text-[0.55rem]">Pinned</Badge> : null}</div><p className={`mt-1 whitespace-pre-wrap break-words text-sm leading-6 ${message.deletedAt ? "italic text-muted-foreground" : ""}`}>{message.deletedAt ? "Message deleted" : message.body}</p>{!message.deletedAt && message.attachments?.length ? <div className="mt-2 flex flex-wrap gap-2">{message.attachments.map((attachment) => <MessageAttachment key={attachment.id} attachment={attachment} />)}</div> : null}</div>{!message.deletedAt ? <DropdownMenu><DropdownMenuTrigger asChild><Button size="icon-xs" variant="ghost" className="opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100" aria-label="Message actions"><MoreHorizontal /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => onReply(message)}><Reply /> Reply</DropdownMenuItem>{message.authorClerkId === viewerId || canModerate ? <DropdownMenuItem variant="destructive" onSelect={() => void onDelete(message)}><Trash2 /> Delete</DropdownMenuItem> : null}</DropdownMenuContent></DropdownMenu> : null}</article>;
+}
+
+function MessageAttachment({ attachment }: { attachment: Attachment }) {
+  const href = `/api/v1/employee/chat/attachments/${attachment.id}`;
+  if (attachment.mimeType.startsWith("image/")) return <a href={href} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg border bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><Image src={href} alt={attachment.filename} width={240} height={160} unoptimized className="max-h-48 w-auto max-w-full object-contain" /><span className="sr-only">Open {attachment.filename}</span></a>;
+  return <a href={href} target="_blank" rel="noreferrer" className="flex max-w-72 items-center gap-2 rounded-lg border bg-muted/40 px-3 py-2 text-xs hover:bg-muted"><FileText className="size-5 shrink-0 text-brand-blue" /><span className="min-w-0"><span className="block truncate font-semibold">{attachment.filename}</span><span className="text-muted-foreground">PDF · {formatEmployeeChatAttachmentSize(attachment.size)}</span></span></a>;
 }
 
 function EmptyChat({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
@@ -207,7 +304,8 @@ function EmptyChat({ icon, title, body }: { icon: React.ReactNode; title: string
 }
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, { ...init, headers: { ...(init?.body ? { "Content-Type": "application/json" } : {}), ...init?.headers }, cache: "no-store" });
+  const sendsForm = init?.body instanceof FormData;
+  const response = await fetch(url, { ...init, headers: { ...(init?.body && !sendsForm ? { "Content-Type": "application/json" } : {}), ...init?.headers }, cache: "no-store" });
   const payload = await response.json().catch(() => null) as { data?: T; error?: { message?: string } } | null;
   if (!response.ok || !payload?.data) throw new Error(payload?.error?.message ?? "The newsroom service did not complete the request.");
   return payload.data;
