@@ -140,7 +140,9 @@ function useTvTheme() {
 }
 
 async function api<T>(path: string, init?: RequestInit) {
-  return requestHarborlineApi<T>(path, { baseUrl: apiUrl }, init);
+  const headers = new Headers(init?.headers);
+  headers.set("X-NJC-Client", tvAudiencePlatform);
+  return requestHarborlineApi<T>(path, { baseUrl: apiUrl }, { ...init, headers });
 }
 
 async function reportPresence(token?: string) {

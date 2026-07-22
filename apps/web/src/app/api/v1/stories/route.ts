@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPublishedStories } from "@/lib/content";
+import { authorizeReaderApiRequest } from "@/lib/reader-api-access";
 
 export async function GET(request: NextRequest) {
+  const authorization = await authorizeReaderApiRequest(request);
+  if (authorization.response) return authorization.response;
   const searchParams = request.nextUrl.searchParams;
   const category = searchParams.get("category") ?? undefined;
   const query = searchParams.get("q") ?? undefined;
@@ -18,5 +21,5 @@ export async function GET(request: NextRequest) {
       category: category ?? null,
       query: query ?? null,
     },
-  });
+  }, { headers: authorization.headers });
 }

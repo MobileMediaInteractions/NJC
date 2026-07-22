@@ -105,6 +105,8 @@ Verified accounts create and revoke keys at `/developers`. Send the one-time sec
 | `weather:read` | `/api/developer/v1/weather` |
 | `live:read` | `/api/developer/v1/live` |
 
+The `/api/v1/stories` reader routes are reserved for same-origin requests from `https://www.thejerseycourier.com`, the permanent `https://njc-web.vercel.app` alias, and identified official Courier clients. Third-party and server-to-server integrations must use `/api/developer/v1/stories` with an account API key; reader-route headers are not a substitute for developer authentication.
+
 Each key is HMAC-hashed at rest, audited, revocable, limited to five active keys per account, and defaults to 60 requests per minute plus 10,000 requests per day. Upstash Redis is mandatory for these developer routes; they fail closed if the limiter is unavailable.
 
 Rate responses include `X-RateLimit-Limit-Minute`, `X-RateLimit-Remaining-Minute`, `X-RateLimit-Limit-Day` and `X-RateLimit-Remaining-Day`. A `429` also includes `Retry-After`.

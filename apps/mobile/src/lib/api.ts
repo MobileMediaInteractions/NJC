@@ -25,7 +25,7 @@ async function cachedFetch<T>(
   let requestError: unknown;
 
   try {
-    const data = await requestHarborlineApi<T>(path, { baseUrl: apiBaseUrl });
+    const data = await requestHarborlineApi<T>(path, { baseUrl: apiBaseUrl }, { headers: { "X-NJC-Client": "mobile" } });
     try {
       await deviceStorage.setItem(
         key,
