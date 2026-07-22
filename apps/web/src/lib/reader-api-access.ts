@@ -34,8 +34,8 @@ function allowedOrigins() {
   return new Set<string>([...officialReaderOrigins, ...configured]);
 }
 
-function isDevelopmentTarget(origin: string) {
-  if (process.env.NODE_ENV === "production") return false;
+function isDevelopmentTarget(origin: string, allowLocalDevelopment: boolean) {
+  if (!allowLocalDevelopment) return false;
   try {
     const hostname = new URL(origin).hostname;
     return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
@@ -44,10 +44,11 @@ function isDevelopmentTarget(origin: string) {
   }
 }
 
-export function evaluateReaderApiAccess(request: Request): ReaderAccess {
+export function evaluateReaderApiAccess(request: Request, options?: { allowLocalDevelopment?: boolean }): ReaderAccess {
   const targetOrigin = new URL(request.url).origin;
   const origins = allowedOrigins();
-  if (!origins.has(targetOrigin) && !isDevelopmentTarget(targetOrigin)) return { allowed: false };
+  const allowLocalDevelopment = options?.allowLocalDevelopment ?? process.env.NODE_ENV !== "production";
+  if (!origins.has(targetOrigin) && !isDevelopmentTarget(targetOrigin, allowLocalDevelopment)) return { allowed: false };
 
   const client = request.headers.get("x-njc-client")?.toLowerCase();
   if (officialReaderClients.includes(client as (typeof officialReaderClients)[number])) {
@@ -62,7 +63,7 @@ export function evaluateReaderApiAccess(request: Request): ReaderAccess {
   const fetchSite = request.headers.get("sec-fetch-site")?.toLowerCase();
   if (headerOrigin && origins.has(headerOrigin)) return { allowed: true, source: "web", origin: headerOrigin };
   if (referrerOrigin && origins.has(referrerOrigin)) return { allowed: true, source: "web", origin: referrerOrigin };
-  if (fetchSite === "same-origin" && (origins.has(targetOrigin) || isDevelopmentTarget(targetOrigin))) return { allowed: true, source: "web", origin: targetOrigin };
+  if (fetchSite === "same-origin" && (origins.has(targetOrigin) || isDevelopmentTarget(targetOrigin, allowLocalDevelopment))) return { allowed: true, source: "web", origin: targetOrigin };
   return { allowed: false };
 }
 

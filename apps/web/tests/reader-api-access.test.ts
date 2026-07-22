@@ -26,6 +26,6 @@ test("reader API recognizes official app clients only on an official API origin"
 });
 
 test("reader API remains available to same-origin local development", () => {
-  assert.notEqual(process.env.NODE_ENV, "production");
-  assert.deepEqual(evaluateReaderApiAccess(new Request("http://localhost:3000/api/v1/stories", { headers: { "Sec-Fetch-Site": "same-origin" } })), { allowed: true, source: "web", origin: "http://localhost:3000" });
+  assert.deepEqual(evaluateReaderApiAccess(new Request("http://localhost:3000/api/v1/stories", { headers: { "Sec-Fetch-Site": "same-origin" } }), { allowLocalDevelopment: true }), { allowed: true, source: "web", origin: "http://localhost:3000" });
+  assert.deepEqual(evaluateReaderApiAccess(new Request("http://localhost:3000/api/v1/stories", { headers: { "Sec-Fetch-Site": "same-origin" } }), { allowLocalDevelopment: false }), { allowed: false });
 });
