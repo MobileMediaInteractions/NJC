@@ -54,6 +54,7 @@ export default async function EditStoryPage({ params }: { params: Promise<{ id: 
           slug: story.slug,
           dek: story.dek,
           body: story.body,
+          whyItMatters: story.whyItMatters,
           categorySlug: story.categorySlug,
           location: story.location,
           imageUrl: story.imageUrl,

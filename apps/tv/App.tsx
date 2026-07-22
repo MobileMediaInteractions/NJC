@@ -560,6 +560,12 @@ function StoryDetail({
         <Text style={styles.storyByline}>
           By {story.author.name} · {story.readingMinutes} MIN READ
         </Text>
+        {story.whyItMatters ? (
+          <View style={styles.storyWhyItMatters}>
+            <Text style={styles.storyWhyItMattersLabel}>WHY IT MATTERS</Text>
+            <Text style={styles.storyWhyItMattersBody}>{story.whyItMatters}</Text>
+          </View>
+        ) : null}
         {story.body.map((paragraph, index) => (
           <Text key={`${story.id}-${index}`} style={styles.storyParagraph}>
             {paragraph}
@@ -861,6 +867,26 @@ const createStyles = (colors: TvColors) =>
       fontWeight: "800",
       marginTop: 28,
       marginBottom: 36,
+    },
+    storyWhyItMatters: {
+      backgroundColor: colors.blue,
+      borderTopWidth: 5,
+      borderTopColor: colors.yellow,
+      paddingHorizontal: 28,
+      paddingVertical: 24,
+      marginBottom: 36,
+    },
+    storyWhyItMattersLabel: {
+      color: colors.yellow,
+      fontSize: 14,
+      fontWeight: "900",
+      letterSpacing: 2.4,
+    },
+    storyWhyItMattersBody: {
+      color: colors.onMedia,
+      fontSize: 20,
+      lineHeight: 31,
+      marginTop: 13,
     },
     storyParagraph: {
       color: colors.white,

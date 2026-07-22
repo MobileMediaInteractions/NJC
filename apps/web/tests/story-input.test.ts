@@ -26,7 +26,9 @@ const validStory = {
 };
 
 test("accepts a complete publish request with optional URLs left blank", () => {
-  assert.equal(storyInput.safeParse(validStory).success, true);
+  const result = storyInput.safeParse(validStory);
+  assert.equal(result.success, true);
+  if (result.success) assert.equal(result.data.includeWhyItMatters, false);
 });
 
 test("requires accessible alt text when a lead image is present", () => {

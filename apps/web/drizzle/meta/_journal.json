@@ -71,6 +71,13 @@
       "when": 1784386041050,
       "tag": "0009_chief_odin",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1784747190812,
+      "tag": "0010_conscious_starjammers",
+      "breakpoints": true
     }
   ]
 }

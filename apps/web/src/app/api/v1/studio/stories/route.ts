@@ -6,6 +6,7 @@ import { stories, storyRevisions } from "@harborline/backend/schema";
 import { writeApiAudit } from "@/lib/api-keys";
 import { getStudioUser } from "@/lib/auth";
 import { storyInput } from "@/lib/story-input";
+import { generateWhyItMatters } from "@/lib/why-it-matters";
 
 export async function POST(request: Request) {
   const viewer = await getStudioUser();
@@ -28,11 +29,15 @@ export async function POST(request: Request) {
       publishedAt,
       publishedAtRiskAcknowledged: _publishedAtRiskAcknowledged,
       publishedAtChangeReason,
+      includeWhyItMatters,
       ...storyValues
     } = parsed.data;
     void _publishedAtRiskAcknowledged;
     const [story] = await getDb().insert(stories).values({
       ...storyValues,
+      whyItMatters: includeWhyItMatters
+        ? generateWhyItMatters(parsed.data)
+        : null,
       imageUrl: parsed.data.imageUrl || null,
       seoTitle: parsed.data.seoTitle || null,
       seoDescription: parsed.data.seoDescription || null,

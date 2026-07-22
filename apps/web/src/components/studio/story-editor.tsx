@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { validateStoryImage } from "@/lib/media-upload";
 import { firstStoryError, storyInput, type StoryFieldErrors } from "@/lib/story-input";
+import { generateWhyItMatters, WHY_IT_MATTERS_MAX_CHARACTERS } from "@/lib/why-it-matters";
 
 const categories = [
   ["local", "Local News"], ["middlesex", "Middlesex County"], ["statehouse", "Statehouse Desk"], ["public-square", "Public Square"], ["opinion", "Garden State Forum"], ["sports", "Jersey Gridiron & Court"], ["jersey-laurels", "Jersey Laurels"], ["investigates", "Courier Watch"], ["weather", "Weather"], ["culture", "Arts & Culture"],
@@ -26,6 +27,7 @@ export interface StoryEditorInitialStory {
   slug: string;
   dek: string;
   body: string[];
+  whyItMatters: string | null;
   categorySlug: string;
   location: string;
   imageUrl: string | null;
@@ -54,6 +56,7 @@ export function StoryEditor({
   const [slug, setSlug] = useState(initialStory?.slug ?? "");
   const [dek, setDek] = useState(initialStory?.dek ?? "");
   const [body, setBody] = useState(initialStory?.body.join("\n\n") ?? "");
+  const [includeWhyItMatters, setIncludeWhyItMatters] = useState(Boolean(initialStory?.whyItMatters));
   const [category, setCategory] = useState(initialStory?.categorySlug ?? "middlesex");
   const [location, setLocation] = useState(initialStory?.location ?? datelines[0] ?? "New Brunswick");
   const [tags, setTags] = useState(initialStory?.tags.join(", ") ?? "");
@@ -77,6 +80,10 @@ export function StoryEditor({
   const [message, setMessage] = useState("");
   const [fieldErrors, setFieldErrors] = useState<StoryFieldErrors>({});
   const datelineOptions = location && !datelines.includes(location) ? [location, ...datelines] : datelines;
+  const bodyParagraphs = body.split(/\n\n+/).map((item) => item.trim()).filter(Boolean);
+  const generatedWhyItMatters = includeWhyItMatters
+    ? generateWhyItMatters({ headline, dek, body: bodyParagraphs })
+    : "";
   const wordCount = body.trim() ? body.trim().split(/\s+/).length : 0;
 
   async function save(status: "draft" | "review" | "published") {
@@ -98,7 +105,7 @@ export function StoryEditor({
       focusFirstInvalidField(errors);
       return;
     }
-    const input = { headline, slug, dek, body: body.split(/\n\n+/).map((item) => item.trim()).filter(Boolean), categorySlug: category, categoryLabel, location, imageUrl, imageAlt, tags: tags.split(",").map((item) => item.trim()).filter(Boolean), seoTitle, seoDescription, canonicalUrl, noIndex, status, isBreaking: breaking, publishedAt: status === "published" && useCustomPublishedAt ? parsedPublishedAt?.toISOString() ?? "" : "", publishedAtRiskAcknowledged: status === "published" && useCustomPublishedAt ? publishedAtRiskAcknowledged : false, publishedAtChangeReason: status === "published" && useCustomPublishedAt ? publishedAtChangeReason : "" };
+    const input = { headline, slug, dek, body: bodyParagraphs, includeWhyItMatters, categorySlug: category, categoryLabel, location, imageUrl, imageAlt, tags: tags.split(",").map((item) => item.trim()).filter(Boolean), seoTitle, seoDescription, canonicalUrl, noIndex, status, isBreaking: breaking, publishedAt: status === "published" && useCustomPublishedAt ? parsedPublishedAt?.toISOString() ?? "" : "", publishedAtRiskAcknowledged: status === "published" && useCustomPublishedAt ? publishedAtRiskAcknowledged : false, publishedAtChangeReason: status === "published" && useCustomPublishedAt ? publishedAtChangeReason : "" };
     const validation = storyInput.safeParse(input);
     if (!validation.success) {
       const errors = validation.error.flatten().fieldErrors;
@@ -244,6 +251,14 @@ export function StoryEditor({
                   <Button className="w-full" onClick={() => save("published")} disabled={state === "saving" || uploadState === "uploading"}>{state === "saving" ? <><Loader2 className="animate-spin" /> Publishing…</> : "Publish now"}</Button>
                 </>
               ) : <p className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">Your role can draft and submit stories for review. A publisher sets the public posted time.</p>}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle className="text-base">Reader context</CardTitle><CardDescription>Optional context generated only from this story&apos;s verified copy.</CardDescription></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between gap-4"><div><Label htmlFor="why-it-matters">Why it matters</Label><p className="mt-1 text-xs text-muted-foreground">Adds the contextual callout beside the article.</p></div><Switch id="why-it-matters" checked={includeWhyItMatters} onCheckedChange={setIncludeWhyItMatters} /></div>
+              {includeWhyItMatters ? <div className="border-t-4 border-brand-yellow bg-brand-navy p-4 text-white"><div className="flex items-center justify-between gap-3"><p className="eyebrow text-brand-yellow">Why it matters</p><span className="text-[0.65rem] text-white/50">{generatedWhyItMatters.length}/{WHY_IT_MATTERS_MAX_CHARACTERS}</span></div><p className="mt-3 text-sm leading-6 text-white/72">{generatedWhyItMatters || "Finish the summary and article copy to generate this callout."}</p></div> : null}
+              <p className="text-xs leading-5 text-muted-foreground">The server regenerates the final wording on every save, caps it at {WHY_IT_MATTERS_MAX_CHARACTERS} characters and never invents information outside the article.</p>
             </CardContent>
           </Card>
           <Card><CardHeader><CardTitle className="text-base">Search appearance</CardTitle><CardDescription>Defaults are generated from the story. Override only when the search result needs clearer wording.</CardDescription></CardHeader><CardContent className="space-y-4"><div className="space-y-2"><div className="flex justify-between"><Label htmlFor="seo-title">SEO title</Label><span className="text-xs text-muted-foreground">{seoTitle.length}/70</span></div><Input id="seo-title" value={seoTitle} onChange={(event) => setSeoTitle(event.target.value)} maxLength={70} placeholder={headline || "Uses headline by default"} /></div><div className="space-y-2"><div className="flex justify-between"><Label htmlFor="seo-description">Search description</Label><span className="text-xs text-muted-foreground">{seoDescription.length}/180</span></div><Textarea id="seo-description" value={seoDescription} onChange={(event) => setSeoDescription(event.target.value)} maxLength={180} placeholder={dek || "Uses summary by default"} /></div><div className="space-y-2"><Label htmlFor="canonical-url">Canonical URL</Label><Input id="canonical-url" type="url" value={canonicalUrl} onChange={(event) => setCanonicalUrl(event.target.value)} placeholder="Leave blank for this story URL" aria-invalid={Boolean(fieldError("canonicalUrl"))} />{fieldError("canonicalUrl") && <p className="text-xs text-destructive">{fieldError("canonicalUrl")}</p>}</div><Separator /><div className="flex items-center justify-between gap-4"><div><Label htmlFor="no-index">Exclude from search</Label><p className="mt-1 text-xs text-muted-foreground">Adds noindex and removes the story from sitemaps.</p></div><Switch id="no-index" checked={noIndex} onCheckedChange={setNoIndex} /></div></CardContent></Card>

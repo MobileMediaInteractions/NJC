@@ -61,6 +61,7 @@ export interface Story {
   headline: string;
   dek: string;
   body: string[];
+  whyItMatters?: string;
   category: string;
   categoryLabel: string;
   location: string;

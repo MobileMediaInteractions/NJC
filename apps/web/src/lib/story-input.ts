@@ -5,6 +5,7 @@ export const storyInput = z.object({
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "The headline must produce a valid story URL."),
   dek: z.string().trim().min(10, "Enter a summary with at least 10 characters.").max(320),
   body: z.array(z.string().trim().min(1)).min(1, "Write at least one story paragraph."),
+  includeWhyItMatters: z.boolean().default(false),
   categorySlug: z.enum(["local", "middlesex", "statehouse", "public-square", "opinion", "sports", "jersey-laurels", "investigates", "weather", "culture"]),
   categoryLabel: z.string().trim().min(2).max(80),
   location: z.string().trim().min(2, "Enter a dateline or location.").max(80),

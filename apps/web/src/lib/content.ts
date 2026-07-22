@@ -19,6 +19,7 @@ export function normalizeStory(row: typeof stories.$inferSelect): Story {
     headline: row.headline,
     dek: row.dek,
     body: row.body,
+    whyItMatters: row.whyItMatters ?? undefined,
     category: row.categorySlug,
     categoryLabel: row.categoryLabel,
     location: row.location,

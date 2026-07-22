@@ -148,6 +148,12 @@ export default function StoryScreen() {
             <Text style={styles.actionText}>Share</Text>
           </Pressable>
         </View>
+        {story.whyItMatters ? (
+          <View style={styles.whyItMatters}>
+            <Text style={styles.whyItMattersLabel}>WHY IT MATTERS</Text>
+            <Text style={styles.whyItMattersBody}>{story.whyItMatters}</Text>
+          </View>
+        ) : null}
         {story.body.map((paragraph) => (
           <Text key={paragraph} style={styles.body}>
             {paragraph}
@@ -217,6 +223,25 @@ const makeStyles = (colors: AppColors) =>
       borderRadius: 7,
     },
     actionText: { color: colors.blue, fontWeight: "800" },
+    whyItMatters: {
+      backgroundColor: colors.brandNavy,
+      borderTopWidth: 4,
+      borderTopColor: colors.yellow,
+      padding: 18,
+      marginBottom: 22,
+    },
+    whyItMattersLabel: {
+      color: colors.yellow,
+      fontSize: 11,
+      fontWeight: "900",
+      letterSpacing: 2,
+    },
+    whyItMattersBody: {
+      color: colors.onBrand,
+      fontSize: 16,
+      lineHeight: 25,
+      marginTop: 10,
+    },
     body: { color: colors.ink, fontSize: 17, lineHeight: 29, marginBottom: 18 },
     tags: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 },
     tag: {

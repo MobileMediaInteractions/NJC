@@ -104,15 +104,16 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         <div className="relative aspect-[16/9] overflow-hidden bg-muted"><Image src={story.image} alt={story.imageAlt} fill priority sizes="100vw" className="object-cover" /></div>
         <figcaption className="mt-2 text-xs text-muted-foreground">{story.imageAlt}</figcaption>
       </figure>
-      <div className="container-news grid max-w-[65rem] gap-10 py-10 lg:grid-cols-[minmax(0,42rem)_1fr]">
+      <div className={`container-news grid gap-10 py-10 ${story.whyItMatters ? "max-w-[65rem] lg:grid-cols-[minmax(0,42rem)_1fr]" : "max-w-[42rem]"}`}>
         <div>
           <p className="mb-6 text-xs font-bold uppercase tracking-wider text-brand-blue">{story.location}</p>
+          {story.whyItMatters ? <div className="mb-8 border-t-4 border-brand-yellow bg-brand-navy p-5 text-white lg:hidden"><p className="eyebrow text-brand-yellow">Why it matters</p><p className="mt-3 text-sm leading-6 text-white/72">{story.whyItMatters}</p></div> : null}
           <div className="space-y-6 text-[1.08rem] leading-[1.85] text-foreground/90">{story.body.map((paragraph, index) => <p key={index} className={index === 0 ? "first-letter:float-left first-letter:mr-2 first-letter:text-6xl first-letter:font-black first-letter:leading-[0.85] first-letter:text-brand-blue" : ""}>{paragraph}</p>)}</div>
           <div className="my-10"><AdSlot placement="articleInline" label="Advertisement" /></div>
           <div className="border-y py-6"><p className="eyebrow text-brand-blue">Tags</p><div className="mt-3 flex flex-wrap gap-2">{story.tags.map((tag) => <Badge key={tag} variant="secondary" className="rounded-full">{tag}</Badge>)}</div></div>
           {configuration.features.newsletters ? <section className="mt-10 bg-secondary p-6"><p className="eyebrow text-brand-blue">The Middlesex Morning</p><h2 className="mt-2 text-2xl font-black text-brand-navy">Understand your community before your first coffee.</h2><p className="mb-5 mt-2 text-sm text-muted-foreground">The most useful local stories, every weekday morning.</p><NewsletterForm /></section> : null}
         </div>
-        <aside className="hidden lg:block"><div className="sticky top-5 border-t-4 border-brand-yellow bg-brand-navy p-5 text-white"><p className="eyebrow text-brand-yellow">Why it matters</p><p className="mt-3 text-sm leading-6 text-white/72">County decisions shape public money, schools, transportation, neighborhood safety and the daily services residents rely on.</p></div></aside>
+        {story.whyItMatters ? <aside className="hidden lg:block"><div className="sticky top-5 border-t-4 border-brand-yellow bg-brand-navy p-5 text-white"><p className="eyebrow text-brand-yellow">Why it matters</p><p className="mt-3 text-sm leading-6 text-white/72">{story.whyItMatters}</p></div></aside> : null}
       </div>
       {related.length > 0 && <section className="container-news border-t-4 border-brand-navy pt-5"><h2 className="mb-7 text-3xl font-black tracking-[-0.04em] text-brand-navy">More from {story.categoryLabel}</h2><div className="grid gap-7 md:grid-cols-3">{related.map((item) => <StoryCard key={item.id} story={item} />)}</div></section>}
     </article>

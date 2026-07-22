@@ -1,0 +1,1 @@
+ALTER TABLE "stories" ADD COLUMN "why_it_matters" text;

@@ -8,6 +8,7 @@ import { writeApiAudit } from "@/lib/api-keys";
 import { canDeleteStory, getStudioUser } from "@/lib/auth";
 import { storyInput } from "@/lib/story-input";
 import { canPublishStory, canTransitionStoryStatus } from "@/lib/story-workflow";
+import { generateWhyItMatters } from "@/lib/why-it-matters";
 
 const storyId = z.uuid();
 const transitionInput = z.object({ status: z.enum(["draft", "review", "published"]) });
@@ -188,6 +189,7 @@ export async function PUT(
     publishedAt,
     publishedAtRiskAcknowledged: _publishedAtRiskAcknowledged,
     publishedAtChangeReason,
+    includeWhyItMatters,
     ...storyValues
   } = parsedBody.data;
   void _publishedAtRiskAcknowledged;
@@ -196,6 +198,9 @@ export async function PUT(
     const updated = await getDb().transaction(async (tx) => {
       const [story] = await tx.update(stories).set({
         ...storyValues,
+        whyItMatters: includeWhyItMatters
+          ? generateWhyItMatters(parsedBody.data)
+          : null,
         imageUrl: parsedBody.data.imageUrl || null,
         imageAlt: parsedBody.data.imageAlt || null,
         seoTitle: parsedBody.data.seoTitle || null,
