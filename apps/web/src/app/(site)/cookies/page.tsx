@@ -14,7 +14,7 @@ export default function CookiesPage() {
         </h2>
         <p className="mt-3">
           Clerk may store authentication and fraud-prevention values. The New Jersey Courier
-          stores consent choices and interface preferences. The mobile app uses
+          stores consent choices, interface preferences and saved-story bookmarks. The mobile app uses
           on-device SQLite key-value storage for cached news, weather and
           bookmarks. Apple TV, Android TV and Roku use on-device storage for revocable
           sign-in tokens and installation identifiers. These functions are

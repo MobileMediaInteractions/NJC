@@ -7,7 +7,7 @@ type StoryShareInput = {
   slug: string;
 };
 
-export function getStoryShareUrl({ canonicalUrl, headline, siteOrigin, slug }: StoryShareInput) {
+export function getStoryShareLinks({ canonicalUrl, headline, siteOrigin, slug }: StoryShareInput) {
   let articleUrl: URL;
 
   try {
@@ -18,5 +18,19 @@ export function getStoryShareUrl({ canonicalUrl, headline, siteOrigin, slug }: S
 
   const intent = new URL(xPostIntentUrl);
   intent.searchParams.set("text", `${headline}\n\n${articleUrl.toString()}`);
-  return intent.toString();
+
+  const email = new URLSearchParams({
+    subject: headline,
+    body: `${headline}\n\n${articleUrl.toString()}`,
+  });
+
+  return {
+    articleUrl: articleUrl.toString(),
+    emailUrl: `mailto:?${email.toString()}`,
+    xUrl: intent.toString(),
+  };
+}
+
+export function getStoryShareUrl(input: StoryShareInput) {
+  return getStoryShareLinks(input).xUrl;
 }

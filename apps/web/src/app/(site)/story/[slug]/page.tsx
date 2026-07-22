@@ -2,20 +2,19 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Bookmark, ExternalLink, Link2, Mail, Share2 } from "lucide-react";
 import { AdSlot } from "@/components/ad-slot";
 import { JsonLd } from "@/components/json-ld";
 import { NewsletterForm } from "@/components/newsletter-form";
+import { StoryActions } from "@/components/story-actions";
 import { StoryCard } from "@/components/story-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { getPublishedStories, getStoryBySlug } from "@/lib/content";
 import { formatStoryDate } from "@/lib/format";
 import { getSiteOrigin } from "@/lib/origin";
 import { isSearchIndexingEnabled, storyPageJsonLd } from "@/lib/seo";
 import { getSiteConfiguration } from "@/lib/site-settings";
-import { getStoryShareUrl } from "@/lib/story-sharing";
+import { getStoryShareLinks } from "@/lib/story-sharing";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -73,7 +72,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     getSiteConfiguration(),
   ]);
   const related = relatedStories.filter((item) => item.slug !== story.slug).slice(0, 3);
-  const xShareUrl = getStoryShareUrl({
+  const shareLinks = getStoryShareLinks({
     canonicalUrl: story.canonicalUrl,
     headline: story.headline,
     siteOrigin: getSiteOrigin(),
@@ -97,19 +96,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
             <Avatar className="size-11"><AvatarImage src={story.author.avatar} /><AvatarFallback className="bg-brand-navy font-bold text-white">{story.author.initials}</AvatarFallback></Avatar>
             <div><p className="text-sm font-bold text-brand-navy">By {story.author.name}</p><p className="text-xs text-muted-foreground">{story.author.role} · Published {formatStoryDate(story.publishedAt)}{story.updatedAt && story.updatedAt !== story.publishedAt ? ` · Updated ${formatStoryDate(story.updatedAt)}` : ""}</p></div>
           </div>
-          <div className="flex items-center gap-1">
-            <Button asChild variant="outline" size="icon">
-              <a href={xShareUrl} target="_blank" rel="noopener noreferrer" aria-label="Share this article on X" title="Share on X">
-                <Share2 className="size-4" />
-              </a>
-            </Button>
-            {[
-              { label: "Save", icon: Bookmark },
-              { label: "Email", icon: Mail },
-              { label: "Open share options", icon: ExternalLink },
-              { label: "Copy link", icon: Link2 },
-            ].map(({ label, icon: Icon }) => <Button key={label} variant="outline" size="icon" aria-label={label}><Icon className="size-4" /></Button>)}
-          </div>
+          <StoryActions {...shareLinks} headline={story.headline} />
         </div>
       </header>
       <figure className="container-news max-w-[76rem]">
