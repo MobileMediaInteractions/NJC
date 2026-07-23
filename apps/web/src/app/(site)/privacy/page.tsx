@@ -28,7 +28,11 @@ export default function PrivacyPage() {
           when authenticated and first/last-active timestamps. They do not store
           individual article-reading history or an advertising identifier. With
           analytics consent, public page and story views are added to daily aggregate
-          counters that are not linked to an installation or account. We do not store
+          counters that are not linked to an installation or account. The referring
+          page is reduced to a broad acquisition category such as Google, X,
+          Facebook, Instagram, email, direct or other, and the raw referring URL is
+          discarded. A broad device class such as desktop, phone, tablet or smart TV
+          is retained with those aggregate counters. We do not store
           raw developer API keys after creation. Device sign-in handles
           short-lived pairing status, hashed sync codes and requester network
           information for abuse prevention. Apple TV, Android TV and Roku sessions retain account,

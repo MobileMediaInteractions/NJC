@@ -441,6 +441,18 @@ export type AnalyticsPathView = {
   views: number;
 };
 
+export type AnalyticsSourceView = {
+  source: string;
+  entries: number;
+  views: number;
+};
+
+export type AnalyticsDeviceView = {
+  platform: string;
+  entries: number;
+  views: number;
+};
+
 export const analyticsDailyViews = pgTable(
   "analytics_daily_views",
   {
@@ -452,14 +464,24 @@ export const analyticsDailyViews = pgTable(
     }),
     storySlug: text("story_slug"),
     storyHeadline: text("story_headline"),
+    trafficSource: text("traffic_source").notNull().default("unknown"),
+    devicePlatform: text("device_platform").notNull().default("unknown"),
+    entries: integer("entries").notNull().default(0),
     views: integer("views").notNull().default(1),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
-    uniqueIndex("analytics_daily_views_day_path_idx").on(table.day, table.pathname),
+    uniqueIndex("analytics_daily_views_day_path_source_device_idx").on(
+      table.day,
+      table.pathname,
+      table.trafficSource,
+      table.devicePlatform,
+    ),
     index("analytics_daily_views_day_idx").on(table.day),
     index("analytics_daily_views_story_day_idx").on(table.storySlug, table.day),
+    index("analytics_daily_views_source_day_idx").on(table.trafficSource, table.day),
+    index("analytics_daily_views_device_day_idx").on(table.devicePlatform, table.day),
   ],
 );
 
@@ -473,6 +495,8 @@ export const analyticsPeriodArchives = pgTable(
     totalViews: integer("total_views").notNull().default(0),
     storyViews: jsonb("story_views").$type<AnalyticsStoryView[]>().notNull().default([]),
     pathViews: jsonb("path_views").$type<AnalyticsPathView[]>().notNull().default([]),
+    sourceViews: jsonb("source_views").$type<AnalyticsSourceView[]>().notNull().default([]),
+    deviceViews: jsonb("device_views").$type<AnalyticsDeviceView[]>().notNull().default([]),
     generatedAt: timestamp("generated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

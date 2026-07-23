@@ -5,6 +5,9 @@ import { recordPageView } from "@/lib/traffic-analytics";
 
 const input = z.object({
   pathname: z.string().min(1).max(500),
+  referrer: z.string().max(2048).optional(),
+  sourceHint: z.string().max(80).optional(),
+  isEntry: z.boolean().optional().default(false),
 });
 
 const botPattern = /bot|crawler|spider|slurp|preview|facebookexternalhit|discordbot|twitterbot|linkedinbot/i;
@@ -26,7 +29,12 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await recordPageView(parsed.data.pathname);
+    const result = await recordPageView({
+      ...parsed.data,
+      userAgent: request.headers.get("user-agent"),
+      mobileHint: request.headers.get("sec-ch-ua-mobile"),
+      siteOrigin: new URL(request.url).origin,
+    });
     console.log(JSON.stringify({
       level: "info",
       message: "Page view processed",

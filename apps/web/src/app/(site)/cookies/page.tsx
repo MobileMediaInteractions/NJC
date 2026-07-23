@@ -37,7 +37,11 @@ export default function CookiesPage() {
           last-active time as separate installation totals. These records do not include
           individual article-reading history or an advertising identifier. The website
           also increments daily aggregate counters for the public page or story viewed;
-          those counters are not linked to the browser identifier or an account.
+          those counters are not linked to the browser identifier or an account. For
+          acquisition reporting, the raw referring URL is classified into a broad
+          source such as Google, X, Facebook, Instagram, email, direct or other and is
+          then discarded. The aggregate also records a broad web device class such as
+          desktop, phone, tablet or smart TV.
         </p>
         <p className="mt-3">
           Google AdSense is available to the publisher but remains disabled by

@@ -1,10 +1,33 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  classifyDevicePlatform,
+  classifyTrafficSource,
   completedAnalyticsPeriods,
   normalizeAnalyticsPathname,
   publicationDay,
 } from "../src/lib/traffic-analytics";
+
+test("traffic sources are reduced to privacy-safe acquisition categories", () => {
+  assert.equal(classifyTrafficSource("", null, "https://www.thejerseycourier.com"), "direct");
+  assert.equal(classifyTrafficSource("https://t.co/example"), "x");
+  assert.equal(classifyTrafficSource("https://l.facebook.com/l.php"), "facebook");
+  assert.equal(classifyTrafficSource("https://www.instagram.com/"), "instagram");
+  assert.equal(classifyTrafficSource("https://news.google.com/articles/abc"), "google");
+  assert.equal(classifyTrafficSource("https://www.thejerseycourier.com/latest", null, "https://www.thejerseycourier.com"), "internal");
+  assert.equal(classifyTrafficSource("", "newsletter"), "email");
+  assert.equal(classifyTrafficSource("https://example.org/post"), "other");
+});
+
+test("web devices are grouped without retaining a fingerprint", () => {
+  assert.equal(classifyDevicePlatform("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)"), "mobile");
+  assert.equal(classifyDevicePlatform("Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit Mobile"), "mobile");
+  assert.equal(classifyDevicePlatform("Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X)"), "tablet");
+  assert.equal(classifyDevicePlatform("Mozilla/5.0 (Linux; Android 14; SM-X710) AppleWebKit"), "tablet");
+  assert.equal(classifyDevicePlatform("Mozilla/5.0 (SMART-TV; Linux; Tizen 8.0)"), "tv");
+  assert.equal(classifyDevicePlatform("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"), "desktop");
+  assert.equal(classifyDevicePlatform("", "?1"), "mobile");
+});
 
 test("traffic paths include public pages and reject internal application routes", () => {
   assert.equal(normalizeAnalyticsPathname("/story/council-budget?share=fresh"), "/story/council-budget");

@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   Braces,
   Clock3,
+  Compass,
   Eye,
   Link2,
   Monitor,
@@ -29,6 +30,8 @@ import {
   type AnalyticsArchive,
   type AnalyticsPeriod,
   type StoryTrafficMetric,
+  type TrafficDeviceMetric,
+  type TrafficSourceMetric,
 } from "@/lib/traffic-analytics";
 
 const number = new Intl.NumberFormat("en-US");
@@ -68,9 +71,14 @@ export default async function AnalyticsPage() {
       <Card><CardHeader><CardTitle className="flex items-center gap-2"><TrendingUp className="size-4 text-primary" /> Daily site views</CardTitle><CardDescription>All public pages over the last 30 publication days.</CardDescription></CardHeader><CardContent><DailyBarChart rows={traffic.daily} /></CardContent></Card>
     </div>
 
+    <div className="mt-6 grid gap-6 xl:grid-cols-2">
+      <Card><CardHeader><CardTitle className="flex items-center gap-2"><Compass className="size-4 text-primary" /> What brought readers here</CardTitle><CardDescription>Acquisition sources are ranked by first page entries. Raw referring URLs are classified and discarded.</CardDescription></CardHeader><CardContent><SourceBreakdown rows={traffic.sources} /></CardContent></Card>
+      <Card><CardHeader><CardTitle className="flex items-center gap-2"><Monitor className="size-4 text-primary" /> Web device mix</CardTitle><CardDescription>Desktop, phone, tablet and smart-TV share across consented website page views.</CardDescription></CardHeader><CardContent><DeviceBreakdown rows={traffic.devices} /></CardContent></Card>
+    </div>
+
     <Card className="mt-6"><CardHeader><CardTitle>Every story by total views</CardTitle><CardDescription>Every published or archived article, including zero-view stories, ordered by lifetime readership.</CardDescription></CardHeader><CardContent className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>Story</TableHead><TableHead className="text-right">All time</TableHead><TableHead className="text-right">7 days</TableHead><TableHead className="text-right">30 days</TableHead><TableHead className="text-right">Share</TableHead></TableRow></TableHeader><TableBody>{traffic.stories.map((story) => <StoryTrafficRow key={story.slug} story={story} total={traffic.totals.storyViews} />)}</TableBody></Table>{traffic.stories.length === 0 ? <EmptyTraffic label="No published stories are available yet." /> : null}</CardContent></Card>
 
-    <Card className="mt-6"><CardHeader><CardTitle>Reporting archive</CardTitle><CardDescription>Completed weekly, monthly and yearly snapshots are generated during the existing daily newsroom maintenance job. Each snapshot retains every page and story total for portable backup and historical comparison.</CardDescription></CardHeader><CardContent><Tabs defaultValue="week"><TabsList><TabsTrigger value="week">Weekly</TabsTrigger><TabsTrigger value="month">Monthly</TabsTrigger><TabsTrigger value="year">Yearly</TabsTrigger></TabsList>{(["week", "month", "year"] as const).map((period) => <TabsContent key={period} value={period} className="mt-4"><ArchiveTable period={period} rows={traffic.archives[period]} /></TabsContent>)}</Tabs></CardContent></Card>
+    <Card className="mt-6"><CardHeader><CardTitle>Reporting archive</CardTitle><CardDescription>Completed weekly, monthly and yearly snapshots are generated during the existing daily newsroom maintenance job. Each snapshot retains page, story, acquisition-source and device totals for portable backup and historical comparison.</CardDescription></CardHeader><CardContent><Tabs defaultValue="week"><TabsList><TabsTrigger value="week">Weekly</TabsTrigger><TabsTrigger value="month">Monthly</TabsTrigger><TabsTrigger value="year">Yearly</TabsTrigger></TabsList>{(["week", "month", "year"] as const).map((period) => <TabsContent key={period} value={period} className="mt-4"><ArchiveTable period={period} rows={traffic.archives[period]} /></TabsContent>)}</Tabs></CardContent></Card>
 
     <section className="mt-10" aria-labelledby="platform-audience"><div className="flex items-center gap-2"><Users className="size-5 text-primary" /><h2 id="platform-audience" className="text-xl font-bold">Audience platforms</h2></div><p className="mt-1 text-sm text-muted-foreground">Unique installations and authenticated API consumers, separated by platform.</p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -84,7 +92,7 @@ export default async function AnalyticsPage() {
         <Card><CardHeader><CardTitle>Active mix</CardTitle><CardDescription>Relative 30-day activity by platform.</CardDescription></CardHeader><CardContent className="space-y-6">{audience.platforms.map((item) => <div key={item.platform}><div className="mb-2 flex items-center justify-between gap-4 text-sm"><div className="flex items-center gap-2 font-semibold text-foreground [&_svg]:size-4">{icons[item.platform]}{item.label}</div><span className="font-mono text-muted-foreground">{number.format(item.active30d)}</span></div><Progress value={(item.active30d / maxActive) * 100} /></div>)}</CardContent></Card>
       </div>
     </section>
-    <p className="mt-5 text-xs text-muted-foreground">Generated {new Date(traffic.generatedAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}. Site traffic and web installation totals include only visitors who allow analytics. Automated social and search crawlers are excluded.</p>
+    <p className="mt-5 text-xs text-muted-foreground">Generated {new Date(traffic.generatedAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}. Site traffic and web installation totals include only visitors who allow analytics. Acquisition categories and device classes begin with this release; earlier views remain labeled as legacy or unknown. Automated social and search crawlers are excluded.</p>
   </div></StudioShell>;
 }
 
@@ -111,13 +119,41 @@ function DailyBarChart({ rows }: { rows: Array<{ day: string; views: number }> }
   return <div><div className="flex h-56 items-end gap-1.5 border-b border-l px-2 pt-4" role="img" aria-label="Bar graph of daily site views over the last 30 days">{rows.map((row) => <div key={row.day} className="group relative flex h-full min-w-0 flex-1 items-end"><div className="w-full rounded-t-sm bg-primary/75 transition-colors hover:bg-primary" style={{ height: row.views ? `${Math.max(4, (row.views / max) * 100)}%` : "2px" }}><span className="sr-only">{row.day}: {row.views} views</span></div><div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-popover px-2 py-1 text-[0.65rem] shadow group-hover:block">{formatDay(row.day)} · {number.format(row.views)} views</div></div>)}</div><div className="mt-2 flex justify-between text-[0.65rem] text-muted-foreground"><span>{formatDay(rows[0]?.day)}</span><span>{formatDay(rows[Math.floor(rows.length / 2)]?.day)}</span><span>{formatDay(rows.at(-1)?.day)}</span></div></div>;
 }
 
+function SourceBreakdown({ rows }: { rows: TrafficSourceMetric[] }) {
+  const totalEntries = rows.reduce((sum, row) => sum + row.entries, 0);
+  const visible = rows.filter((row) => row.entries > 0).slice(0, 8);
+  if (!visible.length) return <EmptyTraffic label="Acquisition sources will appear after the next consented reader session begins." />;
+  return <div><div className="mb-5 flex items-end justify-between gap-4"><div><p className="text-sm text-muted-foreground">Leading source</p><p className="mt-1 text-2xl font-bold">{visible[0]?.label}</p></div><div className="text-right"><p className="font-mono text-2xl font-bold">{number.format(totalEntries)}</p><p className="text-xs text-muted-foreground">tracked entries</p></div></div><DistributionBars rows={visible.map((row) => ({ key: row.source, label: row.label, value: row.entries, detail: `${row.share.toFixed(1)}% · ${number.format(row.views)} page views` }))} /></div>;
+}
+
+function DeviceBreakdown({ rows }: { rows: TrafficDeviceMetric[] }) {
+  const visible = rows.filter((row) => row.views > 0).slice(0, 8);
+  if (!visible.length) return <EmptyTraffic label="Device usage will appear after a consented page view is recorded." />;
+  return <div><div className="mb-5 flex items-end justify-between gap-4"><div><p className="text-sm text-muted-foreground">Most-used web device</p><p className="mt-1 text-2xl font-bold">{visible[0]?.label}</p></div><div className="text-right"><p className="font-mono text-2xl font-bold">{visible[0]?.share.toFixed(1)}%</p><p className="text-xs text-muted-foreground">of web page views</p></div></div><DistributionBars rows={visible.map((row) => ({ key: row.platform, label: row.label, value: row.views, detail: `${row.share.toFixed(1)}% · ${number.format(row.entries)} entries` }))} /></div>;
+}
+
+function DistributionBars({ rows }: { rows: Array<{ key: string; label: string; value: number; detail: string }> }) {
+  const max = Math.max(1, ...rows.map((row) => row.value));
+  return <div className="space-y-4">{rows.map((row) => <div key={row.key}><div className="mb-1.5 flex items-center justify-between gap-4 text-sm"><span className="font-semibold">{row.label}</span><span className="font-mono">{number.format(row.value)}</span></div><div className="h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary" style={{ width: `${Math.max(2, (row.value / max) * 100)}%` }} /></div><p className="mt-1 text-right text-[0.65rem] text-muted-foreground">{row.detail}</p></div>)}</div>;
+}
+
 function StoryTrafficRow({ story, total }: { story: StoryTrafficMetric; total: number }) {
   return <TableRow><TableCell><Link href={`/story/${story.slug}`} className="font-semibold hover:text-primary">{story.headline}</Link><p className="mt-1 font-mono text-[0.65rem] text-muted-foreground">/story/{story.slug}</p></TableCell><TableCell className="text-right font-mono font-semibold">{number.format(story.views)}</TableCell><TableCell className="text-right font-mono">{number.format(story.views7d)}</TableCell><TableCell className="text-right font-mono">{number.format(story.views30d)}</TableCell><TableCell className="text-right font-mono">{total ? `${((story.views / total) * 100).toFixed(1)}%` : "0%"}</TableCell></TableRow>;
 }
 
 function ArchiveTable({ period, rows }: { period: AnalyticsPeriod; rows: AnalyticsArchive[] }) {
   if (!rows.length) return <EmptyTraffic label={`The first completed ${period} will be archived by daily maintenance.`} />;
-  return <div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>Reporting period</TableHead><TableHead className="text-right">Site views</TableHead><TableHead className="text-right">Story views</TableHead><TableHead>Most read</TableHead><TableHead className="text-right">Archived</TableHead></TableRow></TableHeader><TableBody>{rows.map((row) => { const storyTotal = row.storyViews.reduce((sum, story) => sum + story.views, 0); const leader = row.storyViews[0]; return <TableRow key={row.id}><TableCell className="font-semibold">{formatDay(row.periodStart)} – {formatDay(row.periodEnd)}</TableCell><TableCell className="text-right font-mono">{number.format(row.totalViews)}</TableCell><TableCell className="text-right font-mono">{number.format(storyTotal)}</TableCell><TableCell>{leader ? <><p className="line-clamp-1 font-medium">{leader.headline}</p><p className="text-xs text-muted-foreground">{number.format(leader.views)} views</p></> : <span className="text-muted-foreground">No story traffic</span>}</TableCell><TableCell className="text-right text-xs text-muted-foreground">{new Date(row.generatedAt).toLocaleDateString("en-US", { dateStyle: "medium" })}</TableCell></TableRow>; })}</TableBody></Table></div>;
+  return <div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>Reporting period</TableHead><TableHead className="text-right">Site views</TableHead><TableHead className="text-right">Story views</TableHead><TableHead>Most read</TableHead><TableHead>Top source</TableHead><TableHead>Top device</TableHead><TableHead className="text-right">Archived</TableHead></TableRow></TableHeader><TableBody>{rows.map((row) => { const storyTotal = row.storyViews.reduce((sum, story) => sum + story.views, 0); const leader = row.storyViews[0]; const source = row.sourceViews.find((item) => item.entries > 0); const device = row.deviceViews[0]; return <TableRow key={row.id}><TableCell className="font-semibold">{formatDay(row.periodStart)} – {formatDay(row.periodEnd)}</TableCell><TableCell className="text-right font-mono">{number.format(row.totalViews)}</TableCell><TableCell className="text-right font-mono">{number.format(storyTotal)}</TableCell><TableCell>{leader ? <><p className="line-clamp-1 font-medium">{leader.headline}</p><p className="text-xs text-muted-foreground">{number.format(leader.views)} views</p></> : <span className="text-muted-foreground">No story traffic</span>}</TableCell><TableCell>{source ? <><p className="font-medium">{sourceLabel(source.source)}</p><p className="text-xs text-muted-foreground">{number.format(source.entries)} entries</p></> : <span className="text-muted-foreground">—</span>}</TableCell><TableCell>{device ? <><p className="font-medium">{deviceLabel(device.platform)}</p><p className="text-xs text-muted-foreground">{number.format(device.views)} views</p></> : <span className="text-muted-foreground">—</span>}</TableCell><TableCell className="text-right text-xs text-muted-foreground">{new Date(row.generatedAt).toLocaleDateString("en-US", { dateStyle: "medium" })}</TableCell></TableRow>; })}</TableBody></Table></div>;
+}
+
+function sourceLabel(value: string) {
+  const labels: Record<string, string> = { direct: "Direct", google: "Google", bing: "Bing", x: "X / Twitter", facebook: "Facebook", instagram: "Instagram", linkedin: "LinkedIn", reddit: "Reddit", youtube: "YouTube", email: "Email", internal: "Courier internal", other: "Other", unknown: "Legacy" };
+  return labels[value] ?? "Other";
+}
+
+function deviceLabel(value: string) {
+  const labels: Record<string, string> = { desktop: "Desktop", mobile: "Mobile", tablet: "Tablet", tv: "Smart TV", unknown: "Unknown" };
+  return labels[value] ?? "Unknown";
 }
 
 function EmptyTraffic({ label }: { label: string }) {
