@@ -26,7 +26,9 @@ export default function PrivacyPage() {
           pseudonymous installation identifier, Web/iOS/Android/tvOS/Android TV/Roku
           platform, app version, account link
           when authenticated and first/last-active timestamps. They do not store
-          article-reading history or an advertising identifier. We do not store
+          individual article-reading history or an advertising identifier. With
+          analytics consent, public page and story views are added to daily aggregate
+          counters that are not linked to an installation or account. We do not store
           raw developer API keys after creation. Device sign-in handles
           short-lived pairing status, hashed sync codes and requester network
           information for abuse prevention. Apple TV, Android TV and Roku sessions retain account,

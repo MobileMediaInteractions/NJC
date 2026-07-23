@@ -35,7 +35,9 @@ export default function CookiesPage() {
           readers can disable and delete that record from Account → Privacy and
           support. Apple TV, Android TV and Roku report their platform, app version and
           last-active time as separate installation totals. These records do not include
-          article-reading history or an advertising identifier.
+          individual article-reading history or an advertising identifier. The website
+          also increments daily aggregate counters for the public page or story viewed;
+          those counters are not linked to the browser identifier or an account.
         </p>
         <p className="mt-3">
           Google AdSense is available to the publisher but remains disabled by

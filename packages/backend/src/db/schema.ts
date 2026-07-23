@@ -429,6 +429,58 @@ export const audienceInstallations = pgTable(
   ],
 );
 
+export type AnalyticsStoryView = {
+  storyId: string | null;
+  slug: string;
+  headline: string;
+  views: number;
+};
+
+export type AnalyticsPathView = {
+  pathname: string;
+  views: number;
+};
+
+export const analyticsDailyViews = pgTable(
+  "analytics_daily_views",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    day: text("day").notNull(),
+    pathname: text("pathname").notNull(),
+    storyId: uuid("story_id").references(() => stories.id, {
+      onDelete: "set null",
+    }),
+    storySlug: text("story_slug"),
+    storyHeadline: text("story_headline"),
+    views: integer("views").notNull().default(1),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("analytics_daily_views_day_path_idx").on(table.day, table.pathname),
+    index("analytics_daily_views_day_idx").on(table.day),
+    index("analytics_daily_views_story_day_idx").on(table.storySlug, table.day),
+  ],
+);
+
+export const analyticsPeriodArchives = pgTable(
+  "analytics_period_archives",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    period: text("period").notNull(),
+    periodStart: text("period_start").notNull(),
+    periodEnd: text("period_end").notNull(),
+    totalViews: integer("total_views").notNull().default(0),
+    storyViews: jsonb("story_views").$type<AnalyticsStoryView[]>().notNull().default([]),
+    pathViews: jsonb("path_views").$type<AnalyticsPathView[]>().notNull().default([]),
+    generatedAt: timestamp("generated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("analytics_period_archives_period_start_idx").on(table.period, table.periodStart),
+    index("analytics_period_archives_period_end_idx").on(table.period, table.periodEnd),
+  ],
+);
+
 export const devicePairingRequests = pgTable(
   "device_pairing_requests",
   {
