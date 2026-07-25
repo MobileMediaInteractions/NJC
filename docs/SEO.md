@@ -26,6 +26,13 @@ Google initially fetched the pre-activation `robots.txt` that blocked all crawli
 
 - Canonical URLs resolve through the Vercel production alias now and a configured custom domain later.
 - Every published story receives unique title, description, author, section, publication/update dates, keywords, social-card metadata and large-image preview permissions.
+- Abdullah Muzammil has the initial public `/author/abdullah-muzammil` profile.
+  His visible bylines, article metadata and `NewsArticle.author` objects link to
+  that indexable `ProfilePage` entity; additional authors should receive the
+  same treatment only after their public profile information is approved.
+- The search favicon uses the stable, crawlable `/favicon` URL and a square
+  64×64 PNG. Google controls recrawl timing and does not guarantee that a
+  favicon or structured-data enhancement will appear.
 - Story pages emit `NewsArticle` and `BreadcrumbList` JSON-LD. The homepage emits `NewsMediaOrganization` and `WebSite` JSON-LD. Section pages emit `CollectionPage` and breadcrumb data.
 - `/sitemap.xml` lists indexable sections and up to 49,900 published stories while staying below the protocol’s 50,000-URL limit.
 - `/news-sitemap.xml` lists up to 1,000 indexable articles published in the prior 48 hours with Google News metadata. Between publishing cycles it retains one standard story URL without stale news metadata so the XML remains valid without misrepresenting an older article as current news.

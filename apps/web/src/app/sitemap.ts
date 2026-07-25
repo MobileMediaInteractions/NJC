@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { getAuthorProfilePaths } from "@/lib/authors";
 import { getPublishedStoryIndex } from "@/lib/content";
 import { getSiteOrigin } from "@/lib/origin";
 
@@ -17,6 +18,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/newsletter",
     "/press",
     "/about",
+    ...getAuthorProfilePaths(),
   ];
 
   return [

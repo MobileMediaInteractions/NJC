@@ -1,9 +1,8 @@
 import { ImageResponse } from "next/og";
 
-export const size = { width: 64, height: 64 };
-export const contentType = "image/png";
+export const faviconSize = { width: 64, height: 64 };
 
-export default function Icon() {
+export function createFaviconResponse() {
   return new ImageResponse(
     <div
       style={{
@@ -34,6 +33,6 @@ export default function Icon() {
         }}
       />
     </div>,
-    size,
+    faviconSize,
   );
 }

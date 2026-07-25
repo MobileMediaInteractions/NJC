@@ -9,6 +9,7 @@ import { StoryActions } from "@/components/story-actions";
 import { StoryCard } from "@/components/story-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { getAuthorProfileByName, getAuthorProfileUrl } from "@/lib/authors";
 import { getPublishedStories, getStoryBySlug } from "@/lib/content";
 import { formatStoryDate } from "@/lib/format";
 import { getSiteOrigin } from "@/lib/origin";
@@ -24,12 +25,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const description = story.seoDescription || story.dek;
   const canonical = story.canonicalUrl || `/story/${story.slug}`;
   const socialImage = getStorySocialImageUrl({ siteOrigin: getSiteOrigin(), slug: story.slug, updatedAt: story.updatedAt });
+  const authorUrl = getAuthorProfileUrl(story.author.name);
   const index = isSearchIndexingEnabled() && !story.noIndex;
   return {
     title,
     description,
     keywords: story.tags,
-    authors: [{ name: story.author.name }],
+    authors: [{ name: story.author.name, ...(authorUrl ? { url: authorUrl } : {}) }],
     category: story.categoryLabel,
     alternates: { canonical },
     robots: {
@@ -52,7 +54,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description,
       publishedTime: story.publishedAt,
       modifiedTime: story.updatedAt || story.publishedAt,
-      authors: [story.author.name],
+      authors: [authorUrl ?? story.author.name],
       section: story.categoryLabel,
       tags: story.tags,
       images: [{ url: socialImage, width: 1200, height: 630, type: "image/png", alt: story.imageAlt }],
@@ -82,6 +84,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     slug: story.slug,
     updatedAt: story.updatedAt,
   });
+  const authorProfile = getAuthorProfileByName(story.author.name);
 
   return (
     <article>
@@ -98,7 +101,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         <div className="mt-7 flex flex-col gap-5 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="size-11"><AvatarImage src={story.author.avatar} /><AvatarFallback className="bg-brand-navy font-bold text-white">{story.author.initials}</AvatarFallback></Avatar>
-            <div><p className="text-sm font-bold text-brand-navy">By {story.author.name}</p><p className="text-xs text-muted-foreground">{story.author.role} · Published {formatStoryDate(story.publishedAt)}{story.updatedAt && story.updatedAt !== story.publishedAt ? ` · Updated ${formatStoryDate(story.updatedAt)}` : ""}</p></div>
+            <div><p className="text-sm font-bold text-brand-navy">By {authorProfile ? <Link href={`/author/${authorProfile.slug}`} rel="author" className="underline-offset-4 hover:underline">{story.author.name}</Link> : story.author.name}</p><p className="text-xs text-muted-foreground">{story.author.role} · Published {formatStoryDate(story.publishedAt)}{story.updatedAt && story.updatedAt !== story.publishedAt ? ` · Updated ${formatStoryDate(story.updatedAt)}` : ""}</p></div>
           </div>
           <StoryActions {...shareLinks} headline={story.headline} />
         </div>

@@ -1,4 +1,5 @@
 import { brandAssets } from "@/lib/assets";
+import { getAuthorProfileUrl, type AuthorProfile } from "@/lib/authors";
 import { getSiteOrigin } from "@/lib/origin";
 import type { SiteConfiguration } from "@/lib/site-settings";
 import type { Story } from "@/lib/types";
@@ -63,6 +64,7 @@ export function homePageJsonLd(publication: SiteConfiguration["publication"]) {
 export function storyPageJsonLd(story: Story, publication: SiteConfiguration["publication"]) {
   const storyUrl = story.canonicalUrl || absoluteUrl(`/story/${story.slug}`);
   const categoryUrl = absoluteUrl(`/category/${story.category}`);
+  const authorUrl = getAuthorProfileUrl(story.author.name);
   const wordCount = story.body.join(" ").trim().split(/\s+/).filter(Boolean).length;
 
   return {
@@ -82,6 +84,12 @@ export function storyPageJsonLd(story: Story, publication: SiteConfiguration["pu
         author: {
           "@type": "Person",
           name: story.author.name,
+          ...(authorUrl
+            ? {
+                "@id": `${authorUrl}#person`,
+                url: authorUrl,
+              }
+            : {}),
         },
         publisher: { "@id": `${getSiteOrigin()}/#publisher` },
         articleSection: story.categoryLabel,
@@ -106,6 +114,52 @@ export function storyPageJsonLd(story: Story, publication: SiteConfiguration["pu
           { "@type": "ListItem", position: 1, name: "Home", item: getSiteOrigin() },
           { "@type": "ListItem", position: 2, name: story.categoryLabel, item: categoryUrl },
           { "@type": "ListItem", position: 3, name: story.headline, item: storyUrl },
+        ],
+      },
+    ],
+  };
+}
+
+export function authorProfilePageJsonLd(
+  profile: AuthorProfile,
+  authoredStories: Story[],
+  publication: SiteConfiguration["publication"],
+) {
+  const profileUrl = absoluteUrl(`/author/${profile.slug}`);
+  const personId = `${profileUrl}#person`;
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      publisherFor(publication),
+      {
+        "@type": "ProfilePage",
+        "@id": `${profileUrl}#profile`,
+        url: profileUrl,
+        name: `${profile.name} | ${publication.name}`,
+        description: profile.description,
+        mainEntity: {
+          "@type": "Person",
+          "@id": personId,
+          name: profile.name,
+          url: profileUrl,
+          description: profile.description,
+          affiliation: { "@id": `${getSiteOrigin()}/#publisher` },
+        },
+        hasPart: authoredStories.map((story) => ({
+          "@type": "NewsArticle",
+          "@id": `${story.canonicalUrl || absoluteUrl(`/story/${story.slug}`)}#article`,
+          headline: story.headline,
+          url: story.canonicalUrl || absoluteUrl(`/story/${story.slug}`),
+          datePublished: story.publishedAt,
+          author: { "@id": personId },
+        })),
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: getSiteOrigin() },
+          { "@type": "ListItem", position: 2, name: profile.name, item: profileUrl },
         ],
       },
     ],

@@ -36,6 +36,9 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: publication.description,
     applicationName: publication.name,
+    icons: {
+      icon: [{ url: "/favicon", type: "image/png", sizes: "64x64" }],
+    },
     creator: publication.name,
     publisher: publication.name,
     referrer: "origin-when-cross-origin",
