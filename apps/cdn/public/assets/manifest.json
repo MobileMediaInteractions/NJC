@@ -1,9 +1,9 @@
 {
   "brand": "The New Jersey Courier",
   "version": "1",
-  "origin": "",
-  "originMode": "same-origin",
-  "plannedCustomOrigin": "https://cdn.njcourier.com",
+  "origin": "https://cdn.thejerseycourier.com",
+  "originMode": "dedicated",
+  "plannedCustomOrigin": "https://cdn.thejerseycourier.com",
   "cachePolicy": "immutable",
   "assets": {
     "mark": "/assets/brand/v1/mark.svg",

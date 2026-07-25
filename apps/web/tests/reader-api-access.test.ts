@@ -2,11 +2,23 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { evaluateReaderApiAccess } from "../src/lib/reader-api-access";
 
-test("reader API accepts same-origin website requests on both production domains", () => {
+test("reader API accepts same-origin website requests on all official production domains", () => {
   const custom = evaluateReaderApiAccess(new Request("https://www.thejerseycourier.com/api/v1/stories", { headers: { "Sec-Fetch-Site": "same-origin" } }));
+  const api = evaluateReaderApiAccess(new Request("https://api.thejerseycourier.com/api/v1/stories", { headers: { "Sec-Fetch-Site": "same-origin" } }));
   const vercel = evaluateReaderApiAccess(new Request("https://njc-web.vercel.app/api/v1/stories", { headers: { Referer: "https://njc-web.vercel.app/latest" } }));
   assert.deepEqual(custom, { allowed: true, source: "web", origin: "https://www.thejerseycourier.com" });
+  assert.deepEqual(api, { allowed: true, source: "web", origin: "https://api.thejerseycourier.com" });
   assert.deepEqual(vercel, { allowed: true, source: "web", origin: "https://njc-web.vercel.app" });
+});
+
+test("reader API permits the main site to call the official API subdomain", () => {
+  const access = evaluateReaderApiAccess(new Request("https://api.thejerseycourier.com/api/v1/stories", {
+    headers: {
+      Origin: "https://www.thejerseycourier.com",
+      "Sec-Fetch-Site": "same-site",
+    },
+  }));
+  assert.deepEqual(access, { allowed: true, source: "web", origin: "https://www.thejerseycourier.com" });
 });
 
 test("reader API rejects direct and cross-site access", () => {

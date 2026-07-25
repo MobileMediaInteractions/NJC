@@ -48,7 +48,9 @@ Canonical assets live in [`apps/cdn/public/assets`](apps/cdn/public/assets). Eve
 https://<your-vercel-project>.vercel.app/assets/brand/v1/mark.svg
 ```
 
-No domain or separate CDN project is required. Later, set `NEXT_PUBLIC_ASSET_ORIGIN` to a dedicated Vercel asset project or `https://cdn.njcourier.com`; asset paths do not change.
+Production assets are served from
+`https://cdn.thejerseycourier.com`; the mirrored same-origin paths remain
+available for local development and portability. Asset paths do not change.
 
 See the [brand guide](docs/brand/BRAND_GUIDE.md), [asset catalog](docs/brand/ASSET_CATALOG.md), and [CDN deployment guide](docs/CDN.md).
 
@@ -75,7 +77,11 @@ Install Neon, Clerk, Vercel Blob and Upstash for the web project. Production dep
 
 The Hobby deployment runs `/api/cron/publish-scheduled` once daily at `10:00 UTC`, which complies with Vercel's Hobby cron limit. Upgrade the project before restoring a more frequent schedule; Studio can still publish time-sensitive stories manually at any time.
 
-When a domain is purchased, follow the [custom-domain launch runbook](docs/DOMAIN_LAUNCH.md). It covers the Vercel primary-domain redirect, `NEXT_PUBLIC_SITE_URL`, Clerk production keys and DNS, canonical/SEO checks, optional `cdn.<domain>`, native-app follow-up and rollback. A second `apps/cdn` project remains optional.
+The [custom-domain launch runbook](docs/DOMAIN_LAUNCH.md) covers the Vercel
+primary-domain redirect, Clerk production keys, canonical/SEO checks,
+native-app follow-up and rollback. The
+[subdomain runbook](docs/SUBDOMAINS.md) covers Studio, API, CDN and the
+temporary NJC+ redirect.
 
 Copy [`apps/web/.env.example`](apps/web/.env.example) for configuration names. Never commit `.env.local`.
 

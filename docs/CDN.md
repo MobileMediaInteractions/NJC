@@ -1,6 +1,6 @@
 # Courier asset delivery
 
-## Phase 1: no purchased domain
+## Local and fallback delivery
 
 Deploy only `apps/web`. Its prebuild script mirrors the canonical files from `apps/cdn/public/assets` into `apps/web/public/assets`, and Vercel serves them through the web project’s automatic HTTPS production alias:
 
@@ -10,21 +10,25 @@ https://<project-name>.vercel.app/assets/brand/v1/wordmark.svg
 
 Leave `NEXT_PUBLIC_ASSET_ORIGIN` unset. The applications use same-origin `/assets/...` paths, so local development, Vercel previews and the production `*.vercel.app` alias all work without DNS or cross-origin configuration.
 
-## Phase 2: optional separate asset project
+## Dedicated production asset project
 
-If asset traffic later needs independent ownership or deployment, create a second Vercel project with Root Directory `apps/cdn` and framework preset `Other`. It receives its own generated URL, for example `https://new-jersey-courier-assets.vercel.app`.
+Create a second Vercel project with Root Directory `apps/cdn` and framework
+preset `Other`. Attach `cdn.thejerseycourier.com` after its first deployment.
 
-Set the web project’s `NEXT_PUBLIC_ASSET_ORIGIN` to that exact origin. The Next.js image allowlist is generated from the configured value at build time, so arbitrary Vercel hosts are not trusted.
+Set the web project’s `NEXT_PUBLIC_ASSET_ORIGIN` to
+`https://cdn.thejerseycourier.com`. The Next.js image allowlist is generated
+from the configured value at build time, so arbitrary Vercel hosts are not
+trusted.
 
-## Phase 3: custom domains
+## Production sequence
 
 After purchasing a domain:
 
-1. Attach the primary domain to the existing web project.
-2. Set `NEXT_PUBLIC_SITE_URL` to its canonical HTTPS origin.
-3. Optionally attach `cdn.<domain>` to the asset project.
-4. If the CDN project is used, update `NEXT_PUBLIC_ASSET_ORIGIN` to its custom HTTPS origin and redeploy.
-5. Verify `/assets/manifest.json` before updating native release builds.
+1. Deploy `apps/cdn` and attach `cdn.thejerseycourier.com`.
+2. Verify `/assets/manifest.json` and a versioned asset.
+3. Set `NEXT_PUBLIC_ASSET_ORIGIN=https://cdn.thejerseycourier.com` on `njc-web`.
+4. Redeploy the web project and verify its image allowlist.
+5. Update native release builds only after both origins pass verification.
 
 Every public pathname remains unchanged across these phases. Only the origin changes.
 

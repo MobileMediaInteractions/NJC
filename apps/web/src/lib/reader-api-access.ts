@@ -6,6 +6,7 @@ import { createRedisClient } from "@/lib/redis";
 export const officialReaderOrigins = [
   "https://www.thejerseycourier.com",
   "https://thejerseycourier.com",
+  "https://api.thejerseycourier.com",
   "https://njc-web.vercel.app",
 ] as const;
 

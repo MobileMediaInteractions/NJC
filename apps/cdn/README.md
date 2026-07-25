@@ -1,6 +1,9 @@
 # New Jersey Courier CDN
 
-This is the canonical source tree for versioned Courier assets. A separate deployment is optional: initially, the web prebuild mirrors these files and serves them from `/assets` on the web project’s generated `*.vercel.app` URL.
+This is the canonical source tree for versioned Courier assets. Production uses
+the dedicated `https://cdn.thejerseycourier.com` origin. The web prebuild still
+mirrors the same files into `/assets`, preserving a same-origin fallback for
+local development and provider portability.
 
 Paths are immutable once published. Add a new version directory instead of replacing a production asset:
 
@@ -10,6 +13,9 @@ Paths are immutable once published. Add a new version directory instead of repla
 /assets/manifest.json
 ```
 
-If independent asset deployment is useful later, deploy this folder as a second Vercel project and use its generated `*.vercel.app` URL. After a domain is purchased, that same project can receive `cdn.<domain>`. Set `NEXT_PUBLIC_ASSET_ORIGIN` only when using the separate project.
+Deploy this folder as a second Vercel project with Root Directory `apps/cdn`,
+Framework Preset `Other`, and the `cdn.thejerseycourier.com` hostname. Set the
+web project’s `NEXT_PUBLIC_ASSET_ORIGIN` to that exact HTTPS origin only after
+the manifest and a versioned asset have been verified.
 
 CMS uploads belong in the connected public Vercel Blob store under similarly versioned or content-addressed paths. Do not place private documents in this project.

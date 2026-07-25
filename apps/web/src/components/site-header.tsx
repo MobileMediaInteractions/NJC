@@ -25,6 +25,10 @@ import {
 import type { SiteConfiguration } from "@/lib/site-settings";
 import type { Story, WeatherSnapshot } from "@harborline/contracts";
 
+const studioUrl =
+  process.env.NEXT_PUBLIC_STUDIO_URL ??
+  "https://studio.thejerseycourier.com/studio";
+
 export function SiteHeader({ publication, navigation, features }: { publication: SiteConfiguration["publication"]; navigation: SiteConfiguration["navigation"]; features: SiteConfiguration["features"] }) {
   const [weather, setWeather] = useState<WeatherSnapshot | null>(null);
   const [latestStory, setLatestStory] = useState<Story | null>(null);
@@ -74,7 +78,7 @@ export function SiteHeader({ publication, navigation, features }: { publication:
             <Link href="/newsletter"><Bell /> Get the briefing</Link>
           </Button> : null}
           <Button size="sm" asChild className="rounded-none bg-brand-blue text-xs font-bold text-white hover:bg-brand-navy">
-            <Link href="/studio">Sign in</Link>
+            <Link href={studioUrl}>Sign in</Link>
           </Button>
         </div>
       </div>
@@ -112,7 +116,7 @@ export function SiteHeader({ publication, navigation, features }: { publication:
             </Link> : null}
             <span className="hidden h-4 w-px bg-white/20 lg:block" />
             <ThemeMenu />
-            <Link href="/studio" className="hidden shrink-0 items-center gap-1.5 text-[0.69rem] font-bold uppercase tracking-[0.065em] text-white/90 hover:text-brand-yellow lg:flex">
+            <Link href={studioUrl} className="hidden shrink-0 items-center gap-1.5 text-[0.69rem] font-bold uppercase tracking-[0.065em] text-white/90 hover:text-brand-yellow lg:flex">
               <UserRound className="size-3.5" /> Sign in
             </Link>
           </div>
@@ -170,7 +174,7 @@ function MobileNavigation({ publication, navigation, features }: { publication: 
           <SheetClose asChild><Link href="/search" className="flex items-center gap-2 py-2 font-semibold"><Search className="size-4" />Search the Courier</Link></SheetClose>
           {features.weather ? <SheetClose asChild><Link href="/weather" className="flex items-center gap-2 py-2 font-semibold"><CloudSun className="size-4" />Local weather</Link></SheetClose> : null}
           {features.newsletters ? <SheetClose asChild><Link href="/newsletter" className="flex items-center gap-2 py-2 font-semibold"><Bell className="size-4" />Newsletters & alerts</Link></SheetClose> : null}
-          <SheetClose asChild><Link href="/studio" className="flex items-center gap-2 py-2 font-semibold"><UserRound className="size-4" />Newsroom sign in</Link></SheetClose>
+          <SheetClose asChild><Link href={studioUrl} className="flex items-center gap-2 py-2 font-semibold"><UserRound className="size-4" />Newsroom sign in</Link></SheetClose>
           <div className="mt-5 border-t pt-4"><ThemeMenu /></div>
         </nav>
       </SheetContent>

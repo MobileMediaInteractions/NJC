@@ -33,7 +33,13 @@ Never place a Clerk secret in a public/native environment variable or in Git.
 
 Leave `NEXT_PUBLIC_ASSET_ORIGIN` unset for the first domain launch. Brand assets will automatically use `https://<canonical-host>/assets/...`, avoiding a second DNS and deployment change.
 
-If an independent asset project is useful later, deploy `apps/cdn`, attach `cdn.<domain>`, verify `/assets/manifest.json`, then set `NEXT_PUBLIC_ASSET_ORIGIN=https://cdn.<domain>` and redeploy. This remains optional.
+Production now uses the independent `apps/cdn` project at
+`cdn.thejerseycourier.com`. Verify `/assets/manifest.json` before setting
+`NEXT_PUBLIC_ASSET_ORIGIN=https://cdn.thejerseycourier.com` and redeploying.
+The mirrored same-origin assets remain the fallback.
+
+Studio, API, CDN and the temporary NJC+ redirect are documented in
+[`SUBDOMAINS.md`](SUBDOMAINS.md).
 
 ## 4. Verify before enabling indexing
 
