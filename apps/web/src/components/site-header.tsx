@@ -27,7 +27,7 @@ import type { Story, WeatherSnapshot } from "@harborline/contracts";
 
 const studioUrl =
   process.env.NEXT_PUBLIC_STUDIO_URL ??
-  "https://studio.thejerseycourier.com/studio";
+  "/studio";
 
 export function SiteHeader({ publication, navigation, features }: { publication: SiteConfiguration["publication"]; navigation: SiteConfiguration["navigation"]; features: SiteConfiguration["features"] }) {
   const [weather, setWeather] = useState<WeatherSnapshot | null>(null);
