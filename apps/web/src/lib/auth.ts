@@ -63,6 +63,7 @@ export async function getStudioUser(): Promise<StudioUser | null> {
           email: studioUser.email,
           displayName: studioUser.name,
           role: studioUser.role,
+          avatarUrl: user.imageUrl,
         })
         .onConflictDoUpdate({
           target: users.clerkId,
@@ -70,6 +71,7 @@ export async function getStudioUser(): Promise<StudioUser | null> {
             email: studioUser.email,
             displayName: studioUser.name,
             role: studioUser.role,
+            avatarUrl: user.imageUrl,
             isActive: true,
             updatedAt: new Date(),
           },

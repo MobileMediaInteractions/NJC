@@ -26,10 +26,13 @@ Google initially fetched the pre-activation `robots.txt` that blocked all crawli
 
 - Canonical URLs resolve through the Vercel production alias now and a configured custom domain later.
 - Every published story receives unique title, description, author, section, publication/update dates, keywords, social-card metadata and large-image preview permissions.
-- Abdullah Muzammil has the initial public `/author/abdullah-muzammil` profile.
-  His visible bylines, article metadata and `NewsArticle.author` objects link to
-  that indexable `ProfilePage` entity; additional authors should receive the
-  same treatment only after their public profile information is approved.
+- Abdullah Muzammil retains the initial public `/author/abdullah-muzammil`
+  profile. Every verified Studio user now has a private public-profile editor.
+  Once their account name, newsroom title and biography are complete, the
+  database publishes them automatically to `/staff`, adds their author URL to
+  the sitemap and connects matching bylines and `NewsArticle.author` objects to
+  the indexable `ProfilePage` entity. Removing Studio access or making a
+  required field incomplete removes that profile from the public directory.
 - The search favicon uses the stable, crawlable `/favicon` URL and a square
   64×64 PNG. Google controls recrawl timing and does not guarantee that a
   favicon or structured-data enhancement will appear.

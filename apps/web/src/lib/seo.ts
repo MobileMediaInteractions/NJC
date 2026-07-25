@@ -1,5 +1,9 @@
 import { brandAssets } from "@/lib/assets";
-import { getAuthorProfileUrl, type AuthorProfile } from "@/lib/authors";
+import {
+  getAuthorProfileUrl,
+  getAuthorProfileUrlBySlug,
+  type AuthorProfile,
+} from "@/lib/authors";
 import { getSiteOrigin } from "@/lib/origin";
 import type { SiteConfiguration } from "@/lib/site-settings";
 import type { Story } from "@/lib/types";
@@ -61,10 +65,16 @@ export function homePageJsonLd(publication: SiteConfiguration["publication"]) {
   };
 }
 
-export function storyPageJsonLd(story: Story, publication: SiteConfiguration["publication"]) {
+export function storyPageJsonLd(
+  story: Story,
+  publication: SiteConfiguration["publication"],
+  authorProfile?: Pick<AuthorProfile, "slug" | "title" | "avatarUrl">,
+) {
   const storyUrl = story.canonicalUrl || absoluteUrl(`/story/${story.slug}`);
   const categoryUrl = absoluteUrl(`/category/${story.category}`);
-  const authorUrl = getAuthorProfileUrl(story.author.name);
+  const authorUrl = authorProfile
+    ? getAuthorProfileUrlBySlug(authorProfile.slug)
+    : getAuthorProfileUrl(story.author.name);
   const wordCount = story.body.join(" ").trim().split(/\s+/).filter(Boolean).length;
 
   return {
@@ -84,6 +94,10 @@ export function storyPageJsonLd(story: Story, publication: SiteConfiguration["pu
         author: {
           "@type": "Person",
           name: story.author.name,
+          ...(authorProfile?.title ? { jobTitle: authorProfile.title } : {}),
+          ...(authorProfile?.avatarUrl
+            ? { image: absoluteUrl(authorProfile.avatarUrl) }
+            : {}),
           ...(authorUrl
             ? {
                 "@id": `${authorUrl}#person`,
@@ -144,6 +158,10 @@ export function authorProfilePageJsonLd(
           name: profile.name,
           url: profileUrl,
           description: profile.description,
+          ...(profile.title ? { jobTitle: profile.title } : {}),
+          ...(profile.avatarUrl
+            ? { image: absoluteUrl(profile.avatarUrl) }
+            : {}),
           affiliation: { "@id": `${getSiteOrigin()}/#publisher` },
         },
         hasPart: authoredStories.map((story) => ({

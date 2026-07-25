@@ -49,6 +49,19 @@ test("article markup links Abdullah to his unique profile page", () => {
   assert.match(json, /"@id":"[^"]*\/author\/abdullah-muzammil#person"/);
 });
 
+test("article markup accepts a completed database-backed staff profile", () => {
+  const json = JSON.stringify(
+    storyPageJsonLd(story, defaultSiteConfiguration.publication, {
+      slug: "jamie-rivera",
+      title: "Middlesex County reporter",
+      avatarUrl: "https://images.example.com/jamie.jpg",
+    }),
+  );
+  assert.match(json, /\/author\/jamie-rivera/);
+  assert.match(json, /"jobTitle":"Middlesex County reporter"/);
+  assert.match(json, /"image":"https:\/\/images\.example\.com\/jamie\.jpg"/);
+});
+
 test("author profile markup connects Abdullah to attributed reporting", () => {
   const profile = getAuthorProfileBySlug("abdullah-muzammil");
   assert.ok(profile);

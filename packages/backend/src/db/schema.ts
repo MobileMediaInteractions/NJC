@@ -61,6 +61,11 @@ export const users = pgTable(
     displayName: text("display_name").notNull(),
     role: staffRole("role").notNull().default("contributor"),
     title: text("title"),
+    bio: text("bio"),
+    publicSlug: text("public_slug"),
+    publicProfilePublishedAt: timestamp("public_profile_published_at", {
+      withTimezone: true,
+    }),
     avatarUrl: text("avatar_url"),
     isActive: boolean("is_active").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -73,6 +78,7 @@ export const users = pgTable(
   (table) => [
     uniqueIndex("users_clerk_id_idx").on(table.clerkId),
     uniqueIndex("users_email_idx").on(table.email),
+    uniqueIndex("users_public_slug_idx").on(table.publicSlug),
   ],
 );
 

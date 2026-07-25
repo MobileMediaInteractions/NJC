@@ -9,12 +9,13 @@ import { StoryActions } from "@/components/story-actions";
 import { StoryCard } from "@/components/story-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { getAuthorProfileByName, getAuthorProfileUrl } from "@/lib/authors";
+import { getAuthorProfileUrlBySlug } from "@/lib/authors";
 import { getPublishedStories, getStoryBySlug } from "@/lib/content";
 import { formatStoryDate } from "@/lib/format";
 import { getSiteOrigin } from "@/lib/origin";
 import { isSearchIndexingEnabled, storyPageJsonLd } from "@/lib/seo";
 import { getSiteConfiguration } from "@/lib/site-settings";
+import { getPublicStaffProfileByIdentity } from "@/lib/staff-profiles";
 import { getStoryShareLinks, getStorySocialImageUrl } from "@/lib/story-sharing";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -25,7 +26,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const description = story.seoDescription || story.dek;
   const canonical = story.canonicalUrl || `/story/${story.slug}`;
   const socialImage = getStorySocialImageUrl({ siteOrigin: getSiteOrigin(), slug: story.slug, updatedAt: story.updatedAt });
-  const authorUrl = getAuthorProfileUrl(story.author.name);
+  const authorProfile = await getPublicStaffProfileByIdentity({
+    clerkId: story.author.id,
+    name: story.author.name,
+  }).catch((error) => {
+    console.error("Story author profile metadata lookup failed", {
+      slug: story.slug,
+      error,
+    });
+    return undefined;
+  });
+  const authorUrl = authorProfile
+    ? getAuthorProfileUrlBySlug(authorProfile.slug)
+    : undefined;
   const index = isSearchIndexingEnabled() && !story.noIndex;
   return {
     title,
@@ -72,9 +85,19 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   const { slug } = await params;
   const story = await getStoryBySlug(slug);
   if (!story) notFound();
-  const [relatedStories, configuration] = await Promise.all([
+  const [relatedStories, configuration, authorProfile] = await Promise.all([
     getPublishedStories({ category: story.category, limit: 4 }),
     getSiteConfiguration(),
+    getPublicStaffProfileByIdentity({
+      clerkId: story.author.id,
+      name: story.author.name,
+    }).catch((error) => {
+      console.error("Story author profile lookup failed", {
+        slug: story.slug,
+        error,
+      });
+      return undefined;
+    }),
   ]);
   const related = relatedStories.filter((item) => item.slug !== story.slug).slice(0, 3);
   const shareLinks = getStoryShareLinks({
@@ -84,11 +107,10 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     slug: story.slug,
     updatedAt: story.updatedAt,
   });
-  const authorProfile = getAuthorProfileByName(story.author.name);
 
   return (
     <article>
-      <JsonLd data={storyPageJsonLd(story, configuration.publication)} />
+      <JsonLd data={storyPageJsonLd(story, configuration.publication, authorProfile)} />
       <header className="container-news max-w-[70rem] py-10 lg:pt-14">
         <div className="flex flex-wrap items-center gap-2">
           <Link href={`/category/${story.category}`} className="eyebrow text-brand-blue hover:underline">{story.categoryLabel}</Link>
@@ -100,7 +122,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         <p className="mt-6 max-w-3xl text-lg leading-8 text-muted-foreground sm:text-xl">{story.dek}</p>
         <div className="mt-7 flex flex-col gap-5 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <Avatar className="size-11"><AvatarImage src={story.author.avatar} /><AvatarFallback className="bg-brand-navy font-bold text-white">{story.author.initials}</AvatarFallback></Avatar>
+            <Avatar className="size-11"><AvatarImage src={authorProfile?.avatarUrl ?? story.author.avatar} /><AvatarFallback className="bg-brand-navy font-bold text-white">{story.author.initials}</AvatarFallback></Avatar>
             <div><p className="text-sm font-bold text-brand-navy">By {authorProfile ? <Link href={`/author/${authorProfile.slug}`} rel="author" className="underline-offset-4 hover:underline">{story.author.name}</Link> : story.author.name}</p><p className="text-xs text-muted-foreground">{story.author.role} · Published {formatStoryDate(story.publishedAt)}{story.updatedAt && story.updatedAt !== story.publishedAt ? ` · Updated ${formatStoryDate(story.updatedAt)}` : ""}</p></div>
           </div>
           <StoryActions {...shareLinks} headline={story.headline} />

@@ -16,6 +16,7 @@ import {
   Newspaper,
   Settings,
   Users,
+  UserRound,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -35,6 +36,7 @@ const navigation = [
   { label: "Press requests", href: "/studio/press", icon: Newspaper },
   { label: "Press releases", href: "/studio/press-releases", icon: FileText, requiresPress: true },
   { label: "Analytics", href: "/studio/analytics", icon: BarChart3 },
+  { label: "My profile", href: "/studio/profile", icon: UserRound },
   { label: "Team & roles", href: "/studio/team", icon: Users },
   { label: "Portable exports", href: "/studio/exports", icon: Archive },
   { label: "Settings", href: "/studio/settings", icon: Settings },
@@ -147,7 +149,11 @@ export function StudioShellClient({
                   <FilePlus2 /> New story
                 </Link>
               </Button>
-              <div className="hidden items-center gap-2 sm:flex">
+              <Link
+                href="/studio/profile"
+                className="hidden items-center gap-2 rounded-md p-1 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring sm:flex"
+                aria-label="Open my staff profile"
+              >
                 <Avatar className="size-8">
                   <AvatarFallback className="bg-brand-blue text-xs text-white">
                     {viewer.name
@@ -163,7 +169,7 @@ export function StudioShellClient({
                     {viewer.role}
                   </p>
                 </div>
-              </div>
+              </Link>
             </div>
           </header>
           <main className="p-4 sm:p-7">{children}</main>

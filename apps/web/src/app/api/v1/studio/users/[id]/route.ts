@@ -8,6 +8,7 @@ import { writeApiAudit } from "@/lib/api-keys";
 import { getStudioUser, resolveStaffRole } from "@/lib/auth";
 import { canChangeManagedRole, studioAccountUpdateSchema } from "@/lib/studio-account-policy";
 import { getStudioAccount } from "@/lib/studio-accounts";
+import { synchronizePublicStaffProfile } from "@/lib/staff-profiles";
 
 export const dynamic = "force-dynamic";
 
@@ -149,6 +150,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         updatedAt: new Date(),
       }).where(eq(users.clerkId, id));
     }
+    const publicProfile = await synchronizePublicStaffProfile(id);
 
     await writeApiAudit({
       actorClerkId: viewer.id,
@@ -160,10 +162,16 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
         nextRole,
         nameChanged: (target.firstName ?? "") !== parsed.data.firstName || (target.lastName ?? "") !== parsed.data.lastName,
         titleUpdated: true,
+        publicProfilePublished: Boolean(publicProfile?.publicProfilePublishedAt),
       },
     });
     revalidatePath("/studio/team");
     revalidatePath(`/studio/team/${id}`);
+    revalidatePath("/staff");
+    revalidatePath("/sitemap.xml");
+    if (publicProfile?.publicSlug) {
+      revalidatePath(`/author/${publicProfile.publicSlug}`);
+    }
     const account = await getStudioAccount(id);
     return NextResponse.json(
       { data: account, meta: { apiVersion: "1" } },

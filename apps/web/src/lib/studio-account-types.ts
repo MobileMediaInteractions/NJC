@@ -58,6 +58,9 @@ export type StudioAccountProfile = StudioAccountSummary & {
   databaseProfile: {
     id: string;
     isActive: boolean;
+    bio: string | null;
+    publicSlug: string | null;
+    publicProfilePublishedAt: string | null;
     createdAt: string;
     updatedAt: string;
   } | null;

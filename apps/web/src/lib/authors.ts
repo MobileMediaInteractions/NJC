@@ -4,6 +4,8 @@ export interface AuthorProfile {
   slug: string;
   name: string;
   description: string;
+  title?: string | null;
+  avatarUrl?: string | null;
 }
 
 const authorProfiles = [
@@ -32,9 +34,11 @@ export function getAuthorProfileByName(name: string) {
 
 export function getAuthorProfileUrl(name: string) {
   const profile = getAuthorProfileByName(name);
-  return profile
-    ? new URL(`/author/${profile.slug}`, getSiteOrigin()).toString()
-    : undefined;
+  return profile ? getAuthorProfileUrlBySlug(profile.slug) : undefined;
+}
+
+export function getAuthorProfileUrlBySlug(slug: string) {
+  return new URL(`/author/${slug}`, getSiteOrigin()).toString();
 }
 
 export function getAuthorProfilePaths() {

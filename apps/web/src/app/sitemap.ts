@@ -1,11 +1,17 @@
 import type { MetadataRoute } from "next";
-import { getAuthorProfilePaths } from "@/lib/authors";
 import { getPublishedStoryIndex } from "@/lib/content";
 import { getSiteOrigin } from "@/lib/origin";
+import { getPublicStaffProfilePaths } from "@/lib/staff-profiles";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getSiteOrigin();
-  const stories = await getPublishedStoryIndex({ limit: 49_900 });
+  const [stories, staffProfilePaths] = await Promise.all([
+    getPublishedStoryIndex({ limit: 49_900 }),
+    getPublicStaffProfilePaths().catch((error) => {
+      console.error("Public staff sitemap lookup failed", error);
+      return [];
+    }),
+  ]);
   const routes = [
     "",
     "/latest",
@@ -18,7 +24,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/newsletter",
     "/press",
     "/about",
-    ...getAuthorProfilePaths(),
+    "/staff",
+    ...staffProfilePaths,
   ];
 
   return [

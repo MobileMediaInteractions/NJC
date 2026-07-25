@@ -115,6 +115,10 @@ export async function getStudioAccount(clerkId: string): Promise<StudioAccountPr
     databaseProfile: databaseProfile ? {
       id: databaseProfile.id,
       isActive: databaseProfile.isActive,
+      bio: databaseProfile.bio,
+      publicSlug: databaseProfile.publicSlug,
+      publicProfilePublishedAt:
+        databaseProfile.publicProfilePublishedAt?.toISOString() ?? null,
       createdAt: databaseProfile.createdAt.toISOString(),
       updatedAt: databaseProfile.updatedAt.toISOString(),
     } : null,
