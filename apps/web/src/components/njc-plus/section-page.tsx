@@ -3,6 +3,7 @@ import { PremiumCard } from "@/components/njc-plus/cards";
 import { NjcPlusHeader } from "@/components/njc-plus/brand";
 import { filterPremiumContentByFlags, getPublishedPremiumContent, resolveNjcPlusSurface, type premiumContentKinds } from "@/lib/njc-plus";
 import { isNjcPlusFeatureEnabled, type NjcPlusChildFlag } from "@/lib/feature-flags";
+import { redirectUnavailableNjcPlus } from "@/lib/njc-plus-routing";
 
 export async function NjcPlusSectionPage({ title, intro, kinds, feature, preview }: { title: string; intro: string; kinds: readonly (typeof premiumContentKinds)[number][]; feature: NjcPlusChildFlag | readonly NjcPlusChildFlag[]; preview?: string }) {
   const features = typeof feature === "string" ? [feature] : feature;
@@ -10,7 +11,8 @@ export async function NjcPlusSectionPage({ title, intro, kinds, feature, preview
   const childAvailable = surface.studioPreview ||
     (await Promise.all(features.map(isNjcPlusFeatureEnabled))).some(Boolean) ||
     features.some((item) => surface.betaFeatureKeys.includes(item));
-  if (!surface.available || !childAvailable) notFound();
+  if (!surface.available) redirectUnavailableNjcPlus();
+  if (!childAvailable) notFound();
   const all = await getPublishedPremiumContent({ limit: 200, includeUnpublished: surface.studioPreview });
   const available = surface.studioPreview
     ? all

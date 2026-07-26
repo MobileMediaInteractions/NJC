@@ -11,6 +11,7 @@ import { isNjcPlusFeatureEnabled, isNjcPlusPublicEnabled } from "@/lib/feature-f
 import { getPremiumContentBySlug, getPremiumContentConnections, getPremiumPlaybackProgress, premiumKindFormat, premiumKindLabel, requiredFeatureForContent, resolveNjcPlusSurface, resolvePremiumAccess } from "@/lib/njc-plus";
 import { njcPlusBetaDisclosure } from "@/lib/njc-plus-beta-contract";
 import { njcPlusAssets } from "@/lib/njc-plus-assets";
+import { redirectUnavailableNjcPlus } from "@/lib/njc-plus-routing";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   if (!(await isNjcPlusPublicEnabled())) return { robots: { index: false, follow: false } };
@@ -30,7 +31,7 @@ export default async function PremiumDetail({ params, searchParams }: { params: 
   const item = await getPremiumContentBySlug(slug, studioPreview);
   if (!item) notFound();
   const surface = await resolveNjcPlusSurface({ preview, feature: requiredFeatureForContent(item.kind) ?? undefined });
-  if (!surface.available) notFound();
+  if (!surface.available) redirectUnavailableNjcPlus();
   const access = surface.studioPreview ? { allowed: true, signedIn: true } : await resolvePremiumAccess(item);
   const format = premiumKindFormat(item.kind);
   const commentsAvailable = item.commentsEnabled && (

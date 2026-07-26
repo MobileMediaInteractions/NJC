@@ -1,5 +1,4 @@
 import { and, eq, gt, isNull, lte, or } from "drizzle-orm";
-import { notFound } from "next/navigation";
 import { Check, ShieldCheck } from "lucide-react";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import { premiumOffers } from "@harborline/backend/schema";
@@ -8,11 +7,12 @@ import { CheckoutButton } from "@/components/njc-plus/checkout-button";
 import { isNjcPlusFeatureEnabled } from "@/lib/feature-flags";
 import { getVisiblePremiumTiers, resolveNjcPlusSurface } from "@/lib/njc-plus";
 import { njcPlusBetaDisclosure } from "@/lib/njc-plus-beta-contract";
+import { redirectUnavailableNjcPlus } from "@/lib/njc-plus-routing";
 
 export default async function JoinPage({ searchParams }: { searchParams: Promise<{ preview?: string }> }) {
   const { preview } = await searchParams;
   const surface = await resolveNjcPlusSurface({ preview, feature: "njc_plus_paywalls" });
-  if (!surface.available) notFound();
+  if (!surface.available) redirectUnavailableNjcPlus();
   const now = new Date();
   const [tiers, trialsFlag, checkoutFlag, offers] = await Promise.all([
     getVisiblePremiumTiers(surface.studioPreview),

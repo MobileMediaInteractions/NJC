@@ -1,15 +1,15 @@
 import { ilike, or, and, eq } from "drizzle-orm";
-import { notFound } from "next/navigation";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import { premiumContent } from "@harborline/backend/schema";
 import { PremiumCard } from "@/components/njc-plus/cards";
 import { NjcPlusHeader } from "@/components/njc-plus/brand";
 import { filterPremiumContentByFlags, resolveNjcPlusSurface } from "@/lib/njc-plus";
+import { redirectUnavailableNjcPlus } from "@/lib/njc-plus-routing";
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string; preview?: string }> }) {
   const { q = "", preview } = await searchParams;
   const surface = await resolveNjcPlusSurface({ preview, feature: "njc_plus_search" });
-  if (!surface.available) notFound();
+  if (!surface.available) redirectUnavailableNjcPlus();
   const query = q.trim().slice(0, 120);
   const matches = query && hasDatabase() ? await getDb().select().from(premiumContent).where(and(
     surface.studioPreview ? undefined : eq(premiumContent.status, "published"),

@@ -1,17 +1,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Radio, Sparkles } from "lucide-react";
-import { notFound } from "next/navigation";
 import { PremiumCard } from "@/components/njc-plus/cards";
 import { NjcPlusHeader } from "@/components/njc-plus/brand";
 import { isNjcPlusFeatureEnabled } from "@/lib/feature-flags";
 import { filterPremiumContentByFlags, getPremiumHomepage, getPublishedPremiumContent, resolveNjcPlusSurface } from "@/lib/njc-plus";
 import { njcPlusAssets } from "@/lib/njc-plus-assets";
+import { redirectUnavailableNjcPlus } from "@/lib/njc-plus-routing";
 
 export default async function NjcPlusHome({ searchParams }: { searchParams: Promise<{ preview?: string }> }) {
   const { preview } = await searchParams;
   const surface = await resolveNjcPlusSurface({ preview });
-  if (!surface.available) notFound();
+  if (!surface.available) redirectUnavailableNjcPlus();
   const [unfilteredContent, modules, membershipAvailable] = await Promise.all([
     getPublishedPremiumContent({ limit: 120, includeUnpublished: surface.studioPreview }),
     getPremiumHomepage(surface.studioPreview),
