@@ -190,6 +190,11 @@ const nextConfig: NextConfig = {
           destination: "/developers",
         },
         {
+          source: "/:slug",
+          has: onHost(plusHostname),
+          destination: "/plus/:slug",
+        },
+        {
           source: "/",
           has: onHost(plusHostname),
           destination: "/plus",
@@ -203,11 +208,6 @@ const nextConfig: NextConfig = {
           source: "/join/:path*",
           has: onHost(plusHostname),
           destination: "/plus/join/:path*",
-        },
-        {
-          source: "/:slug",
-          has: onHost(plusHostname),
-          destination: "/plus/:slug",
         },
         {
           source: "/v1/:path*",
