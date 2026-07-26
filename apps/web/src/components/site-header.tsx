@@ -1,5 +1,6 @@
 "use client";
 
+import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
@@ -22,11 +23,53 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import type { SiteAccountAction } from "@/lib/site-account";
+import {
+  hasStudioAccessRole,
+  resolveSiteAccountAction,
+  type SiteAccountAction,
+} from "@/lib/site-account";
 import type { SiteConfiguration } from "@/lib/site-settings";
 import type { Story, WeatherSnapshot } from "@harborline/contracts";
 
-export function SiteHeader({ publication, navigation, features, accountAction, plusEnabled = false }: { publication: SiteConfiguration["publication"]; navigation: SiteConfiguration["navigation"]; features: SiteConfiguration["features"]; accountAction: SiteAccountAction; plusEnabled?: boolean }) {
+type SiteHeaderProps = {
+  publication: SiteConfiguration["publication"];
+  navigation: SiteConfiguration["navigation"];
+  features: SiteConfiguration["features"];
+  plusEnabled?: boolean;
+  clerkEnabled: boolean;
+  studioHref: string;
+};
+
+export function SiteHeader(props: SiteHeaderProps) {
+  if (props.clerkEnabled) {
+    return <AuthenticatedSiteHeader {...props} />;
+  }
+
+  return (
+    <SiteHeaderContent
+      {...props}
+      accountAction={resolveSiteAccountAction({
+        signedIn: false,
+        hasStudioAccess: false,
+      })}
+    />
+  );
+}
+
+function AuthenticatedSiteHeader(props: SiteHeaderProps) {
+  const { isSignedIn, user } = useUser();
+  const accountAction = resolveSiteAccountAction(
+    {
+      signedIn: isSignedIn === true,
+      hasStudioAccess: hasStudioAccessRole(user?.publicMetadata.role),
+    },
+    props.studioHref,
+  );
+
+  return <SiteHeaderContent {...props} accountAction={accountAction} />;
+}
+
+function SiteHeaderContent({ publication, navigation, features, accountAction, plusEnabled = false }: SiteHeaderProps & { accountAction: SiteAccountAction }) {
   const [weather, setWeather] = useState<WeatherSnapshot | null>(null);
   const [latestStory, setLatestStory] = useState<Story | null>(null);
 

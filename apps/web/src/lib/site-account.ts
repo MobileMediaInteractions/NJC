@@ -3,6 +3,18 @@ export type SiteAccountAction = {
   href: string;
 };
 
+const studioAccessRoles = new Set([
+  "admin",
+  "editor",
+  "producer",
+  "reporter",
+  "contributor",
+]);
+
+export function hasStudioAccessRole(value: unknown) {
+  return typeof value === "string" && studioAccessRoles.has(value);
+}
+
 export function resolveSiteAccountAction(
   state: { signedIn: boolean; hasStudioAccess: boolean },
   studioHref = "/studio",

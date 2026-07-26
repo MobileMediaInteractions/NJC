@@ -6,9 +6,12 @@ export const config = {
   matcher: [
     "/studio/:path*",
     "/developers",
+    "/profile/:path*",
+    "/plus/:path*",
     "/sign-in/:path*",
     "/sign-up/:path*",
     "/api/v1/studio/:path*",
+    "/api/v1/plus/:path*",
     "/api/v1/employee/:path*",
     "/api/v1/developer/keys/:path*",
     "/api/v1/mobile/admin/:path*",
