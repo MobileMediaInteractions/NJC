@@ -154,6 +154,8 @@ const nextConfig: NextConfig = {
         destination: apiOrigin,
         permanent: true,
       },
+      // Authentication callbacks may still return to the internal portal path.
+      // Settle those requests on the clean API hostname root as well.
       {
         source: "/developers",
         has: onHost(apiHostname),
