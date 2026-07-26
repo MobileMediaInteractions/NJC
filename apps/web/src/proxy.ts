@@ -4,6 +4,22 @@ export default clerkMiddleware();
 
 export const config = {
   matcher: [
+    // Clean Studio, API-portal, and NJC+ subdomain paths are rewritten to
+    // their internal routes after proxy matching. Clerk must therefore run
+    // on those service hosts before the rewrite, while public news routes on
+    // the primary site continue to bypass Clerk.
+    {
+      source:
+        "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+      has: [
+        {
+          type: "header",
+          key: "host",
+          value:
+            "(?:studio|api|plus)\\.thejerseycourier\\.com(?::\\d+)?",
+        },
+      ],
+    },
     "/studio/:path*",
     "/developers",
     "/profile/:path*",
