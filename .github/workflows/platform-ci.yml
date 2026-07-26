@@ -55,6 +55,8 @@ jobs:
         with: { version: 11.7.0 }
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: pnpm }
+      - name: Install Roku validation prerequisites
+        run: sudo apt-get update && sudo apt-get install -y libxml2-utils
       - run: pnpm install --frozen-lockfile
       - run: pnpm --dir apps/web test
       - run: pnpm --dir apps/web typecheck
