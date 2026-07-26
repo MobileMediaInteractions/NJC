@@ -9,11 +9,11 @@ deployment and one separately deployable static asset origin.
 | `studio.thejerseycourier.com` | `njc-web` | Redirects `/` to `/studio`; Studio authentication and authorization remain enforced by Clerk and the API |
 | `api.thejerseycourier.com` | `njc-web` | Clean `/v1/*` and `/developer/*` aliases rewrite to the existing versioned API routes |
 | `cdn.thejerseycourier.com` | dedicated CDN project rooted at `apps/cdn` | Immutable public brand and editorial assets; never private newsroom material |
-| `plus.thejerseycourier.com` | `njc-web` | Temporary redirect to the matching path on the canonical site until NJC+ ships |
+| `plus.thejerseycourier.com` | `njc-web` | Host-aware NJC+ product routes; the parent beta flag still returns 404 until launch |
 
 DNS labels cannot contain `+`, so the public hostname for NJC+ is `plus`.
-Its redirect is deliberately temporary rather than permanent, preventing
-browsers from caching a 308 after NJC+ becomes a standalone product.
+The host rewrites to the separate `/plus` product shell without exposing or
+weakening the `njc_plus_beta` release boundary.
 
 ## Web project environment
 
@@ -60,7 +60,8 @@ After deployment:
 2. Confirm `https://api.thejerseycourier.com/v1/stories` reaches the existing
    protected reader API and developer endpoints still require API keys.
 3. Confirm CDN assets return the expected cache, CORS and no-index headers.
-4. Confirm any NJC+ path redirects once to the same path on
-   `https://www.thejerseycourier.com`.
+4. While `njc_plus_beta` is off, confirm the NJC+ host returns the fail-closed
+   not-found response. After launch approval, confirm its root, section and
+   content routes render the NJC+ product shell.
 5. Keep Studio, API and CDN out of the public sitemap. Only canonical public
    article and section URLs belong in Google Search.

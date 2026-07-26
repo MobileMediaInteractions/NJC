@@ -188,3 +188,25 @@ html.dark .bg-white.text-brand-navy {
     animation-iteration-count: 1 !important;
   }
 }
+
+.njc-plus-member-state {
+  position: relative;
+  min-height: 100vh;
+}
+
+.njc-plus-member-state::before {
+  content: "NJC+ MEMBER";
+  position: fixed;
+  z-index: 90;
+  right: 1rem;
+  bottom: 1rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid #63e6ff55;
+  background: #05070cee;
+  color: #b9ff4a;
+  box-shadow: 0 0 2rem #63e6ff1f;
+  font-size: 0.61rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  pointer-events: none;
+}

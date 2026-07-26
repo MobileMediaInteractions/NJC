@@ -113,6 +113,34 @@
       "when": 1785020844589,
       "tag": "0015_rare_gauntlet",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1785023399092,
+      "tag": "0016_large_hemingway",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1785023984048,
+      "tag": "0017_natural_bullseye",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1785025845379,
+      "tag": "0018_mysterious_synch",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1785025988369,
+      "tag": "0019_nappy_rocket_raccoon",
+      "breakpoints": true
     }
   ]
 }

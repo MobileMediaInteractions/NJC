@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   defaultSiteConfiguration,
   formatDatelines,
+  include20Under20Navigation,
   isGoogleAdsLive,
   normalizePublisherId,
   parseNavigation,
@@ -55,6 +56,19 @@ test("navigation accepts local paths and rejects external destinations", () => {
 
   const external = { ...configurationCopy(), navigation: parseNavigation("Bad | https://example.com") };
   assert.equal(siteConfigurationSchema.safeParse(external).success, false);
+});
+
+test("20 Under 20 replaces the former staff navigation slot", () => {
+  assert.deepEqual(
+    include20Under20Navigation([
+      { label: "Latest", href: "/latest" },
+      { label: "Staff", href: "/staff" },
+    ]),
+    [
+      { label: "Latest", href: "/latest" },
+      { label: "20 Under 20", href: "/20-under-20" },
+    ],
+  );
 });
 
 test("editorial datelines round trip and reject duplicates", () => {

@@ -17,10 +17,9 @@ test("production subdomains have explicit host-aware routes", async () => {
       condition.value === "studio.thejerseycourier.com"
     )
   ));
-  assert.ok(redirects.some((route) =>
-    route.source === "/:path*" &&
-    route.destination === "https://www.thejerseycourier.com/:path*" &&
-    route.permanent === false &&
+  assert.ok(rewrites.beforeFiles?.some((route) =>
+    route.source === "/" &&
+    route.destination === "/plus" &&
     route.has?.some((condition) =>
       condition.type === "host" &&
       condition.value === "plus.thejerseycourier.com"

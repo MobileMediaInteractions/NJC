@@ -25,6 +25,7 @@ export const siteConfig = {
     { label: "Garden State Forum", href: "/category/opinion" },
     { label: "Gridiron & Court", href: "/category/sports" },
     { label: "Jersey Laurels", href: "/category/jersey-laurels" },
+    { label: "20 Under 20", href: "/20-under-20" },
   ],
   monetization: {
     adsEnabled: false,

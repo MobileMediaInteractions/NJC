@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "premium_entitlements_source_idx" ON "premium_entitlements" USING btree ("user_clerk_id","source_type","source_id","scope_type","scope_id");

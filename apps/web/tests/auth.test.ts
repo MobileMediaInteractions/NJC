@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { canDeleteStory, canManageSiteSettings, resolveStaffRole } from "../src/lib/auth";
+import { resolveSiteAccountAction } from "../src/lib/site-account";
 
 test("Studio access requires an explicitly assigned staff role", () => {
   assert.equal(resolveStaffRole(undefined), null);
@@ -23,4 +24,22 @@ test("only administrators can change production site settings", () => {
   assert.equal(canManageSiteSettings("producer"), false);
   assert.equal(canManageSiteSettings("reporter"), false);
   assert.equal(canManageSiteSettings("contributor"), false);
+});
+
+test("public account navigation reflects sign-in and Studio access", () => {
+  assert.deepEqual(
+    resolveSiteAccountAction({ signedIn: false, hasStudioAccess: false }),
+    { label: "Sign In", href: "/sign-in" },
+  );
+  assert.deepEqual(
+    resolveSiteAccountAction({ signedIn: true, hasStudioAccess: false }),
+    { label: "Profile", href: "/profile" },
+  );
+  assert.deepEqual(
+    resolveSiteAccountAction(
+      { signedIn: true, hasStudioAccess: true },
+      "https://studio.example.com",
+    ),
+    { label: "Studio", href: "https://studio.example.com" },
+  );
 });

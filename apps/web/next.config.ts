@@ -73,19 +73,31 @@ const nextConfig: NextConfig = {
         destination: `${canonicalSiteOrigin}/developers`,
         permanent: false,
       },
-      {
-        source: "/:path*",
-        has: [{ type: "host", value: plusHostname }],
-        destination: `${canonicalSiteOrigin}/:path*`,
-        // NJC+ is intentionally temporary. Avoid a browser-cached 308 so this
-        // hostname can become a first-class product without a migration.
-        permanent: false,
-      },
     ];
   },
   async rewrites() {
     return {
       beforeFiles: [
+        {
+          source: "/",
+          has: [{ type: "host", value: plusHostname }],
+          destination: "/plus",
+        },
+        ...["watch", "listen", "live", "search", "join"].map((section) => ({
+          source: `/${section}`,
+          has: [{ type: "host" as const, value: plusHostname }],
+          destination: `/plus/${section}`,
+        })),
+        {
+          source: "/join/:path*",
+          has: [{ type: "host", value: plusHostname }],
+          destination: "/plus/join/:path*",
+        },
+        {
+          source: "/:slug",
+          has: [{ type: "host", value: plusHostname }],
+          destination: "/plus/:slug",
+        },
         {
           source: "/v1/:path*",
           has: [{ type: "host", value: apiHostname }],

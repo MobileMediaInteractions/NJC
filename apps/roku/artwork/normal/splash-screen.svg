@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <title>The New Jersey Courier Roku splash screen</title>
+  <rect width="1920" height="1080" fill="#071C2C"/>
+  <circle cx="960" cy="540" r="430" fill="#173E32" opacity="0.2"/>
+  <path d="M480 228h960M480 852h960" stroke="#C49545" stroke-width="6" opacity="0.9"/>
+  <rect x="824" y="260" width="272" height="272" rx="28" fill="#173E32" stroke="#2F6654" stroke-width="4"/>
+  <path d="M865 319h190M865 473h190" stroke="#C49545" stroke-width="8"/>
+  <text x="960" y="438" fill="#F6F1E7" font-family="Georgia, 'Times New Roman', serif" font-size="112" font-weight="700" text-anchor="middle" letter-spacing="-14">NJC</text>
+  <text x="960" y="650" fill="#F8F5EE" font-family="Georgia, 'Times New Roman', serif" font-size="88" font-weight="700" text-anchor="middle" letter-spacing="-3">The New Jersey Courier</text>
+  <text x="960" y="730" fill="#D9D3C8" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="700" text-anchor="middle" letter-spacing="10">THE AUTHORITATIVE VOICE OF THE GARDEN STATE</text>
+  <text x="960" y="928" fill="#93B7A8" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="700" text-anchor="middle" letter-spacing="7">LOCAL NEWS · MIDDLESEX COUNTY</text>
+</svg>

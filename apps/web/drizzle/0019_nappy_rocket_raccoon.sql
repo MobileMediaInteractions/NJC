@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "premium_beta_tester_one_current_idx" ON "premium_beta_tester_grants" USING btree ("user_clerk_id") WHERE "premium_beta_tester_grants"."status" in ('active', 'paused');

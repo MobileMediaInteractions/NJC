@@ -43,6 +43,7 @@ rmSync(configuredRoot, { recursive: true, force: true });
 mkdirSync(configuredRoot, { recursive: true });
 cpSync(resolve(appRoot, "source"), resolve(configuredRoot, "source"), { recursive: true });
 cpSync(resolve(appRoot, "components"), resolve(configuredRoot, "components"), { recursive: true });
+cpSync(resolve(appRoot, "images"), resolve(configuredRoot, "images"), { recursive: true });
 
 const manifest = sourceManifest.replace(/^api_url=.*$/m, `api_url=${apiUrl}`);
 writeFileSync(resolve(configuredRoot, "manifest"), manifest);
@@ -57,6 +58,7 @@ const result = spawnSync(
     configuredRoot,
     "--files",
     "manifest",
+    "images/**/*",
     "source/**/*",
     "components/**/*",
     "--out-file",

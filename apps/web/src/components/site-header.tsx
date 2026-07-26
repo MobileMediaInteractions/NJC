@@ -22,14 +22,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import type { SiteAccountAction } from "@/lib/site-account";
 import type { SiteConfiguration } from "@/lib/site-settings";
 import type { Story, WeatherSnapshot } from "@harborline/contracts";
 
-const studioUrl =
-  process.env.NEXT_PUBLIC_STUDIO_URL ??
-  "/studio";
-
-export function SiteHeader({ publication, navigation, features }: { publication: SiteConfiguration["publication"]; navigation: SiteConfiguration["navigation"]; features: SiteConfiguration["features"] }) {
+export function SiteHeader({ publication, navigation, features, accountAction, plusEnabled = false }: { publication: SiteConfiguration["publication"]; navigation: SiteConfiguration["navigation"]; features: SiteConfiguration["features"]; accountAction: SiteAccountAction; plusEnabled?: boolean }) {
   const [weather, setWeather] = useState<WeatherSnapshot | null>(null);
   const [latestStory, setLatestStory] = useState<Story | null>(null);
 
@@ -78,13 +75,13 @@ export function SiteHeader({ publication, navigation, features }: { publication:
             <Link href="/newsletter"><Bell /> Get the briefing</Link>
           </Button> : null}
           <Button size="sm" asChild className="rounded-none bg-brand-blue text-xs font-bold text-white hover:bg-brand-navy">
-            <Link href={studioUrl}>Sign in</Link>
+            <Link href={accountAction.href}>{accountAction.label}</Link>
           </Button>
         </div>
       </div>
 
       <div className="container-news grid h-[68px] grid-cols-[2.75rem_1fr_2.75rem] items-center lg:hidden">
-        <MobileNavigation publication={publication} navigation={navigation} features={features} />
+        <MobileNavigation publication={publication} navigation={navigation} features={features} accountAction={accountAction} plusEnabled={plusEnabled} />
         <Link href="/" className="min-w-0 text-center" aria-label={`${publication.name} home`}>
           <span className="font-editorial block truncate text-[1.45rem] font-semibold leading-none tracking-[-0.045em] text-brand-navy sm:text-[1.7rem]">
             {publication.name}
@@ -106,6 +103,7 @@ export function SiteHeader({ publication, navigation, features }: { publication:
                 {item.label}
               </Link>
             ))}
+            {plusEnabled ? <Link href="/plus" className="shrink-0 text-[0.69rem] font-black uppercase tracking-[0.065em] text-[#b9ff4a] hover:text-white">NJC+</Link> : null}
           </div>
           <div className="flex h-full shrink-0 items-center gap-5 lg:ml-auto">
             <Link href="/search" className="hidden items-center gap-1.5 text-[0.69rem] font-bold uppercase tracking-[0.065em] text-white/90 hover:text-brand-yellow lg:flex">
@@ -116,8 +114,8 @@ export function SiteHeader({ publication, navigation, features }: { publication:
             </Link> : null}
             <span className="hidden h-4 w-px bg-white/20 lg:block" />
             <ThemeMenu />
-            <Link href={studioUrl} className="hidden shrink-0 items-center gap-1.5 text-[0.69rem] font-bold uppercase tracking-[0.065em] text-white/90 hover:text-brand-yellow lg:flex">
-              <UserRound className="size-3.5" /> Sign in
+            <Link href={accountAction.href} className="hidden shrink-0 items-center gap-1.5 text-[0.69rem] font-bold uppercase tracking-[0.065em] text-white/90 hover:text-brand-yellow lg:flex">
+              <UserRound className="size-3.5" /> {accountAction.label}
             </Link>
           </div>
         </div>
@@ -152,7 +150,7 @@ function Masthead({ publication }: { publication: SiteConfiguration["publication
   );
 }
 
-function MobileNavigation({ publication, navigation, features }: { publication: SiteConfiguration["publication"]; navigation: SiteConfiguration["navigation"]; features: SiteConfiguration["features"] }) {
+function MobileNavigation({ publication, navigation, features, accountAction, plusEnabled = false }: { publication: SiteConfiguration["publication"]; navigation: SiteConfiguration["navigation"]; features: SiteConfiguration["features"]; accountAction: SiteAccountAction; plusEnabled?: boolean }) {
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -170,11 +168,12 @@ function MobileNavigation({ publication, navigation, features }: { publication: 
               <Link href={item.href} className="border-b py-3.5 text-base font-bold text-brand-navy">{item.label}</Link>
             </SheetClose>
           ))}
+          {plusEnabled ? <SheetClose asChild><Link href="/plus" className="border-b py-3.5 text-base font-black text-[#669900]">NJC+</Link></SheetClose> : null}
           <Separator className="my-5" />
           <SheetClose asChild><Link href="/search" className="flex items-center gap-2 py-2 font-semibold"><Search className="size-4" />Search the Courier</Link></SheetClose>
           {features.weather ? <SheetClose asChild><Link href="/weather" className="flex items-center gap-2 py-2 font-semibold"><CloudSun className="size-4" />Local weather</Link></SheetClose> : null}
           {features.newsletters ? <SheetClose asChild><Link href="/newsletter" className="flex items-center gap-2 py-2 font-semibold"><Bell className="size-4" />Newsletters & alerts</Link></SheetClose> : null}
-          <SheetClose asChild><Link href={studioUrl} className="flex items-center gap-2 py-2 font-semibold"><UserRound className="size-4" />Newsroom sign in</Link></SheetClose>
+          <SheetClose asChild><Link href={accountAction.href} className="flex items-center gap-2 py-2 font-semibold"><UserRound className="size-4" />{accountAction.label}</Link></SheetClose>
           <div className="mt-5 border-t pt-4"><ThemeMenu /></div>
         </nav>
       </SheetContent>

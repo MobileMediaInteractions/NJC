@@ -11,6 +11,8 @@ New Jersey Courier’s Roku client is a native SceneGraph application written in
 - Public access without an account
 - Optional QR/manual sync-code linking with a revocable 90-day device token
 - Anonymous Roku installation presence with no reading history or advertising identifier
+- Launch channel icon and splash artwork for FHD, HD and SD televisions
+- A separately labeled beta artwork set bundled for entitled accounts inside the same app
 
 Roku does not currently expose a documented app-facing light/dark appearance preference. The `System` choice therefore uses New Jersey Courier’s television-optimized dark palette; explicit Light and Dark choices remain available and persistent.
 
@@ -29,7 +31,11 @@ Create the production ZIP using that origin:
 pnpm roku:package
 ```
 
-The result is `apps/roku/dist/njcourier-roku.zip`. Its root contains `manifest`, `source/` and `components/`, as required by the Roku Developer Application Installer. `ROKU_API_URL=https://another-origin.example pnpm roku:package` remains available as an explicit build-time override; production packaging rejects placeholder hosts and URLs containing credentials, paths, queries or fragments.
+The result is `apps/roku/dist/njcourier-roku.zip`. Its root contains `manifest`, `images/`, `source/` and `components/`, as required by the Roku Developer Application Installer. `ROKU_API_URL=https://another-origin.example pnpm roku:package` remains available as an explicit build-time override; production packaging rejects placeholder hosts and URLs containing credentials, paths, queries or fragments.
+
+Normal and beta artwork live in the same `njcourier-roku.zip` application package. The committed manifest always uses the normal icon and initial splash because Roku displays both before the app can validate a linked account. After startup, the app validates the account-backed `releaseChannel` entitlement and displays beta or alpha flair for approved testers. Production users and failed or expired entitlement checks always receive the normal experience.
+
+The beta artwork is therefore available to beta-only in-app experiences without creating a second Roku application, store listing, installation, or device token. There is no client-side beta switch.
 
 For LAN testing only, an HTTP origin can be packaged with `ROKU_ALLOW_HTTP=1`. Production should always use HTTPS.
 
@@ -48,4 +54,4 @@ The second command uploads the existing ZIP to the device’s Developer Applicat
 
 Current Roku certification guidance requires non-TVE apps that require authentication to support an on-device authentication path. New Jersey Courier’s news, weather and live coverage do not require an account; QR/code linking is an optional personalization convenience. Before a Roku Channel Store submission, confirm the current authentication rules with Roku and add an approved on-device OAuth/AAL flow if Roku treats optional linking as an authenticated experience. Do not make remote-only linking a gate to public news.
 
-The launch package also needs final Roku artwork, screenshots, privacy disclosures, content ratings, streaming rights and device-matrix certification after the real identity and region are selected.
+The launch package still needs final Channel Store screenshots, privacy disclosures, content ratings, streaming-rights confirmation and device-matrix certification.

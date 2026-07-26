@@ -10,6 +10,7 @@ import {
   normalizeDevicePayload,
   safePairingHashEqual,
 } from "@/lib/device-pairing";
+import { getAccountReleaseChannel } from "@/lib/release-channel";
 
 export const runtime = "nodejs";
 const inputSchema = z.object({ deviceSecret: z.string().min(40).max(120) });
@@ -130,6 +131,7 @@ export async function POST(
           ? "androidtv"
           : "tvos";
     const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60_000);
+    const releaseChannel = await getAccountReleaseChannel(claimed.approvedByClerkId);
     await db.insert(deviceSessions).values({
       tokenHash: access.tokenHash,
       userClerkId: claimed.approvedByClerkId,
@@ -146,6 +148,7 @@ export async function POST(
           account: {
             name: claimed.approvedByName ?? "The New Jersey Courier reader",
             platform,
+            releaseChannel,
           },
           expiresAt: expiresAt.toISOString(),
         },

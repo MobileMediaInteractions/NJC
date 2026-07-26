@@ -107,6 +107,23 @@ export async function getOptionalAccountId() {
   return userId ?? null;
 }
 
+export async function getSiteAccountState() {
+  if (!isClerkConfigured()) {
+    return { signedIn: false, hasStudioAccess: false };
+  }
+
+  const { userId } = await auth();
+  if (!userId) {
+    return { signedIn: false, hasStudioAccess: false };
+  }
+
+  const user = await currentUser();
+  return {
+    signedIn: true,
+    hasStudioAccess: Boolean(resolveStaffRole(user?.publicMetadata.role)),
+  };
+}
+
 export async function canUseMobileAdmin() {
   const user = await getStudioUser();
   return user && ["admin", "editor", "producer"].includes(user.role) ? user : null;

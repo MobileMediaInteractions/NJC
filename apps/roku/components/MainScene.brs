@@ -2,6 +2,8 @@ sub init()
   m.background = m.top.findNode("background")
   m.brand = m.top.findNode("brand")
   m.tagline = m.top.findNode("tagline")
+  m.releaseFlair = m.top.findNode("releaseFlair")
+  m.releaseFlairLabel = m.top.findNode("releaseFlairLabel")
   m.accountLabel = m.top.findNode("accountLabel")
   m.rule = m.top.findNode("rule")
   m.heroImage = m.top.findNode("heroImage")
@@ -60,6 +62,8 @@ sub init()
     registry.Flush()
   end if
   m.accessToken = ""
+  m.releaseChannel = "production"
+  applyReleaseChannel(m.releaseChannel)
   if registry.Exists("deviceToken") then m.accessToken = registry.Read("deviceToken")
   updateAccountNavigation(m.accessToken <> "")
   applyTheme()
@@ -303,6 +307,9 @@ sub onPairPoll(event as Object)
     registry.Flush()
     name = "Courier reader"
     if result.account <> invalid and result.account.name <> invalid then name = result.account.name
+    channel = "production"
+    if result.account <> invalid and result.account.releaseChannel <> invalid then channel = result.account.releaseChannel
+    applyReleaseChannel(channel)
     m.accountLabel.text = "Connected as " + name
     updateAccountNavigation(true)
     m.top.findNode("pairStatus").text = "Connected as " + name + ". You may close this screen."
@@ -341,10 +348,12 @@ sub onSession(event as Object)
   result = event.GetData()
   removeTask(event)
   if result <> invalid and result.ok
+    applyReleaseChannel(result.releaseChannel)
     m.accountLabel.text = "Connected as " + safeString(result.name)
     updateAccountNavigation(true)
   else
     m.accessToken = ""
+    applyReleaseChannel("production")
     registry = CreateObject("roRegistrySection", "Harborline")
     registry.Delete("deviceToken")
     registry.Flush()
@@ -352,6 +361,22 @@ sub onSession(event as Object)
     updateAccountNavigation(false)
   end if
 end sub
+
+sub applyReleaseChannel(value as Dynamic)
+  channel = LCase(safeString(value))
+  if channel <> "alpha" and channel <> "beta" then channel = "production"
+  m.releaseChannel = channel
+  m.releaseFlair.visible = channel <> "production"
+  if channel = "alpha"
+    m.releaseFlairLabel.text = "ALPHA"
+  else
+    m.releaseFlairLabel.text = "BETA"
+  end if
+end sub
+
+function hasPrereleaseAccess() as Boolean
+  return m.releaseChannel = "alpha" or m.releaseChannel = "beta"
+end function
 
 sub updateAccountNavigation(connected as Boolean)
   m.connectButton.visible = not connected

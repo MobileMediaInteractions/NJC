@@ -94,6 +94,28 @@ export const siteConfigurationSchema = z.object({
 export type SiteConfiguration = z.infer<typeof siteConfigurationSchema>;
 export type AdPlacementName = keyof SiteConfiguration["advertising"]["placements"];
 
+export function include20Under20Navigation(
+  navigation: SiteConfiguration["navigation"],
+) {
+  const initiative = { label: "20 Under 20", href: "/20-under-20" };
+  const initiativeIndex = navigation.findIndex(
+    (item) => item.href === initiative.href,
+  );
+
+  if (initiativeIndex >= 0) {
+    return navigation.filter((item) => item.href !== "/staff");
+  }
+
+  const staffIndex = navigation.findIndex((item) => item.href === "/staff");
+  if (staffIndex >= 0) {
+    return navigation.map((item, index) =>
+      index === staffIndex ? initiative : item,
+    );
+  }
+
+  return navigation.length < 12 ? [...navigation, initiative] : navigation;
+}
+
 export const defaultSiteConfiguration: SiteConfiguration = {
   publication: {
     name: siteConfig.name,
@@ -184,7 +206,12 @@ export const getSiteConfiguration = cache(async function getSiteConfiguration() 
       .where(eq(siteSettings.key, siteConfigurationKey))
       .limit(1);
     const parsed = siteConfigurationSchema.safeParse(record?.value);
-    if (parsed.success) return parsed.data;
+    if (parsed.success) {
+      return {
+        ...parsed.data,
+        navigation: include20Under20Navigation(parsed.data.navigation),
+      };
+    }
     if (record) console.error("Stored site configuration is invalid", parsed.error.flatten());
   } catch (error) {
     console.error("Site configuration lookup failed", error);

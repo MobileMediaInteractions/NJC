@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="540" height="405" viewBox="0 0 540 405">
+  <title>The New Jersey Courier Roku beta channel icon</title>
+  <rect width="540" height="405" fill="#0B211B"/>
+  <rect x="0" y="0" width="540" height="9" fill="#C49545"/>
+  <rect x="0" y="396" width="540" height="9" fill="#C49545"/>
+  <rect x="194" y="44" width="152" height="152" rx="18" fill="#173E32" stroke="#2F6654" stroke-width="3"/>
+  <path d="M216 76h108M216 164h108" stroke="#C49545" stroke-width="5"/>
+  <text x="270" y="142" fill="#F6F1E7" font-family="Georgia, 'Times New Roman', serif" font-size="63" font-weight="700" text-anchor="middle" letter-spacing="-8">NJC</text>
+  <text x="270" y="250" fill="#F8F5EE" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" text-anchor="middle" letter-spacing="1">THE NEW JERSEY</text>
+  <text x="270" y="290" fill="#F8F5EE" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="800" text-anchor="middle" letter-spacing="2">COURIER</text>
+  <rect x="199" y="318" width="142" height="42" rx="21" fill="#C49545"/>
+  <text x="270" y="346" fill="#171917" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="800" text-anchor="middle" letter-spacing="5">BETA</text>
+</svg>

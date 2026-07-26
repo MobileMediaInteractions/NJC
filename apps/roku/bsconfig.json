@@ -2,6 +2,7 @@
   "rootDir": ".",
   "files": [
     "manifest",
+    "images/**/*",
     "source/**/*",
     "components/**/*"
   ],

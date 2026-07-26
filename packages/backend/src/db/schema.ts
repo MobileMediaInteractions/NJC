@@ -10,6 +10,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const staffRole = pgEnum("staff_role", [
   "admin",
@@ -181,14 +182,61 @@ export const mediaAssets = pgTable(
     height: integer("height"),
     altText: text("alt_text"),
     credit: text("credit"),
+    copyright: text("copyright"),
+    license: text("license"),
+    source: text("source").notNull().default("studio"),
+    extension: text("extension"),
+    sha256: text("sha256"),
+    durationMs: integer("duration_ms"),
+    processingStatus: text("processing_status").notNull().default("ready"),
+    visibility: text("visibility").notNull().default("public"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
     uploadedById: uuid("uploaded_by_id").references(() => users.id, {
       onDelete: "set null",
     }),
+    uploadedBySnapshot: jsonb("uploaded_by_snapshot").$type<{
+      clerkId: string;
+      name: string;
+    }>(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
-  (table) => [uniqueIndex("media_pathname_idx").on(table.pathname)],
+  (table) => [
+    uniqueIndex("media_pathname_idx").on(table.pathname),
+    index("media_type_created_idx").on(table.mimeType, table.createdAt),
+    index("media_deleted_created_idx").on(table.deletedAt, table.createdAt),
+    index("media_sha256_idx").on(table.sha256),
+  ],
+);
+
+export const mediaAssetUsages = pgTable(
+  "media_asset_usages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    assetId: uuid("asset_id")
+      .notNull()
+      .references(() => mediaAssets.id, { onDelete: "restrict" }),
+    product: text("product").notNull().default("courier"),
+    ownerType: text("owner_type").notNull(),
+    ownerId: text("owner_id").notNull(),
+    field: text("field").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("media_asset_usage_unique_idx").on(
+      table.assetId,
+      table.product,
+      table.ownerType,
+      table.ownerId,
+      table.field,
+    ),
+    index("media_asset_usage_owner_idx").on(table.product, table.ownerType, table.ownerId),
+  ],
 );
 
 export const assignments = pgTable(
@@ -561,6 +609,396 @@ export const siteSettings = pgTable("site_settings", {
   updatedByClerkId: text("updated_by_clerk_id"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * Product-level release controls. Parents override children in application
+ * policy, while each row remains independently configurable and auditable.
+ */
+export const featureFlags = pgTable(
+  "feature_flags",
+  {
+    key: text("key").primaryKey(),
+    parentKey: text("parent_key"),
+    enabled: boolean("enabled").notNull().default(false),
+    description: text("description").notNull().default(""),
+    configuration: jsonb("configuration").$type<Record<string, unknown>>().notNull().default({}),
+    updatedByClerkId: text("updated_by_clerk_id"),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("feature_flags_parent_idx").on(table.parentKey)],
+);
+
+export const premiumContent = pgTable(
+  "premium_content",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    kind: text("kind").notNull(),
+    status: text("status").notNull().default("draft"),
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    eyebrow: text("eyebrow").notNull().default("NJC+"),
+    summary: text("summary").notNull().default(""),
+    body: jsonb("body").$type<string[]>().notNull().default([]),
+    parentId: uuid("parent_id"),
+    seasonNumber: integer("season_number"),
+    episodeNumber: integer("episode_number"),
+    durationMs: integer("duration_ms"),
+    imageAssetId: uuid("image_asset_id").references(() => mediaAssets.id, { onDelete: "set null" }),
+    imageUrl: text("image_url"),
+    imageAlt: text("image_alt"),
+    mediaAssetId: uuid("media_asset_id").references(() => mediaAssets.id, { onDelete: "set null" }),
+    mediaUrl: text("media_url"),
+    mediaMimeType: text("media_mime_type"),
+    captionsUrl: text("captions_url"),
+    transcript: text("transcript"),
+    authors: jsonb("authors").$type<Array<{ id?: string; name: string; role?: string }>>().notNull().default([]),
+    speakers: jsonb("speakers").$type<Array<{ name: string; role?: string }>>().notNull().default([]),
+    categories: jsonb("categories").$type<string[]>().notNull().default([]),
+    tags: jsonb("tags").$type<string[]>().notNull().default([]),
+    relatedIds: jsonb("related_ids").$type<string[]>().notNull().default([]),
+    paywallPolicy: text("paywall_policy").notNull().default("njc_plus"),
+    requiredTierIds: jsonb("required_tier_ids").$type<string[]>().notNull().default([]),
+    previewSeconds: integer("preview_seconds").notNull().default(0),
+    rentalHours: integer("rental_hours"),
+    commentsEnabled: boolean("comments_enabled").notNull().default(false),
+    isLive: boolean("is_live").notNull().default(false),
+    isBreaking: boolean("is_breaking").notNull().default(false),
+    isFeatured: boolean("is_featured").notNull().default(false),
+    seoTitle: text("seo_title"),
+    seoDescription: text("seo_description"),
+    socialImageUrl: text("social_image_url"),
+    noIndex: boolean("no_index").notNull().default(false),
+    scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+    createdByClerkId: text("created_by_clerk_id").notNull(),
+    updatedByClerkId: text("updated_by_clerk_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("premium_content_slug_idx").on(table.slug),
+    index("premium_content_status_published_idx").on(table.status, table.publishedAt),
+    index("premium_content_kind_published_idx").on(table.kind, table.publishedAt),
+    index("premium_content_parent_idx").on(table.parentId, table.seasonNumber, table.episodeNumber),
+  ],
+);
+
+export const premiumContentRelations = pgTable(
+  "premium_content_relations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    sourceContentId: uuid("source_content_id").notNull().references(() => premiumContent.id, { onDelete: "cascade" }),
+    targetContentId: uuid("target_content_id").notNull().references(() => premiumContent.id, { onDelete: "cascade" }),
+    relationType: text("relation_type").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("premium_content_relation_unique_idx").on(table.sourceContentId, table.targetContentId, table.relationType),
+    index("premium_content_relation_target_idx").on(table.targetContentId, table.relationType),
+  ],
+);
+
+export const premiumHomepageModules = pgTable(
+  "premium_homepage_modules",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    moduleType: text("module_type").notNull(),
+    title: text("title").notNull().default(""),
+    eyebrow: text("eyebrow").notNull().default(""),
+    contentIds: jsonb("content_ids").$type<string[]>().notNull().default([]),
+    configuration: jsonb("configuration").$type<Record<string, unknown>>().notNull().default({}),
+    sortOrder: integer("sort_order").notNull().default(0),
+    enabled: boolean("enabled").notNull().default(true),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    updatedByClerkId: text("updated_by_clerk_id").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("premium_homepage_order_idx").on(table.enabled, table.sortOrder)],
+);
+
+export const premiumContentRevisions = pgTable(
+  "premium_content_revisions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    contentId: uuid("content_id").notNull().references(() => premiumContent.id, { onDelete: "cascade" }),
+    version: integer("version").notNull(),
+    snapshot: jsonb("snapshot").notNull(),
+    note: text("note"),
+    editorClerkId: text("editor_clerk_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("premium_content_revision_unique_idx").on(table.contentId, table.version)],
+);
+
+export const premiumTiers = pgTable(
+  "premium_tiers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull(),
+    name: text("name").notNull(),
+    description: text("description").notNull().default(""),
+    priceCents: integer("price_cents").notNull(),
+    currency: text("currency").notNull().default("usd"),
+    interval: text("interval").notNull().default("month"),
+    benefits: jsonb("benefits").$type<string[]>().notNull().default([]),
+    capabilities: jsonb("capabilities").$type<string[]>().notNull().default([]),
+    trialEligible: boolean("trial_eligible").notNull().default(false),
+    accessCreditEligible: boolean("access_credit_eligible").notNull().default(false),
+    available: boolean("available").notNull().default(false),
+    visible: boolean("visible").notNull().default(false),
+    providerPriceId: text("provider_price_id"),
+    rules: jsonb("rules").$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("premium_tiers_slug_idx").on(table.slug)],
+);
+
+export const premiumOffers = pgTable(
+  "premium_offers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull(),
+    tierId: uuid("tier_id").notNull().references(() => premiumTiers.id, { onDelete: "restrict" }),
+    kind: text("kind").notNull().default("trial"),
+    name: text("name").notNull(),
+    promotionalText: text("promotional_text").notNull().default(""),
+    priceCents: integer("price_cents").notNull().default(100),
+    durationDays: integer("duration_days").notNull().default(3),
+    active: boolean("active").notNull().default(false),
+    perUserLimit: integer("per_user_limit").notNull().default(1),
+    paymentRequired: boolean("payment_required").notNull().default(true),
+    autoRenews: boolean("auto_renews").notNull().default(true),
+    renewalPriceCents: integer("renewal_price_cents"),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    providerPriceId: text("provider_price_id"),
+    eligibility: jsonb("eligibility").$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("premium_offers_slug_idx").on(table.slug)],
+);
+
+export const premiumSubscriptions = pgTable(
+  "premium_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userClerkId: text("user_clerk_id").notNull(),
+    tierId: uuid("tier_id").notNull().references(() => premiumTiers.id, { onDelete: "restrict" }),
+    offerId: uuid("offer_id").references(() => premiumOffers.id, { onDelete: "set null" }),
+    provider: text("provider").notNull().default("stripe"),
+    providerCustomerId: text("provider_customer_id"),
+    providerSubscriptionId: text("provider_subscription_id"),
+    status: text("status").notNull().default("pending"),
+    currentPeriodStartsAt: timestamp("current_period_starts_at", { withTimezone: true }),
+    currentPeriodEndsAt: timestamp("current_period_ends_at", { withTimezone: true }),
+    cancelAtPeriodEnd: boolean("cancel_at_period_end").notNull().default(false),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("premium_subscriptions_user_status_idx").on(table.userClerkId, table.status),
+    uniqueIndex("premium_subscriptions_provider_idx").on(table.provider, table.providerSubscriptionId),
+  ],
+);
+
+export const premiumEntitlements = pgTable(
+  "premium_entitlements",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userClerkId: text("user_clerk_id").notNull(),
+    scopeType: text("scope_type").notNull(),
+    scopeId: text("scope_id").notNull(),
+    sourceType: text("source_type").notNull(),
+    sourceId: text("source_id"),
+    status: text("status").notNull().default("active"),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull().defaultNow(),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    pausedAt: timestamp("paused_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("premium_entitlements_user_active_idx").on(table.userClerkId, table.status, table.endsAt),
+    index("premium_entitlements_scope_idx").on(table.scopeType, table.scopeId, table.status),
+    uniqueIndex("premium_entitlements_source_idx").on(
+      table.userClerkId,
+      table.sourceType,
+      table.sourceId,
+      table.scopeType,
+      table.scopeId,
+    ),
+  ],
+);
+
+export const premiumBetaTesterGrants = pgTable(
+  "premium_beta_tester_grants",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userClerkId: text("user_clerk_id").notNull(),
+    status: text("status").notNull().default("active"),
+    featureKeys: jsonb("feature_keys").$type<string[]>().notNull().default([]),
+    premiumContentIncluded: boolean("premium_content_included").notNull().default(false),
+    contentIds: jsonb("content_ids").$type<string[]>().notNull().default([]),
+    showMemberBranding: boolean("show_member_branding").notNull().default(false),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull().defaultNow(),
+    endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+    pausedAt: timestamp("paused_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    invitedByClerkId: text("invited_by_clerk_id").notNull(),
+    revokedByClerkId: text("revoked_by_clerk_id"),
+    reason: text("reason").notNull(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("premium_beta_tester_user_status_idx").on(table.userClerkId, table.status, table.endsAt),
+    index("premium_beta_tester_active_window_idx").on(table.status, table.startsAt, table.endsAt),
+    uniqueIndex("premium_beta_tester_one_current_idx")
+      .on(table.userClerkId)
+      .where(sql`${table.status} in ('active', 'paused')`),
+  ],
+);
+
+export const accessCreditLedger = pgTable(
+  "access_credit_ledger",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userClerkId: text("user_clerk_id").notNull(),
+    amount: integer("amount").notNull(),
+    transactionType: text("transaction_type").notNull(),
+    reason: text("reason").notNull(),
+    sourceType: text("source_type"),
+    sourceId: text("source_id"),
+    reversalOfId: uuid("reversal_of_id"),
+    idempotencyKey: text("idempotency_key"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    createdByClerkId: text("created_by_clerk_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("access_credit_ledger_user_idx").on(table.userClerkId, table.createdAt),
+    uniqueIndex("access_credit_ledger_idempotency_idx").on(table.idempotencyKey),
+  ],
+);
+
+export const accessCreditRedemptionRules = pgTable(
+  "access_credit_redemption_rules",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    active: boolean("active").notNull().default(false),
+    costCredits: integer("cost_credits").notNull(),
+    benefitType: text("benefit_type").notNull(),
+    benefitValue: integer("benefit_value"),
+    tierId: uuid("tier_id").references(() => premiumTiers.id, { onDelete: "restrict" }),
+    contentId: uuid("content_id").references(() => premiumContent.id, { onDelete: "restrict" }),
+    limits: jsonb("limits").$type<Record<string, unknown>>().notNull().default({}),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("access_credit_rules_active_idx").on(table.active, table.costCredits)],
+);
+
+export const accessCreditRedemptions = pgTable(
+  "access_credit_redemptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userClerkId: text("user_clerk_id").notNull(),
+    ruleId: uuid("rule_id").notNull().references(() => accessCreditRedemptionRules.id, { onDelete: "restrict" }),
+    ledgerTransactionId: uuid("ledger_transaction_id").notNull().references(() => accessCreditLedger.id, { onDelete: "restrict" }),
+    entitlementId: uuid("entitlement_id").references(() => premiumEntitlements.id, { onDelete: "restrict" }),
+    status: text("status").notNull().default("completed"),
+    idempotencyKey: text("idempotency_key").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("access_credit_redemptions_idempotency_idx").on(table.idempotencyKey),
+    index("access_credit_redemptions_user_idx").on(table.userClerkId, table.createdAt),
+  ],
+);
+
+export const premiumPlaybackProgress = pgTable(
+  "premium_playback_progress",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userClerkId: text("user_clerk_id").notNull(),
+    contentId: uuid("content_id").notNull().references(() => premiumContent.id, { onDelete: "cascade" }),
+    positionMs: integer("position_ms").notNull().default(0),
+    durationMs: integer("duration_ms"),
+    completed: boolean("completed").notNull().default(false),
+    devicePlatform: text("device_platform").notNull().default("web"),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("premium_playback_progress_user_content_idx").on(table.userClerkId, table.contentId),
+    index("premium_playback_progress_user_updated_idx").on(table.userClerkId, table.updatedAt),
+  ],
+);
+
+export const premiumComments = pgTable(
+  "premium_comments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    contentId: uuid("content_id").notNull().references(() => premiumContent.id, { onDelete: "cascade" }),
+    parentId: uuid("parent_id"),
+    authorClerkId: text("author_clerk_id").notNull(),
+    body: text("body").notNull(),
+    status: text("status").notNull().default("pending"),
+    editedAt: timestamp("edited_at", { withTimezone: true }),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("premium_comments_content_status_idx").on(table.contentId, table.status, table.createdAt)],
+);
+
+export const premiumCommentReports = pgTable(
+  "premium_comment_reports",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    commentId: uuid("comment_id").notNull().references(() => premiumComments.id, { onDelete: "cascade" }),
+    reporterClerkId: text("reporter_clerk_id").notNull(),
+    reason: text("reason").notNull(),
+    status: text("status").notNull().default("open"),
+    reviewedByClerkId: text("reviewed_by_clerk_id"),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("premium_comment_reports_reporter_idx").on(table.commentId, table.reporterClerkId),
+    index("premium_comment_reports_status_idx").on(table.status, table.createdAt),
+  ],
+);
+
+export const premiumAuditLogs = pgTable(
+  "premium_audit_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    actorClerkId: text("actor_clerk_id").notNull(),
+    action: text("action").notNull(),
+    targetType: text("target_type").notNull(),
+    targetId: text("target_id").notNull(),
+    reason: text("reason"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    ipHash: text("ip_hash"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("premium_audit_target_idx").on(table.targetType, table.targetId, table.createdAt),
+    index("premium_audit_actor_idx").on(table.actorClerkId, table.createdAt),
+  ],
+);
 
 export const dataRequests = pgTable(
   "data_requests",

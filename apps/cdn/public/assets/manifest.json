@@ -11,6 +11,10 @@
     "wordmarkInverse": "/assets/brand/v1/wordmark-inverse.svg",
     "appIcon": "/assets/brand/v1/app-icon.svg",
     "adaptiveForeground": "/assets/brand/v1/adaptive-foreground.svg",
-    "gardenStateEngraving": "/assets/editorial/v1/garden-state-engraving.png"
+    "gardenStateEngraving": "/assets/editorial/v1/garden-state-engraving.png",
+    "njcPlusPrimaryDark": "/assets/njc-plus/v1/njc-plus-primary-dark.svg",
+    "njcPlusPrimaryLight": "/assets/njc-plus/v1/njc-plus-primary-light.svg",
+    "njcPlusIcon": "/assets/njc-plus/v1/njc-plus-icon.svg",
+    "njcPlusSignalField": "/assets/njc-plus/v1/signal-field.png"
   }
 }

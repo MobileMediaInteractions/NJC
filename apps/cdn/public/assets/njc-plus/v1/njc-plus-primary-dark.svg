@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 352 100" role="img" aria-labelledby="title">
+  <title id="title">NJC Plus</title>
+  <g fill="none" fill-rule="evenodd">
+    <path fill="#B9FF4A" d="M0 12h76v76H0z"/>
+    <path fill="#05070C" d="M16 27h10l24 31V27h11v46H51L27 42v31H16z"/>
+    <path fill="#05070C" d="M59 51h17v10H59zM62.5 47.5v17h10v-17z"/>
+    <text x="96" y="69" fill="#F6F8FB" font-family="Arial Black, Arial, sans-serif" font-size="54" font-weight="900" letter-spacing="-3">NJC+</text>
+    <path d="M99 81h230" stroke="#63E6FF" stroke-width="4"/>
+  </g>
+</svg>

@@ -6,6 +6,10 @@
 
     <Label id="brand" translation="[72,42]" width="900" height="62" text="THE NEW JERSEY COURIER" color="0xF6F1E7FF" font="font:ExtraLargeBoldSystemFont" />
     <Label id="tagline" translation="[78,94]" width="760" height="34" text="LOCAL NEWS · MIDDLESEX COUNTY" color="0x9CC5ADFF" font="font:SmallBoldSystemFont" />
+    <Group id="releaseFlair" translation="[970,48]" visible="false">
+      <Rectangle width="160" height="46" color="0xC49545FF" />
+      <Label id="releaseFlairLabel" width="160" height="46" text="BETA" color="0x171917FF" font="font:SmallBoldSystemFont" horizAlign="center" vertAlign="center" />
+    </Group>
     <Label id="accountLabel" translation="[1350,55]" width="490" height="34" text="Public access" color="0x87A9BCFF" font="font:SmallSystemFont" horizAlign="right" />
 
     <LayoutGroup id="navigation" translation="[70,146]" layoutDirection="horiz" itemSpacings="[18]" vertAlignment="center">

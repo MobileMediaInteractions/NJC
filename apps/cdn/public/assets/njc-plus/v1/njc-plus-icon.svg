@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">NJC Plus icon</title>
+  <rect width="128" height="128" rx="24" fill="#05070C"/>
+  <path d="M19 23h90v82H19z" fill="#B9FF4A"/>
+  <path d="M32 42h11l28 36V42h12v52H72L44 58v36H32z" fill="#05070C"/>
+  <path d="M79 55h30v13H79zM87.5 46.5h13v30h-13z" fill="#FF5964"/>
+  <path d="M22 108h84" stroke="#63E6FF" stroke-width="6"/>
+</svg>
