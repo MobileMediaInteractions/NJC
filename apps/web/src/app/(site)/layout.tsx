@@ -3,6 +3,7 @@ import { SiteHeader } from "@/components/site-header";
 import { GoogleAdSenseScript } from "@/components/google-ads";
 import { getSiteConfiguration, isGoogleAdsLive, normalizePublisherId } from "@/lib/site-settings";
 import { isNjcPlusPublicEnabled } from "@/lib/feature-flags";
+import { normalizeStudioHref } from "@/lib/site-account";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export default async function PublicSiteLayout({ children }: { children: React.R
         features={configuration.features}
         plusEnabled={plusEnabled}
         clerkEnabled={Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)}
-        studioHref={process.env.NEXT_PUBLIC_STUDIO_URL ?? "/studio"}
+        studioHref={normalizeStudioHref(process.env.NEXT_PUBLIC_STUDIO_URL)}
       />
       <main id="main-content" className="flex-1">{children}</main>
       <SiteFooter publication={configuration.publication} features={configuration.features} />

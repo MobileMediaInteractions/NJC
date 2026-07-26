@@ -6,7 +6,7 @@ deployment and one separately deployable static asset origin.
 | Host | Vercel project | Behavior |
 | --- | --- | --- |
 | `www.thejerseycourier.com` | `njc-web` | Canonical public publication |
-| `studio.thejerseycourier.com` | `njc-web` | Redirects `/` to `/studio`; Studio authentication and authorization remain enforced by Clerk and the API |
+| `studio.thejerseycourier.com` | `njc-web` | Serves Studio at `/` through an internal rewrite; Studio authentication and authorization remain enforced by Clerk and the API |
 | `api.thejerseycourier.com` | `njc-web` | Clean `/v1/*` and `/developer/*` aliases rewrite to the existing versioned API routes |
 | `cdn.thejerseycourier.com` | dedicated CDN project rooted at `apps/cdn` | Immutable public brand and editorial assets; never private newsroom material |
 | `plus.thejerseycourier.com` | `njc-web` | Host-aware NJC+ product routes; the parent beta flag still returns 404 until launch |
@@ -21,7 +21,7 @@ Set these values for Production:
 
 ```dotenv
 NEXT_PUBLIC_SITE_URL=https://www.thejerseycourier.com
-NEXT_PUBLIC_STUDIO_URL=https://studio.thejerseycourier.com/studio
+NEXT_PUBLIC_STUDIO_URL=https://studio.thejerseycourier.com
 NEXT_PUBLIC_STUDIO_HOST=studio.thejerseycourier.com
 NEXT_PUBLIC_API_HOST=api.thejerseycourier.com
 NEXT_PUBLIC_PLUS_HOST=plus.thejerseycourier.com
@@ -55,8 +55,10 @@ is not a separate search property.
 
 After deployment:
 
-1. Confirm the Studio root reaches `/studio` and an unauthorized session still
-   receives the normal Clerk access gate.
+1. Confirm the Studio root serves the newsroom without exposing `/studio` in
+   the browser, and an unauthorized session still receives the normal Clerk
+   access gate. Confirm the legacy public `/studio/*` URL permanently redirects
+   to the matching clean Studio-subdomain path.
 2. Confirm `https://api.thejerseycourier.com/v1/stories` reaches the existing
    protected reader API and developer endpoints still require API keys.
 3. Confirm CDN assets return the expected cache, CORS and no-index headers.

@@ -9,12 +9,29 @@ test("production subdomains have explicit host-aware routes", async () => {
   assert.ok(redirects);
   assert.ok(rewrites && !Array.isArray(rewrites));
 
-  assert.ok(redirects.some((route) =>
+  assert.ok(rewrites.beforeFiles?.some((route) =>
     route.source === "/" &&
     route.destination === "/studio" &&
     route.has?.some((condition) =>
       condition.type === "host" &&
       condition.value === "studio.thejerseycourier.com"
+    )
+  ));
+  assert.ok(rewrites.beforeFiles?.some((route) =>
+    route.source === "/stories/:path*" &&
+    route.destination === "/studio/stories/:path*" &&
+    route.has?.some((condition) =>
+      condition.type === "host" &&
+      condition.value === "studio.thejerseycourier.com"
+    )
+  ));
+  assert.ok(redirects.some((route) =>
+    route.source === "/studio/:path*" &&
+    route.destination === "https://studio.thejerseycourier.com/:path*" &&
+    route.permanent === true &&
+    route.has?.some((condition) =>
+      condition.type === "host" &&
+      condition.value === "www.thejerseycourier.com"
     )
   ));
   assert.ok(rewrites.beforeFiles?.some((route) =>
@@ -28,6 +45,14 @@ test("production subdomains have explicit host-aware routes", async () => {
   assert.ok(rewrites.beforeFiles?.some((route) =>
     route.source === "/v1/:path*" &&
     route.destination === "/api/v1/:path*" &&
+    route.has?.some((condition) =>
+      condition.type === "host" &&
+      condition.value === "api.thejerseycourier.com"
+    )
+  ));
+  assert.ok(rewrites.beforeFiles?.some((route) =>
+    route.source === "/" &&
+    route.destination === "/developers" &&
     route.has?.some((condition) =>
       condition.type === "host" &&
       condition.value === "api.thejerseycourier.com"

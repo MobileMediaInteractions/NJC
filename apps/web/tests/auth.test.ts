@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { canDeleteStory, canManageSiteSettings, resolveStaffRole } from "../src/lib/auth";
-import { hasStudioAccessRole, resolveSiteAccountAction } from "../src/lib/site-account";
+import {
+  hasStudioAccessRole,
+  normalizeStudioHref,
+  resolveSiteAccountAction,
+} from "../src/lib/site-account";
 
 test("Studio access requires an explicitly assigned staff role", () => {
   assert.equal(resolveStaffRole(undefined), null);
@@ -46,4 +50,9 @@ test("public account navigation reflects sign-in and Studio access", () => {
     ),
     { label: "Studio", href: "https://studio.example.com" },
   );
+  assert.equal(
+    normalizeStudioHref("https://studio.example.com/studio?legacy=1#old"),
+    "https://studio.example.com",
+  );
+  assert.equal(normalizeStudioHref("/studio"), "/studio");
 });

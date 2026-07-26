@@ -15,6 +15,22 @@ export function hasStudioAccessRole(value: unknown) {
   return typeof value === "string" && studioAccessRoles.has(value);
 }
 
+export function normalizeStudioHref(value: string | undefined) {
+  if (!value) {
+    return "/studio";
+  }
+
+  try {
+    const url = new URL(value);
+    url.pathname = "/";
+    url.search = "";
+    url.hash = "";
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return value;
+  }
+}
+
 export function resolveSiteAccountAction(
   state: { signedIn: boolean; hasStudioAccess: boolean },
   studioHref = "/studio",

@@ -13,6 +13,29 @@ const apiHostname =
   process.env.NEXT_PUBLIC_API_HOST ?? "api.thejerseycourier.com";
 const plusHostname =
   process.env.NEXT_PUBLIC_PLUS_HOST ?? "plus.thejerseycourier.com";
+const canonicalSiteHostname = new URL(canonicalSiteOrigin).hostname;
+const studioOrigin = `https://${studioHostname}`;
+const apiOrigin = `https://${apiHostname}`;
+const plusOrigin = `https://${plusHostname}`;
+const studioSections = [
+  "analytics",
+  "chat",
+  "exports",
+  "media",
+  "njc-plus",
+  "press",
+  "press-releases",
+  "profile",
+  "settings",
+  "sign-in",
+  "stories",
+  "team",
+  "tips",
+] as const;
+
+function onHost(value: string) {
+  return [{ type: "host" as const, value }];
+}
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@harborline/backend", "@harborline/contracts"],
@@ -57,21 +80,79 @@ const nextConfig: NextConfig = {
         source: "/studio/:path*",
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" }],
       },
+      {
+        source: "/:path*",
+        has: onHost(studioHostname),
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" }],
+      },
+      {
+        source: "/:path*",
+        has: onHost(apiHostname),
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
     ];
   },
   async redirects() {
     return [
       {
-        source: "/",
-        has: [{ type: "host", value: studioHostname }],
-        destination: "/studio",
-        permanent: false,
+        source: "/studio",
+        has: onHost(canonicalSiteHostname),
+        destination: studioOrigin,
+        permanent: true,
       },
       {
-        source: "/",
-        has: [{ type: "host", value: apiHostname }],
-        destination: `${canonicalSiteOrigin}/developers`,
-        permanent: false,
+        source: "/studio/:path*",
+        has: onHost(canonicalSiteHostname),
+        destination: `${studioOrigin}/:path*`,
+        permanent: true,
+      },
+      {
+        source: "/studio",
+        has: onHost(studioHostname),
+        destination: studioOrigin,
+        permanent: true,
+      },
+      {
+        source: "/studio/:path*",
+        has: onHost(studioHostname),
+        destination: `${studioOrigin}/:path*`,
+        permanent: true,
+      },
+      {
+        source: "/plus",
+        has: onHost(canonicalSiteHostname),
+        destination: plusOrigin,
+        permanent: true,
+      },
+      {
+        source: "/plus/:path*",
+        has: onHost(canonicalSiteHostname),
+        destination: `${plusOrigin}/:path*`,
+        permanent: true,
+      },
+      {
+        source: "/plus",
+        has: onHost(plusHostname),
+        destination: plusOrigin,
+        permanent: true,
+      },
+      {
+        source: "/plus/:path*",
+        has: onHost(plusHostname),
+        destination: `${plusOrigin}/:path*`,
+        permanent: true,
+      },
+      {
+        source: "/developers",
+        has: onHost(canonicalSiteHostname),
+        destination: apiOrigin,
+        permanent: true,
+      },
+      {
+        source: "/docs",
+        has: onHost(apiHostname),
+        destination: apiOrigin,
+        permanent: true,
       },
     ];
   },
@@ -80,38 +161,55 @@ const nextConfig: NextConfig = {
       beforeFiles: [
         {
           source: "/",
-          has: [{ type: "host", value: plusHostname }],
+          has: onHost(studioHostname),
+          destination: "/studio",
+        },
+        ...studioSections.flatMap((section) => [
+          {
+            source: `/${section}`,
+            has: onHost(studioHostname),
+            destination: `/studio/${section}`,
+          },
+          {
+            source: `/${section}/:path*`,
+            has: onHost(studioHostname),
+            destination: `/studio/${section}/:path*`,
+          },
+        ]),
+        {
+          source: "/",
+          has: onHost(apiHostname),
+          destination: "/developers",
+        },
+        {
+          source: "/",
+          has: onHost(plusHostname),
           destination: "/plus",
         },
         ...["watch", "listen", "live", "search", "join"].map((section) => ({
           source: `/${section}`,
-          has: [{ type: "host" as const, value: plusHostname }],
+          has: onHost(plusHostname),
           destination: `/plus/${section}`,
         })),
         {
           source: "/join/:path*",
-          has: [{ type: "host", value: plusHostname }],
+          has: onHost(plusHostname),
           destination: "/plus/join/:path*",
         },
         {
           source: "/:slug",
-          has: [{ type: "host", value: plusHostname }],
+          has: onHost(plusHostname),
           destination: "/plus/:slug",
         },
         {
           source: "/v1/:path*",
-          has: [{ type: "host", value: apiHostname }],
+          has: onHost(apiHostname),
           destination: "/api/v1/:path*",
         },
         {
           source: "/developer/:path*",
-          has: [{ type: "host", value: apiHostname }],
+          has: onHost(apiHostname),
           destination: "/api/developer/:path*",
-        },
-        {
-          source: "/docs",
-          has: [{ type: "host", value: apiHostname }],
-          destination: "/developers",
         },
       ],
       afterFiles: [],
