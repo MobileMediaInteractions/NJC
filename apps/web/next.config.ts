@@ -154,6 +154,12 @@ const nextConfig: NextConfig = {
         destination: apiOrigin,
         permanent: true,
       },
+      {
+        source: "/developers",
+        has: onHost(apiHostname),
+        destination: apiOrigin,
+        permanent: true,
+      },
     ];
   },
   async rewrites() {
