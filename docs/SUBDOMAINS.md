@@ -9,7 +9,7 @@ deployment and one separately deployable static asset origin.
 | `studio.thejerseycourier.com` | `njc-web` | Serves Studio at `/` through an internal rewrite; Studio authentication and authorization remain enforced by Clerk and the API |
 | `api.thejerseycourier.com` | `njc-web` | Clean `/v1/*` and `/developer/*` aliases rewrite to the existing versioned API routes |
 | `cdn.thejerseycourier.com` | dedicated CDN project rooted at `apps/cdn` | Immutable public brand and editorial assets; never private newsroom material |
-| `plus.thejerseycourier.com` | `njc-web` | Host-aware NJC+ product routes; the parent beta flag still returns 404 until launch |
+| `plus.thejerseycourier.com` | `njc-web` | Host-aware NJC+ product routes; unavailable public surfaces redirect to the canonical publication while Studio preview and invited-beta access remain entitlement-gated |
 
 DNS labels cannot contain `+`, so the public hostname for NJC+ is `plus`.
 The host rewrites to the separate `/plus` product shell without exposing or

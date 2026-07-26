@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import { getSiteOrigin } from "@/lib/origin";
+import { siteConfig } from "@/lib/site";
 
 export function getNjcPlusFallbackUrl() {
-  return getSiteOrigin();
+  return `https://${siteConfig.domain}`;
 }
 
 export function redirectUnavailableNjcPlus(): never {
