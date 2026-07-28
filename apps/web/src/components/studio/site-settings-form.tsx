@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CheckCircle2, ExternalLink, Loader2, ShieldAlert } from "lucide-react";
+import { CheckCircle2, ExternalLink, Loader2, Plus, ShieldAlert, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,11 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { EditableList } from "@/components/studio/editable-list";
 import {
-  formatDatelines,
-  formatNavigation,
-  parseDatelines,
-  parseNavigation,
   type AdPlacementName,
   type SiteConfiguration,
 } from "@/lib/site-settings";
@@ -38,10 +35,6 @@ export function SiteSettingsForm({
   updatedAt: string | null;
 }) {
   const [configuration, setConfiguration] = useState(initialConfiguration);
-  const [navigationText, setNavigationText] = useState(formatNavigation(initialConfiguration.navigation));
-  const [datelinesText, setDatelinesText] = useState(
-    formatDatelines(initialConfiguration.editorial.datelines),
-  );
   const [state, setState] = useState<SaveState>("idle");
   const [message, setMessage] = useState("");
 
@@ -74,16 +67,11 @@ export function SiteSettingsForm({
     if (!canManage || state === "saving") return;
     setState("saving");
     setMessage("");
-    const payload = {
-      ...configuration,
-      navigation: parseNavigation(navigationText),
-      editorial: { datelines: parseDatelines(datelinesText) },
-    };
     try {
       const response = await fetch("/api/v1/studio/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(configuration),
       });
       const result = await response.json() as { data?: SiteConfiguration; error?: { message?: string; details?: { formErrors?: string[]; fieldErrors?: Record<string, string[]> } } };
       if (!response.ok || !result.data) {
@@ -91,8 +79,6 @@ export function SiteSettingsForm({
         throw new Error(detail ?? result.error?.message ?? "The configuration could not be saved");
       }
       setConfiguration(result.data);
-      setNavigationText(formatNavigation(result.data.navigation));
-      setDatelinesText(formatDatelines(result.data.editorial.datelines));
       setState("saved");
       setMessage("Production configuration saved. Public pages will use the new values on their next request.");
     } catch (error) {
@@ -145,7 +131,16 @@ export function SiteSettingsForm({
             <TextField label="IANA timezone" value={configuration.publication.timezone} onChange={(value) => updatePublication("timezone", value)} disabled={!canManage} placeholder="America/New_York" className="sm:col-span-2" />
           </CardContent></Card>
 
-          <Card><CardHeader><CardTitle>Primary navigation</CardTitle><CardDescription>One item per line in the format <code>Label | /local-path</code>. External and script URLs are rejected.</CardDescription></CardHeader><CardContent><Label htmlFor="site-navigation">Menu items</Label><Textarea id="site-navigation" value={navigationText} disabled={!canManage} onChange={(event) => setNavigationText(event.target.value)} className="mt-2 min-h-56 font-mono text-xs" /></CardContent></Card>
+          <Card><CardHeader><CardTitle>Primary navigation</CardTitle><CardDescription>Add a label and local destination for each menu item. Studio handles the data structure; external and script URLs remain rejected.</CardDescription></CardHeader><CardContent className="space-y-3">
+            {configuration.navigation.map((item, index) => (
+              <div key={index} className="grid gap-2 rounded-lg border p-3 sm:grid-cols-[1fr_1.4fr_auto] sm:items-end">
+                <TextField label={`Item ${index + 1} label`} value={item.label} onChange={(label) => setConfiguration((current) => ({ ...current, navigation: current.navigation.map((entry, entryIndex) => entryIndex === index ? { ...entry, label, href: entry.href === "/" || entry.href === localPath(entry.label) ? localPath(label) : entry.href } : entry) }))} disabled={!canManage} />
+                <TextField label="Local path" value={item.href} onChange={(href) => setConfiguration((current) => ({ ...current, navigation: current.navigation.map((entry, entryIndex) => entryIndex === index ? { ...entry, href } : entry) }))} disabled={!canManage} placeholder="/local-news" />
+                <Button type="button" variant="ghost" size="icon" disabled={!canManage || configuration.navigation.length <= 1} onClick={() => setConfiguration((current) => ({ ...current, navigation: current.navigation.filter((_, entryIndex) => entryIndex !== index) }))} aria-label={`Remove ${item.label || `item ${index + 1}`}`}><Trash2 /></Button>
+              </div>
+            ))}
+            <Button type="button" variant="outline" disabled={!canManage || configuration.navigation.length >= 12} onClick={() => setConfiguration((current) => ({ ...current, navigation: [...current.navigation, { label: "", href: "/" }] }))}><Plus /> Add menu item</Button>
+          </CardContent></Card>
         </TabsContent>
 
         <TabsContent value="editorial" className="pt-4">
@@ -158,15 +153,17 @@ export function SiteSettingsForm({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Label htmlFor="story-datelines">Approved datelines</Label>
-              <Textarea
-                id="story-datelines"
-                value={datelinesText}
-                disabled={!canManage}
-                onChange={(event) => setDatelinesText(event.target.value)}
-                className="mt-2 min-h-56"
-                placeholder={"New Brunswick\nMiddlesex County\nTrenton"}
-              />
+              <Label>Approved datelines</Label>
+              <div className="mt-2">
+                <EditableList
+                  values={configuration.editorial.datelines}
+                  onChange={(datelines) => setConfiguration((current) => ({ ...current, editorial: { ...current.editorial, datelines } }))}
+                  placeholder="Add a city, county, or state desk"
+                  addLabel="Add dateline"
+                  disabled={!canManage}
+                  maxItems={50}
+                />
+              </div>
               <p className="mt-2 text-xs leading-5 text-muted-foreground">
                 Use recognizable geographic names. Changing this list does not
                 rewrite datelines on already published stories.
@@ -215,4 +212,9 @@ function TextField({ id: explicitId, label, value, onChange, disabled, placehold
 
 function Toggle({ label, description, checked, disabled, onCheckedChange }: { label: string; description: string; checked: boolean; disabled: boolean; onCheckedChange: (checked: boolean) => void }) {
   return <div className="flex items-start justify-between gap-5"><div><p className="text-sm font-medium">{label}</p><p className="mt-1 text-xs leading-5 text-muted-foreground">{description}</p></div><Switch checked={checked} disabled={disabled} onCheckedChange={onCheckedChange} aria-label={label} /></div>;
+}
+
+function localPath(label: string) {
+  const slug = label.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return slug ? `/${slug}` : "/";
 }

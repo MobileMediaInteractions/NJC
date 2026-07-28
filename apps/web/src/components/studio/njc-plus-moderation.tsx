@@ -47,8 +47,6 @@ export function NjcPlusModeration() {
   useEffect(() => {
     const timer = window.setTimeout(() => void load(), 0);
     return () => window.clearTimeout(timer);
-  // The initial moderation queue is loaded once; mutations explicitly refresh it.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function moderate(target: "comment" | "report", id: string, status: string) {

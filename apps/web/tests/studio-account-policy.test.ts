@@ -1,6 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { canChangeManagedRole, studioAccountUpdateSchema } from "../src/lib/studio-account-policy";
+import {
+  canChangeManagedRole,
+  studioAccountSearchSchema,
+  studioAccountUpdateSchema,
+} from "../src/lib/studio-account-policy";
+
+test("account search accepts one-letter queries and bounds result counts", () => {
+  assert.deepEqual(studioAccountSearchSchema.parse({ q: " a ", limit: "20" }), {
+    q: "a",
+    limit: 20,
+  });
+  assert.equal(studioAccountSearchSchema.safeParse({ q: "", limit: 10 }).success, false);
+  assert.equal(studioAccountSearchSchema.safeParse({ q: "reporter", limit: 21 }).success, false);
+});
 
 test("user profile updates accept every managed role and reader access", () => {
   for (const role of ["admin", "editor", "producer", "reporter", "contributor", null]) {

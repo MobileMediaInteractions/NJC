@@ -4,6 +4,11 @@ import { managedStaffRoles } from "@/lib/studio-account-types";
 
 export const managedStaffRoleSchema = z.enum(managedStaffRoles);
 
+export const studioAccountSearchSchema = z.object({
+  q: z.string().trim().min(1).max(120),
+  limit: z.coerce.number().int().min(1).max(20).default(10),
+});
+
 export const studioAccountUpdateSchema = z.object({
   firstName: z.string().trim().max(100),
   lastName: z.string().trim().max(100),

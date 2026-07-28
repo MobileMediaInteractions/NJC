@@ -11,6 +11,7 @@ export const managedStaffRoles = [
 export type StudioAccountSummary = {
   id: string;
   displayName: string;
+  username: string | null;
   primaryEmail: string | null;
   imageUrl: string;
   role: StaffRole | null;
@@ -25,7 +26,6 @@ export type StudioAccountSummary = {
 export type StudioAccountProfile = StudioAccountSummary & {
   firstName: string;
   lastName: string;
-  username: string | null;
   externalId: string | null;
   locale: string | null;
   passwordEnabled: boolean;

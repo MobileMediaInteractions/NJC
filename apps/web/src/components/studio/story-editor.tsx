@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { EditableList } from "@/components/studio/editable-list";
 import { validateStoryImage } from "@/lib/media-upload";
 import { firstStoryError, storyInput, type StoryFieldErrors } from "@/lib/story-input";
 import { generateWhyItMatters, WHY_IT_MATTERS_MAX_CHARACTERS } from "@/lib/why-it-matters";
@@ -59,7 +60,7 @@ export function StoryEditor({
   const [includeWhyItMatters, setIncludeWhyItMatters] = useState(Boolean(initialStory?.whyItMatters));
   const [category, setCategory] = useState(initialStory?.categorySlug ?? "middlesex");
   const [location, setLocation] = useState(initialStory?.location ?? datelines[0] ?? "New Brunswick");
-  const [tags, setTags] = useState(initialStory?.tags.join(", ") ?? "");
+  const [tags, setTags] = useState(initialStory?.tags ?? []);
   const [seoTitle, setSeoTitle] = useState(initialStory?.seoTitle ?? "");
   const [seoDescription, setSeoDescription] = useState(initialStory?.seoDescription ?? "");
   const [canonicalUrl, setCanonicalUrl] = useState(initialStory?.canonicalUrl ?? "");
@@ -105,7 +106,7 @@ export function StoryEditor({
       focusFirstInvalidField(errors);
       return;
     }
-    const input = { headline, slug, dek, body: bodyParagraphs, includeWhyItMatters, categorySlug: category, categoryLabel, location, imageUrl, imageAlt, tags: tags.split(",").map((item) => item.trim()).filter(Boolean), seoTitle, seoDescription, canonicalUrl, noIndex, status, isBreaking: breaking, publishedAt: status === "published" && useCustomPublishedAt ? parsedPublishedAt?.toISOString() ?? "" : "", publishedAtRiskAcknowledged: status === "published" && useCustomPublishedAt ? publishedAtRiskAcknowledged : false, publishedAtChangeReason: status === "published" && useCustomPublishedAt ? publishedAtChangeReason : "" };
+    const input = { headline, slug, dek, body: bodyParagraphs, includeWhyItMatters, categorySlug: category, categoryLabel, location, imageUrl, imageAlt, tags, seoTitle, seoDescription, canonicalUrl, noIndex, status, isBreaking: breaking, publishedAt: status === "published" && useCustomPublishedAt ? parsedPublishedAt?.toISOString() ?? "" : "", publishedAtRiskAcknowledged: status === "published" && useCustomPublishedAt ? publishedAtRiskAcknowledged : false, publishedAtChangeReason: status === "published" && useCustomPublishedAt ? publishedAtChangeReason : "" };
     const validation = storyInput.safeParse(input);
     if (!validation.success) {
       const errors = validation.error.flatten().fieldErrors;
@@ -229,7 +230,7 @@ export function StoryEditor({
                 {fieldError("location") && <p className="text-xs text-destructive">{fieldError("location")}</p>}
                 <p className="text-xs text-muted-foreground">Edit approved choices in Studio Settings → Editorial.</p>
               </div>
-              <div className="space-y-2"><Label htmlFor="tags">Tags</Label><Input id="tags" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="housing, city hall" /></div>
+              <div className="space-y-2"><Label>Tags</Label><EditableList values={tags} onChange={setTags} placeholder="Add a reporting topic" addLabel="Add tag" maxItems={20} /></div>
               <Separator />
               <div className="flex items-center justify-between"><div><Label htmlFor="breaking">Breaking news</Label><p className="mt-1 text-xs text-muted-foreground">Adds urgent public treatment.</p></div><Switch id="breaking" checked={breaking} onCheckedChange={setBreaking} /></div>
               {canPublish ? (

@@ -32,6 +32,7 @@ function summaryFor(user: ClerkUser, databaseProfile?: DatabaseProfile): StudioA
   return {
     id: user.id,
     displayName: displayName(user),
+    username: user.username,
     primaryEmail: user.primaryEmailAddress?.emailAddress ?? null,
     imageUrl: user.imageUrl,
     role: resolveStaffRole(user.publicMetadata.role),
@@ -74,6 +75,34 @@ export async function listStudioAccounts(input: { query?: string; page?: number;
   };
 }
 
+export async function searchStudioAccounts(query: string, limit = 10): Promise<StudioAccountSummary[]> {
+  const normalizedQuery = query.trim();
+  const boundedLimit = Math.min(Math.max(limit, 1), 20);
+  if (!normalizedQuery) return [];
+
+  const client = await clerkClient();
+  const [response, exactMatch] = await Promise.all([
+    client.users.getUserList({
+      limit: boundedLimit,
+      orderBy: "-last_active_at",
+      query: normalizedQuery,
+    }),
+    normalizedQuery.startsWith("user_")
+      ? client.users.getUser(normalizedQuery).catch(() => null)
+      : Promise.resolve(null),
+  ]);
+
+  const uniqueUsers = new Map<string, ClerkUser>();
+  if (exactMatch) uniqueUsers.set(exactMatch.id, exactMatch);
+  for (const user of response.data) {
+    if (uniqueUsers.size >= boundedLimit) break;
+    uniqueUsers.set(user.id, user);
+  }
+  const matchingUsers = [...uniqueUsers.values()].slice(0, boundedLimit);
+  const profiles = await databaseProfiles(matchingUsers.map((user) => user.id));
+  return matchingUsers.map((user) => summaryFor(user, profiles.get(user.id)));
+}
+
 export async function getStudioAccount(clerkId: string): Promise<StudioAccountProfile> {
   const user = await (await clerkClient()).users.getUser(clerkId);
   const profiles = await databaseProfiles([clerkId]);
@@ -82,7 +111,6 @@ export async function getStudioAccount(clerkId: string): Promise<StudioAccountPr
     ...summaryFor(user, databaseProfile),
     firstName: user.firstName ?? "",
     lastName: user.lastName ?? "",
-    username: user.username,
     externalId: user.externalId,
     locale: user.locale,
     passwordEnabled: user.passwordEnabled,
