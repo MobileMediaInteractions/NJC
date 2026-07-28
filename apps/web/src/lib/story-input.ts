@@ -16,6 +16,7 @@ export const storyInput = z.object({
   seoDescription: z.string().max(180).optional().or(z.literal("")),
   canonicalUrl: z.url("Canonical URL must be a complete URL.").optional().or(z.literal("")),
   noIndex: z.boolean().default(false),
+  bylineMode: z.enum(["account", "pseudonym"]).default("account"),
   isBreaking: z.boolean().default(false),
   status: z.enum(["draft", "review", "scheduled", "published"]),
   scheduledAt: z.iso.datetime().optional().or(z.literal("")),

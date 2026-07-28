@@ -9,6 +9,14 @@ import { canDeleteStory, getStudioUser } from "@/lib/auth";
 import { storyInput } from "@/lib/story-input";
 import { canPublishStory, canTransitionStoryStatus } from "@/lib/story-workflow";
 import { generateWhyItMatters } from "@/lib/why-it-matters";
+import {
+  BylineUnavailableError,
+  getBylineOwner,
+  resolvePublicByline,
+  validateSavedPublicByline,
+} from "@/lib/bylines";
+import { legacyPublicBylineSnapshot } from "@/lib/pseudonyms";
+import { getSiteConfiguration } from "@/lib/site-settings";
 
 const storyId = z.uuid();
 const transitionInput = z.object({ status: z.enum(["draft", "review", "published"]) });
@@ -45,7 +53,10 @@ export async function PATCH(
     );
 
   const nextStatus = parsedBody.data.status;
-  if (!canTransitionStoryStatus(current.status, nextStatus, viewer.role, current.authorSnapshot?.id === viewer.id)) {
+  const isOwner = Boolean(
+    viewer.databaseId && current.authorId === viewer.databaseId,
+  );
+  if (!canTransitionStoryStatus(current.status, nextStatus, viewer.role, isOwner)) {
     if (current.status === "review" && !canPublishStory(viewer.role)) {
       return NextResponse.json(
         { error: { code: "forbidden", message: "Your role cannot complete editorial review" } },
@@ -66,9 +77,35 @@ export async function PATCH(
 
   const now = new Date();
   try {
+    let publishByline = current.publicBylineSnapshot;
+    if (nextStatus === "published") {
+      if (
+        publishByline?.mode === "pseudonym" &&
+        !(await getSiteConfiguration()).features.pseudonyms
+      ) {
+        throw new BylineUnavailableError(
+          "Pseudonymous publication is currently disabled in Studio Configuration.",
+        );
+      }
+      if (publishByline?.mode === "pseudonym") {
+        const owner = current.authorId
+          ? await getBylineOwner(current.authorId)
+          : null;
+        if (!owner || !validateSavedPublicByline(owner, publishByline)) {
+          throw new BylineUnavailableError(
+            "The saved pseudonym changed or is no longer available. Return the story to draft and review the public byline.",
+          );
+        }
+      } else if (!publishByline) {
+        publishByline = legacyPublicBylineSnapshot({
+          authorSnapshot: current.authorSnapshot,
+        });
+      }
+    }
     const updated = await getDb().transaction(async (tx) => {
       const [story] = await tx.update(stories).set({
         status: nextStatus,
+        publicBylineSnapshot: publishByline,
         publishedAt: nextStatus === "published" ? now : current.publishedAt,
         updatedAt: now,
       }).where(and(eq(stories.id, current.id), eq(stories.status, current.status))).returning();
@@ -114,6 +151,12 @@ export async function PATCH(
     console.info("[studio:stories] status changed", { storyId: updated.id, from: current.status, to: updated.status, actorId: viewer.id });
     return NextResponse.json({ data: updated, meta: { apiVersion: "1" } });
   } catch (error) {
+    if (error instanceof BylineUnavailableError) {
+      return NextResponse.json(
+        { error: { code: "byline_requires_review", message: error.message } },
+        { status: 409 },
+      );
+    }
     console.error("[studio:stories] status change failed", { storyId: current.id, from: current.status, to: nextStatus, actorId: viewer.id, error });
     return NextResponse.json(
       { error: { code: "transition_failed", message: "The editorial action could not be completed" } },
@@ -160,7 +203,9 @@ export async function PUT(
       { status: 409 },
     );
 
-  const isOwner = current.authorSnapshot?.id === viewer.id;
+  const isOwner = Boolean(
+    viewer.databaseId && current.authorId === viewer.databaseId,
+  );
   const isPublisher = canPublishStory(viewer.role);
   if (!isOwner && !isPublisher)
     return NextResponse.json(
@@ -190,14 +235,61 @@ export async function PUT(
     publishedAtRiskAcknowledged: _publishedAtRiskAcknowledged,
     publishedAtChangeReason,
     includeWhyItMatters,
+    bylineMode,
     ...storyValues
   } = parsedBody.data;
   void _publishedAtRiskAcknowledged;
 
   try {
+    if (
+      bylineMode === "pseudonym" &&
+      !(await getSiteConfiguration()).features.pseudonyms
+    ) {
+      return NextResponse.json(
+        { error: { code: "feature_disabled", message: "Pseudonyms are currently disabled in Studio Configuration" } },
+        { status: 409 },
+      );
+    }
+    const nextPublicByline = current.authorId
+      ? await resolvePublicByline(current.authorId, bylineMode)
+      : bylineMode === "account"
+        ? legacyPublicBylineSnapshot({
+            authorSnapshot: current.authorSnapshot,
+          })
+        : (() => {
+            throw new BylineUnavailableError(
+              "A legacy story without an assigned owner cannot use a pseudonym.",
+            );
+          })();
+    const previousPublicByline =
+      current.publicBylineSnapshot ??
+      legacyPublicBylineSnapshot({ authorSnapshot: current.authorSnapshot });
+    const bylineChanged =
+      previousPublicByline.mode !== nextPublicByline.mode ||
+      previousPublicByline.name !== nextPublicByline.name ||
+      previousPublicByline.pseudonymRevision !==
+        nextPublicByline.pseudonymRevision;
+    if (parsedBody.data.status === "published" && bylineChanged) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "byline_requires_review",
+            message:
+              "A public byline change must be saved and reviewed before publication.",
+          },
+        },
+        { status: 409 },
+      );
+    }
+    const effectiveStatus =
+      current.status === "review" && bylineChanged
+        ? "draft"
+        : parsedBody.data.status;
     const updated = await getDb().transaction(async (tx) => {
       const [story] = await tx.update(stories).set({
         ...storyValues,
+        status: effectiveStatus,
+        publicBylineSnapshot: nextPublicByline,
         whyItMatters: includeWhyItMatters
           ? generateWhyItMatters(parsedBody.data)
           : null,
@@ -207,7 +299,7 @@ export async function PUT(
         seoDescription: parsedBody.data.seoDescription || null,
         canonicalUrl: parsedBody.data.canonicalUrl || null,
         scheduledAt: parsedBody.data.scheduledAt ? new Date(parsedBody.data.scheduledAt) : null,
-        publishedAt: parsedBody.data.status === "published"
+        publishedAt: effectiveStatus === "published"
           ? publishedAt
             ? new Date(publishedAt)
             : now
@@ -225,7 +317,9 @@ export async function PUT(
         snapshot: story,
         note: publishedAt
           ? `Story updated with custom posted time by ${viewer.name}: ${publishedAtChangeReason}`
-          : `Story updated as ${story.status} by ${viewer.name}`,
+          : bylineChanged
+            ? `Public byline updated by ${viewer.name}; prior review invalidated`
+            : `Story updated as ${story.status} by ${viewer.name}`,
       });
       return story;
     });
@@ -248,6 +342,8 @@ export async function PUT(
         toStatus: updated.status,
         publishedAt: updated.publishedAt?.toISOString(),
         reason: publishedAt ? publishedAtChangeReason : undefined,
+        bylineMode: updated.publicBylineSnapshot?.mode,
+        bylineChanged,
       },
     });
 
@@ -267,6 +363,12 @@ export async function PUT(
     }
     return NextResponse.json({ data: updated, meta: { apiVersion: "1" } });
   } catch (error) {
+    if (error instanceof BylineUnavailableError) {
+      return NextResponse.json(
+        { error: { code: "byline_unavailable", message: error.message } },
+        { status: 409 },
+      );
+    }
     console.error("[studio:stories] edit failed", { storyId: current.id, actorId: viewer.id, error });
     return NextResponse.json(
       { error: { code: "save_failed", message: "The story changes could not be saved" } },

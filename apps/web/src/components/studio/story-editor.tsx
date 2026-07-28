@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { EditableList } from "@/components/studio/editable-list";
 import { validateStoryImage } from "@/lib/media-upload";
 import { firstStoryError, storyInput, type StoryFieldErrors } from "@/lib/story-input";
+import type { StoryBylineOption } from "@/lib/pseudonyms";
 import { generateWhyItMatters, WHY_IT_MATTERS_MAX_CHARACTERS } from "@/lib/why-it-matters";
 
 const categories = [
@@ -39,6 +40,7 @@ export interface StoryEditorInitialStory {
   canonicalUrl: string | null;
   noIndex: boolean;
   isBreaking: boolean;
+  bylineMode: "account" | "pseudonym";
   status: "draft" | "review";
 }
 
@@ -46,11 +48,15 @@ export function StoryEditor({
   datelines,
   canPublish,
   publicationTimezone,
+  bylineOptions,
+  pseudonymsEnabled,
   initialStory,
 }: {
   datelines: string[];
   canPublish: boolean;
   publicationTimezone: string;
+  bylineOptions: StoryBylineOption[];
+  pseudonymsEnabled: boolean;
   initialStory?: StoryEditorInitialStory;
 }) {
   const [headline, setHeadline] = useState(initialStory?.headline ?? "");
@@ -66,6 +72,9 @@ export function StoryEditor({
   const [canonicalUrl, setCanonicalUrl] = useState(initialStory?.canonicalUrl ?? "");
   const [noIndex, setNoIndex] = useState(initialStory?.noIndex ?? false);
   const [breaking, setBreaking] = useState(initialStory?.isBreaking ?? false);
+  const [bylineMode, setBylineMode] = useState<"account" | "pseudonym">(
+    initialStory?.bylineMode ?? "account",
+  );
   const [useCustomPublishedAt, setUseCustomPublishedAt] = useState(false);
   const [publishedAt, setPublishedAt] = useState("");
   const [publishedAtRiskAcknowledged, setPublishedAtRiskAcknowledged] = useState(false);
@@ -86,6 +95,10 @@ export function StoryEditor({
     ? generateWhyItMatters({ headline, dek, body: bodyParagraphs })
     : "";
   const wordCount = body.trim() ? body.trim().split(/\s+/).length : 0;
+  const accountByline = bylineOptions.find((option) => option.mode === "account");
+  const pseudonymByline = bylineOptions.find((option) => option.mode === "pseudonym");
+  const selectedByline =
+    bylineOptions.find((option) => option.mode === bylineMode) ?? accountByline;
 
   async function save(status: "draft" | "review" | "published") {
     const categoryLabel = categories.find(([value]) => value === category)?.[1] ?? "Middlesex County";
@@ -106,7 +119,7 @@ export function StoryEditor({
       focusFirstInvalidField(errors);
       return;
     }
-    const input = { headline, slug, dek, body: bodyParagraphs, includeWhyItMatters, categorySlug: category, categoryLabel, location, imageUrl, imageAlt, tags, seoTitle, seoDescription, canonicalUrl, noIndex, status, isBreaking: breaking, publishedAt: status === "published" && useCustomPublishedAt ? parsedPublishedAt?.toISOString() ?? "" : "", publishedAtRiskAcknowledged: status === "published" && useCustomPublishedAt ? publishedAtRiskAcknowledged : false, publishedAtChangeReason: status === "published" && useCustomPublishedAt ? publishedAtChangeReason : "" };
+    const input = { headline, slug, dek, body: bodyParagraphs, includeWhyItMatters, categorySlug: category, categoryLabel, location, imageUrl, imageAlt, tags, seoTitle, seoDescription, canonicalUrl, noIndex, bylineMode, status, isBreaking: breaking, publishedAt: status === "published" && useCustomPublishedAt ? parsedPublishedAt?.toISOString() ?? "" : "", publishedAtRiskAcknowledged: status === "published" && useCustomPublishedAt ? publishedAtRiskAcknowledged : false, publishedAtChangeReason: status === "published" && useCustomPublishedAt ? publishedAtChangeReason : "" };
     const validation = storyInput.safeParse(input);
     if (!validation.success) {
       const errors = validation.error.flatten().fieldErrors;
@@ -231,6 +244,51 @@ export function StoryEditor({
                 <p className="text-xs text-muted-foreground">Edit approved choices in Studio Settings → Editorial.</p>
               </div>
               <div className="space-y-2"><Label>Tags</Label><EditableList values={tags} onChange={setTags} placeholder="Add a reporting topic" addLabel="Add tag" maxItems={20} /></div>
+              <Separator />
+              <div className="space-y-3">
+                <div>
+                  <Label>Public byline</Label>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Readers will see <strong>By {selectedByline?.name ?? "Courier Newsroom"}</strong>.
+                  </p>
+                </div>
+                {pseudonymByline ? (
+                  <div className="flex items-start justify-between gap-4 rounded-md border p-3">
+                    <div>
+                      <Label htmlFor="use-pseudonym">Use saved pseudonym</Label>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Publish as {pseudonymByline.name}. The real account remains
+                        the internal story owner.
+                      </p>
+                      {!pseudonymByline.available ? (
+                        <p className="mt-1 text-xs font-semibold text-amber-500">
+                          This pseudonym is currently unavailable.
+                        </p>
+                      ) : null}
+                      {!pseudonymsEnabled ? (
+                        <p className="mt-1 text-xs font-semibold text-amber-500">
+                          Pseudonyms are disabled in Studio Configuration.
+                        </p>
+                      ) : null}
+                    </div>
+                    <Switch
+                      id="use-pseudonym"
+                      checked={bylineMode === "pseudonym"}
+                      disabled={!pseudonymsEnabled || !pseudonymByline.available}
+                      onCheckedChange={(checked) =>
+                        setBylineMode(checked ? "pseudonym" : "account")
+                      }
+                    />
+                  </div>
+                ) : (
+                  <p className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+                    No pseudonym is saved for this story owner. Add one in{" "}
+                    <Link href="/studio/profile" className="font-semibold underline">
+                      My profile
+                    </Link>.
+                  </p>
+                )}
+              </div>
               <Separator />
               <div className="flex items-center justify-between"><div><Label htmlFor="breaking">Breaking news</Label><p className="mt-1 text-xs text-muted-foreground">Adds urgent public treatment.</p></div><Switch id="breaking" checked={breaking} onCheckedChange={setBreaking} /></div>
               {canPublish ? (

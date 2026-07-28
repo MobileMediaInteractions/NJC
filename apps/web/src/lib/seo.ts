@@ -74,7 +74,11 @@ export function storyPageJsonLd(
   const categoryUrl = absoluteUrl(`/category/${story.category}`);
   const authorUrl = authorProfile
     ? getAuthorProfileUrlBySlug(authorProfile.slug)
-    : getAuthorProfileUrl(story.author.name);
+    : story.author.profileSlug
+      ? getAuthorProfileUrlBySlug(story.author.profileSlug)
+      : story.author.mode !== "pseudonym"
+        ? getAuthorProfileUrl(story.author.name)
+        : undefined;
   const wordCount = story.body.join(" ").trim().split(/\s+/).filter(Boolean).length;
 
   return {
@@ -94,8 +98,10 @@ export function storyPageJsonLd(
         author: {
           "@type": "Person",
           name: story.author.name,
-          ...(authorProfile?.title ? { jobTitle: authorProfile.title } : {}),
-          ...(authorProfile?.avatarUrl
+          ...(story.author.mode !== "pseudonym" && authorProfile?.title
+            ? { jobTitle: authorProfile.title }
+            : {}),
+          ...(story.author.mode !== "pseudonym" && authorProfile?.avatarUrl
             ? { image: absoluteUrl(authorProfile.avatarUrl) }
             : {}),
           ...(authorUrl

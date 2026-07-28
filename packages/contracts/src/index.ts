@@ -49,10 +49,12 @@ export type StaffRole =
 
 export interface Author {
   id: string;
+  mode?: "account" | "pseudonym";
   name: string;
   role: string;
   initials: string;
   avatar?: string;
+  profileSlug?: string;
 }
 
 export interface Story {

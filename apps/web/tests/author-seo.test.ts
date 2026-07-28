@@ -76,3 +76,24 @@ test("author profile markup connects Abdullah to attributed reporting", () => {
   assert.match(json, /"@type":"Person"/);
   assert.match(json, /"headline":"A local report"/);
 });
+
+test("pseudonymous article markup does not infer a real author profile", () => {
+  const pseudonymousStory: Story = {
+    ...story,
+    author: {
+      id: "story-story-1-byline",
+      mode: "pseudonym",
+      name: "Abdullah Muzammil",
+      role: "Courier contributor",
+      initials: "AM",
+    },
+  };
+  const json = JSON.stringify(
+    storyPageJsonLd(
+      pseudonymousStory,
+      defaultSiteConfiguration.publication,
+    ),
+  );
+  assert.match(json, /"name":"Abdullah Muzammil"/);
+  assert.doesNotMatch(json, /\/author\/abdullah-muzammil/);
+});

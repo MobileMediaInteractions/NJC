@@ -19,8 +19,9 @@ async function getProfileStories(profile: PublicStaffProfile) {
   const normalizedName = profile.name.trim().toLocaleLowerCase("en-US");
   return stories.filter(
     (story) =>
-      (profile.clerkId && story.author.id === profile.clerkId) ||
-      story.author.name.trim().toLocaleLowerCase("en-US") === normalizedName,
+      story.author.profileSlug === profile.slug ||
+      (story.author.mode !== "pseudonym" &&
+        story.author.name.trim().toLocaleLowerCase("en-US") === normalizedName),
   );
 }
 

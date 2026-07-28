@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/card";
 import { getStudioUser } from "@/lib/auth";
 import { getStaffProfileDraft } from "@/lib/staff-profiles";
+import { getSiteConfiguration } from "@/lib/site-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -16,13 +17,16 @@ export default async function StudioProfilePage() {
   const viewer = await getStudioUser();
   if (!viewer) return <StudioGate><></></StudioGate>;
 
-  const profile = await getStaffProfileDraft(viewer.id).catch((error) => {
-    console.error("Studio public profile lookup failed", {
-      actorId: viewer.id,
-      error,
-    });
-    return null;
-  });
+  const [profile, configuration] = await Promise.all([
+    getStaffProfileDraft(viewer.id).catch((error) => {
+      console.error("Studio public profile lookup failed", {
+        actorId: viewer.id,
+        error,
+      });
+      return null;
+    }),
+    getSiteConfiguration(),
+  ]);
 
   return (
     <StudioShell viewer={viewer}>
@@ -33,7 +37,10 @@ export default async function StudioProfilePage() {
         </p>
         <div className="mt-7">
           {profile ? (
-            <StaffProfileEditor initialProfile={profile} />
+            <StaffProfileEditor
+              initialProfile={profile}
+              pseudonymsEnabled={configuration.features.pseudonyms}
+            />
           ) : (
             <Card>
               <CardHeader>

@@ -45,6 +45,8 @@ export const siteConfigurationSchema = z.object({
     weather: z.boolean(),
     membership: z.boolean(),
     donations: z.boolean(),
+    pseudonyms: z.boolean().default(true),
+    distribution: z.boolean().default(true),
   }),
   editorial: z.object({
     datelines: z
@@ -137,6 +139,8 @@ export const defaultSiteConfiguration: SiteConfiguration = {
     weather: true,
     membership: siteConfig.monetization.membershipEnabled,
     donations: siteConfig.monetization.donationsEnabled,
+    pseudonyms: true,
+    distribution: true,
   },
   editorial: {
     datelines: [...defaultDatelines],

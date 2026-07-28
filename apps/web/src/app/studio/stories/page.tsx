@@ -38,7 +38,9 @@ export default async function StudioStoriesPage() {
     ownerName: story.authorSnapshot?.name ?? "Unassigned",
     status: story.status,
     updatedLabel: formatUpdated(story.updatedAt),
-    canEdit: showReviewActions || story.authorSnapshot?.id === viewer.id,
+    canEdit:
+      showReviewActions ||
+      Boolean(viewer.databaseId && story.authorId === viewer.databaseId),
   }));
 
   return (

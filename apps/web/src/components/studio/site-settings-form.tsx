@@ -2,7 +2,19 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CheckCircle2, ExternalLink, Loader2, Plus, ShieldAlert, Trash2 } from "lucide-react";
+import {
+  BadgeDollarSign,
+  CheckCircle2,
+  ExternalLink,
+  FileText,
+  Loader2,
+  Navigation,
+  Plus,
+  Settings2,
+  ShieldAlert,
+  SlidersHorizontal,
+  Trash2,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,8 +47,10 @@ export function SiteSettingsForm({
   updatedAt: string | null;
 }) {
   const [configuration, setConfiguration] = useState(initialConfiguration);
+  const [lastSavedConfiguration, setLastSavedConfiguration] = useState(initialConfiguration);
   const [state, setState] = useState<SaveState>("idle");
   const [message, setMessage] = useState("");
+  const dirty = JSON.stringify(configuration) !== JSON.stringify(lastSavedConfiguration);
 
   function updatePublication(key: keyof SiteConfiguration["publication"], value: string) {
     setConfiguration((current) => ({ ...current, publication: { ...current.publication, [key]: value } }));
@@ -79,6 +93,7 @@ export function SiteSettingsForm({
         throw new Error(detail ?? result.error?.message ?? "The configuration could not be saved");
       }
       setConfiguration(result.data);
+      setLastSavedConfiguration(result.data);
       setState("saved");
       setMessage("Production configuration saved. Public pages will use the new values on their next request.");
     } catch (error) {
@@ -90,18 +105,21 @@ export function SiteSettingsForm({
   const adsReady = configuration.advertising.enabled &&
     Boolean(configuration.advertising.publisherId) &&
     configuration.advertising.privacyMessageConfigured;
+  const enabledFeatureCount = Object.values(configuration.features).filter(Boolean).length;
+  const totalFeatureCount = Object.keys(configuration.features).length;
 
   return (
-    <div className="max-w-5xl">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+    <div className="max-w-6xl">
+      <div className="flex flex-wrap items-end justify-between gap-5">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Site configuration</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Control publication identity, navigation, reader features and advertising from one audited workspace.</p>
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">Platform operations</p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight">Configuration control room</h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">Prepare publication, editorial, feature and advertising changes from one focused workspace. Existing server validation remains the release boundary.</p>
         </div>
-        <div className="flex items-center gap-3">
-          {updatedAt ? <p className="text-xs text-muted-foreground">Last saved {new Date(updatedAt).toLocaleString()}</p> : null}
-          <Button onClick={save} disabled={!canManage || state === "saving"}>
-            {state === "saving" ? <Loader2 className="animate-spin" /> : state === "saved" ? <CheckCircle2 /> : null}
+        <div className="flex flex-wrap items-center justify-end gap-3">
+          <Badge variant={dirty ? "default" : "secondary"}>{dirty ? "Unsaved changes" : "Production saved"}</Badge>
+          <Button onClick={save} disabled={!canManage || state === "saving" || !dirty}>
+            {state === "saving" ? <Loader2 className="animate-spin" /> : state === "saved" && !dirty ? <CheckCircle2 /> : null}
             Save configuration
           </Button>
         </div>
@@ -110,15 +128,37 @@ export function SiteSettingsForm({
       {!canManage ? <div className="mt-6 flex gap-3 rounded-lg border border-amber-400/40 bg-amber-400/10 p-4 text-sm"><ShieldAlert className="mt-0.5 size-5 shrink-0" /><p>You can review these values, but only an administrator can change production site configuration.</p></div> : null}
       {message ? <p role="status" className={`mt-5 rounded-lg border p-4 text-sm ${state === "error" ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-primary/30 bg-primary/10"}`}>{message}</p> : null}
 
-      <Tabs defaultValue="publication" className="mt-7">
-        <TabsList className="h-auto flex-wrap justify-start">
-          <TabsTrigger value="publication" className="px-3 py-2">Publication</TabsTrigger>
-          <TabsTrigger value="editorial" className="px-3 py-2">Editorial</TabsTrigger>
-          <TabsTrigger value="features" className="px-3 py-2">Features</TabsTrigger>
-          <TabsTrigger value="advertising" className="px-3 py-2">Google AdSense</TabsTrigger>
-        </TabsList>
+      <section className="mt-7 overflow-hidden rounded-2xl bg-[#102f25] text-white ring-1 ring-black/10">
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4">
+          <ControlStatus label="Release state" value={canManage ? "Administrator" : "Read only"} detail={canManage ? "Validated save access" : "Review access only"} />
+          <ControlStatus label="Navigation" value={`${configuration.navigation.length} destinations`} detail="Public primary menu" />
+          <ControlStatus label="Runtime features" value={`${enabledFeatureCount} of ${totalFeatureCount} on`} detail="Shared availability flags" />
+          <ControlStatus label="Advertising" value={configuration.advertising.enabled ? configuration.advertising.previewMode ? "Preview" : "Live requested" : "Off"} detail={adsReady ? "Required fields present" : "Setup incomplete"} />
+        </div>
+        <div className="border-t border-white/10 px-5 py-3 text-[0.68rem] text-white/48 sm:px-6">
+          {updatedAt ? `Last production save ${new Date(updatedAt).toLocaleString()}` : "No production save timestamp is available."}
+        </div>
+      </section>
 
-        <TabsContent value="publication" className="space-y-6 pt-4">
+      <Tabs defaultValue="publication" orientation="vertical" className="mt-7 gap-6 lg:grid lg:grid-cols-[14rem_minmax(0,1fr)]">
+        <aside className="min-w-0">
+          <div className="lg:sticky lg:top-24">
+            <p className="mb-2 px-2 text-[0.65rem] font-black uppercase tracking-[0.16em] text-muted-foreground">Control areas</p>
+            <TabsList className="h-auto w-full max-w-full justify-start gap-1 overflow-x-auto bg-transparent p-0 lg:flex-col lg:items-stretch">
+              <TabsTrigger value="publication" className="h-10 shrink-0 justify-start px-3 lg:w-full"><Navigation /> Publication</TabsTrigger>
+              <TabsTrigger value="editorial" className="h-10 shrink-0 justify-start px-3 lg:w-full"><FileText /> Editorial</TabsTrigger>
+              <TabsTrigger value="features" className="h-10 shrink-0 justify-start px-3 lg:w-full"><SlidersHorizontal /> Features</TabsTrigger>
+              <TabsTrigger value="advertising" className="h-10 shrink-0 justify-start px-3 lg:w-full"><BadgeDollarSign /> Advertising</TabsTrigger>
+            </TabsList>
+            <div className="mt-4 hidden rounded-lg border bg-muted/25 p-3 text-xs leading-5 text-muted-foreground lg:block">
+              <Settings2 className="mb-2 size-4 text-primary" />
+              Changes stay local until the production save completes successfully.
+            </div>
+          </div>
+        </aside>
+
+        <div className="min-w-0">
+        <TabsContent value="publication" className="space-y-6">
           <Card><CardHeader><CardTitle>Brand and coverage</CardTitle><CardDescription>These values feed the public masthead, footer, metadata, feeds and public configuration API.</CardDescription></CardHeader><CardContent className="grid gap-5 sm:grid-cols-2">
             <TextField label="Publication name" value={configuration.publication.name} onChange={(value) => updatePublication("name", value)} disabled={!canManage} />
             <TextField label="Short name" value={configuration.publication.shortName} onChange={(value) => updatePublication("shortName", value)} disabled={!canManage} />
@@ -143,7 +183,7 @@ export function SiteSettingsForm({
           </CardContent></Card>
         </TabsContent>
 
-        <TabsContent value="editorial" className="pt-4">
+        <TabsContent value="editorial">
           <Card>
             <CardHeader>
               <CardTitle>Story datelines</CardTitle>
@@ -172,8 +212,10 @@ export function SiteSettingsForm({
           </Card>
         </TabsContent>
 
-        <TabsContent value="features" className="pt-4">
+        <TabsContent value="features">
           <Card><CardHeader><CardTitle>Reader and commercial features</CardTitle><CardDescription>These flags are published through the shared configuration API so web, mobile and television clients can converge on the same availability.</CardDescription></CardHeader><CardContent className="space-y-5">
+            <Toggle label="Pseudonymous bylines" description="Allows eligible Studio authors to choose an approved saved pseudonym for a story while preserving internal accountability." checked={configuration.features.pseudonyms} disabled={!canManage} onCheckedChange={(value) => updateFeature("pseudonyms", value)} />
+            <Toggle label="Secure distribution" description="Makes the authorized pre-publication distribution workspace available to supported clients." checked={configuration.features.distribution} disabled={!canManage} onCheckedChange={(value) => updateFeature("distribution", value)} />
             <Toggle label="Comments" description="Reader discussion endpoints and future story controls." checked={configuration.features.comments} disabled={!canManage} onCheckedChange={(value) => updateFeature("comments", value)} />
             <Toggle label="Newsletters" description="Newsletter signup surfaces and API availability." checked={configuration.features.newsletters} disabled={!canManage} onCheckedChange={(value) => updateFeature("newsletters", value)} />
             <Toggle label="Breaking-news alerts" description="Alert enrollment and delivery surfaces." checked={configuration.features.alerts} disabled={!canManage} onCheckedChange={(value) => updateFeature("alerts", value)} />
@@ -184,7 +226,7 @@ export function SiteSettingsForm({
           </CardContent></Card>
         </TabsContent>
 
-        <TabsContent value="advertising" className="space-y-6 pt-4">
+        <TabsContent value="advertising" className="space-y-6">
           <Card><CardHeader><div className="flex flex-wrap items-start justify-between gap-4"><div><CardTitle>Google AdSense</CardTitle><CardDescription>Global delivery controls. No ad code loads while advertising is disabled or Preview mode is on.</CardDescription></div><Badge variant={adsReady ? "secondary" : "outline"}>{adsReady ? configuration.advertising.previewMode ? "Preview only" : "Ready for live delivery" : "Not ready"}</Badge></div></CardHeader><CardContent className="space-y-5">
             <Toggle label="Enable advertising" description="Makes configured ad placements eligible to render." checked={configuration.advertising.enabled} disabled={!canManage} onCheckedChange={(value) => updateAdvertising("enabled", value)} />
             <Toggle label="Preview mode" description="Shows clearly labeled placeholders without loading Google or generating impressions. Keep this on during newsroom testing." checked={configuration.advertising.previewMode} disabled={!canManage} onCheckedChange={(value) => updateAdvertising("previewMode", value)} />
@@ -200,9 +242,14 @@ export function SiteSettingsForm({
             return <div key={placement.key} className="grid gap-4 border-b pb-6 last:border-0 last:pb-0 sm:grid-cols-[1fr_14rem] sm:items-end"><Toggle label={placement.label} description={placement.description} checked={value.enabled} disabled={!canManage} onCheckedChange={(checked) => updatePlacement(placement.key, "enabled", checked)} /><TextField id={`ad-slot-${placement.key}`} label="Ad unit ID" value={value.slotId} onChange={(slotId) => updatePlacement(placement.key, "slotId", slotId)} disabled={!canManage || !value.enabled} placeholder="1234567890" /></div>;
           })}</CardContent></Card>
         </TabsContent>
+        </div>
       </Tabs>
     </div>
   );
+}
+
+function ControlStatus({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return <div className="border-b border-white/10 px-5 py-5 last:border-b-0 sm:border-r xl:border-b-0 xl:last:border-r-0"><p className="text-[0.68rem] font-semibold text-white/48">{label}</p><p className="mt-1 text-lg font-bold">{value}</p><p className="mt-1 text-[0.66rem] text-white/38">{detail}</p></div>;
 }
 
 function TextField({ id: explicitId, label, value, onChange, disabled, placeholder, className }: { id?: string; label: string; value: string; onChange: (value: string) => void; disabled: boolean; placeholder?: string; className?: string }) {

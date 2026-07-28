@@ -2,96 +2,108 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  Activity,
   Archive,
   BarChart3,
   BookOpenText,
   ChevronDown,
   ChevronLeft,
   Clapperboard,
-  ContactRound,
+  Coins,
   ExternalLink,
   FilePlus2,
   FileText,
+  FileVideo2,
+  Flag,
+  FolderOpen,
+  Home,
   Inbox,
+  KeyRound,
+  Layers3,
   LayoutDashboard,
   Library,
   Menu,
   MessageCircleMore,
+  MessageSquareWarning,
   Newspaper,
   PanelLeftClose,
   PanelLeftOpen,
+  ScrollText,
   Settings,
+  Share2,
   UserRound,
   Users,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
+import {
+  StudioCommunicationControls,
+  formatUnread,
+  useStudioCommunication,
+} from "@/components/studio/studio-communication-controls";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  StudioCommunicationControls,
-  formatUnread,
-  useStudioCommunication,
-} from "@/components/studio/studio-communication-controls";
-import { njcPlusStudioSections } from "@/components/studio/njc-plus-nav";
 import { formatTipBadge } from "@/lib/newsroom-tips";
-import { cn } from "@/lib/utils";
+import {
+  resolveStudioNavigation,
+  type StudioHubId,
+  type StudioNavigationHub,
+  type StudioNavigationItem,
+} from "@/lib/studio-navigation";
 import type { StudioUser } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
-type StudioNavigationItem = {
-  label: string;
-  href: string;
-  icon: typeof LayoutDashboard;
-  excludesContributor?: boolean;
-  requiresChat?: boolean;
-  requiresPress?: boolean;
-  external?: boolean;
+const sidebarStorageKey = "njc:studio:sidebar-collapsed:v1";
+
+const hubIcons: Record<StudioHubId, typeof LayoutDashboard> = {
+  overview: LayoutDashboard,
+  editorial: BookOpenText,
+  distribution: Share2,
+  communications: MessageCircleMore,
+  "njc-plus": Clapperboard,
+  control: Settings,
 };
 
-const navigationGroups: Array<{ label: string; items: StudioNavigationItem[] }> = [
-  {
-    label: "Workspace",
-    items: [
-      { label: "Dashboard", href: "/studio", icon: LayoutDashboard },
-      { label: "Stories", href: "/studio/stories", icon: BookOpenText },
-      { label: "NJC+", href: "/studio/njc-plus", icon: Clapperboard },
-      { label: "Media", href: "/studio/media", icon: Library },
-    ],
-  },
-  {
-    label: "Newsroom",
-    items: [
-      { label: "Team chat", href: "/studio/chat", icon: MessageCircleMore, requiresChat: true },
-      { label: "News tips", href: "/studio/tips", icon: Inbox, excludesContributor: true },
-      { label: "Press requests", href: "/studio/press", icon: Newspaper },
-      { label: "Press releases", href: "/studio/press-releases", icon: FileText, requiresPress: true },
-    ],
-  },
-  {
-    label: "Staff",
-    items: [
-      { label: "My staff profile", href: "/studio/profile", icon: UserRound },
-      { label: "Team & roles", href: "/studio/team", icon: Users },
-      { label: "Public staff site", href: "/staff", icon: ContactRound, external: true },
-    ],
-  },
-  {
-    label: "Operations",
-    items: [
-      { label: "Analytics", href: "/studio/analytics", icon: BarChart3 },
-      { label: "Portable exports", href: "/studio/exports", icon: Archive },
-      { label: "Settings", href: "/studio/settings", icon: Settings },
-    ],
-  },
-];
+const itemIcons: Record<string, typeof LayoutDashboard> = {
+  dashboard: LayoutDashboard,
+  stories: BookOpenText,
+  media: Library,
+  tips: Inbox,
+  "press-releases": FileText,
+  "press-requests": Newspaper,
+  "distribution-manager": FolderOpen,
+  exports: Archive,
+  chat: MessageCircleMore,
+  team: Users,
+  analytics: BarChart3,
+  settings: Settings,
+  "njc-plus-overview": Activity,
+  "njc-plus-content": FileVideo2,
+  "njc-plus-homepage": Home,
+  "njc-plus-commerce": Layers3,
+  "njc-plus-access": KeyRound,
+  "njc-plus-credits": Coins,
+  "njc-plus-comments": MessageSquareWarning,
+  "njc-plus-analytics": BarChart3,
+  "njc-plus-audit": ScrollText,
+  "njc-plus-flags": Flag,
+};
 
 export function StudioShellClient({
   children,
@@ -111,51 +123,87 @@ export function StudioShellClient({
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [njcPlusOpen, setNjcPlusOpen] = useState(pathname.startsWith("/studio/njc-plus"));
-  const tipBadge = formatTipBadge(newTipCount);
-  const communication = useStudioCommunication({ enabled: chatEnabled, initialUnread: unreadChatCount });
-  const chatBadge = communication.unreadChat ? formatUnread(communication.unreadChat) : null;
-  const navigationProps = {
-    viewer,
+  const communication = useStudioCommunication({
+    enabled: chatEnabled,
+    initialUnread: unreadChatCount,
+  });
+  const context = { role: viewer.role, chatEnabled, pressEnabled };
+  const { hubs, activeHub, activeItem } = resolveStudioNavigation(
     pathname,
-    newTipCount,
+    context,
+  );
+  const tipBadge = formatTipBadge(newTipCount);
+  const chatBadge = communication.unreadChat
+    ? formatUnread(communication.unreadChat)
+    : null;
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setCollapsed(window.localStorage.getItem(sidebarStorageKey) === "true");
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  function toggleCollapsed() {
+    setCollapsed((current) => {
+      const next = !current;
+      window.localStorage.setItem(sidebarStorageKey, String(next));
+      return next;
+    });
+  }
+
+  const navigationProps = {
+    hubs,
+    activeHub,
+    activeItem,
     tipBadge,
+    newTipCount,
     chatBadge,
     unreadChatCount: communication.unreadChat,
-    chatEnabled,
-    pressEnabled,
-    njcPlusOpen,
-    setNjcPlusOpen,
   };
+  const primaryAction = getPrimaryAction(activeHub.id, pressEnabled);
 
   return (
-    <div className="dark min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <div
         className={cn(
-          "min-h-screen transition-[grid-template-columns] duration-300 ease-out lg:grid",
-          collapsed ? "lg:grid-cols-[5rem_minmax(0,1fr)]" : "lg:grid-cols-[17.5rem_minmax(0,1fr)]",
+          "min-h-screen transition-[grid-template-columns] duration-300 ease-out motion-reduce:transition-none lg:grid",
+          collapsed
+            ? "lg:grid-cols-[4.75rem_minmax(0,1fr)]"
+            : "lg:grid-cols-[16.5rem_minmax(0,1fr)]",
         )}
       >
-        <aside className="sticky top-0 hidden h-screen min-h-0 border-r border-white/10 bg-[#061f31] text-white lg:flex lg:flex-col">
-          <SidebarHeader collapsed={collapsed} onToggle={() => setCollapsed((value) => !value)} />
+        <aside className="dark sticky top-0 hidden h-screen min-h-0 border-r border-white/10 bg-[#0b271e] text-white lg:flex lg:flex-col">
+          <SidebarHeader collapsed={collapsed} onToggle={toggleCollapsed} />
           <SidebarNavigation {...navigationProps} collapsed={collapsed} />
           <SidebarFooter collapsed={collapsed} />
         </aside>
 
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent side="left" showCloseButton={false} className="dark w-[19rem] max-w-[88vw] gap-0 border-white/10 bg-[#061f31] p-0 text-white">
+          <SheetContent
+            side="left"
+            showCloseButton={false}
+            className="dark w-[18rem] max-w-[88vw] gap-0 border-white/10 bg-[#0b271e] p-0 text-white"
+          >
             <SheetHeader className="sr-only">
               <SheetTitle>Newsroom Studio navigation</SheetTitle>
             </SheetHeader>
             <SidebarHeader onToggle={() => setMobileOpen(false)} mobile />
-            <SidebarNavigation {...navigationProps} collapsed={false} onNavigate={() => setMobileOpen(false)} />
-            <SidebarFooter collapsed={false} onNavigate={() => setMobileOpen(false)} />
+            <SidebarNavigation
+              {...navigationProps}
+              collapsed={false}
+              onNavigate={() => setMobileOpen(false)}
+            />
+            <SidebarFooter
+              collapsed={false}
+              onNavigate={() => setMobileOpen(false)}
+            />
           </SheetContent>
         </Sheet>
 
         <div className="min-w-0">
-          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-3 backdrop-blur sm:px-7">
-            <div className="flex min-w-0 items-center gap-2.5">
+          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/92 px-3 backdrop-blur-xl sm:px-6">
+            <div className="flex min-w-0 items-center gap-3">
               <Button
                 variant="ghost"
                 size="icon"
@@ -165,27 +213,22 @@ export function StudioShellClient({
               >
                 <Menu />
               </Button>
-              <div className="lg:hidden"><BrandMark compact /></div>
-              <Badge variant="secondary" className="hidden sm:inline-flex lg:hidden">Studio</Badge>
-              <p className="hidden text-sm font-medium text-muted-foreground lg:block">Middlesex County desk</p>
-              {tipBadge && viewer.role !== "contributor" ? (
-                <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex lg:hidden">
-                  <Link href="/studio/tips" aria-label={`${newTipCount} new news tips`}>
-                    <Inbox />
-                    <span className="rounded-full bg-red-600 px-1.5 py-0.5 text-[0.65rem] font-black leading-none text-white">{tipBadge}</span>
-                  </Link>
-                </Button>
-              ) : null}
-              {chatEnabled ? (
-                <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex lg:hidden">
-                  <Link href="/studio/chat" aria-label={`${communication.unreadChat} unread team messages`}>
-                    <MessageCircleMore />
-                    {chatBadge ? <span className="rounded-full bg-red-600 px-1.5 py-0.5 text-[0.65rem] font-black leading-none text-white">{chatBadge}</span> : null}
-                  </Link>
-                </Button>
-              ) : null}
+              <div className="lg:hidden">
+                <BrandMark compact />
+              </div>
+              <div className="hidden min-w-0 sm:block">
+                <p className="truncate text-sm font-semibold">
+                  {activeItem?.label ?? activeHub.label}
+                </p>
+                <p className="truncate text-[0.68rem] text-muted-foreground">
+                  {activeItem && activeItem.label !== activeHub.label
+                    ? activeHub.label
+                    : activeHub.description}
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
+
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <StudioCommunicationControls
                 enabled={chatEnabled}
                 unreadNotifications={communication.unreadNotifications}
@@ -194,29 +237,25 @@ export function StudioShellClient({
                 setStatus={communication.setStatus}
                 markNotificationRead={communication.markNotificationRead}
               />
-              <Button asChild size="sm">
-                <Link href="/studio/stories/new">
-                  <FilePlus2 />
-                  <span className="hidden md:inline">New story</span>
-                  <span className="sr-only md:hidden">New story</span>
-                </Link>
-              </Button>
-              <Link
-                href="/studio/profile"
-                className="hidden items-center gap-2 rounded-md p-1 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring sm:flex"
-                aria-label="Open my staff profile"
-              >
-                <Avatar className="size-8">
-                  <AvatarFallback className="bg-brand-blue text-xs text-white">{initials(viewer.name)}</AvatarFallback>
-                </Avatar>
-                <div className="hidden xl:block">
-                  <p className="text-xs font-semibold">{viewer.name}</p>
-                  <p className="text-[0.65rem] capitalize text-muted-foreground">{viewer.role}</p>
-                </div>
-              </Link>
+              {primaryAction ? (
+                <Button asChild size="sm">
+                  <Link href={primaryAction.href}>
+                    <FilePlus2 />
+                    <span className="hidden md:inline">
+                      {primaryAction.label}
+                    </span>
+                    <span className="sr-only md:hidden">
+                      {primaryAction.label}
+                    </span>
+                  </Link>
+                </Button>
+              ) : null}
+              <AccountMenu viewer={viewer} />
             </div>
           </header>
-          <main className="p-4 sm:p-7">{children}</main>
+          <main className="mx-auto w-full max-w-[96rem] p-4 sm:p-6 lg:p-8">
+            {children}
+          </main>
         </div>
       </div>
     </div>
@@ -233,19 +272,49 @@ function SidebarHeader({
   onToggle: () => void;
 }) {
   return (
-    <div className={cn("flex h-[5.25rem] shrink-0 items-center border-b border-white/10", collapsed ? "justify-center px-2" : "justify-between gap-3 px-5")}>
+    <div
+      className={cn(
+        "flex h-[4.75rem] shrink-0 items-center border-b border-white/10",
+        collapsed ? "justify-center px-2" : "justify-between gap-3 px-4",
+      )}
+    >
       <div className="min-w-0 overflow-hidden">
-        <BrandMark inverse compact={collapsed} className={cn("transition-opacity duration-200", collapsed && "justify-center")} />
+        <BrandMark
+          inverse
+          compact={collapsed}
+          className={cn(
+            "transition-opacity duration-200 motion-reduce:transition-none",
+            collapsed && "justify-center",
+          )}
+        />
       </div>
       <Button
         variant="ghost"
         size="icon"
         onClick={onToggle}
         className="shrink-0 text-white/60 hover:bg-white/10 hover:text-white"
-        aria-label={mobile ? "Close Studio navigation" : collapsed ? "Expand Studio navigation" : "Collapse Studio navigation"}
-        title={mobile ? "Close navigation" : collapsed ? "Expand navigation" : "Collapse navigation"}
+        aria-label={
+          mobile
+            ? "Close Studio navigation"
+            : collapsed
+              ? "Expand Studio navigation"
+              : "Collapse Studio navigation"
+        }
+        title={
+          mobile
+            ? "Close navigation"
+            : collapsed
+              ? "Expand navigation"
+              : "Collapse navigation"
+        }
       >
-        {mobile ? <ChevronLeft /> : collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+        {mobile ? (
+          <ChevronLeft />
+        ) : collapsed ? (
+          <PanelLeftOpen />
+        ) : (
+          <PanelLeftClose />
+        )}
       </Button>
     </div>
   );
@@ -253,142 +322,314 @@ function SidebarHeader({
 
 function SidebarNavigation({
   collapsed,
-  viewer,
-  pathname,
-  newTipCount,
+  hubs,
+  activeHub,
+  activeItem,
   tipBadge,
+  newTipCount,
   chatBadge,
   unreadChatCount,
-  chatEnabled,
-  pressEnabled,
-  njcPlusOpen,
-  setNjcPlusOpen,
   onNavigate,
 }: {
   collapsed: boolean;
-  viewer: StudioUser;
-  pathname: string;
-  newTipCount: number;
+  hubs: StudioNavigationHub[];
+  activeHub: StudioNavigationHub;
+  activeItem: StudioNavigationItem | undefined;
   tipBadge: string | null;
+  newTipCount: number;
   chatBadge: string | null;
   unreadChatCount: number;
-  chatEnabled: boolean;
-  pressEnabled: boolean;
-  njcPlusOpen: boolean;
-  setNjcPlusOpen: React.Dispatch<React.SetStateAction<boolean>>;
   onNavigate?: () => void;
 }) {
-  const showPlusChildren = !collapsed && njcPlusOpen;
   return (
     <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-4 [scrollbar-color:rgba(255,255,255,.16)_transparent]">
-      {!collapsed ? <div className="px-5 pb-3"><Badge className="rounded-sm bg-brand-yellow text-brand-navy">Newsroom Studio</Badge></div> : null}
-      <nav className={cn("space-y-5", collapsed ? "px-2" : "px-3")} aria-label="Studio navigation">
-        {navigationGroups.map((group) => {
-          const items = group.items.filter((item) =>
-            (!item.excludesContributor || viewer.role !== "contributor") &&
-            (!item.requiresChat || chatEnabled) &&
-            (!item.requiresPress || pressEnabled));
-          return <section key={group.label}>
-            {!collapsed ? <p className="mb-1.5 px-3 text-[0.62rem] font-black uppercase tracking-[0.17em] text-white/35">{group.label}</p> : null}
-            <div className="space-y-1">
-              {items.map((item) => {
-                const active = item.href === "/studio"
-                  ? pathname === item.href
-                  : !item.external && pathname.startsWith(item.href);
-                const showTipBadge = item.href === "/studio/tips" && tipBadge;
-                const showChatBadge = item.href === "/studio/chat" && chatBadge;
-                const isPlus = item.href === "/studio/njc-plus";
-                return <div key={item.href}>
-                  <div className="flex items-center">
-                    <Link
-                      href={item.href}
-                      onClick={() => {
-                        if (isPlus) setNjcPlusOpen(true);
-                        onNavigate?.();
-                      }}
-                      title={collapsed ? item.label : undefined}
-                      className={cn(
-                        "group relative flex min-w-0 flex-1 items-center rounded-md text-sm font-medium text-white/62 transition-[background-color,color,padding] duration-200 hover:bg-white/7 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow",
-                        collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5",
-                        active && "bg-white/10 text-white",
-                        isPlus && showPlusChildren && "rounded-r-none",
-                      )}
-                    >
-                      <item.icon className="size-4 shrink-0" />
-                      {!collapsed ? <span className="truncate">{item.label}</span> : <span className="sr-only">{item.label}</span>}
-                      {!collapsed && item.external ? <ExternalLink className="ml-auto size-3 text-white/35" /> : null}
-                      {!collapsed && showTipBadge ? <NavigationBadge label={`${newTipCount} new news tips`} value={tipBadge} /> : null}
-                      {!collapsed && showChatBadge ? <NavigationBadge label={`${unreadChatCount} unread team messages`} value={chatBadge} /> : null}
-                      {collapsed && (showTipBadge || showChatBadge) ? <span className="absolute right-2 top-2 size-2 rounded-full bg-red-500 ring-2 ring-[#061f31]" aria-label={showTipBadge ? `${newTipCount} new news tips` : `${unreadChatCount} unread team messages`} /> : null}
-                    </Link>
-                    {isPlus && !collapsed ? <button
-                      type="button"
-                      onClick={() => setNjcPlusOpen((value) => !value)}
-                      className={cn(
-                        "grid self-stretch place-items-center rounded-r-md px-2 text-white/45 transition-colors hover:bg-white/7 hover:text-white",
-                        active && "bg-white/10 text-white",
-                      )}
-                      aria-label={showPlusChildren ? "Collapse NJC+ tools" : "Expand NJC+ tools"}
-                      aria-expanded={showPlusChildren}
-                    >
-                      <ChevronDown className={cn("size-3.5 transition-transform duration-200", showPlusChildren && "rotate-180")} />
-                    </button> : null}
-                  </div>
-                  {isPlus && showPlusChildren ? <div className="relative ml-5 mt-1 space-y-0.5 border-l border-white/10 pl-3">
-                    {njcPlusStudioSections.map((section) => {
-                      const childActive = section.href === "/studio/njc-plus"
-                        ? pathname === section.href
-                        : pathname.startsWith(section.href);
-                      return <Link
-                        key={section.href}
-                        href={section.href}
-                        onClick={onNavigate}
-                        className={cn(
-                          "flex items-center gap-2.5 rounded-md px-3 py-2 text-xs font-semibold text-white/45 transition-colors hover:bg-white/7 hover:text-white",
-                          childActive && "bg-white/8 text-brand-yellow",
-                        )}
-                      >
-                        <section.icon className="size-3.5 shrink-0" />
-                        <span>{section.label}</span>
-                      </Link>;
-                    })}
-                    <Link href="/plus?preview=studio" onClick={onNavigate} className="flex items-center gap-2.5 rounded-md px-3 py-2 text-xs font-semibold text-[#b9ff4a]/75 transition-colors hover:bg-white/7 hover:text-[#b9ff4a]">
-                      <ExternalLink className="size-3.5" /> Private preview
-                    </Link>
-                  </div> : null}
-                </div>;
-              })}
+      {!collapsed ? (
+        <div className="px-4 pb-4">
+          <Badge className="rounded-sm bg-brand-yellow text-brand-navy">
+            Newsroom Studio
+          </Badge>
+        </div>
+      ) : null}
+      <nav
+        className={cn(collapsed ? "px-2" : "px-3")}
+        aria-label="Studio navigation"
+      >
+        {!collapsed ? (
+          <p className="mb-1.5 px-2 text-[0.62rem] font-black uppercase tracking-[0.17em] text-white/35">
+            Workspaces
+          </p>
+        ) : null}
+        <div className="space-y-1">
+          {hubs.map((hub) => {
+            const Icon = hubIcons[hub.id];
+            const active = hub.id === activeHub.id;
+            const hubBadge = badgeForHub(hub, tipBadge, chatBadge);
+            return (
+              <Link
+                key={hub.id}
+                href={hub.items[0]!.href}
+                onClick={onNavigate}
+                title={collapsed ? hub.label : undefined}
+                className={cn(
+                  "group relative flex items-center rounded-lg text-sm font-semibold text-white/58 transition-colors hover:bg-white/7 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow",
+                  collapsed
+                    ? "justify-center px-2 py-2.5"
+                    : "gap-3 px-2.5 py-2.5",
+                  active && "bg-white/10 text-white",
+                )}
+              >
+                <Icon className="size-4 shrink-0" />
+                {!collapsed ? (
+                  <>
+                    <span className="min-w-0 flex-1 truncate">
+                      {hub.label}
+                    </span>
+                    {hubBadge ? (
+                      <NavigationBadge
+                        label={hubBadge.label}
+                        value={hubBadge.value}
+                      />
+                    ) : null}
+                  </>
+                ) : (
+                  <>
+                    <span className="sr-only">{hub.label}</span>
+                    {hubBadge ? (
+                      <span
+                        className="absolute right-2 top-2 size-2 rounded-full bg-red-500 ring-2 ring-[#0b271e]"
+                        aria-label={hubBadge.label}
+                      />
+                    ) : null}
+                  </>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+
+        {!collapsed ? (
+          <section className="mt-5 border-t border-white/10 pt-4">
+            <div className="mb-2 flex items-center justify-between gap-3 px-2">
+              <div className="min-w-0">
+                <p className="truncate text-[0.62rem] font-black uppercase tracking-[0.17em] text-white/35">
+                  In {activeHub.label}
+                </p>
+                <p className="mt-0.5 truncate text-[0.66rem] text-white/38">
+                  {activeHub.description}
+                </p>
+              </div>
+              <ChevronDown className="size-3.5 shrink-0 text-white/25" />
             </div>
-          </section>;
-        })}
+            <div className="space-y-0.5">
+              {activeHub.items.map((item) => {
+                const Icon = itemIcons[item.id] ?? LayoutDashboard;
+                const active = activeItem?.id === item.id;
+                const badge = badgeForItem(
+                  item,
+                  tipBadge,
+                  newTipCount,
+                  chatBadge,
+                  unreadChatCount,
+                );
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    onClick={onNavigate}
+                    className={cn(
+                      "flex min-w-0 items-center gap-2.5 rounded-md px-2.5 py-2 text-xs font-semibold text-white/45 transition-colors hover:bg-white/7 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow",
+                      active && "bg-white/8 text-brand-yellow",
+                    )}
+                  >
+                    <Icon className="size-3.5 shrink-0" />
+                    <span className="min-w-0 flex-1 truncate">
+                      {item.label}
+                    </span>
+                    {badge ? (
+                      <NavigationBadge
+                        label={badge.label}
+                        value={badge.value}
+                      />
+                    ) : null}
+                  </Link>
+                );
+              })}
+              {activeHub.id === "njc-plus" ? (
+                <Link
+                  href="/plus?preview=studio"
+                  onClick={onNavigate}
+                  className="flex items-center gap-2.5 rounded-md px-2.5 py-2 text-xs font-semibold text-[#b9ff4a]/70 transition-colors hover:bg-white/7 hover:text-[#b9ff4a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow"
+                >
+                  <ExternalLink className="size-3.5" />
+                  Private preview
+                </Link>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
       </nav>
     </div>
   );
 }
 
-function SidebarFooter({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+function SidebarFooter({
+  collapsed,
+  onNavigate,
+}: {
+  collapsed: boolean;
+  onNavigate?: () => void;
+}) {
   return (
-    <div className={cn("shrink-0 border-t border-white/10", collapsed ? "p-2" : "p-4")}>
+    <div
+      className={cn(
+        "shrink-0 border-t border-white/10",
+        collapsed ? "p-2" : "p-3",
+      )}
+    >
       <Link
         href="/"
         onClick={onNavigate}
         title={collapsed ? "View public site" : undefined}
         className={cn(
-          "flex items-center rounded-md text-xs font-semibold text-white/55 transition-colors hover:bg-white/7 hover:text-white",
+          "flex items-center rounded-md text-xs font-semibold text-white/50 transition-colors hover:bg-white/7 hover:text-white",
           collapsed ? "justify-center p-2.5" : "gap-2 px-2 py-2",
         )}
       >
         <ChevronLeft className="size-3.5 shrink-0" />
-        {!collapsed ? "View public site" : <span className="sr-only">View public site</span>}
+        {!collapsed ? (
+          "View public site"
+        ) : (
+          <span className="sr-only">View public site</span>
+        )}
       </Link>
     </div>
   );
 }
 
-function NavigationBadge({ label, value }: { label: string; value: string }) {
-  return <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[0.65rem] font-black leading-none text-white" aria-label={label}>{value}</span>;
+function AccountMenu({ viewer }: { viewer: StudioUser }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="rounded-full"
+          aria-label="Open Studio account menu"
+        >
+          <Avatar className="size-8">
+            <AvatarFallback className="bg-brand-blue text-xs text-white">
+              {initials(viewer.name)}
+            </AvatarFallback>
+          </Avatar>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-60 p-2">
+        <DropdownMenuLabel className="px-2 py-2">
+          <span className="block truncate text-sm font-semibold text-foreground">
+            {viewer.name}
+          </span>
+          <span className="mt-0.5 block text-[0.68rem] font-normal capitalize text-muted-foreground">
+            {viewer.role} · Middlesex County desk
+          </span>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild className="px-2 py-2">
+          <Link href="/studio/profile">
+            <UserRound /> My profile
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild className="px-2 py-2">
+          <Link href="/staff">
+            <Users /> Public staff site
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild className="px-2 py-2">
+          <Link href="/">
+            <ExternalLink /> View publication
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function getPrimaryAction(hub: StudioHubId, pressEnabled: boolean) {
+  if (hub === "distribution" && pressEnabled) {
+    return {
+      label: "New release",
+      href: "/studio/press-releases/new",
+    };
+  }
+  if (hub === "njc-plus") {
+    return {
+      label: "New NJC+ item",
+      href: "/studio/njc-plus/content/new",
+    };
+  }
+  if (hub === "overview" || hub === "editorial") {
+    return {
+      label: "New story",
+      href: "/studio/stories/new",
+    };
+  }
+  return null;
+}
+
+function badgeForItem(
+  item: StudioNavigationItem,
+  tipBadge: string | null,
+  newTipCount: number,
+  chatBadge: string | null,
+  unreadChatCount: number,
+) {
+  if (item.id === "tips" && tipBadge) {
+    return { value: tipBadge, label: `${newTipCount} new news tips` };
+  }
+  if (item.id === "chat" && chatBadge) {
+    return {
+      value: chatBadge,
+      label: `${unreadChatCount} unread team messages`,
+    };
+  }
+  return null;
+}
+
+function badgeForHub(
+  hub: StudioNavigationHub,
+  tipBadge: string | null,
+  chatBadge: string | null,
+) {
+  if (hub.items.some((item) => item.id === "tips") && tipBadge) {
+    return { value: tipBadge, label: "New news tips" };
+  }
+  if (hub.items.some((item) => item.id === "chat") && chatBadge) {
+    return { value: chatBadge, label: "Unread team messages" };
+  }
+  return null;
+}
+
+function NavigationBadge({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <span
+      className="inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[0.65rem] font-black leading-none text-white"
+      aria-label={label}
+    >
+      {value}
+    </span>
+  );
 }
 
 function initials(name: string) {
-  return name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2);
+  return name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2);
 }

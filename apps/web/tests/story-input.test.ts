@@ -28,7 +28,21 @@ const validStory = {
 test("accepts a complete publish request with optional URLs left blank", () => {
   const result = storyInput.safeParse(validStory);
   assert.equal(result.success, true);
-  if (result.success) assert.equal(result.data.includeWhyItMatters, false);
+  if (result.success) {
+    assert.equal(result.data.includeWhyItMatters, false);
+    assert.equal(result.data.bylineMode, "account");
+  }
+});
+
+test("accepts only a server-resolved byline mode, not arbitrary author input", () => {
+  assert.equal(
+    storyInput.safeParse({ ...validStory, bylineMode: "pseudonym" }).success,
+    true,
+  );
+  assert.equal(
+    storyInput.safeParse({ ...validStory, bylineMode: "someone-else" }).success,
+    false,
+  );
 });
 
 test("requires accessible alt text when a lead image is present", () => {

@@ -6,9 +6,11 @@ import { getStudioUser } from "@/lib/auth";
 import { staffProfileUpdateSchema } from "@/lib/staff-profile-policy";
 import {
   getStaffProfileDraft,
+  PseudonymConflictError,
   StaffProfilePublicationError,
   updateStaffProfileSettings,
 } from "@/lib/staff-profiles";
+import { getSiteConfiguration } from "@/lib/site-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +23,17 @@ function unavailable() {
       },
     },
     { status: 503 },
+  );
+}
+
+function isPseudonymUniqueViolation(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "23505" &&
+    "constraint" in error &&
+    error.constraint === "users_pseudonym_normalized_idx"
   );
 }
 
@@ -68,10 +81,29 @@ export async function PATCH(request: Request) {
 
   try {
     const previousProfile = await getStaffProfileDraft(viewer.id);
+    const configuration = await getSiteConfiguration();
+    const proposedPseudonym =
+      parsed.data.pseudonym ?? previousProfile?.pseudonym ?? "";
+    if (
+      !configuration.features.pseudonyms &&
+      proposedPseudonym !== (previousProfile?.pseudonym ?? "")
+    ) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "feature_disabled",
+            message:
+              "Pseudonym changes are currently disabled in Studio Configuration",
+          },
+        },
+        { status: 409 },
+      );
+    }
     const synchronized = await updateStaffProfileSettings({
       clerkId: viewer.id,
       title: parsed.data.title,
       bio: parsed.data.bio,
+      pseudonym: proposedPseudonym,
       publish:
         parsed.data.publishToStaffPage ??
         Boolean(previousProfile?.publicProfilePublishedAt),
@@ -104,6 +136,9 @@ export async function PATCH(request: Request) {
         publicationRequested: parsed.data.publishToStaffPage,
         publicSlug: synchronized.publicSlug,
         biographyLength: synchronized.bio?.length ?? 0,
+        pseudonymChanged:
+          previousProfile?.pseudonym !== (synchronized.pseudonym ?? ""),
+        pseudonymRevision: synchronized.pseudonymRevision,
       },
     });
 
@@ -123,6 +158,25 @@ export async function PATCH(request: Request) {
       { headers: { "Cache-Control": "private, no-store" } },
     );
   } catch (error) {
+    if (
+      error instanceof PseudonymConflictError ||
+      isPseudonymUniqueViolation(error)
+    ) {
+      const message =
+        error instanceof PseudonymConflictError
+          ? error.message
+          : "Choose a pseudonym that is not already associated with another newsroom identity.";
+      return NextResponse.json(
+        {
+          error: {
+            code: "pseudonym_conflict",
+            message,
+            details: { fieldErrors: { pseudonym: [message] } },
+          },
+        },
+        { status: 409 },
+      );
+    }
     if (error instanceof StaffProfilePublicationError) {
       return NextResponse.json(
         {

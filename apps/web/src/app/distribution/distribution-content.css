@@ -1,0 +1,67 @@
+.distribution-all-content {
+  margin-top: 5rem;
+}
+.distribution-all-content > header p {
+  color: var(--dist-signal);
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.distribution-all-content > header h2 {
+  margin: 0.35rem 0 1.5rem;
+  font-size: 2rem;
+}
+.distribution-all-content .distribution-tools {
+  grid-template-columns: minmax(15rem, 1fr) repeat(3, 12rem);
+}
+.distribution-content-list {
+  margin-top: 1rem;
+  border-top: 1px solid var(--dist-line);
+}
+.distribution-content-list article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--dist-line);
+}
+.distribution-content-list article > a {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  color: inherit;
+  text-decoration: none;
+}
+.distribution-content-list article > a > svg {
+  width: 1.5rem;
+  color: var(--dist-signal);
+}
+.distribution-content-list article > a > svg.is-favorite {
+  color: #ef6c83;
+}
+.distribution-content-list article small,
+.distribution-content-list article span {
+  display: block;
+  color: var(--dist-muted);
+}
+.distribution-content-list article strong {
+  display: block;
+  margin: 0.2rem 0;
+}
+.distribution-content-list .distribution-organizer {
+  margin: 0;
+}
+@media (max-width: 900px) {
+  .distribution-all-content .distribution-tools {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 600px) {
+  .distribution-all-content .distribution-tools,
+  .distribution-content-list article {
+    grid-template-columns: 1fr;
+  }
+}

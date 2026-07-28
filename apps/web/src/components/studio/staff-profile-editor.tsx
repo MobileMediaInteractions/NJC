@@ -25,16 +25,20 @@ import {
   staffBiographyMaximumLength,
   staffBiographyMinimumLength,
 } from "@/lib/staff-profile-policy";
+import { pseudonymMaximumLength } from "@/lib/pseudonyms";
 import type { StaffProfileDraft } from "@/lib/staff-profiles";
 
 export function StaffProfileEditor({
   initialProfile,
+  pseudonymsEnabled,
 }: {
   initialProfile: StaffProfileDraft;
+  pseudonymsEnabled: boolean;
 }) {
   const [profile, setProfile] = useState(initialProfile);
   const [title, setTitle] = useState(initialProfile.title);
   const [bio, setBio] = useState(initialProfile.bio);
+  const [pseudonym, setPseudonym] = useState(initialProfile.pseudonym);
   const [publishToStaffPage, setPublishToStaffPage] = useState(
     Boolean(initialProfile.publicProfilePublishedAt),
   );
@@ -61,6 +65,7 @@ export function StaffProfileEditor({
         body: JSON.stringify({
           title,
           bio,
+          pseudonym,
           publishToStaffPage: ready && publishToStaffPage,
         }),
       });
@@ -87,6 +92,7 @@ export function StaffProfileEditor({
       setProfile(payload.data);
       setTitle(payload.data.title);
       setBio(payload.data.bio);
+      setPseudonym(payload.data.pseudonym);
       setPublishToStaffPage(Boolean(payload.data.publicProfilePublishedAt));
       setMessage(
         payload.data.publicProfilePublishedAt
@@ -173,6 +179,51 @@ export function StaffProfileEditor({
               {staffBiographyMinimumLength} characters are required before the
               profile can publish.
             </p>
+          </div>
+
+          <div className="space-y-3 rounded-lg border p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label htmlFor="staff-pseudonym">Pseudonym / pen name</Label>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                  Optional. Once saved, you can choose this identity while
+                  creating a story. Your account remains connected internally
+                  for ownership, review and audit history.
+                </p>
+              </div>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {pseudonym.length}/{pseudonymMaximumLength}
+              </span>
+            </div>
+            <Input
+              id="staff-pseudonym"
+              value={pseudonym}
+              maxLength={pseudonymMaximumLength}
+              disabled={!pseudonymsEnabled || !profile.pseudonymEnabled || busy}
+              onChange={(event) => setPseudonym(event.target.value)}
+              placeholder="Optional public pen name"
+            />
+            {pseudonym.trim() ? (
+              <div className="rounded-md bg-muted/40 p-3 text-sm">
+                Public byline preview: <strong>By {pseudonym.trim()}</strong>
+              </div>
+            ) : null}
+            {!pseudonymsEnabled ? (
+              <p className="text-xs font-semibold text-amber-500">
+                Pseudonyms are currently disabled in Studio Configuration.
+                Saved information has not been removed.
+              </p>
+            ) : !profile.pseudonymEnabled ? (
+              <p className="text-xs font-semibold text-amber-500">
+                This pseudonym is unavailable. Contact an administrator before
+                using or changing it.
+              </p>
+            ) : (
+              <p className="text-xs leading-5 text-muted-foreground">
+                Saving a changed or removed pseudonym does not rewrite stories
+                that are already published.
+              </p>
+            )}
           </div>
 
           {!ready ? (

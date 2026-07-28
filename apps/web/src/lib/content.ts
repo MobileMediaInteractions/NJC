@@ -2,16 +2,17 @@ import { and, desc, eq, gte, ilike, isNull, or } from "drizzle-orm";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import { stories } from "@harborline/backend/schema";
 import type { Story } from "@/lib/types";
+import {
+  legacyPublicBylineSnapshot,
+  publicStoryAuthor,
+} from "@/lib/pseudonyms";
 
 const DEFAULT_STORY_IMAGE = "/assets/editorial/v1/garden-state-engraving.png";
 
 export function normalizeStory(row: typeof stories.$inferSelect): Story {
-  const fallbackAuthor = {
-    id: "courier-desk",
-    name: "Courier Newsroom",
-    role: "Middlesex County desk",
-    initials: "NJC",
-  };
+  const publicByline =
+    row.publicBylineSnapshot ??
+    legacyPublicBylineSnapshot({ authorSnapshot: row.authorSnapshot });
 
   return {
     id: row.id,
@@ -28,7 +29,7 @@ export function normalizeStory(row: typeof stories.$inferSelect): Story {
     readingMinutes: row.readingMinutes,
     image: row.imageUrl ?? DEFAULT_STORY_IMAGE,
     imageAlt: row.imageAlt ?? "Middlesex County news",
-    author: row.authorSnapshot ?? fallbackAuthor,
+    author: publicStoryAuthor(row.id, publicByline),
     tags: row.tags,
     seoTitle: row.seoTitle ?? undefined,
     seoDescription: row.seoDescription ?? undefined,

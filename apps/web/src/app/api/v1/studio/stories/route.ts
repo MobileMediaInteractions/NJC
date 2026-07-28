@@ -7,6 +7,11 @@ import { writeApiAudit } from "@/lib/api-keys";
 import { getStudioUser } from "@/lib/auth";
 import { storyInput } from "@/lib/story-input";
 import { generateWhyItMatters } from "@/lib/why-it-matters";
+import {
+  BylineUnavailableError,
+  resolvePublicByline,
+} from "@/lib/bylines";
+import { getSiteConfiguration } from "@/lib/site-settings";
 
 export async function POST(request: Request) {
   const viewer = await getStudioUser();
@@ -19,6 +24,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: { code: "invalid_request", message: "Check the highlighted story fields", details } }, { status: 400 });
   }
   if (parsed.data.status === "published" && !["admin", "editor", "producer"].includes(viewer.role)) return NextResponse.json({ error: { code: "forbidden", message: "Your role cannot publish stories" } }, { status: 403 });
+  if (
+    parsed.data.bylineMode === "pseudonym" &&
+    !(await getSiteConfiguration()).features.pseudonyms
+  ) {
+    return NextResponse.json(
+      { error: { code: "feature_disabled", message: "Pseudonyms are currently disabled in Studio Configuration" } },
+      { status: 409 },
+    );
+  }
+  if (!viewer.databaseId) {
+    return NextResponse.json(
+      { error: { code: "profile_unavailable", message: "A synchronized newsroom profile is required before saving a story" } },
+      { status: 409 },
+    );
+  }
 
   const [existing] = await getDb().select({ id: stories.id }).from(stories).where(eq(stories.slug, parsed.data.slug)).limit(1);
   if (existing) return NextResponse.json({ error: { code: "slug_conflict", message: "A story with this headline URL already exists. Change the headline before saving." } }, { status: 409 });
@@ -30,9 +50,14 @@ export async function POST(request: Request) {
       publishedAtRiskAcknowledged: _publishedAtRiskAcknowledged,
       publishedAtChangeReason,
       includeWhyItMatters,
+      bylineMode,
       ...storyValues
     } = parsed.data;
     void _publishedAtRiskAcknowledged;
+    const publicBylineSnapshot = await resolvePublicByline(
+      viewer.databaseId,
+      bylineMode,
+    );
     const [story] = await getDb().insert(stories).values({
       ...storyValues,
       whyItMatters: includeWhyItMatters
@@ -52,6 +77,7 @@ export async function POST(request: Request) {
       readingMinutes: Math.max(1, Math.ceil(parsed.data.body.join(" ").split(/\s+/).length / 220)),
       authorId: viewer.databaseId ?? null,
       authorSnapshot: { id: viewer.id, name: viewer.name, role: viewer.role, initials: viewer.name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase() },
+      publicBylineSnapshot,
     }).returning();
     await getDb().insert(storyRevisions).values({
       storyId: story.id,
@@ -89,6 +115,12 @@ export async function POST(request: Request) {
     console.info("[studio:stories] saved", { storyId: story.id, status: story.status, authorId: viewer.id });
     return NextResponse.json({ data: story, meta: { apiVersion: "1" } }, { status: 201 });
   } catch (error) {
+    if (error instanceof BylineUnavailableError) {
+      return NextResponse.json(
+        { error: { code: "byline_unavailable", message: error.message } },
+        { status: 409 },
+      );
+    }
     console.error("[studio:stories] persistence failed", { status: parsed.data.status, userId: viewer.id, error });
     return NextResponse.json({ error: { code: "save_failed", message: "The story could not be saved. No publication was confirmed." } }, { status: 500 });
   }

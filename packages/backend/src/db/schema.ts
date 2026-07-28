@@ -1,5 +1,6 @@
 import {
   boolean,
+  check,
   index,
   integer,
   jsonb,
@@ -63,6 +64,13 @@ export const users = pgTable(
     role: staffRole("role").notNull().default("contributor"),
     title: text("title"),
     bio: text("bio"),
+    pseudonym: text("pseudonym"),
+    pseudonymNormalized: text("pseudonym_normalized"),
+    pseudonymEnabled: boolean("pseudonym_enabled").notNull().default(true),
+    pseudonymRevision: integer("pseudonym_revision").notNull().default(0),
+    pseudonymUpdatedAt: timestamp("pseudonym_updated_at", {
+      withTimezone: true,
+    }),
     publicSlug: text("public_slug"),
     publicProfilePublishedAt: timestamp("public_profile_published_at", {
       withTimezone: true,
@@ -80,6 +88,9 @@ export const users = pgTable(
     uniqueIndex("users_clerk_id_idx").on(table.clerkId),
     uniqueIndex("users_email_idx").on(table.email),
     uniqueIndex("users_public_slug_idx").on(table.publicSlug),
+    uniqueIndex("users_pseudonym_normalized_idx")
+      .on(table.pseudonymNormalized)
+      .where(sql`${table.pseudonymNormalized} is not null`),
   ],
 );
 
@@ -119,6 +130,15 @@ export const stories = pgTable(
       role: string;
       initials: string;
       avatar?: string;
+    }>(),
+    publicBylineSnapshot: jsonb("public_byline_snapshot").$type<{
+      mode: "account" | "pseudonym";
+      name: string;
+      initials: string;
+      role: string;
+      avatar?: string;
+      profileSlug?: string;
+      pseudonymRevision?: number;
     }>(),
     imageUrl: text("image_url"),
     imageAlt: text("image_alt"),
@@ -236,6 +256,277 @@ export const mediaAssetUsages = pgTable(
       table.field,
     ),
     index("media_asset_usage_owner_idx").on(table.product, table.ownerType, table.ownerId),
+  ],
+);
+
+export const distributionFiles = pgTable(
+  "distribution_files",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    pathname: text("pathname").notNull(),
+    filename: text("filename").notNull(),
+    mimeType: text("mime_type").notNull(),
+    size: integer("size").notNull(),
+    sha256: text("sha256"),
+    width: integer("width"),
+    height: integer("height"),
+    durationMs: integer("duration_ms"),
+    processingStatus: text("processing_status").notNull().default("ready"),
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    uploadedByClerkId: text("uploaded_by_clerk_id").notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("distribution_files_pathname_idx").on(table.pathname),
+    index("distribution_files_type_size_idx").on(table.mimeType, table.size),
+    index("distribution_files_created_idx").on(table.createdAt),
+    check("distribution_files_positive_size_check", sql`${table.size} > 0`),
+    check(
+      "distribution_files_dimensions_check",
+      sql`(${table.width} is null or ${table.width} > 0) and (${table.height} is null or ${table.height} > 0)`,
+    ),
+    check(
+      "distribution_files_duration_check",
+      sql`${table.durationMs} is null or ${table.durationMs} >= 0`,
+    ),
+    check(
+      "distribution_files_processing_status_check",
+      sql`${table.processingStatus} in ('pending', 'ready', 'failed', 'quarantined')`,
+    ),
+  ],
+);
+
+export const distributionPackages = pgTable(
+  "distribution_packages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    status: text("status").notNull().default("draft"),
+    availableAt: timestamp("available_at", { withTimezone: true }),
+    embargoAt: timestamp("embargo_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    downloadPolicy: text("download_policy").notNull().default("view_only"),
+    termsText: text("terms_text").notNull().default(""),
+    createdByClerkId: text("created_by_clerk_id").notNull(),
+    updatedByClerkId: text("updated_by_clerk_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("distribution_packages_slug_idx").on(table.slug),
+    index("distribution_packages_status_idx").on(table.status, table.updatedAt),
+    check(
+      "distribution_packages_status_check",
+      sql`${table.status} in ('draft', 'available', 'expired', 'revoked', 'archived')`,
+    ),
+    check(
+      "distribution_packages_download_policy_check",
+      sql`${table.downloadPolicy} in ('view_only', 'grant_controlled', 'download')`,
+    ),
+    check(
+      "distribution_packages_dates_check",
+      sql`${table.expiresAt} is null or ${table.availableAt} is null or ${table.expiresAt} > ${table.availableAt}`,
+    ),
+  ],
+);
+
+export const distributionPackageItems = pgTable(
+  "distribution_package_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    packageId: uuid("package_id")
+      .notNull()
+      .references(() => distributionPackages.id, { onDelete: "cascade" }),
+    fileId: uuid("file_id").references(() => distributionFiles.id, {
+      onDelete: "restrict",
+    }),
+    storyId: uuid("story_id").references(() => stories.id, {
+      onDelete: "restrict",
+    }),
+    storySnapshot: jsonb("story_snapshot").$type<{
+      headline: string;
+      dek: string;
+      body: string[];
+      categoryLabel: string;
+      sourceUpdatedAt: string;
+      capturedAt: string;
+    }>(),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("distribution_package_asset_idx").on(
+      table.packageId,
+      table.fileId,
+    ),
+    uniqueIndex("distribution_package_story_idx").on(
+      table.packageId,
+      table.storyId,
+    ),
+    index("distribution_package_items_order_idx").on(
+      table.packageId,
+      table.sortOrder,
+    ),
+    check(
+      "distribution_package_items_single_source_check",
+      sql`num_nonnulls(${table.fileId}, ${table.storyId}) = 1`,
+    ),
+    check(
+      "distribution_package_items_story_snapshot_check",
+      sql`${table.storyId} is null or ${table.storySnapshot} is not null`,
+    ),
+  ],
+);
+
+export const distributionGrants = pgTable(
+  "distribution_grants",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    packageId: uuid("package_id")
+      .notNull()
+      .references(() => distributionPackages.id, { onDelete: "cascade" }),
+    userClerkId: text("user_clerk_id").notNull(),
+    grantedByClerkId: text("granted_by_clerk_id").notNull(),
+    startsAt: timestamp("starts_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    downloadAllowed: boolean("download_allowed").notNull().default(false),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("distribution_grants_package_user_idx").on(
+      table.packageId,
+      table.userClerkId,
+    ),
+    index("distribution_grants_user_active_idx").on(
+      table.userClerkId,
+      table.revokedAt,
+      table.expiresAt,
+    ),
+    check(
+      "distribution_grants_dates_check",
+      sql`${table.expiresAt} is null or ${table.expiresAt} > ${table.startsAt}`,
+    ),
+  ],
+);
+
+export const distributionPlaybackProgress = pgTable(
+  "distribution_playback_progress",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userClerkId: text("user_clerk_id").notNull(),
+    fileId: uuid("file_id")
+      .notNull()
+      .references(() => distributionFiles.id, { onDelete: "cascade" }),
+    positionMs: integer("position_ms").notNull().default(0),
+    durationMs: integer("duration_ms").notNull().default(0),
+    completed: boolean("completed").notNull().default(false),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("distribution_progress_user_file_idx").on(
+      table.userClerkId,
+      table.fileId,
+    ),
+    index("distribution_progress_updated_idx").on(
+      table.userClerkId,
+      table.updatedAt,
+    ),
+    check(
+      "distribution_progress_values_check",
+      sql`${table.positionMs} >= 0 and ${table.durationMs} >= 0 and (${table.durationMs} = 0 or ${table.positionMs} <= ${table.durationMs})`,
+    ),
+  ],
+);
+
+export const distributionAuditLogs = pgTable(
+  "distribution_audit_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    actorClerkId: text("actor_clerk_id").notNull(),
+    action: text("action").notNull(),
+    targetType: text("target_type"),
+    targetId: text("target_id"),
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    ipHash: text("ip_hash"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("distribution_audit_actor_idx").on(
+      table.actorClerkId,
+      table.createdAt,
+    ),
+    index("distribution_audit_target_idx").on(
+      table.targetType,
+      table.targetId,
+      table.createdAt,
+    ),
+  ],
+);
+
+export const distributionUserLibrary = pgTable(
+  "distribution_user_library",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userClerkId: text("user_clerk_id").notNull(),
+    itemId: uuid("item_id")
+      .notNull()
+      .references(() => distributionPackageItems.id, { onDelete: "cascade" }),
+    collection: text("collection").notNull().default("Saved"),
+    favorite: boolean("favorite").notNull().default(false),
+    addedAt: timestamp("added_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("distribution_user_library_user_item_idx").on(
+      table.userClerkId,
+      table.itemId,
+    ),
+    index("distribution_user_library_collection_idx").on(
+      table.userClerkId,
+      table.collection,
+    ),
+    check(
+      "distribution_user_library_collection_check",
+      sql`length(btrim(${table.collection})) > 0`,
+    ),
   ],
 );
 

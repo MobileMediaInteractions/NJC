@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { pseudonymSchema } from "@/lib/pseudonyms";
 
 export const staffBiographyMinimumLength = 80;
 export const staffBiographyMaximumLength = 2_000;
@@ -6,6 +7,7 @@ export const staffBiographyMaximumLength = 2_000;
 export const staffProfileUpdateSchema = z.object({
   title: z.string().trim().max(120),
   bio: z.string().trim().max(staffBiographyMaximumLength),
+  pseudonym: pseudonymSchema.optional(),
   publishToStaffPage: z.boolean().optional(),
 });
 

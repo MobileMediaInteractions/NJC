@@ -22,6 +22,7 @@ export function StoryReviewActions({
   id,
   slug,
   headline,
+  bylineName,
   status,
   canPublish,
   canSubmitReview,
@@ -29,6 +30,7 @@ export function StoryReviewActions({
   id: string;
   slug: string;
   headline: string;
+  bylineName: string;
   status: StoryStatus;
   canPublish: boolean;
   canSubmitReview: boolean;
@@ -82,7 +84,7 @@ export function StoryReviewActions({
               <AlertDialogHeader>
                 <AlertDialogMedia className="bg-primary/15 text-primary"><Send /></AlertDialogMedia>
                 <AlertDialogTitle>Publish this story now?</AlertDialogTitle>
-                <AlertDialogDescription>“{headline}” will immediately appear on the public site, apps, Roku, feeds and search sitemaps.</AlertDialogDescription>
+                <AlertDialogDescription>“{headline}” will immediately appear under “By {bylineName}” on the public site, apps, Roku, feeds and search sitemaps.</AlertDialogDescription>
               </AlertDialogHeader>
               {error ? <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</p> : null}
               <AlertDialogFooter>

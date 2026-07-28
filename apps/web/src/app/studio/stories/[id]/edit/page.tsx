@@ -10,6 +10,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { getStudioUser } from "@/lib/auth";
 import { getSiteConfiguration } from "@/lib/site-settings";
 import { canPublishStory } from "@/lib/story-workflow";
+import { getStoryBylineOptions } from "@/lib/bylines";
 
 const storyId = z.uuid();
 
@@ -33,7 +34,9 @@ export default async function EditStoryPage({ params }: { params: Promise<{ id: 
   if (!story) notFound();
 
   const canPublish = canPublishStory(viewer.role);
-  const canEdit = canPublish || story.authorSnapshot?.id === viewer.id;
+  const canEdit =
+    canPublish ||
+    Boolean(viewer.databaseId && story.authorId === viewer.databaseId);
   if (!canEdit) {
     return <StudioShell viewer={viewer}><StatusCard title="Editing access required" description="Only the story owner or a publisher can change this newsroom draft." /></StudioShell>;
   }
@@ -42,12 +45,21 @@ export default async function EditStoryPage({ params }: { params: Promise<{ id: 
   }
 
   const configuration = await getSiteConfiguration();
+  const bylineOptions = story.authorId
+    ? await getStoryBylineOptions(story.authorId)
+    : [{
+        mode: "account" as const,
+        name: story.authorSnapshot?.name ?? "Courier Newsroom",
+        available: true,
+      }];
   return (
     <StudioShell viewer={viewer}>
       <StoryEditor
         datelines={configuration.editorial.datelines}
         publicationTimezone={configuration.publication.timezone}
         canPublish={canPublish}
+        bylineOptions={bylineOptions}
+        pseudonymsEnabled={configuration.features.pseudonyms}
         initialStory={{
           id: story.id,
           headline: story.headline,
@@ -65,6 +77,7 @@ export default async function EditStoryPage({ params }: { params: Promise<{ id: 
           canonicalUrl: story.canonicalUrl,
           noIndex: story.noIndex,
           isBreaking: story.isBreaking,
+          bylineMode: story.publicBylineSnapshot?.mode ?? "account",
           status: story.status,
         }}
       />

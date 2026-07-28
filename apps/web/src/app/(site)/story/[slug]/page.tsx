@@ -15,7 +15,10 @@ import { formatStoryDate } from "@/lib/format";
 import { getSiteOrigin } from "@/lib/origin";
 import { isSearchIndexingEnabled, storyPageJsonLd } from "@/lib/seo";
 import { getSiteConfiguration } from "@/lib/site-settings";
-import { getPublicStaffProfileByIdentity } from "@/lib/staff-profiles";
+import {
+  getPublicStaffProfileByIdentity,
+  getPublicStaffProfileBySlug,
+} from "@/lib/staff-profiles";
 import { getStoryShareLinks, getStorySocialImageUrl } from "@/lib/story-sharing";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -26,10 +29,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const description = story.seoDescription || story.dek;
   const canonical = story.canonicalUrl || `/story/${story.slug}`;
   const socialImage = getStorySocialImageUrl({ siteOrigin: getSiteOrigin(), slug: story.slug, updatedAt: story.updatedAt });
-  const authorProfile = await getPublicStaffProfileByIdentity({
-    clerkId: story.author.id,
-    name: story.author.name,
-  }).catch((error) => {
+  const authorProfile = await (
+    story.author.profileSlug
+      ? getPublicStaffProfileBySlug(story.author.profileSlug)
+      : story.author.mode !== "pseudonym"
+        ? getPublicStaffProfileByIdentity({ name: story.author.name })
+        : Promise.resolve(undefined)
+  ).catch((error) => {
     console.error("Story author profile metadata lookup failed", {
       slug: story.slug,
       error,
@@ -88,10 +94,13 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   const [relatedStories, configuration, authorProfile] = await Promise.all([
     getPublishedStories({ category: story.category, limit: 4 }),
     getSiteConfiguration(),
-    getPublicStaffProfileByIdentity({
-      clerkId: story.author.id,
-      name: story.author.name,
-    }).catch((error) => {
+    (
+      story.author.profileSlug
+        ? getPublicStaffProfileBySlug(story.author.profileSlug)
+        : story.author.mode !== "pseudonym"
+          ? getPublicStaffProfileByIdentity({ name: story.author.name })
+          : Promise.resolve(undefined)
+    ).catch((error) => {
       console.error("Story author profile lookup failed", {
         slug: story.slug,
         error,

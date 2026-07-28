@@ -17,6 +17,10 @@ import {
   isPublicStaffProfileVisible,
   shouldPublishStaffProfile,
 } from "@/lib/staff-profile-policy";
+import {
+  normalizePseudonym,
+  pseudonymConflictsWithNames,
+} from "@/lib/pseudonyms";
 
 type StaffRecord = typeof users.$inferSelect;
 
@@ -31,6 +35,9 @@ export type StaffProfileDraft = {
   displayName: string;
   title: string;
   bio: string;
+  pseudonym: string;
+  pseudonymEnabled: boolean;
+  pseudonymRevision: number;
   publicSlug: string | null;
   publicProfilePublishedAt: string | null;
   avatarUrl: string | null;
@@ -86,6 +93,13 @@ export class StaffProfilePublicationError extends Error {
   }
 }
 
+export class PseudonymConflictError extends Error {
+  constructor() {
+    super("Choose a pseudonym that is not already associated with another newsroom identity.");
+    this.name = "PseudonymConflictError";
+  }
+}
+
 export async function synchronizePublicStaffProfile(clerkId: string) {
   if (!hasDatabase()) return null;
   const [record] = await getDb()
@@ -129,6 +143,7 @@ export async function updateStaffProfileSettings(input: {
   clerkId: string;
   title: string;
   bio: string;
+  pseudonym: string;
   publish: boolean;
 }) {
   if (!hasDatabase()) return null;
@@ -145,7 +160,35 @@ export async function updateStaffProfileSettings(input: {
       ...record,
       title: input.title || null,
       bio: input.bio || null,
+      pseudonym: input.pseudonym.trim() || null,
     };
+    const pseudonymNormalized = proposed.pseudonym
+      ? normalizePseudonym(proposed.pseudonym)
+      : null;
+    if (proposed.pseudonym) {
+      const staffNames = await tx
+        .select({
+          clerkId: users.clerkId,
+          displayName: users.displayName,
+          pseudonym: users.pseudonym,
+        })
+        .from(users)
+        .where(eq(users.isActive, true));
+      if (
+        pseudonymConflictsWithNames(proposed.pseudonym, [
+          "Abdullah Muzammil",
+          ...staffNames.map((item) => item.displayName),
+          ...staffNames
+            .filter((item) => item.clerkId !== record.clerkId)
+            .flatMap((item) => (item.pseudonym ? [item.pseudonym] : [])),
+        ])
+      ) {
+        throw new PseudonymConflictError();
+      }
+    }
+    const pseudonymChanged =
+      pseudonymNormalized !== record.pseudonymNormalized ||
+      proposed.pseudonym !== record.pseudonym;
     if (
       input.publish &&
       !shouldPublishStaffProfile({
@@ -189,6 +232,12 @@ export async function updateStaffProfileSettings(input: {
       .set({
         title: proposed.title,
         bio: proposed.bio,
+        pseudonym: proposed.pseudonym,
+        pseudonymNormalized,
+        pseudonymRevision: pseudonymChanged
+          ? record.pseudonymRevision + 1
+          : record.pseudonymRevision,
+        pseudonymUpdatedAt: pseudonymChanged ? new Date() : record.pseudonymUpdatedAt,
         publicSlug,
         publicProfilePublishedAt: input.publish
           ? record.publicProfilePublishedAt ?? new Date()
@@ -213,6 +262,9 @@ export async function getStaffProfileDraft(clerkId: string): Promise<StaffProfil
     displayName: record.displayName,
     title: record.title ?? "",
     bio: record.bio ?? "",
+    pseudonym: record.pseudonym ?? "",
+    pseudonymEnabled: record.pseudonymEnabled,
+    pseudonymRevision: record.pseudonymRevision,
     publicSlug: record.publicSlug,
     publicProfilePublishedAt:
       record.publicProfilePublishedAt?.toISOString() ?? null,

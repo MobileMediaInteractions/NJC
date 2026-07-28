@@ -10,6 +10,7 @@ deployment and one separately deployable static asset origin.
 | `api.thejerseycourier.com` | `njc-web` | Clean `/v1/*` and `/developer/*` aliases rewrite to the existing versioned API routes |
 | `cdn.thejerseycourier.com` | dedicated CDN project rooted at `apps/cdn` | Immutable public brand and editorial assets; never private newsroom material |
 | `plus.thejerseycourier.com` | `njc-web` | Host-aware NJC+ product routes; unavailable public surfaces redirect to the canonical publication while Studio preview and invited-beta access remain entitlement-gated |
+| `distribution.thejerseycourier.com` | `njc-web` | Private, no-index advance-release library. Every package, preview, stream, and download is authorized server-side against a verified Clerk account and an active database grant. |
 
 DNS labels cannot contain `+`, so the public hostname for NJC+ is `plus`.
 The host rewrites to the separate `/plus` product shell without exposing or
@@ -25,12 +26,23 @@ NEXT_PUBLIC_STUDIO_URL=https://studio.thejerseycourier.com
 NEXT_PUBLIC_STUDIO_HOST=studio.thejerseycourier.com
 NEXT_PUBLIC_API_HOST=api.thejerseycourier.com
 NEXT_PUBLIC_PLUS_HOST=plus.thejerseycourier.com
+NEXT_PUBLIC_DISTRIBUTION_HOST=distribution.thejerseycourier.com
+NEXT_PUBLIC_DISTRIBUTION_URL=https://distribution.thejerseycourier.com
+DISTRIBUTION_ENABLED=false
 NEXT_PUBLIC_ASSET_ORIGIN=https://cdn.thejerseycourier.com
 ```
 
 The web UI may continue using same-origin API calls. The API subdomain exists
 for official applications and documented integrations; it does not weaken API
 keys, rate limits, Clerk authorization or per-route permission checks.
+
+Keep `DISTRIBUTION_ENABLED=false` until migration `0020`, the private Blob
+store, Clerk production-domain authorization, and the DNS alias are all
+verified. Distribution uses the existing `njc-web` deployment so it can reuse
+the authoritative account and grant records, but its binaries remain in
+private Blob storage and are delivered only through authenticated streaming
+routes. Never attach `distribution` to the static CDN project, Search Console,
+the sitemap, or a public media URL.
 
 ## CDN project
 

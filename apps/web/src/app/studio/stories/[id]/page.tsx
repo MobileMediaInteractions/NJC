@@ -47,7 +47,7 @@ export default async function StudioStoryReviewPage({ params }: { params: Promis
             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{story.headline}</h1>
             <p className="mt-3 text-lg leading-7 text-muted-foreground">{story.dek}</p>
           </div>
-          <StoryReviewActions id={story.id} slug={story.slug} headline={story.headline} status={story.status} canPublish={canPublish} canSubmitReview={canPublish || story.authorSnapshot?.id === viewer.id} />
+          <StoryReviewActions id={story.id} slug={story.slug} headline={story.headline} bylineName={story.publicBylineSnapshot?.name ?? story.authorSnapshot?.name ?? "Courier Newsroom"} status={story.status} canPublish={canPublish} canSubmitReview={canPublish || Boolean(viewer.databaseId && story.authorId === viewer.databaseId)} />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -62,6 +62,7 @@ export default async function StudioStoryReviewPage({ params }: { params: Promis
           <div className="space-y-6">
             <Card><CardHeader><CardTitle className="text-base">Story details</CardTitle></CardHeader><CardContent className="space-y-4 text-sm">
               <Detail icon={<UserRound />} label="Owner" value={story.authorSnapshot?.name ?? "Unassigned"} />
+              <Detail icon={<UserRound />} label="Public byline" value={story.publicBylineSnapshot?.name ?? story.authorSnapshot?.name ?? "Courier Newsroom"} />
               <Detail icon={<CalendarClock />} label="Updated" value={formatDate(story.updatedAt)} />
               <Separator />
               <div><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Dateline</p><p className="mt-1">{story.location}</p></div>

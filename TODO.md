@@ -6,24 +6,20 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 
 > **Execution-order requirement:** This is the first product implementation to complete after the mandatory Bun and Protocol Buffers investigation immediately below. Finish and verify this entire section before internal-domain work or any platform-specific implementation.
 
-- [ ] Add a first-class **pseudonym/pen-name authorship system** for every Studio user profile.
-  - Audit the existing Clerk user, newsroom profile, database author and public staff/byline models before changing them; extend the current source of truth instead of creating an unrelated author record.
-  - Give each eligible Studio user an optional pseudonym field in their own profile with clear help text, validation, length limits and a preview of how the byline will appear.
-  - Require an explicit save action and show the saved state. A partially entered or unsaved pseudonym must never become available in the story editor.
-  - Prevent blank, deceptive, reserved, impersonating or markup-bearing pseudonyms and define an administrator review/correction path for misuse without exposing private account information.
-  - Keep the real staff account connected internally for permissions, ownership, editorial review, audit history, legal response and abuse investigation; never treat a pseudonym as a second login or a way to bypass accountability.
-  - Do not expose the underlying legal/display identity through public article APIs, HTML, metadata, JSON-LD, social cards, feeds, sitemaps, URLs, image alt text or client bundles when that story was intentionally published under the pseudonym.
-  - Decide and document how pseudonymous contributors appear on public author pages and the staff directory, including whether a dedicated pseudonym author page is created or the story omits a profile link.
-  - Preserve a per-story byline snapshot so changing or removing a profile pseudonym does not silently rewrite previously published stories. Historical changes must use an authorized, audited editorial correction workflow.
-- [ ] Add an explicit pseudonym choice to the story creation and editing workflow.
-  - When the signed-in author has a saved pseudonym, show a clearly labeled checkbox/tick such as **Publish this story under my pseudonym**, defaulting to off unless an approved newsroom policy intentionally says otherwise.
-  - When checked, populate the saved pseudonym automatically; do not make the author retype it and do not allow an arbitrary one-off pen name in the story form.
-  - Hide or disable the control with an explanation when no pseudonym has been saved, with a permission-aware link to the profile editor.
-  - Show the exact public byline in the story preview, review screen, publishing confirmation and scheduled-story summary so the author and editor cannot mistake which identity will appear.
-  - Preserve the author’s real internal ownership while returning only the selected public byline through reader-facing contracts.
-  - Revalidate the pseudonym at save, review, approval, scheduling and publication time. If it is removed, invalidated or administratively disabled before publication, fail safely and require a new editorial decision.
-  - Treat a byline-mode change after approval as a material editorial change that invalidates the prior approval and returns the story to review.
-  - Support authorized reassignment and collaborative/multiple-author stories without allowing one employee to select another person’s pseudonym merely by changing a client-supplied ID.
+- [ ] Complete the remaining advanced pseudonym operations now that the
+  privacy-safe profile, story selector, immutable byline snapshot and public
+  API/SEO protections are implemented.
+  - Add an administrator moderation workflow to disable, restore or require
+    correction of a pseudonym with an auditable reason, without letting an
+    administrator silently invent a new public identity for another person.
+  - Add an authorized historical byline-correction workflow; ordinary profile
+    edits must continue to leave published snapshots unchanged.
+  - Define and implement reassignment and collaborative/multiple-author
+    behavior without allowing one employee to select another person’s
+    pseudonym through client-supplied identifiers.
+  - Re-run the implemented pseudonym validation inside the future
+    approval-gated scheduling worker immediately before a scheduled
+    publication is committed.
 - [ ] Complete a production-grade **approval-gated story scheduler** using the existing story workflow, scheduled status, `scheduledAt` data and publication queue where they are valid.
   - Enforce the state machine on the server: a draft cannot be scheduled, a story in review cannot self-publish and only a story that has received the required approval may enter the scheduled queue.
   - Record approval as an auditable event with approver, approved revision/content hash, timestamp and any required note. “Review” status alone must not be treated as approval.
@@ -52,14 +48,6 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   - Record actor, timestamp, before/after value, reason, target environment and affected platforms for every change; provide a permission-checked history and safe rollback to a known-good configuration.
   - Apply changes atomically, reject stale concurrent edits and distribute a versioned configuration to clients with last-known-good caching and fail-safe defaults.
   - Never expose secrets in the configuration document, browser responses, history or exports. Keep credentials in environment/secret storage and show only connection health or safe identifiers.
-- [ ] Redesign the Configuration area as an original **NJ Courier producer/admin panel**, using the referenced HQ Trivia producer-panel concept as functional inspiration.
-  - Carry forward the useful producer-console idea from the referenced article: administrators should be able to prepare, schedule and control interconnected product behavior from a coherent operational workspace rather than editing scattered technical values.
-  - Do not copy HQ Trivia, Intent’s screenshots, branding, wording or proprietary layout. Translate the workflow principles into an original editorial/newsroom product.
-  - Preserve the established NJ Courier color system, typography and visual identity across light, dark and system themes.
-  - Use a deliberate information hierarchy with a status overview, platform health, feature groups, publishing controls, warnings, dependencies, recent changes and audit activity without making the interface cramped.
-  - Provide responsive desktop and tablet layouts, keyboard navigation, screen-reader labels, strong focus states, sufficient contrast and reduced-motion behavior.
-  - Make risky actions visually distinct without turning the entire panel red or alarm-heavy; routine configuration should remain calm, clear and fast.
-  - Preview representative site and app consequences where practical, but never simulate success when a platform requires a rebuild, external credential or deployment.
 - [ ] Add migration and verification coverage for the complete section.
   - Migrate existing users and stories without inventing pseudonyms, changing public bylines or marking unapproved content as approved.
   - Add database constraints and indexes needed for byline history, approval revisions, scheduled work and configuration versions, with a reversible migration and portable-backup support.

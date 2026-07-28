@@ -13,13 +13,18 @@ const apiHostname =
   process.env.NEXT_PUBLIC_API_HOST ?? "api.thejerseycourier.com";
 const plusHostname =
   process.env.NEXT_PUBLIC_PLUS_HOST ?? "plus.thejerseycourier.com";
+const distributionHostname =
+  process.env.NEXT_PUBLIC_DISTRIBUTION_HOST ??
+  "distribution.thejerseycourier.com";
 const canonicalSiteHostname = new URL(canonicalSiteOrigin).hostname;
 const studioOrigin = `https://${studioHostname}`;
 const apiOrigin = `https://${apiHostname}`;
 const plusOrigin = `https://${plusHostname}`;
+const distributionOrigin = `https://${distributionHostname}`;
 const studioSections = [
   "analytics",
   "chat",
+  "distribution",
   "exports",
   "media",
   "njc-plus",
@@ -90,6 +95,29 @@ const nextConfig: NextConfig = {
         has: onHost(apiHostname),
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },
+      {
+        source: "/distribution/:path*",
+        headers: [
+          {
+            key: "X-Robots-Tag",
+            value: "noindex, nofollow, noarchive, nosnippet",
+          },
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
+      {
+        source: "/:path*",
+        has: onHost(distributionHostname),
+        headers: [
+          {
+            key: "X-Robots-Tag",
+            value: "noindex, nofollow, noarchive, nosnippet",
+          },
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
     ];
   },
   async redirects() {
@@ -149,6 +177,30 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/distribution",
+        has: onHost(canonicalSiteHostname),
+        destination: distributionOrigin,
+        permanent: true,
+      },
+      {
+        source: "/distribution/:path*",
+        has: onHost(canonicalSiteHostname),
+        destination: `${distributionOrigin}/:path*`,
+        permanent: true,
+      },
+      {
+        source: "/distribution",
+        has: onHost(distributionHostname),
+        destination: distributionOrigin,
+        permanent: true,
+      },
+      {
+        source: "/distribution/:path*",
+        has: onHost(distributionHostname),
+        destination: `${distributionOrigin}/:path*`,
+        permanent: true,
+      },
+      {
         source: "/docs",
         has: onHost(apiHostname),
         destination: apiOrigin,
@@ -189,6 +241,18 @@ const nextConfig: NextConfig = {
           has: onHost(apiHostname),
           destination: "/developers",
         },
+        {
+          source: "/",
+          has: onHost(distributionHostname),
+          destination: "/distribution",
+        },
+        ...["package", "file", "item"].flatMap((section) => [
+          {
+            source: `/${section}/:path*`,
+            has: onHost(distributionHostname),
+            destination: `/distribution/${section}/:path*`,
+          },
+        ]),
         {
           source: "/:slug",
           has: onHost(plusHostname),

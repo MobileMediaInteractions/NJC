@@ -87,3 +87,14 @@ test("older stored configuration receives default datelines", () => {
   const parsed = siteConfigurationSchema.parse(configuration);
   assert.ok(parsed.editorial.datelines.includes("New Brunswick"));
 });
+
+test("older stored configuration enables pseudonyms and Distribution by default", () => {
+  const configuration = configurationCopy();
+  const features = configuration.features as Partial<typeof configuration.features>;
+  delete features.pseudonyms;
+  delete features.distribution;
+
+  const parsed = siteConfigurationSchema.parse(configuration);
+  assert.equal(parsed.features.pseudonyms, true);
+  assert.equal(parsed.features.distribution, true);
+});

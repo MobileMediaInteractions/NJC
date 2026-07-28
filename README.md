@@ -80,8 +80,12 @@ The Hobby deployment runs `/api/cron/publish-scheduled` once daily at `10:00 UTC
 The [custom-domain launch runbook](docs/DOMAIN_LAUNCH.md) covers the Vercel
 primary-domain redirect, Clerk production keys, canonical/SEO checks,
 native-app follow-up and rollback. The
-[subdomain runbook](docs/SUBDOMAINS.md) covers Studio, API, CDN and the
-temporary NJC+ redirect.
+[subdomain runbook](docs/SUBDOMAINS.md) covers Studio, API, CDN, Distribution
+and the temporary NJC+ redirect.
+
+The [private Distribution runbook](docs/DISTRIBUTION.md) covers authorized
+pre-publication packages, immutable story snapshots, private media delivery,
+the custom viewer/player, domain activation, and production verification.
 
 Copy [`apps/web/.env.example`](apps/web/.env.example) for configuration names. Never commit `.env.local`.
 
