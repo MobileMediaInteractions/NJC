@@ -148,6 +148,13 @@
       "when": 1785216578136,
       "tag": "0020_awesome_yellow_claw",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1785256107947,
+      "tag": "0021_silky_vance_astro",
+      "breakpoints": true
     }
   ]
 }

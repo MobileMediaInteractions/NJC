@@ -43,7 +43,7 @@ test("navigation hides unauthorized and unavailable destinations", () => {
   const administratorIds = administrator.flatMap((hub) =>
     hub.items.map((item) => item.id),
   );
-  for (const id of ["tips", "team", "settings", "chat", "press-releases", "distribution-manager"]) {
+  for (const id of ["tips", "team", "settings", "legal-registry", "chat", "press-releases", "distribution-manager"]) {
     assert.equal(administratorIds.includes(id), true);
   }
   assert.equal(

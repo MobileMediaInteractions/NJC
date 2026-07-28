@@ -901,6 +901,60 @@ export const siteSettings = pgTable("site_settings", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export interface LegalPublishedSnapshot {
+  title: string;
+  summary: string;
+  body: string[];
+  severity: "informational" | "material" | "critical";
+  revision: number;
+  publishedAt: string;
+}
+
+export const legalCenterEntries = pgTable(
+  "legal_center_entries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    summary: text("summary").notNull().default(""),
+    body: jsonb("body").$type<string[]>().notNull().default([]),
+    severity: text("severity").notNull().default("informational"),
+    status: text("status").notNull().default("draft"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    verificationChecks: jsonb("verification_checks").$type<string[]>().notNull().default([]),
+    createdByClerkId: text("created_by_clerk_id").notNull(),
+    updatedByClerkId: text("updated_by_clerk_id").notNull(),
+    submittedByClerkId: text("submitted_by_clerk_id"),
+    approvedByClerkId: text("approved_by_clerk_id"),
+    publishedRevision: integer("published_revision").notNull().default(0),
+    publishedSnapshot: jsonb("published_snapshot").$type<LegalPublishedSnapshot>(),
+    reviewRequestedAt: timestamp("review_requested_at", { withTimezone: true }),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("legal_center_entries_slug_idx").on(table.slug),
+    index("legal_center_entries_status_order_idx").on(table.status, table.sortOrder),
+    check(
+      "legal_center_entries_severity_check",
+      sql`${table.severity} in ('informational', 'material', 'critical')`,
+    ),
+    check(
+      "legal_center_entries_status_check",
+      sql`${table.status} in ('draft', 'review', 'published')`,
+    ),
+    check(
+      "legal_center_entries_revision_check",
+      sql`${table.publishedRevision} >= 0`,
+    ),
+    check(
+      "legal_center_entries_second_approval_check",
+      sql`${table.severity} <> 'critical' or ${table.approvedByClerkId} is null or ${table.approvedByClerkId} <> ${table.submittedByClerkId}`,
+    ),
+  ],
+);
+
 /**
  * Product-level release controls. Parents override children in application
  * policy, while each row remains independently configurable and auditable.

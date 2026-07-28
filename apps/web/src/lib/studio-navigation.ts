@@ -185,6 +185,12 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         href: "/studio/settings",
         roles: ["admin"],
       },
+      {
+        id: "legal-registry",
+        label: "Legal publishing",
+        href: "/studio/legal",
+        roles: ["admin"],
+      },
     ],
   },
 ] as const;
