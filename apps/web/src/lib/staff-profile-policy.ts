@@ -6,6 +6,7 @@ export const staffBiographyMaximumLength = 2_000;
 export const staffProfileUpdateSchema = z.object({
   title: z.string().trim().max(120),
   bio: z.string().trim().max(staffBiographyMaximumLength),
+  publishToStaffPage: z.boolean().optional(),
 });
 
 export type StaffProfileUpdate = z.infer<typeof staffProfileUpdateSchema>;
@@ -51,4 +52,41 @@ export function isStaffProfileComplete(input: {
   bio: string | null;
 }) {
   return getStaffProfileMissingFields(input).length === 0;
+}
+
+export function shouldPublishStaffProfile(input: {
+  requested: boolean;
+  isActive: boolean;
+  displayName: string;
+  title: string | null;
+  bio: string | null;
+}) {
+  return input.requested && input.isActive && isStaffProfileComplete(input);
+}
+
+export function isPublicStaffProfileVisible(input: {
+  isActive: boolean;
+  displayName: string;
+  title: string | null;
+  bio: string | null;
+  publicSlug: string | null;
+  publicProfilePublishedAt: Date | string | null;
+}) {
+  return Boolean(
+    input.publicSlug &&
+      input.publicProfilePublishedAt &&
+      shouldPublishStaffProfile({
+        requested: true,
+        isActive: input.isActive,
+        displayName: input.displayName,
+        title: input.title,
+        bio: input.bio,
+      }),
+  );
+}
+
+export function hasVisibleStaffProfile(
+  profiles: Parameters<typeof isPublicStaffProfileVisible>[0][],
+) {
+  return profiles.some(isPublicStaffProfileVisible);
 }

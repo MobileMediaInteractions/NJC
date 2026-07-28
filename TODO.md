@@ -4,7 +4,7 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 
 ## Mandatory first product implementation — pseudonyms, approval-gated scheduling and complete Studio control
 
-> **Execution-order requirement:** This is the first product implementation to complete after the mandatory Bun and Protocol Buffers investigation immediately below. Finish and verify this entire section before the Studio-wide minimum-typing pass, internal-domain work or any platform-specific implementation.
+> **Execution-order requirement:** This is the first product implementation to complete after the mandatory Bun and Protocol Buffers investigation immediately below. Finish and verify this entire section before internal-domain work or any platform-specific implementation.
 
 - [ ] Add a first-class **pseudonym/pen-name authorship system** for every Studio user profile.
   - Audit the existing Clerk user, newsroom profile, database author and public staff/byline models before changing them; extend the current source of truth instead of creating an unrelated author record.
@@ -106,7 +106,7 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 
 ## Mandatory third product implementation — repository-wide internal boundary and `int` subdomain
 
-> **Execution-order requirement:** Complete this entire section immediately after the mandatory Studio typing pass and before every platform or product item below it. The internal boundary must be designed from an exhaustive repository review, not by placing the current Studio UI behind another hostname.
+> **Execution-order requirement:** Complete this entire section after the mandatory product implementation and before every platform or product item below it. The internal boundary must be designed from an exhaustive repository review, not by placing the current Studio UI behind another hostname.
 
 - [ ] Perform and document a file-by-file, route-by-route and deployment-by-deployment security classification of the complete repository before creating the internal service.
   - Inspect every application and client: the public Next.js site and Studio, reader mobile app, employee/admin mobile app, Apple TV/Android TV app, Roku channel, CDN project and platform playground.

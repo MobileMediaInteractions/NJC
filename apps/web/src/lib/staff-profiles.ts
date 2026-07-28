@@ -1,6 +1,7 @@
 import "server-only";
 
 import { and, asc, eq, isNotNull } from "drizzle-orm";
+import { cache } from "react";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import { users } from "@harborline/backend/schema";
 import {
@@ -11,7 +12,10 @@ import {
 } from "@/lib/authors";
 import {
   createStaffProfileSlug,
+  getStaffProfileMissingFields,
   isStaffProfileComplete,
+  isPublicStaffProfileVisible,
+  shouldPublishStaffProfile,
 } from "@/lib/staff-profile-policy";
 
 type StaffRecord = typeof users.$inferSelect;
@@ -33,22 +37,17 @@ export type StaffProfileDraft = {
 };
 
 function publicProfileFor(record: StaffRecord): PublicStaffProfile | null {
-  if (
-    !record.isActive ||
-    !record.publicSlug ||
-    !record.publicProfilePublishedAt ||
-    !isStaffProfileComplete(record)
-  ) {
+  if (!isPublicStaffProfileVisible(record)) {
     return null;
   }
   return {
-    slug: record.publicSlug,
+    slug: record.publicSlug!,
     name: record.displayName,
     description: record.bio?.trim() ?? "",
     clerkId: record.clerkId,
     title: record.title,
     avatarUrl: record.avatarUrl,
-    publishedAt: record.publicProfilePublishedAt.toISOString(),
+    publishedAt: record.publicProfilePublishedAt!.toISOString(),
   };
 }
 
@@ -77,6 +76,16 @@ async function findUniqueSlug(record: StaffRecord) {
   return `${base}-${suffix}`;
 }
 
+export class StaffProfilePublicationError extends Error {
+  readonly missingFields: string[];
+
+  constructor(missingFields: string[]) {
+    super("Complete the required profile fields before publishing");
+    this.name = "StaffProfilePublicationError";
+    this.missingFields = missingFields;
+  }
+}
+
 export async function synchronizePublicStaffProfile(clerkId: string) {
   if (!hasDatabase()) return null;
   const [record] = await getDb()
@@ -86,7 +95,10 @@ export async function synchronizePublicStaffProfile(clerkId: string) {
     .limit(1);
   if (!record) return null;
 
-  if (!record.isActive || !isStaffProfileComplete(record)) {
+  if (
+    record.publicProfilePublishedAt &&
+    (!record.isActive || !isStaffProfileComplete(record))
+  ) {
     const [updated] = await getDb()
       .update(users)
       .set({
@@ -97,6 +109,8 @@ export async function synchronizePublicStaffProfile(clerkId: string) {
       .returning();
     return updated ?? record;
   }
+
+  if (!record.publicProfilePublishedAt) return record;
 
   const publicSlug = record.publicSlug ?? (await findUniqueSlug(record));
   const [updated] = await getDb()
@@ -109,6 +123,82 @@ export async function synchronizePublicStaffProfile(clerkId: string) {
     .where(eq(users.clerkId, clerkId))
     .returning();
   return updated ?? record;
+}
+
+export async function updateStaffProfileSettings(input: {
+  clerkId: string;
+  title: string;
+  bio: string;
+  publish: boolean;
+}) {
+  if (!hasDatabase()) return null;
+
+  return getDb().transaction(async (tx) => {
+    const [record] = await tx
+      .select()
+      .from(users)
+      .where(eq(users.clerkId, input.clerkId))
+      .limit(1);
+    if (!record) return null;
+
+    const proposed = {
+      ...record,
+      title: input.title || null,
+      bio: input.bio || null,
+    };
+    if (
+      input.publish &&
+      !shouldPublishStaffProfile({
+        requested: true,
+        isActive: proposed.isActive,
+        displayName: proposed.displayName,
+        title: proposed.title,
+        bio: proposed.bio,
+      })
+    ) {
+      const missingFields = getStaffProfileMissingFields(proposed);
+      if (!proposed.isActive) {
+        missingFields.unshift("active newsroom access");
+      }
+      throw new StaffProfilePublicationError(missingFields);
+    }
+
+    let publicSlug = record.publicSlug;
+    if (input.publish && !publicSlug) {
+      const base = createStaffProfileSlug(record.displayName);
+      const [collision] = await tx
+        .select({ clerkId: users.clerkId })
+        .from(users)
+        .where(eq(users.publicSlug, base))
+        .limit(1);
+      if (!collision || collision.clerkId === record.clerkId) {
+        publicSlug = base;
+      } else {
+        const suffix =
+          record.clerkId
+            .replace(/[^a-z0-9]/gi, "")
+            .slice(-8)
+            .toLocaleLowerCase("en-US") ||
+          record.id.replaceAll("-", "").slice(-8);
+        publicSlug = `${base}-${suffix}`;
+      }
+    }
+
+    const [updated] = await tx
+      .update(users)
+      .set({
+        title: proposed.title,
+        bio: proposed.bio,
+        publicSlug,
+        publicProfilePublishedAt: input.publish
+          ? record.publicProfilePublishedAt ?? new Date()
+          : null,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.clerkId, input.clerkId))
+      .returning();
+    return updated ?? null;
+  });
 }
 
 export async function getStaffProfileDraft(clerkId: string): Promise<StaffProfileDraft | null> {
@@ -130,7 +220,7 @@ export async function getStaffProfileDraft(clerkId: string): Promise<StaffProfil
   };
 }
 
-export async function listPublicStaffProfiles(): Promise<PublicStaffProfile[]> {
+export const listPublicStaffProfiles = cache(async function listPublicStaffProfiles(): Promise<PublicStaffProfile[]> {
   if (!hasDatabase()) return [];
   const records = await getDb()
     .select()
@@ -147,6 +237,10 @@ export async function listPublicStaffProfiles(): Promise<PublicStaffProfile[]> {
     const profile = publicProfileFor(record);
     return profile ? [profile] : [];
   });
+});
+
+export async function hasPublicStaffProfiles() {
+  return (await listPublicStaffProfiles()).length > 0;
 }
 
 export async function getPublicStaffProfileBySlug(slug: string) {

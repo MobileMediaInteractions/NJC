@@ -1,18 +1,22 @@
 import type { MetadataRoute } from "next";
 import { getPublishedStoryIndex } from "@/lib/content";
 import { getSiteOrigin } from "@/lib/origin";
-import { getPublicStaffProfilePaths } from "@/lib/staff-profiles";
+import { getPublicStaffProfilePaths, hasPublicStaffProfiles } from "@/lib/staff-profiles";
 import { getNjcPlusFlags, isNjcPlusPublicEnabled } from "@/lib/feature-flags";
 import { filterPremiumContentByFlags, getPublishedPremiumContent } from "@/lib/njc-plus";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = getSiteOrigin();
   const plusEnabled = await isNjcPlusPublicEnabled();
-  const [stories, staffProfilePaths, premiumUnfiltered, plusFlags] = await Promise.all([
+  const [stories, staffProfilePaths, staffPageEnabled, premiumUnfiltered, plusFlags] = await Promise.all([
     getPublishedStoryIndex({ limit: 49_900 }),
     getPublicStaffProfilePaths().catch((error) => {
       console.error("Public staff sitemap lookup failed", error);
       return [];
+    }),
+    hasPublicStaffProfiles().catch((error) => {
+      console.error("Public staff directory sitemap lookup failed", error);
+      return false;
     }),
     plusEnabled ? getPublishedPremiumContent({ limit: 10_000 }) : Promise.resolve([]),
     plusEnabled ? getNjcPlusFlags() : Promise.resolve([]),
@@ -32,7 +36,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/press",
     "/about",
     "/20-under-20",
-    "/staff",
+    ...(staffPageEnabled ? ["/staff"] : []),
     ...staffProfilePaths,
   ];
 

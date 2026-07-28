@@ -1,14 +1,13 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
-import { getDb, hasDatabase } from "@harborline/backend/db";
-import { users } from "@harborline/backend/schema";
+import { hasDatabase } from "@harborline/backend/db";
 import { writeApiAudit } from "@/lib/api-keys";
 import { getStudioUser } from "@/lib/auth";
 import { staffProfileUpdateSchema } from "@/lib/staff-profile-policy";
 import {
   getStaffProfileDraft,
-  synchronizePublicStaffProfile,
+  StaffProfilePublicationError,
+  updateStaffProfileSettings,
 } from "@/lib/staff-profiles";
 
 export const dynamic = "force-dynamic";
@@ -68,15 +67,15 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    await getDb()
-      .update(users)
-      .set({
-        title: parsed.data.title || null,
-        bio: parsed.data.bio || null,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.clerkId, viewer.id));
-    const synchronized = await synchronizePublicStaffProfile(viewer.id);
+    const previousProfile = await getStaffProfileDraft(viewer.id);
+    const synchronized = await updateStaffProfileSettings({
+      clerkId: viewer.id,
+      title: parsed.data.title,
+      bio: parsed.data.bio,
+      publish:
+        parsed.data.publishToStaffPage ??
+        Boolean(previousProfile?.publicProfilePublishedAt),
+    });
     if (!synchronized) {
       return NextResponse.json(
         {
@@ -89,18 +88,28 @@ export async function PATCH(request: Request) {
       );
     }
 
+    const wasPublished = Boolean(previousProfile?.publicProfilePublishedAt);
+    const isPublished = Boolean(synchronized.publicProfilePublishedAt);
     await writeApiAudit({
       actorClerkId: viewer.id,
-      event: "studio.public_profile_updated",
+      event:
+        wasPublished === isPublished
+          ? "studio.public_profile_updated"
+          : isPublished
+            ? "studio.public_profile_published"
+            : "studio.public_profile_unpublished",
       request,
       metadata: {
-        published: Boolean(synchronized.publicProfilePublishedAt),
+        published: isPublished,
+        publicationRequested: parsed.data.publishToStaffPage,
         publicSlug: synchronized.publicSlug,
         biographyLength: synchronized.bio?.length ?? 0,
       },
     });
 
     revalidatePath("/staff");
+    revalidatePath("/");
+    revalidatePath("/about");
     revalidatePath("/sitemap.xml");
     if (synchronized.publicSlug) {
       revalidatePath(`/author/${synchronized.publicSlug}`);
@@ -114,6 +123,18 @@ export async function PATCH(request: Request) {
       { headers: { "Cache-Control": "private, no-store" } },
     );
   } catch (error) {
+    if (error instanceof StaffProfilePublicationError) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "profile_incomplete",
+            message: error.message,
+            details: { formErrors: error.missingFields },
+          },
+        },
+        { status: 400 },
+      );
+    }
     console.error("Studio public profile update failed", {
       actorId: viewer.id,
       error,

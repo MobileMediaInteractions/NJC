@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   getStaffProfileMissingFields,
@@ -34,6 +35,9 @@ export function StaffProfileEditor({
   const [profile, setProfile] = useState(initialProfile);
   const [title, setTitle] = useState(initialProfile.title);
   const [bio, setBio] = useState(initialProfile.bio);
+  const [publishToStaffPage, setPublishToStaffPage] = useState(
+    Boolean(initialProfile.publicProfilePublishedAt),
+  );
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -54,7 +58,11 @@ export function StaffProfileEditor({
       const response = await fetch("/api/v1/studio/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, bio }),
+        body: JSON.stringify({
+          title,
+          bio,
+          publishToStaffPage: ready && publishToStaffPage,
+        }),
       });
       const payload = (await response.json()) as {
         data?: StaffProfileDraft;
@@ -79,10 +87,11 @@ export function StaffProfileEditor({
       setProfile(payload.data);
       setTitle(payload.data.title);
       setBio(payload.data.bio);
+      setPublishToStaffPage(Boolean(payload.data.publicProfilePublishedAt));
       setMessage(
         payload.data.publicProfilePublishedAt
           ? "Saved and published to the Courier staff page."
-          : "Draft saved. Complete the remaining fields to publish automatically.",
+          : "Profile saved as a private draft.",
       );
     } catch (caught) {
       setError(
@@ -102,9 +111,9 @@ export function StaffProfileEditor({
           <div>
             <CardTitle>Public staff profile</CardTitle>
             <CardDescription className="mt-1 max-w-2xl">
-              Introduce yourself to readers. Once your name, newsroom title and
-              biography are complete, your profile is automatically added to
-              the public staff page.
+              Complete your newsroom profile, then choose whether it should
+              appear in the public staff directory. Saving a complete profile
+              does not publish it automatically.
             </CardDescription>
           </div>
           <span
@@ -179,6 +188,31 @@ export function StaffProfileEditor({
             </div>
           ) : null}
 
+          <div className="flex items-start justify-between gap-5 rounded-lg border p-4">
+            <div className="space-y-1">
+              <Label htmlFor="publish-staff-profile">
+                Show me on the public staff page
+              </Label>
+              <p className="max-w-2xl text-xs leading-5 text-muted-foreground">
+                Turn this on to publish your profile. Turn it off at any time
+                to remove yourself from the directory without deleting your
+                profile information.
+              </p>
+              {!ready ? (
+                <p className="text-xs font-semibold text-amber-500">
+                  Complete the required fields before enabling publication.
+                </p>
+              ) : null}
+            </div>
+            <Switch
+              id="publish-staff-profile"
+              checked={ready && publishToStaffPage}
+              disabled={!ready || busy}
+              onCheckedChange={setPublishToStaffPage}
+              aria-label="Show me on the public staff page"
+            />
+          </div>
+
           {message ? (
             <p
               role="status"
@@ -200,7 +234,7 @@ export function StaffProfileEditor({
           <div className="flex flex-wrap items-center gap-3">
             <Button type="submit" disabled={busy}>
               {busy ? <Loader2 className="animate-spin" /> : null}
-              Save profile
+              Save profile settings
             </Button>
             {profile.publicSlug && profile.publicProfilePublishedAt ? (
               <Button asChild type="button" variant="outline">
