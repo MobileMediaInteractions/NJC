@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import nextConfig from "../next.config";
+import { studioNavigationHubs } from "../src/lib/studio-navigation";
 
 test("production subdomains have explicit host-aware routes", async () => {
   const redirects = await nextConfig.redirects?.();
@@ -28,6 +29,14 @@ test("production subdomains have explicit host-aware routes", async () => {
   assert.ok(rewrites.beforeFiles?.some((route) =>
     route.source === "/stories/:path*" &&
     route.destination === "/studio/stories/:path*" &&
+    route.has?.some((condition) =>
+      condition.type === "host" &&
+      condition.value === "studio.thejerseycourier.com"
+    )
+  ));
+  assert.ok(rewrites.beforeFiles?.some((route) =>
+    route.source === "/20-under-20" &&
+    route.destination === "/studio/20-under-20" &&
     route.has?.some((condition) =>
       condition.type === "host" &&
       condition.value === "studio.thejerseycourier.com"
@@ -114,4 +123,39 @@ test("production subdomains have explicit host-aware routes", async () => {
       condition.value === "www.thejerseycourier.com"
     )
   ));
+});
+
+test("every clean Studio navigation section has a host rewrite", async () => {
+  const rewrites = await nextConfig.rewrites?.();
+  assert.ok(rewrites && !Array.isArray(rewrites));
+
+  const rewrittenSections = new Set(
+    rewrites.beforeFiles
+      ?.filter((route) =>
+        route.has?.some((condition) =>
+          condition.type === "host" &&
+          condition.value === "studio.thejerseycourier.com"
+        )
+      )
+      .flatMap((route) => {
+        const match = route.destination.match(/^\/studio\/([^/:]+)/);
+        return match?.[1] ? [match[1]] : [];
+      }),
+  );
+  const navigationSections = new Set(
+    studioNavigationHubs
+      .flatMap((hub) => hub.items)
+      .flatMap((item) => {
+        const match = item.href.match(/^\/studio\/([^/]+)/);
+        return match?.[1] ? [match[1]] : [];
+      }),
+  );
+
+  for (const section of navigationSections) {
+    assert.equal(
+      rewrittenSections.has(section),
+      true,
+      `Missing clean Studio-host rewrite for /${section}`,
+    );
+  }
 });

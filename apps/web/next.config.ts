@@ -22,10 +22,12 @@ const apiOrigin = `https://${apiHostname}`;
 const plusOrigin = `https://${plusHostname}`;
 const distributionOrigin = `https://${distributionHostname}`;
 const studioSections = [
+  "20-under-20",
   "analytics",
   "chat",
   "distribution",
   "exports",
+  "legal",
   "media",
   "njc-plus",
   "press",
