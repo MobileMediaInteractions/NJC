@@ -642,6 +642,104 @@ export const newsTips = pgTable(
   (table) => [index("news_tips_status_idx").on(table.status, table.createdAt)],
 );
 
+export interface TwentyUnderTwentyHonoreeSnapshot {
+  name: string;
+  school: string;
+  city: string;
+  county: string;
+  bio: string;
+  quote?: string;
+  photoUrl?: string;
+}
+
+export const twentyUnderTwentyPrograms = pgTable(
+  "twenty_under_twenty_programs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    year: integer("year").notNull(),
+    status: text("status").notNull().default("draft"),
+    title: text("title").notNull().default("20 Under 20"),
+    description: text("description").notNull().default(""),
+    eligibilitySummary: text("eligibility_summary").notNull().default("New Jersey high school students under 20"),
+    ageLimit: integer("age_limit").notNull().default(20),
+    classSize: integer("class_size").notNull().default(20),
+    nominationOpensAt: timestamp("nomination_opens_at", { withTimezone: true }),
+    nominationClosesAt: timestamp("nomination_closes_at", { withTimezone: true }),
+    applicationOpensAt: timestamp("application_opens_at", { withTimezone: true }),
+    applicationClosesAt: timestamp("application_closes_at", { withTimezone: true }),
+    eventAt: timestamp("event_at", { withTimezone: true }),
+    eventLocation: text("event_location"),
+    keynoteSpeaker: text("keynote_speaker"),
+    createdByClerkId: text("created_by_clerk_id").notNull(),
+    updatedByClerkId: text("updated_by_clerk_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("twenty_under_twenty_program_year_idx").on(table.year),
+    index("twenty_under_twenty_program_status_idx").on(table.status, table.year),
+    check("twenty_under_twenty_program_status_check", sql`${table.status} in ('draft', 'nominations_open', 'applications_open', 'review', 'announced', 'archived')`),
+    check("twenty_under_twenty_program_year_check", sql`${table.year} between 2026 and 2200`),
+    check("twenty_under_twenty_program_age_check", sql`${table.ageLimit} between 13 and 25`),
+    check("twenty_under_twenty_program_class_size_check", sql`${table.classSize} between 1 and 100`),
+  ],
+);
+
+export const twentyUnderTwentySubmissions = pgTable(
+  "twenty_under_twenty_submissions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    programId: uuid("program_id").notNull().references(() => twentyUnderTwentyPrograms.id, { onDelete: "restrict" }),
+    kind: text("kind").notNull(),
+    status: text("status").notNull().default("submitted"),
+    receiptCode: text("receipt_code").notNull(),
+    studentFirstName: text("student_first_name").notNull(),
+    studentLastName: text("student_last_name").notNull(),
+    studentEmail: text("student_email").notNull(),
+    birthDate: text("birth_date").notNull(),
+    school: text("school").notNull(),
+    grade: text("grade").notNull(),
+    city: text("city").notNull(),
+    county: text("county").notNull(),
+    educatorName: text("educator_name"),
+    educatorEmail: text("educator_email"),
+    educatorTitle: text("educator_title"),
+    relationship: text("relationship"),
+    communityImpact: text("community_impact").notNull(),
+    serviceSummary: text("service_summary").notNull(),
+    futureGoals: text("future_goals").notNull(),
+    supportingLinks: jsonb("supporting_links").$type<string[]>().notNull().default([]),
+    guardianName: text("guardian_name"),
+    guardianEmail: text("guardian_email"),
+    applicantAttested: boolean("applicant_attested").notNull().default(false),
+    publicationConsent: boolean("publication_consent").notNull().default(false),
+    educatorAttested: boolean("educator_attested").notNull().default(false),
+    reviewScore: integer("review_score"),
+    reviewRecommendation: text("review_recommendation"),
+    privateReviewNotes: text("private_review_notes"),
+    reviewedByClerkId: text("reviewed_by_clerk_id"),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    honoreeSnapshot: jsonb("honoree_snapshot").$type<TwentyUnderTwentyHonoreeSnapshot>(),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("twenty_under_twenty_receipt_idx").on(table.receiptCode),
+    uniqueIndex("twenty_under_twenty_submission_student_kind_idx").on(
+      table.programId,
+      table.kind,
+      table.studentEmail,
+    ),
+    index("twenty_under_twenty_submission_queue_idx").on(table.programId, table.status, table.submittedAt),
+    index("twenty_under_twenty_submission_kind_idx").on(table.programId, table.kind, table.submittedAt),
+    check("twenty_under_twenty_submission_kind_check", sql`${table.kind} in ('educator_nomination', 'student_application')`),
+    check("twenty_under_twenty_submission_status_check", sql`${table.status} in ('submitted', 'eligible', 'in_review', 'finalist', 'selected', 'declined', 'withdrawn')`),
+    check("twenty_under_twenty_submission_score_check", sql`${table.reviewScore} is null or ${table.reviewScore} between 0 and 100`),
+    check("twenty_under_twenty_submission_publish_check", sql`${table.publishedAt} is null or (${table.status} = 'selected' and ${table.publicationConsent} = true and ${table.honoreeSnapshot} is not null)`),
+  ],
+);
+
 export const pressKitRequests = pgTable(
   "press_kit_requests",
   {

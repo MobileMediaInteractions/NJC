@@ -6,8 +6,16 @@ import {
   HeartHandshake,
   UsersRound,
 } from "lucide-react";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
+import { getDb, hasDatabase } from "@harborline/backend/db";
+import {
+  twentyUnderTwentyPrograms,
+  twentyUnderTwentySubmissions,
+} from "@harborline/backend/schema";
 import { JsonLd } from "@/components/json-ld";
+import { TwentyUnderTwentyForm } from "@/components/twenty-under-twenty-form";
 import { getSiteOrigin } from "@/lib/origin";
+import { isIntakeOpen } from "@/lib/twenty-under-twenty";
 
 export const metadata: Metadata = {
   title: "20 Under 20",
@@ -23,30 +31,41 @@ export const metadata: Metadata = {
   },
 };
 
-const selectionSteps = [
-  {
-    number: "01",
-    title: "Educator nominations",
-    description:
-      "Educator sponsors identify students whose service and leadership deserve statewide recognition.",
-  },
-  {
-    number: "02",
-    title: "Student applications",
-    description:
-      "Students share their work, the communities they serve, and the impact they hope to make.",
-  },
-  {
-    number: "03",
-    title: "Advisory review",
-    description:
-      "A Courier advisory panel reviews eligible nominations and applications to select the class of 2026.",
-  },
-] as const;
+export const dynamic = "force-dynamic";
 
-export default function TwentyUnderTwentyPage() {
+export default async function TwentyUnderTwentyPage() {
   const origin = getSiteOrigin();
   const url = `${origin}/20-under-20`;
+  const { program, honorees } = await loadProgram();
+  const year = program?.year ?? 2026;
+  const classSize = program?.classSize ?? 20;
+  const ageLimit = program?.ageLimit ?? 20;
+  const nominationsOpen = program
+    ? isIntakeOpen(program, "educator_nomination")
+    : false;
+  const applicationsOpen = program
+    ? isIntakeOpen(program, "student_application")
+    : false;
+  const selectionSteps = [
+    {
+      number: "01",
+      title: "Educator nominations",
+      description:
+        "Educator sponsors identify students whose service and leadership deserve statewide recognition.",
+    },
+    {
+      number: "02",
+      title: "Student applications",
+      description:
+        "Students share their work, the communities they serve, and the impact they hope to make.",
+    },
+    {
+      number: "03",
+      title: "Advisory review",
+      description:
+        `A Courier advisory panel reviews eligible nominations and applications to select the class of ${year}.`,
+    },
+  ] as const;
 
   return (
     <div className="pb-12">
@@ -79,7 +98,7 @@ export default function TwentyUnderTwentyPage() {
           />
           <div className="relative max-w-4xl">
             <p className="text-xs font-black uppercase tracking-[0.24em] text-brand-yellow">
-              The class of 2026
+              The class of {year}
             </p>
             <h1 className="mt-5 max-w-3xl text-7xl font-black leading-[0.82] tracking-[-0.075em] sm:text-8xl lg:text-9xl">
               20
@@ -96,7 +115,7 @@ export default function TwentyUnderTwentyPage() {
               New Jersey&apos;s exceptional young people
             </p>
             <p className="mt-4 text-base leading-7 text-white/70">
-              Twenty students. One statewide class. A celebration of service,
+              {classSize} students. One statewide class. A celebration of service,
               character, and the belief that meaningful leadership can begin at
               any age.
             </p>
@@ -114,8 +133,8 @@ export default function TwentyUnderTwentyPage() {
           </div>
           <div className="space-y-6 text-lg leading-8 text-muted-foreground">
             <p>
-              In 2026, The New Jersey Courier created 20 Under 20 to honor 20
-              exceptional New Jersey high school students under the age of 20.
+              In 2026, The New Jersey Courier created 20 Under 20 to honor
+              exceptional New Jersey high school students under the age of {ageLimit}.
             </p>
             <p>
               The initiative brings a spotlight to young people across the
@@ -132,7 +151,7 @@ export default function TwentyUnderTwentyPage() {
               id="selection-heading"
               className="mt-3 text-4xl font-black tracking-[-0.05em] text-brand-navy dark:text-foreground sm:text-5xl"
             >
-              From nomination to the class of 2026
+              From nomination to the class of {year}
             </h2>
             <p className="mt-5 text-lg leading-8 text-muted-foreground">
               Selection combines the perspective of educator sponsors with the
@@ -167,9 +186,14 @@ export default function TwentyUnderTwentyPage() {
               Honoring the full class
             </h2>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-white/75">
-              A late-spring event will recognize the 20 Under 20 class of 2026
-              and feature a prominent keynote speaker. The Courier will also
-              share the students&apos; accomplishments with the wider community.
+              {program?.eventAt
+                ? `The recognition event is scheduled for ${formatDate(program.eventAt)}${program.eventLocation ? ` at ${program.eventLocation}` : ""}.`
+                : `A recognition event will honor the 20 Under 20 class of ${year}.`}{" "}
+              {program?.keynoteSpeaker
+                ? `${program.keynoteSpeaker} is scheduled to deliver the keynote.`
+                : "Event and keynote details will be announced when finalized."}{" "}
+              The Courier will also share the students&apos; accomplishments
+              with the wider community.
             </p>
           </div>
 
@@ -177,12 +201,12 @@ export default function TwentyUnderTwentyPage() {
             <ProgramFact
               icon={<GraduationCap />}
               label="Eligibility"
-              value="New Jersey high school students under 20"
+              value={program?.eligibilitySummary ?? `New Jersey high school students under ${ageLimit}`}
             />
             <ProgramFact
               icon={<UsersRound />}
               label="Class size"
-              value="20 students selected statewide"
+              value={`${classSize} students selected statewide`}
             />
             <ProgramFact
               icon={<HeartHandshake />}
@@ -192,25 +216,102 @@ export default function TwentyUnderTwentyPage() {
             <ProgramFact
               icon={<CalendarDays />}
               label="Recognition"
-              value="Late spring 2026"
+              value={program?.eventAt ? formatDate(program.eventAt) : `Details for ${year} to come`}
             />
           </div>
         </section>
 
-        <section className="mx-auto max-w-4xl py-16 text-center lg:py-24">
-          <p className="eyebrow text-brand-blue dark:text-primary">Nominations and applications</p>
-          <h2 className="mt-3 text-4xl font-black tracking-[-0.05em] text-brand-navy dark:text-foreground sm:text-5xl">
-            Program details are coming
-          </h2>
-          <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
-            Eligibility guidance, nomination materials, application
-            requirements, key dates, and event information will be published
-            here when they are finalized.
-          </p>
+        {program?.status === "announced" && honorees.length ? (
+          <section className="py-16 lg:py-24" aria-labelledby="honoree-heading">
+            <p className="eyebrow text-brand-blue dark:text-primary">The class of {year}</p>
+            <h2 id="honoree-heading" className="mt-3 text-4xl font-black tracking-[-0.05em] text-brand-navy dark:text-foreground sm:text-5xl">
+              Meet the honorees
+            </h2>
+            <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {honorees.map((honoree) => (
+                <article key={`${honoree.name}-${honoree.school}`} className="overflow-hidden border bg-card">
+                  {honoree.photoUrl ? (
+                    <div
+                      className="aspect-[4/3] w-full bg-cover bg-center"
+                      style={{ backgroundImage: `url("${honoree.photoUrl.replaceAll('"', "%22")}")` }}
+                      role="img"
+                      aria-label={`Portrait of ${honoree.name}`}
+                    />
+                  ) : null}
+                  <div className="p-6">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-brand-blue dark:text-primary">{honoree.county} County</p>
+                    <h3 className="mt-2 text-2xl font-black text-brand-navy dark:text-foreground">{honoree.name}</h3>
+                    <p className="mt-1 text-sm font-semibold text-muted-foreground">{honoree.school} · {honoree.city}</p>
+                    <p className="mt-5 leading-7 text-muted-foreground">{honoree.bio}</p>
+                    {honoree.quote ? <blockquote className="mt-5 border-l-2 border-brand-yellow pl-4 italic">&ldquo;{honoree.quote}&rdquo;</blockquote> : null}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        <section className="mx-auto max-w-5xl py-16 lg:py-24">
+          <div className={nominationsOpen || applicationsOpen ? "" : "text-center"}>
+            <p className="eyebrow text-brand-blue dark:text-primary">Nominations and applications</p>
+            <h2 className="mt-3 text-4xl font-black tracking-[-0.05em] text-brand-navy dark:text-foreground sm:text-5xl">
+              {nominationsOpen
+                ? `Nominate a student for the class of ${year}`
+                : applicationsOpen
+                  ? `Apply for the class of ${year}`
+                  : program?.status === "review"
+                    ? "The advisory review is underway"
+                    : program?.status === "announced"
+                      ? `The class of ${year} has been announced`
+                      : "Program details are coming"}
+            </h2>
+            <p className={`mt-5 max-w-2xl text-lg leading-8 text-muted-foreground ${nominationsOpen || applicationsOpen ? "" : "mx-auto"}`}>
+              {nominationsOpen
+                ? "Educators may submit one complete nomination at a time. The Courier verifies eligibility before advisory review."
+                : applicationsOpen
+                  ? "Students may submit their own account of their service, leadership, and community impact."
+                  : program?.description || "Eligibility guidance, nomination materials, application requirements, key dates, and event information will be published here when they are finalized."}
+            </p>
+          </div>
+          {nominationsOpen ? <div className="mt-10"><TwentyUnderTwentyForm kind="educator_nomination" year={year} /></div> : null}
+          {applicationsOpen ? <div className="mt-10"><TwentyUnderTwentyForm kind="student_application" year={year} /></div> : null}
         </section>
       </main>
     </div>
   );
+}
+
+async function loadProgram() {
+  if (!hasDatabase()) return { program: null, honorees: [] };
+  try {
+    const [program] = await getDb()
+      .select()
+      .from(twentyUnderTwentyPrograms)
+      .orderBy(desc(twentyUnderTwentyPrograms.year))
+      .limit(1);
+    if (!program) return { program: null, honorees: [] };
+    const rows = program.status === "announced"
+      ? await getDb()
+          .select({ snapshot: twentyUnderTwentySubmissions.honoreeSnapshot })
+          .from(twentyUnderTwentySubmissions)
+          .where(and(
+            eq(twentyUnderTwentySubmissions.programId, program.id),
+            eq(twentyUnderTwentySubmissions.status, "selected"),
+            isNotNull(twentyUnderTwentySubmissions.publishedAt),
+          ))
+      : [];
+    return {
+      program,
+      honorees: rows.flatMap((row) => row.snapshot ? [row.snapshot] : []),
+    };
+  } catch (error) {
+    console.error("20 Under 20 public lookup failed", error);
+    return { program: null, honorees: [] };
+  }
+}
+
+function formatDate(value: Date) {
+  return new Intl.DateTimeFormat("en-US", { dateStyle: "long", timeZone: "America/New_York" }).format(value);
 }
 
 function ProgramFact({

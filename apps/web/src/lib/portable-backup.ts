@@ -34,7 +34,7 @@ async function readDatasets(): Promise<Dataset[]> {
   const data = await Promise.all([
     db.select().from(schema.users), db.select().from(schema.categories), db.select().from(schema.stories), db.select().from(schema.storyRevisions),
     db.select().from(schema.mediaAssets), db.select().from(schema.mediaAssetUsages), db.select().from(schema.assignments), db.select().from(schema.comments), db.select().from(schema.newsletterSubscribers),
-    db.select().from(schema.alerts), db.select().from(schema.liveEvents), db.select().from(schema.newsTips), db.select().from(schema.pressKitRequests), db.select().from(schema.pressReleases), db.select().from(schema.apiKeys),
+    db.select().from(schema.alerts), db.select().from(schema.liveEvents), db.select().from(schema.newsTips), db.select().from(schema.twentyUnderTwentyPrograms), db.select().from(schema.twentyUnderTwentySubmissions), db.select().from(schema.pressKitRequests), db.select().from(schema.pressReleases), db.select().from(schema.apiKeys),
     db.select().from(schema.apiAuditLogs), db.select().from(schema.pushDevices), db.select().from(schema.audienceInstallations), db.select().from(schema.analyticsDailyViews), db.select().from(schema.analyticsPeriodArchives), db.select().from(schema.siteSettings), db.select().from(schema.legalCenterEntries), db.select().from(schema.dataRequests),
     db.select().from(schema.portableExports), db.select().from(schema.devicePairingRequests), db.select().from(schema.deviceSessions),
     db.select().from(schema.featureFlags), db.select().from(schema.premiumContent), db.select().from(schema.premiumContentRelations), db.select().from(schema.premiumHomepageModules), db.select().from(schema.premiumContentRevisions),
@@ -59,7 +59,7 @@ async function readDatasets(): Promise<Dataset[]> {
   const definitions = [
     ["users", schema.users], ["categories", schema.categories], ["stories", schema.stories], ["story_revisions", schema.storyRevisions],
     ["media_assets", schema.mediaAssets], ["media_asset_usages", schema.mediaAssetUsages], ["assignments", schema.assignments], ["comments", schema.comments], ["newsletter_subscribers", schema.newsletterSubscribers],
-    ["alerts", schema.alerts], ["live_events", schema.liveEvents], ["news_tips", schema.newsTips], ["press_kit_requests", schema.pressKitRequests], ["press_releases", schema.pressReleases], ["api_keys", schema.apiKeys],
+    ["alerts", schema.alerts], ["live_events", schema.liveEvents], ["news_tips", schema.newsTips], ["twenty_under_twenty_programs", schema.twentyUnderTwentyPrograms], ["twenty_under_twenty_submissions", schema.twentyUnderTwentySubmissions], ["press_kit_requests", schema.pressKitRequests], ["press_releases", schema.pressReleases], ["api_keys", schema.apiKeys],
     ["api_audit_logs", schema.apiAuditLogs], ["push_devices", schema.pushDevices], ["audience_installations", schema.audienceInstallations], ["analytics_daily_views", schema.analyticsDailyViews], ["analytics_period_archives", schema.analyticsPeriodArchives], ["site_settings", schema.siteSettings], ["legal_center_entries", schema.legalCenterEntries], ["data_requests", schema.dataRequests],
     ["portable_exports", schema.portableExports], ["device_pairing_requests", schema.devicePairingRequests], ["device_sessions", schema.deviceSessions],
     ["feature_flags", schema.featureFlags], ["premium_content", schema.premiumContent], ["premium_content_relations", schema.premiumContentRelations], ["premium_homepage_modules", schema.premiumHomepageModules], ["premium_content_revisions", schema.premiumContentRevisions],

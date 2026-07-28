@@ -90,6 +90,12 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         href: "/studio/tips",
         roles: editorialRoles,
       },
+      {
+        id: "twenty-under-twenty",
+        label: "20 Under 20",
+        href: "/studio/20-under-20",
+        roles: ["admin", "editor"],
+      },
     ],
   },
   {

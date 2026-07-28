@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "twenty_under_twenty_submission_student_kind_idx" ON "twenty_under_twenty_submissions" USING btree ("program_id","kind","student_email");
