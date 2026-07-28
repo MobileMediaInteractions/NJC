@@ -34,6 +34,19 @@ test("accepts a complete publish request with optional URLs left blank", () => {
   }
 });
 
+test("accepts an inactive planned publication time while a story is still a draft", () => {
+  const result = storyInput.safeParse({
+    ...validStory,
+    status: "draft",
+    scheduledAt: "2025-06-15T16:30:00.000Z",
+  });
+  assert.equal(result.success, true);
+  if (result.success) {
+    assert.equal(result.data.status, "draft");
+    assert.equal(result.data.scheduledAt, "2025-06-15T16:30:00.000Z");
+  }
+});
+
 test("accepts only a server-resolved byline mode, not arbitrary author input", () => {
   assert.equal(
     storyInput.safeParse({ ...validStory, bylineMode: "pseudonym" }).success,

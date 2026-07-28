@@ -87,6 +87,11 @@ The [private Distribution runbook](docs/DISTRIBUTION.md) covers authorized
 pre-publication packages, immutable story snapshots, private media delivery,
 the custom viewer/player, domain activation, and production verification.
 
+The completed [Bun and Protocol Buffers investigation](docs/investigations/BUN_PROTOBUF_2026-07-28.md)
+contains the repository-specific benchmarks, compatibility audit, decision
+thresholds, and reproducible harness. It does not change the production
+Node/pnpm/JSON stack.
+
 Copy [`apps/web/.env.example`](apps/web/.env.example) for configuration names. Never commit `.env.local`.
 
 ## Portable operations

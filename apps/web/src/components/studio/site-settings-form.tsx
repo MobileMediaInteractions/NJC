@@ -109,7 +109,7 @@ export function SiteSettingsForm({
   const totalFeatureCount = Object.keys(configuration.features).length;
 
   return (
-    <div className="max-w-6xl">
+    <div className="mx-auto w-full max-w-6xl">
       <div className="flex flex-wrap items-end justify-between gap-5">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-primary">Platform operations</p>

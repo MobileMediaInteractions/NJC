@@ -65,7 +65,7 @@ export function DistributionConsole({
   }
 
   return (
-    <div className="max-w-6xl">
+    <div className="mx-auto w-full max-w-6xl">
       <div>
         <p className="text-sm font-semibold text-primary">Private distribution</p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight">

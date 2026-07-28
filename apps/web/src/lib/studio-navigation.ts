@@ -6,7 +6,8 @@ export type StudioHubId =
   | "distribution"
   | "communications"
   | "njc-plus"
-  | "control";
+  | "control"
+  | "configuration";
 
 export type StudioNavigationContext = {
   role: StaffRole;
@@ -100,7 +101,7 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         id: "distribution-manager",
         label: "File manager",
         href: "/studio/distribution",
-        roles: allRoles,
+        roles: publishingRoles,
       },
       {
         id: "press-releases",
@@ -162,8 +163,8 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
   },
   {
     id: "control",
-    label: "Control",
-    description: "Audience and platform settings",
+    label: "Insights",
+    description: "Audience and platform reporting",
     items: [
       {
         id: "analytics",
@@ -171,9 +172,16 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         href: "/studio/analytics",
         roles: allRoles,
       },
+    ],
+  },
+  {
+    id: "configuration",
+    label: "Site configuration",
+    description: "Publication-wide controls",
+    items: [
       {
         id: "settings",
-        label: "Configuration",
+        label: "Configuration control room",
         href: "/studio/settings",
         roles: ["admin"],
       },

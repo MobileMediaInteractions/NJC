@@ -69,7 +69,7 @@ function StoryTable({ rows, canDelete, canReview }: { rows: StudioStoryRow[]; ca
       <TableHeader><TableRow><TableHead>Headline</TableHead><TableHead>Section</TableHead><TableHead>Owner</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Updated</TableHead><TableHead className="text-right"><span className="sr-only">Actions</span></TableHead></TableRow></TableHeader>
       <TableBody>{rows.map((story) => {
         const reviewAction = story.status === "review" && canReview;
-        const editAction = story.canEdit && (story.status === "draft" || story.status === "review");
+        const editAction = story.canEdit && (story.status === "draft" || story.status === "review" || story.status === "scheduled");
         const href = reviewAction ? `/studio/stories/${story.id}` : editAction ? `/studio/stories/${story.id}/edit` : `/studio/stories/${story.id}`;
         const label = reviewAction ? "Review" : editAction ? "Edit" : "Open";
         return (

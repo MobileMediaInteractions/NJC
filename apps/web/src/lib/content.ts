@@ -6,6 +6,7 @@ import {
   legacyPublicBylineSnapshot,
   publicStoryAuthor,
 } from "@/lib/pseudonyms";
+import { publishDueStories } from "@/lib/scheduled-publication";
 
 const DEFAULT_STORY_IMAGE = "/assets/editorial/v1/garden-state-engraving.png";
 
@@ -60,6 +61,7 @@ export async function getPublishedStoryIndex(options?: {
   }
 
   try {
+    await publishDueStories();
     const conditions = [
       eq(stories.status, "published"),
       eq(stories.noIndex, false),
@@ -105,6 +107,7 @@ export async function getPublishedStories(options?: {
   }
 
   try {
+    await publishDueStories();
     const conditions = [eq(stories.status, "published")];
     if (options?.category) {
       conditions.push(eq(stories.categorySlug, options.category));
@@ -139,6 +142,7 @@ export async function getStoryBySlug(slug: string): Promise<Story | null> {
   }
 
   try {
+    await publishDueStories();
     const [row] = await getDb()
       .select()
       .from(stories)

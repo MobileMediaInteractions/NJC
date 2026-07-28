@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, type DragEvent } from "react";
-import { AlertTriangle, ArrowLeft, CheckCircle2, CloudUpload, Eye, ImageIcon, Loader2, Save, Send, Sparkles, Trash2 } from "lucide-react";
+import { ArrowLeft, CalendarClock, CheckCircle2, CloudUpload, ImageIcon, Loader2, Save, Send, Sparkles, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { EditableList } from "@/components/studio/editable-list";
 import { validateStoryImage } from "@/lib/media-upload";
+import { toLocalDateTimeInput } from "@/lib/local-datetime";
 import { firstStoryError, storyInput, type StoryFieldErrors } from "@/lib/story-input";
 import type { StoryBylineOption } from "@/lib/pseudonyms";
 import { generateWhyItMatters, WHY_IT_MATTERS_MAX_CHARACTERS } from "@/lib/why-it-matters";
@@ -41,19 +42,18 @@ export interface StoryEditorInitialStory {
   noIndex: boolean;
   isBreaking: boolean;
   bylineMode: "account" | "pseudonym";
-  status: "draft" | "review";
+  status: "draft" | "review" | "scheduled";
+  scheduledAt: string | null;
 }
 
 export function StoryEditor({
   datelines,
-  canPublish,
   publicationTimezone,
   bylineOptions,
   pseudonymsEnabled,
   initialStory,
 }: {
   datelines: string[];
-  canPublish: boolean;
   publicationTimezone: string;
   bylineOptions: StoryBylineOption[];
   pseudonymsEnabled: boolean;
@@ -72,13 +72,15 @@ export function StoryEditor({
   const [canonicalUrl, setCanonicalUrl] = useState(initialStory?.canonicalUrl ?? "");
   const [noIndex, setNoIndex] = useState(initialStory?.noIndex ?? false);
   const [breaking, setBreaking] = useState(initialStory?.isBreaking ?? false);
+  const [schedulePlanned, setSchedulePlanned] = useState(
+    Boolean(initialStory?.scheduledAt),
+  );
+  const [scheduledAt, setScheduledAt] = useState(() =>
+    toLocalDateTimeInput(initialStory?.scheduledAt),
+  );
   const [bylineMode, setBylineMode] = useState<"account" | "pseudonym">(
     initialStory?.bylineMode ?? "account",
   );
-  const [useCustomPublishedAt, setUseCustomPublishedAt] = useState(false);
-  const [publishedAt, setPublishedAt] = useState("");
-  const [publishedAtRiskAcknowledged, setPublishedAtRiskAcknowledged] = useState(false);
-  const [publishedAtChangeReason, setPublishedAtChangeReason] = useState("");
   const [imageUrl, setImageUrl] = useState(initialStory?.imageUrl ?? "");
   const [imageAlt, setImageAlt] = useState(initialStory?.imageAlt ?? "");
   const [imageName, setImageName] = useState(initialStory?.imageUrl ? "Current lead image" : "");
@@ -100,26 +102,24 @@ export function StoryEditor({
   const selectedByline =
     bylineOptions.find((option) => option.mode === bylineMode) ?? accountByline;
 
-  async function save(status: "draft" | "review" | "published") {
+  async function save(status: "draft" | "review") {
     const categoryLabel = categories.find(([value]) => value === category)?.[1] ?? "Middlesex County";
-    if (status === "published" && useCustomPublishedAt && !publishedAt) {
-      const errors = { publishedAt: ["Choose the custom posted date and time."] };
+    const parsedScheduledAt =
+      schedulePlanned && scheduledAt ? new Date(scheduledAt) : null;
+    if (
+      schedulePlanned &&
+      (!parsedScheduledAt || Number.isNaN(parsedScheduledAt.getTime()))
+    ) {
+      const errors = {
+        scheduledAt: ["Choose a valid planned publication date and time."],
+      };
       setFieldErrors(errors);
       setState("error");
       setMessage(firstStoryError(errors));
       focusFirstInvalidField(errors);
       return;
     }
-    const parsedPublishedAt = publishedAt ? new Date(publishedAt) : null;
-    if (status === "published" && useCustomPublishedAt && (!parsedPublishedAt || Number.isNaN(parsedPublishedAt.getTime()))) {
-      const errors = { publishedAt: ["Enter a valid posted date and time."] };
-      setFieldErrors(errors);
-      setState("error");
-      setMessage(firstStoryError(errors));
-      focusFirstInvalidField(errors);
-      return;
-    }
-    const input = { headline, slug, dek, body: bodyParagraphs, includeWhyItMatters, categorySlug: category, categoryLabel, location, imageUrl, imageAlt, tags, seoTitle, seoDescription, canonicalUrl, noIndex, bylineMode, status, isBreaking: breaking, publishedAt: status === "published" && useCustomPublishedAt ? parsedPublishedAt?.toISOString() ?? "" : "", publishedAtRiskAcknowledged: status === "published" && useCustomPublishedAt ? publishedAtRiskAcknowledged : false, publishedAtChangeReason: status === "published" && useCustomPublishedAt ? publishedAtChangeReason : "" };
+    const input = { headline, slug, dek, body: bodyParagraphs, includeWhyItMatters, categorySlug: category, categoryLabel, location, imageUrl, imageAlt, tags, seoTitle, seoDescription, canonicalUrl, noIndex, bylineMode, status, isBreaking: breaking, scheduledAt: parsedScheduledAt?.toISOString() ?? "", publishedAt: "", publishedAtRiskAcknowledged: false, publishedAtChangeReason: "" };
     const validation = storyInput.safeParse(input);
     if (!validation.success) {
       const errors = validation.error.flatten().fieldErrors;
@@ -136,8 +136,8 @@ export function StoryEditor({
       const payload = await response.json().catch(() => null);
       if (response.ok && payload?.data?.slug) {
         setState("saved");
-        setMessage(status === "published" ? "Published successfully. Opening the live story…" : initialStory ? "Draft updated in the newsroom." : "Story saved to the newsroom.");
-        window.location.assign(status === "published" ? `/story/${payload.data.slug}` : "/studio/stories");
+        setMessage(status === "review" ? "Story submitted for review." : initialStory ? "Draft updated in the newsroom." : "Draft created in the newsroom.");
+        window.location.assign(status === "review" ? `/studio/stories/${payload.data.id}` : "/studio/stories");
       } else {
         const responseErrors = payload?.error?.details?.fieldErrors as StoryFieldErrors | undefined;
         if (responseErrors) {
@@ -210,7 +210,7 @@ export function StoryEditor({
   function focusFirstInvalidField(errors: StoryFieldErrors) {
     const firstField = Object.keys(errors).find((key) => errors[key]?.length);
     if (!firstField) return;
-    const ids: Record<string, string> = { slug: "headline", categorySlug: "category", canonicalUrl: "canonical-url", imageUrl: "image-upload", imageAlt: "image-alt", publishedAt: "published-at", publishedAtRiskAcknowledged: "published-at-risk", publishedAtChangeReason: "published-at-reason" };
+    const ids: Record<string, string> = { slug: "headline", categorySlug: "category", canonicalUrl: "canonical-url", imageUrl: "image-upload", imageAlt: "image-alt", scheduledAt: "planned-publication-at" };
     requestAnimationFrame(() => document.getElementById(ids[firstField] ?? firstField)?.focus());
   }
 
@@ -220,7 +220,7 @@ export function StoryEditor({
 
   return (
     <div className="mx-auto max-w-7xl">
-      <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><Button variant="ghost" size="sm" asChild className="mb-2 -ml-3 text-muted-foreground"><Link href="/studio/stories"><ArrowLeft /> All stories</Link></Button><h1 className="text-3xl font-bold tracking-tight">{initialStory ? "Edit story" : "Create story"}</h1><p className="mt-1 text-sm text-muted-foreground">{initialStory ? "Continue writing, save another draft, or submit the updated story for review." : "Draft, collaborate, review and publish from one workspace."}</p></div><div className="flex flex-wrap gap-2"><Button variant="outline"><Eye /> Preview</Button><Button variant="outline" onClick={() => save("draft")} disabled={state === "saving" || uploadState === "uploading"}><Save /> Save draft</Button><Button onClick={() => save("review")} disabled={state === "saving" || uploadState === "uploading"}>{state === "saving" ? <Loader2 className="animate-spin" /> : <Send />} Send to review</Button></div></div>
+      <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><Button variant="ghost" size="sm" asChild className="mb-2 -ml-3 text-muted-foreground"><Link href="/studio/stories"><ArrowLeft /> All stories</Link></Button><h1 className="text-3xl font-bold tracking-tight">{initialStory ? "Edit story" : "Create story"}</h1><p className="mt-1 text-sm text-muted-foreground">{initialStory ? initialStory.status !== "draft" ? "Any pre-publication change returns this story to Draft so it can be reviewed again." : "Continue writing or submit this saved draft for editorial review." : "Every story starts as a draft. Save it first, then submit it for review."}</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => save("draft")} disabled={state === "saving" || uploadState === "uploading"}>{state === "saving" ? <Loader2 className="animate-spin" /> : <Save />} {initialStory && initialStory.status !== "draft" ? "Save changes as draft" : "Save draft"}</Button>{initialStory?.status === "draft" ? <Button onClick={() => save("review")} disabled={state === "saving" || uploadState === "uploading"}>{state === "saving" ? <Loader2 className="animate-spin" /> : <Send />} Send to review</Button> : null}</div></div>
       {message && <div className={`mb-5 flex items-center gap-2 rounded-md border p-3 text-sm ${state === "error" ? "border-destructive/30 bg-destructive/10 text-destructive" : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"}`}><CheckCircle2 className="size-4" />{message}</div>}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Card><CardHeader><CardTitle>Story</CardTitle><CardDescription>Required fields are checked before the story enters review.</CardDescription></CardHeader><CardContent className="space-y-6">
@@ -247,7 +247,17 @@ export function StoryEditor({
               <Separator />
               <div className="space-y-3">
                 <div>
-                  <Label>Public byline</Label>
+                  <div className="flex items-center justify-between gap-3">
+                    <Label>Public byline</Label>
+                    <Link
+                      href="/studio/profile"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs font-semibold text-primary underline underline-offset-2"
+                    >
+                      Manage pseudonym
+                    </Link>
+                  </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Readers will see <strong>By {selectedByline?.name ?? "Courier Newsroom"}</strong>.
                   </p>
@@ -282,8 +292,14 @@ export function StoryEditor({
                   </div>
                 ) : (
                   <p className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
-                    No pseudonym is saved for this story owner. Add one in{" "}
-                    <Link href="/studio/profile" className="font-semibold underline">
+                    No pseudonym is saved for this story owner. Save this draft,
+                    then add one in{" "}
+                    <Link
+                      href="/studio/profile"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-semibold underline"
+                    >
                       My profile
                     </Link>.
                   </p>
@@ -291,25 +307,19 @@ export function StoryEditor({
               </div>
               <Separator />
               <div className="flex items-center justify-between"><div><Label htmlFor="breaking">Breaking news</Label><p className="mt-1 text-xs text-muted-foreground">Adds urgent public treatment.</p></div><Switch id="breaking" checked={breaking} onCheckedChange={setBreaking} /></div>
-              {canPublish ? (
-                <>
-                  <Separator />
-                  <div className="flex items-center justify-between gap-4">
-                    <div><Label htmlFor="custom-published-at">Custom posted time</Label><p className="mt-1 text-xs text-muted-foreground">Normally the publish action records the current time.</p></div>
-                    <Switch id="custom-published-at" checked={useCustomPublishedAt} onCheckedChange={(checked) => { setUseCustomPublishedAt(checked); if (!checked) { setPublishedAt(""); setPublishedAtRiskAcknowledged(false); setPublishedAtChangeReason(""); } }} />
-                  </div>
-                  {useCustomPublishedAt ? (
-                    <div className="space-y-4 rounded-lg border-2 border-destructive/60 bg-destructive/10 p-4">
-                      <div className="flex gap-3"><AlertTriangle className="mt-0.5 size-5 shrink-0 text-destructive" /><div><p className="font-bold text-destructive">Changing the posted time carries reporting risk</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Backdating can mislead readers, alter feeds and search ordering, and complicate corrections or legal records. Use only for a documented editorial reason. Future times must use scheduling.</p></div></div>
-                      <div className="space-y-2"><Label htmlFor="published-at">Displayed posted date and time</Label><Input id="published-at" type="datetime-local" value={publishedAt} onChange={(event) => setPublishedAt(event.target.value)} aria-invalid={Boolean(fieldError("publishedAt"))} /><p className="text-xs text-muted-foreground">Entered in your device timezone; publication timezone is {publicationTimezone}.</p>{fieldError("publishedAt") ? <p className="text-xs text-destructive">{fieldError("publishedAt")}</p> : null}</div>
-                      <div className="space-y-2"><Label htmlFor="published-at-reason">Required editorial reason</Label><Textarea id="published-at-reason" value={publishedAtChangeReason} onChange={(event) => setPublishedAtChangeReason(event.target.value)} minLength={10} maxLength={500} placeholder="Explain the archival, migration or correction reason." aria-invalid={Boolean(fieldError("publishedAtChangeReason"))} />{fieldError("publishedAtChangeReason") ? <p className="text-xs text-destructive">{fieldError("publishedAtChangeReason")}</p> : null}</div>
-                      <label id="published-at-risk" className="flex cursor-pointer items-start gap-3 text-xs leading-5"><input type="checkbox" checked={publishedAtRiskAcknowledged} onChange={(event) => setPublishedAtRiskAcknowledged(event.target.checked)} className="mt-1 size-4 accent-red-600" /><span>I understand this changes the public record and accept responsibility for documenting why it is necessary.</span></label>
-                      {fieldError("publishedAtRiskAcknowledged") ? <p className="text-xs text-destructive">{fieldError("publishedAtRiskAcknowledged")}</p> : null}
-                    </div>
-                  ) : null}
-                  <Button className="w-full" onClick={() => save("published")} disabled={state === "saving" || uploadState === "uploading"}>{state === "saving" ? <><Loader2 className="animate-spin" /> Publishing…</> : "Publish now"}</Button>
-                </>
-              ) : <p className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">Your role can draft and submit stories for review. A publisher sets the public posted time.</p>}
+              <Separator />
+              <div className="flex items-start justify-between gap-4">
+                <div><Label htmlFor="plan-publication">Plan publication</Label><p className="mt-1 text-xs leading-5 text-muted-foreground">Choose an intended time while drafting. The clock remains inactive until editorial review confirms the schedule.</p></div>
+                <Switch id="plan-publication" checked={schedulePlanned} onCheckedChange={(checked) => { setSchedulePlanned(checked); if (!checked) setScheduledAt(""); }} />
+              </div>
+              {schedulePlanned ? (
+                <div className="space-y-2 rounded-lg border bg-muted/25 p-4">
+                  <Label htmlFor="planned-publication-at">Planned date and time</Label>
+                  <Input id="planned-publication-at" type="datetime-local" value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} aria-invalid={Boolean(fieldError("scheduledAt"))} />
+                  {fieldError("scheduledAt") ? <p className="text-xs text-destructive">{fieldError("scheduledAt")}</p> : null}
+                  <p className="text-xs leading-5 text-muted-foreground"><CalendarClock className="mr-1 inline size-3.5" /> Entered in your device timezone. Courier publishes in {publicationTimezone}. A Draft or Review story never auto-publishes, even if this time passes; an authorized publisher must activate or replace the schedule after review.</p>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
           <Card>
@@ -326,7 +336,7 @@ export function StoryEditor({
             {imageUrl ? <div className="space-y-4"><div className="relative aspect-video overflow-hidden rounded-md border bg-muted"><Image src={imageUrl} alt={imageAlt || "Uploaded lead image preview"} fill sizes="320px" className="object-cover" /></div><div className="flex items-center justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-medium">{imageName}</p><p className="text-xs text-muted-foreground">Ready to use</p></div><div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadState === "uploading"}><CloudUpload /> Replace</Button><Button type="button" size="icon-sm" variant="ghost" onClick={removeImage} disabled={uploadState === "uploading"} aria-label="Remove image"><Trash2 /></Button></div></div><div className="space-y-2"><Label htmlFor="image-alt">Image description <span className="text-destructive">*</span></Label><Textarea id="image-alt" value={imageAlt} onChange={(event) => setImageAlt(event.target.value)} maxLength={240} placeholder="Describe what is visible for readers using screen readers" aria-invalid={Boolean(fieldError("imageAlt"))} />{fieldError("imageAlt") ? <p className="text-xs text-destructive">{fieldError("imageAlt")}</p> : <p className="text-xs text-muted-foreground">Describe people, place and relevant action; do not repeat the headline.</p>}</div></div> : <button type="button" onClick={() => fileInputRef.current?.click()} onDragEnter={(event) => { event.preventDefault(); setIsDraggingImage(true); }} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; setIsDraggingImage(true); }} onDragLeave={(event) => { event.preventDefault(); setIsDraggingImage(false); }} onDrop={handleImageDrop} disabled={uploadState === "uploading"} className={`flex min-h-36 w-full flex-col items-center justify-center rounded-md border border-dashed text-center transition-colors disabled:cursor-wait disabled:opacity-70 ${isDraggingImage ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground hover:border-primary hover:text-primary"}`}>{uploadState === "uploading" ? <Loader2 className="size-6 animate-spin" /> : <ImageIcon className="size-6" />}<span className="mt-2 text-sm font-medium">{uploadState === "uploading" ? "Uploading image…" : isDraggingImage ? "Drop image to upload" : "Choose or drop an image"}</span><span className="mt-1 text-xs">Select a file from this device</span></button>}
             {uploadMessage ? <p className={`text-xs ${uploadState === "error" ? "text-destructive" : "text-muted-foreground"}`} role="status">{uploadMessage}</p> : null}
           </CardContent></Card>
-          <Card><CardContent className="p-5"><div className="flex items-center justify-between"><span className="text-sm font-medium">Workflow</span><Badge variant="secondary" className="capitalize">{initialStory?.status ?? "draft"}</Badge></div><div className="mt-4 flex items-center gap-2 text-[0.7rem] text-muted-foreground"><span className="size-2 rounded-full bg-primary" /> Draft <span>→</span> Review <span>→</span> Scheduled <span>→</span> Published</div></CardContent></Card>
+          <Card><CardContent className="p-5"><div className="flex items-center justify-between"><span className="text-sm font-medium">Workflow</span><Badge variant="secondary" className="capitalize">{initialStory?.status ?? "draft"}</Badge></div><div className="mt-4 flex flex-wrap items-center gap-2 text-[0.7rem] text-muted-foreground"><span className="size-2 rounded-full bg-primary" /> Draft <span>→</span> Review <span>→</span> <span>Scheduled <em>(optional)</em></span> <span>→</span> Published</div></CardContent></Card>
         </div>
       </div>
     </div>

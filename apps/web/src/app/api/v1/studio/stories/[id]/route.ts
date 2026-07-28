@@ -7,7 +7,11 @@ import { stories, storyRevisions } from "@harborline/backend/schema";
 import { writeApiAudit } from "@/lib/api-keys";
 import { canDeleteStory, getStudioUser } from "@/lib/auth";
 import { storyInput } from "@/lib/story-input";
-import { canPublishStory, canTransitionStoryStatus } from "@/lib/story-workflow";
+import {
+  canPublishStory,
+  canTransitionStoryStatus,
+  isValidScheduledPublication,
+} from "@/lib/story-workflow";
 import { generateWhyItMatters } from "@/lib/why-it-matters";
 import {
   BylineUnavailableError,
@@ -19,7 +23,15 @@ import { legacyPublicBylineSnapshot } from "@/lib/pseudonyms";
 import { getSiteConfiguration } from "@/lib/site-settings";
 
 const storyId = z.uuid();
-const transitionInput = z.object({ status: z.enum(["draft", "review", "published"]) });
+const transitionInput = z.discriminatedUnion("status", [
+  z.object({ status: z.literal("draft") }),
+  z.object({ status: z.literal("review") }),
+  z.object({
+    status: z.literal("scheduled"),
+    scheduledAt: z.iso.datetime(),
+  }),
+  z.object({ status: z.literal("published") }),
+]);
 
 export async function PATCH(
   request: Request,
@@ -53,6 +65,25 @@ export async function PATCH(
     );
 
   const nextStatus = parsedBody.data.status;
+  const scheduledAt =
+    nextStatus === "scheduled"
+      ? new Date(parsedBody.data.scheduledAt)
+      : null;
+  if (
+    nextStatus === "scheduled" &&
+    (!scheduledAt || !isValidScheduledPublication(scheduledAt))
+  ) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "invalid_schedule",
+          message:
+            "Choose a valid publication time at least one minute in the future.",
+        },
+      },
+      { status: 400 },
+    );
+  }
   const isOwner = Boolean(
     viewer.databaseId && current.authorId === viewer.databaseId,
   );
@@ -78,7 +109,7 @@ export async function PATCH(
   const now = new Date();
   try {
     let publishByline = current.publicBylineSnapshot;
-    if (nextStatus === "published") {
+    if (nextStatus === "scheduled" || nextStatus === "published") {
       if (
         publishByline?.mode === "pseudonym" &&
         !(await getSiteConfiguration()).features.pseudonyms
@@ -107,6 +138,12 @@ export async function PATCH(
         status: nextStatus,
         publicBylineSnapshot: publishByline,
         publishedAt: nextStatus === "published" ? now : current.publishedAt,
+        scheduledAt:
+          nextStatus === "scheduled"
+            ? scheduledAt
+            : current.status === "scheduled" && nextStatus === "review"
+              ? null
+              : current.scheduledAt,
         updatedAt: now,
       }).where(and(eq(stories.id, current.id), eq(stories.status, current.status))).returning();
       if (!story) return null;
@@ -132,7 +169,13 @@ export async function PATCH(
       actorClerkId: viewer.id,
       event: "story.status_changed",
       request,
-      metadata: { storyId: updated.id, slug: updated.slug, from: current.status, to: updated.status },
+      metadata: {
+        storyId: updated.id,
+        slug: updated.slug,
+        from: current.status,
+        to: updated.status,
+        scheduledAt: updated.scheduledAt?.toISOString(),
+      },
     });
 
     revalidatePath("/studio");
@@ -197,9 +240,9 @@ export async function PUT(
       { error: { code: "not_found", message: "Story not found" } },
       { status: 404 },
     );
-  if (current.status !== "draft" && current.status !== "review")
+  if (current.status !== "draft" && current.status !== "review" && current.status !== "scheduled")
     return NextResponse.json(
-      { error: { code: "story_locked", message: "Only draft and submitted stories can be edited in this workspace" } },
+      { error: { code: "story_locked", message: "Only unpublished stories can be edited in this workspace" } },
       { status: 409 },
     );
 
@@ -212,10 +255,20 @@ export async function PUT(
       { error: { code: "forbidden", message: "Only the story owner or a publisher can edit this story" } },
       { status: 403 },
     );
-  if (parsedBody.data.status === "published" && !isPublisher)
+  if (
+    parsedBody.data.status === "scheduled" ||
+    parsedBody.data.status === "published" ||
+    parsedBody.data.publishedAt
+  )
     return NextResponse.json(
-      { error: { code: "forbidden", message: "Your role cannot publish stories" } },
-      { status: 403 },
+      {
+        error: {
+          code: "workflow_required",
+          message:
+            "Save editorial copy as a draft, then use the review screen to schedule or publish it.",
+        },
+      },
+      { status: 409 },
     );
 
   const [slugConflict] = await getDb()
@@ -231,14 +284,18 @@ export async function PUT(
 
   const now = new Date();
   const {
-    publishedAt,
+    publishedAt: _publishedAt,
+    scheduledAt,
     publishedAtRiskAcknowledged: _publishedAtRiskAcknowledged,
-    publishedAtChangeReason,
+    publishedAtChangeReason: _publishedAtChangeReason,
     includeWhyItMatters,
     bylineMode,
+    status: requestedStatus,
     ...storyValues
   } = parsedBody.data;
+  void _publishedAt;
   void _publishedAtRiskAcknowledged;
+  void _publishedAtChangeReason;
 
   try {
     if (
@@ -269,22 +326,31 @@ export async function PUT(
       previousPublicByline.name !== nextPublicByline.name ||
       previousPublicByline.pseudonymRevision !==
         nextPublicByline.pseudonymRevision;
-    if (parsedBody.data.status === "published" && bylineChanged) {
+    const effectiveStatus =
+      current.status === "review" || current.status === "scheduled"
+        ? "draft"
+        : requestedStatus;
+    if (
+      current.status === "draft" &&
+      effectiveStatus === "review" &&
+      !canTransitionStoryStatus(
+        current.status,
+        effectiveStatus,
+        viewer.role,
+        isOwner,
+      )
+    ) {
       return NextResponse.json(
         {
           error: {
-            code: "byline_requires_review",
+            code: "forbidden",
             message:
-              "A public byline change must be saved and reviewed before publication.",
+              "Only the story owner or a publisher can submit this draft.",
           },
         },
-        { status: 409 },
+        { status: 403 },
       );
     }
-    const effectiveStatus =
-      current.status === "review" && bylineChanged
-        ? "draft"
-        : parsedBody.data.status;
     const updated = await getDb().transaction(async (tx) => {
       const [story] = await tx.update(stories).set({
         ...storyValues,
@@ -298,12 +364,8 @@ export async function PUT(
         seoTitle: parsedBody.data.seoTitle || null,
         seoDescription: parsedBody.data.seoDescription || null,
         canonicalUrl: parsedBody.data.canonicalUrl || null,
-        scheduledAt: parsedBody.data.scheduledAt ? new Date(parsedBody.data.scheduledAt) : null,
-        publishedAt: effectiveStatus === "published"
-          ? publishedAt
-            ? new Date(publishedAt)
-            : now
-          : null,
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+        publishedAt: null,
         readingMinutes: Math.max(1, Math.ceil(parsedBody.data.body.join(" ").split(/\s+/).length / 220)),
         updatedAt: now,
       }).where(and(eq(stories.id, current.id), eq(stories.status, current.status))).returning();
@@ -315,11 +377,12 @@ export async function PUT(
         editorId: viewer.databaseId ?? null,
         version: (latest?.version ?? 0) + 1,
         snapshot: story,
-        note: publishedAt
-          ? `Story updated with custom posted time by ${viewer.name}: ${publishedAtChangeReason}`
-          : bylineChanged
-            ? `Public byline updated by ${viewer.name}; prior review invalidated`
-            : `Story updated as ${story.status} by ${viewer.name}`,
+        note:
+          current.status === "review" || current.status === "scheduled"
+            ? `Pre-publication content updated by ${viewer.name}; review or active schedule invalidated and returned to draft`
+            : bylineChanged
+              ? `Public byline updated by ${viewer.name}`
+              : `Story updated as ${story.status} by ${viewer.name}`,
       });
       return story;
     });
@@ -332,7 +395,7 @@ export async function PUT(
 
     await writeApiAudit({
       actorClerkId: viewer.id,
-      event: publishedAt ? "story.edited_with_custom_published_at" : "story.edited",
+      event: "story.edited",
       request,
       metadata: {
         storyId: updated.id,
@@ -340,8 +403,6 @@ export async function PUT(
         slug: updated.slug,
         fromStatus: current.status,
         toStatus: updated.status,
-        publishedAt: updated.publishedAt?.toISOString(),
-        reason: publishedAt ? publishedAtChangeReason : undefined,
         bylineMode: updated.publicBylineSnapshot?.mode,
         bylineChanged,
       },
@@ -351,16 +412,6 @@ export async function PUT(
     revalidatePath("/studio/stories");
     revalidatePath(`/studio/stories/${updated.id}`);
     revalidatePath(`/studio/stories/${updated.id}/edit`);
-    if (updated.status === "published") {
-      revalidatePath("/");
-      revalidatePath("/latest");
-      revalidatePath(`/category/${updated.categorySlug}`);
-      revalidatePath(`/story/${updated.slug}`);
-      revalidatePath("/api/v1/stories");
-      revalidatePath("/feed.xml");
-      revalidatePath("/sitemap.xml");
-      revalidatePath("/news-sitemap.xml");
-    }
     return NextResponse.json({ data: updated, meta: { apiVersion: "1" } });
   } catch (error) {
     if (error instanceof BylineUnavailableError) {

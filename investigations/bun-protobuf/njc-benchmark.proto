@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package njc.benchmark.v1;
+
+message ContentBatch {
+  repeated ContentEvent events = 1;
+}
+
+message ContentEvent {
+  string id = 1;
+  string kind = 2;
+  string title = 3;
+  string summary = 4;
+  string body = 5;
+  string category = 6;
+  string author = 7;
+  string image_url = 8;
+  int64 created_at_ms = 9;
+  int32 unread = 10;
+  repeated string tags = 11;
+  bool breaking = 12;
+}

@@ -4,7 +4,7 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 
 ## Mandatory first product implementation — pseudonyms, approval-gated scheduling and complete Studio control
 
-> **Execution-order requirement:** This is the first product implementation to complete after the mandatory Bun and Protocol Buffers investigation immediately below. Finish and verify this entire section before internal-domain work or any platform-specific implementation.
+> **Execution-order requirement:** This is the first product implementation to complete after the finished [Bun and Protocol Buffers investigation](docs/investigations/BUN_PROTOBUF_2026-07-28.md). Finish and verify this entire section before internal-domain work or any platform-specific implementation.
 
 - [ ] Complete the remaining advanced pseudonym operations now that the
   privacy-safe profile, story selector, immutable byline snapshot and public
@@ -54,43 +54,6 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   - Add unit, integration and end-to-end tests for profile pseudonyms, public identity privacy, byline snapshots, authorization, approval invalidation, scheduling accuracy, retries, overdue recovery, configuration dependencies, concurrent edits, audit history and rollback.
   - Verify public web, Studio, developer/reader APIs, mobile, employee, TV and Roku clients against enabled, disabled, stale and unavailable configuration states.
   - Test the scheduler across timezone and daylight-saving boundaries and perform a real production-like scheduled publication rehearsal before relying on it for news.
-
-## Mandatory preliminary investigation — Bun and Protocol Buffers
-
-> **Execution-order requirement:** Complete this evidence-based investigation before implementing the mandatory product section above or any later TODO. Do not migrate the repository merely because another service reported a 21× improvement; establish this platform’s own baseline, isolate the source of any improvement and proceed only when measured production-representative results justify the compatibility and migration cost.
-
-> **Origin of this investigation:** The reported comparison was specifically a migration of the Question House backend from Node.js to Bun that reportedly made its WebSocket “21x faster.” That project also migrated all application endpoint payloads from JSON to Protocol Buffers and reported faster, smaller and more secure requests. Preserve those as two related but separately testable claims: Bun runtime/WebSocket performance and Protocol Buffers endpoint serialization. Protocol Buffers may reduce payload size and parsing work, but binary serialization is not encryption and does not make a request secure without the existing transport security, authentication, authorization, validation and abuse controls.
-
-- [ ] Determine whether adopting Bun would materially improve this repository without destabilizing its supported applications or exceeding the requirement to use free services.
-  - Evaluate **Bun as the package manager**, **Bun as the local script/test runtime**, **Bun as the build runtime** and **Bun as the Vercel Functions runtime** as four separate decisions. Do not describe a faster dependency installation as a faster production API.
-  - Reconfirm Vercel support and plan availability at implementation time. As of this TODO update, Vercel documents Bun package-manager support and a Bun Functions runtime in Beta on all plans, including Next.js when configured explicitly; Beta status and compatibility still require a guarded production trial.
-  - Audit compatibility across the complete workspace: Next.js and Routing Middleware, Turborepo, Clerk, Neon/Postgres, Drizzle and migrations, Vercel Blob, Upstash, Stripe and webhooks, cron jobs, backup scripts, Expo reader/employee/TV builds, React Native TV, Roku tooling, Vite/Tauri, Rust integration, the animation/compiler workspaces, CI and every existing test/build/release command.
-  - Identify Node-specific APIs, native modules, postinstall/build scripts, package-resolution assumptions, lockfile behavior, environment loading, filesystem/process usage and tools that Bun does not support identically.
-  - Establish the current pnpm/Node baseline before changing anything: clean and cached install time, CI time, local startup and hot reload, Next.js build time, cold and warm function startup, request throughput, p50/p95/p99 latency, CPU time, peak memory, error rate and production cost.
-  - Give WebSocket and other real-time paths their own benchmark track so the reported Question House result is compared against equivalent persistent-connection behavior rather than ordinary HTTP or install-time measurements.
-  - Run reproducible isolated comparisons using pinned versions, the same hardware or Vercel conditions, the same dependency cache state, representative production data and enough iterations to report variance rather than one favorable run.
-  - Benchmark incremental options in order: Bun installs with Node runtime, Bun scripts/tests where compatible, Bun builds, then selected Bun Vercel functions or a Bun Next.js canary. Preserve the working pnpm/Node path throughout the evaluation.
-  - Require the entire existing test, lint, typecheck, build, migration, backup/restore and platform verification matrix to pass under any proposed configuration.
-  - Record regressions and unsupported surfaces explicitly. A mixed runtime is acceptable when it provides a measurable benefit and has a clear ownership model; a repository-wide conversion is not a goal by itself.
-  - Approve migration only with predefined thresholds for meaningful end-to-end improvement, no security or correctness regression, no loss of observability, an acceptable maintenance burden and a tested one-step rollback.
-- [ ] Determine whether Protocol Buffers should replace JSON for any data path, and prefer a measured selective adoption over an automatic repository-wide rewrite.
-  - Inventory every JSON use separately: public and developer HTTP APIs, Server Component data, browser fetches, mobile/employee/TV/Roku clients, device pairing, Studio forms, chat polling, analytics ingestion, feature/configuration delivery, platform packages, Lottie animation files, manifests, backups/exports, logs, webhooks and third-party integrations.
-  - Classify each use as an external compatibility contract, internal network protocol, persisted data format, human-authored configuration, interchange/archive format or implementation detail. Protocol Buffers must not be substituted where JSON is required by a standard, third party, editorial workflow or existing public contract.
-  - Do not convert Lottie JSON, JSON-LD structured data, web manifests, Vercel/package configuration, portable human-readable exports or other standardized JSON formats merely to claim protocol adoption.
-  - Identify the strongest candidates first: large or high-frequency internal service payloads, mobile/TV synchronization, chat/event traffic, analytics batches or animation/runtime messages where bandwidth and encode/decode work are proven bottlenecks.
-  - Compare JSON with compression against binary Protocol Buffers using representative small, medium and worst-case messages. Measure encoded bytes, compression ratio, encode/decode time on server and every relevant client, allocation/memory cost, network transfer, battery/device impact, p50/p95/p99 end-to-end latency and failure behavior.
-  - Include lower-powered real Roku and television hardware in the benchmark. Generated TypeScript support alone does not prove that BrightScript, native, browser and offline clients can adopt the format safely or efficiently.
-  - Include schema/compiler generation time, bundle-size growth, debugging and observability cost, CDN/cache behavior, browser content negotiation, gateway/serverless overhead and the operational cost of maintaining generated clients.
-  - Define versioned `.proto` ownership, package naming, field-number reservation, compatibility rules, unknown-field behavior, enum evolution, optional-field presence, deterministic fixtures and generated-code review. Never reuse or renumber a released field.
-  - Keep public JSON compatibility where consumers need it. If useful, add content negotiation or a versioned binary internal endpoint rather than silently changing an existing API response.
-  - Treat Protocol Buffers as serialization, not encryption or authorization. Preserve payload-size limits, authentication, permission checks, input validation, rate limits, auditability and safe error handling.
-  - Build a dual-read/dual-format canary with contract tests and golden fixtures before migration, then verify mixed-version clients, rollback, replay, corrupt payloads, missing fields and old cached data.
-  - Approve each conversion only when the measured end-to-end gain outweighs schema/tooling/client complexity. Document rejected candidates so the same investigation is not repeatedly reopened without new evidence.
-- [ ] Produce a written recommendation before implementation.
-  - Report which gains come from installation, build startup, server cold starts, application execution, smaller payloads or reduced network transfer instead of combining them into a misleading single multiplier.
-  - Include the benchmark harness, raw results, environment and versions so the claimed improvement can be reproduced.
-  - Compare full Bun/full Protobuf, selective adoption and retaining pnpm/Node/JSON, including migration effort, compatibility risk, free-tier constraints and rollback cost.
-  - State a clear **adopt**, **adopt selectively**, **defer** or **reject** decision for Bun and for each Protocol Buffers candidate. The reported 21× result from another service is context, not this project’s acceptance criterion.
 
 ## Mandatory third product implementation — repository-wide internal boundary and `int` subdomain
 

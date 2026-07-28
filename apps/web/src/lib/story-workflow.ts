@@ -13,8 +13,27 @@ export function canTransitionStoryStatus(
   if (current === "draft" && next === "review") {
     return isOwner || canPublishStory(role);
   }
-  if (current === "review" && (next === "draft" || next === "published")) {
+  if (
+    current === "review" &&
+    (next === "draft" || next === "scheduled" || next === "published")
+  ) {
+    return canPublishStory(role);
+  }
+  if (
+    current === "scheduled" &&
+    (next === "review" || next === "published")
+  ) {
     return canPublishStory(role);
   }
   return false;
+}
+
+export function isValidScheduledPublication(
+  scheduledAt: Date,
+  now = new Date(),
+) {
+  return (
+    !Number.isNaN(scheduledAt.getTime()) &&
+    scheduledAt.getTime() >= now.getTime() + 60_000
+  );
 }

@@ -4,6 +4,7 @@ import {
   DistributionPackageConsole,
   type DistributionPackageDetail,
 } from "@/components/studio/distribution-package-console";
+import { StudioShell } from "@/components/studio/studio-shell";
 import {
   getDistributionManager,
   getDistributionPackageForManager,
@@ -14,7 +15,8 @@ export default async function StudioDistributionPackagePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  if (!(await getDistributionManager())) notFound();
+  const manager = await getDistributionManager();
+  if (!manager) notFound();
   const id = (await params).id;
   const record = await getDistributionPackageForManager(id);
   if (!record) notFound();
@@ -44,9 +46,11 @@ export default async function StudioDistributionPackagePage({
     }),
   ) as DistributionPackageDetail;
   return (
-    <DistributionPackageConsole
-      packageId={id}
-      initialDetail={serializable}
-    />
+    <StudioShell viewer={manager}>
+      <DistributionPackageConsole
+        packageId={id}
+        initialDetail={serializable}
+      />
+    </StudioShell>
   );
 }

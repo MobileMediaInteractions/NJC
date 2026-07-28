@@ -187,8 +187,9 @@ export function StaffProfileEditor({
                 <Label htmlFor="staff-pseudonym">Pseudonym / pen name</Label>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">
                   Optional. Once saved, you can choose this identity while
-                  creating a story. Your account remains connected internally
-                  for ownership, review and audit history.
+                  creating or editing any unpublished story. Your account
+                  remains connected internally for ownership, review and audit
+                  history.
                 </p>
               </div>
               <span className="text-xs tabular-nums text-muted-foreground">
@@ -221,7 +222,7 @@ export function StaffProfileEditor({
             ) : (
               <p className="text-xs leading-5 text-muted-foreground">
                 Saving a changed or removed pseudonym does not rewrite stories
-                that are already published.
+                that are already published. Published bylines remain locked.
               </p>
             )}
           </div>

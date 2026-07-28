@@ -1,9 +1,11 @@
 import { and, eq, lte } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { getDb, hasDatabase } from "@harborline/backend/db";
-import { premiumContent, stories } from "@harborline/backend/schema";
+import { premiumContent } from "@harborline/backend/schema";
 import { expireAccessCredits } from "@/lib/access-credits";
 import { refreshAnalyticsArchives } from "@/lib/traffic-analytics";
+import { publishDueStories } from "@/lib/scheduled-publication";
 
 export async function GET(request: Request) {
   const startedAt = Date.now();
@@ -12,12 +14,24 @@ export async function GET(request: Request) {
   }
   if (!hasDatabase()) return NextResponse.json({ error: "DATABASE_URL is not configured" }, { status: 503 });
   const now = new Date();
-  const published = await getDb().update(stories).set({ status: "published", publishedAt: now, updatedAt: now }).where(and(eq(stories.status, "scheduled"), lte(stories.scheduledAt, now))).returning({ id: stories.id, slug: stories.slug });
+  const published = await publishDueStories(now);
   const premiumPublished = await getDb().update(premiumContent).set({ status: "published", publishedAt: now, updatedAt: now }).where(and(eq(premiumContent.status, "scheduled"), lte(premiumContent.scheduledAt, now))).returning({ id: premiumContent.id, slug: premiumContent.slug });
   const [archives, creditExpirations] = await Promise.all([
     refreshAnalyticsArchives(now),
     expireAccessCredits(now),
   ]);
+  if (published.length) {
+    revalidatePath("/");
+    revalidatePath("/latest");
+    revalidatePath("/api/v1/stories");
+    revalidatePath("/feed.xml");
+    revalidatePath("/sitemap.xml");
+    revalidatePath("/news-sitemap.xml");
+    for (const story of published) {
+      revalidatePath(`/story/${story.slug}`);
+      revalidatePath(`/category/${story.categorySlug}`);
+    }
+  }
   console.log(JSON.stringify({
     level: "info",
     message: "Daily newsroom maintenance completed",

@@ -33,6 +33,7 @@ import {
   ScrollText,
   Settings,
   Share2,
+  SlidersHorizontal,
   UserRound,
   Users,
 } from "lucide-react";
@@ -78,6 +79,7 @@ const hubIcons: Record<StudioHubId, typeof LayoutDashboard> = {
   communications: MessageCircleMore,
   "njc-plus": Clapperboard,
   control: Settings,
+  configuration: SlidersHorizontal,
 };
 
 const itemIcons: Record<string, typeof LayoutDashboard> = {
@@ -375,8 +377,10 @@ function SidebarNavigation({
                   collapsed
                     ? "justify-center px-2 py-2.5"
                     : "gap-3 px-2.5 py-2.5",
-                  active && "bg-white/10 text-white",
+                  active &&
+                    "bg-brand-yellow text-brand-navy shadow-sm hover:bg-brand-yellow hover:text-brand-navy",
                 )}
+                aria-current={active ? "page" : undefined}
               >
                 <Icon className="size-4 shrink-0" />
                 {!collapsed ? (
@@ -437,9 +441,11 @@ function SidebarNavigation({
                     href={item.href}
                     onClick={onNavigate}
                     className={cn(
-                      "flex min-w-0 items-center gap-2.5 rounded-md px-2.5 py-2 text-xs font-semibold text-white/45 transition-colors hover:bg-white/7 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow",
-                      active && "bg-white/8 text-brand-yellow",
+                      "relative flex min-w-0 items-center gap-2.5 rounded-md px-2.5 py-2 text-xs font-semibold text-white/45 transition-colors hover:bg-white/7 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow",
+                      active &&
+                        "bg-white/12 pl-4 text-brand-yellow before:absolute before:inset-y-1.5 before:left-1 before:w-0.5 before:rounded-full before:bg-brand-yellow",
                     )}
+                    aria-current={active ? "page" : undefined}
                   >
                     <Icon className="size-3.5 shrink-0" />
                     <span className="min-w-0 flex-1 truncate">

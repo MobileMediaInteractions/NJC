@@ -33,6 +33,7 @@ test("navigation hides unauthorized and unavailable destinations", () => {
   assert.equal(contributorIds.includes("settings"), false);
   assert.equal(contributorIds.includes("chat"), false);
   assert.equal(contributorIds.includes("press-releases"), false);
+  assert.equal(contributorIds.includes("distribution-manager"), false);
 
   const administrator = getVisibleStudioNavigation({
     role: "admin",
@@ -42,9 +43,13 @@ test("navigation hides unauthorized and unavailable destinations", () => {
   const administratorIds = administrator.flatMap((hub) =>
     hub.items.map((item) => item.id),
   );
-  for (const id of ["tips", "team", "settings", "chat", "press-releases"]) {
+  for (const id of ["tips", "team", "settings", "chat", "press-releases", "distribution-manager"]) {
     assert.equal(administratorIds.includes(id), true);
   }
+  assert.equal(
+    administrator.find((hub) => hub.id === "configuration")?.items[0]?.id,
+    "settings",
+  );
 });
 
 test("active navigation selects the most specific visible destination", () => {
@@ -64,7 +69,7 @@ test("active navigation selects the most specific visible destination", () => {
 
   const distributionManager = resolveStudioNavigation(
     "/studio/distribution",
-    { role: "reporter", chatEnabled: false, pressEnabled: false },
+    { role: "editor", chatEnabled: false, pressEnabled: false },
   );
   assert.equal(distributionManager.activeHub.id, "distribution");
   assert.equal(distributionManager.activeItem?.id, "distribution-manager");

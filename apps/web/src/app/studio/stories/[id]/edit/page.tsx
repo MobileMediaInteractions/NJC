@@ -40,8 +40,8 @@ export default async function EditStoryPage({ params }: { params: Promise<{ id: 
   if (!canEdit) {
     return <StudioShell viewer={viewer}><StatusCard title="Editing access required" description="Only the story owner or a publisher can change this newsroom draft." /></StudioShell>;
   }
-  if (story.status !== "draft" && story.status !== "review") {
-    return <StudioShell viewer={viewer}><StatusCard title="This story is locked" description="Published, scheduled and archived stories cannot be changed in the draft editor." /></StudioShell>;
+  if (story.status !== "draft" && story.status !== "review" && story.status !== "scheduled") {
+    return <StudioShell viewer={viewer}><StatusCard title="This story is locked" description="Published and archived stories cannot be changed in the draft editor." /></StudioShell>;
   }
 
   const configuration = await getSiteConfiguration();
@@ -57,7 +57,6 @@ export default async function EditStoryPage({ params }: { params: Promise<{ id: 
       <StoryEditor
         datelines={configuration.editorial.datelines}
         publicationTimezone={configuration.publication.timezone}
-        canPublish={canPublish}
         bylineOptions={bylineOptions}
         pseudonymsEnabled={configuration.features.pseudonyms}
         initialStory={{
@@ -79,6 +78,7 @@ export default async function EditStoryPage({ params }: { params: Promise<{ id: 
           isBreaking: story.isBreaking,
           bylineMode: story.publicBylineSnapshot?.mode ?? "account",
           status: story.status,
+          scheduledAt: story.scheduledAt?.toISOString() ?? null,
         }}
       />
     </StudioShell>

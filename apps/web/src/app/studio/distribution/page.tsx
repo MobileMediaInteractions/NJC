@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import { distributionPackages } from "@harborline/backend/schema";
 import { DistributionConsole } from "@/components/studio/distribution-console";
+import { StudioShell } from "@/components/studio/studio-shell";
 import {
   getDistributionManager,
   isDistributionEnabled,
@@ -19,13 +20,15 @@ export default async function StudioDistributionPage() {
         .orderBy(desc(distributionPackages.updatedAt))
     : [];
   return (
-    <DistributionConsole
-      packages={packages}
-      readiness={{
-        deliveryEnabled: await isDistributionEnabled(),
-        databaseReady: hasDatabase(),
-        privateStorageReady: hasPrivateBlobStorage(),
-      }}
-    />
+    <StudioShell viewer={manager}>
+      <DistributionConsole
+        packages={packages}
+        readiness={{
+          deliveryEnabled: await isDistributionEnabled(),
+          databaseReady: hasDatabase(),
+          privateStorageReady: hasPrivateBlobStorage(),
+        }}
+      />
+    </StudioShell>
   );
 }

@@ -47,7 +47,7 @@ export default async function StudioStoryReviewPage({ params }: { params: Promis
             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{story.headline}</h1>
             <p className="mt-3 text-lg leading-7 text-muted-foreground">{story.dek}</p>
           </div>
-          <StoryReviewActions id={story.id} slug={story.slug} headline={story.headline} bylineName={story.publicBylineSnapshot?.name ?? story.authorSnapshot?.name ?? "Courier Newsroom"} status={story.status} canPublish={canPublish} canSubmitReview={canPublish || Boolean(viewer.databaseId && story.authorId === viewer.databaseId)} />
+          <StoryReviewActions id={story.id} slug={story.slug} headline={story.headline} bylineName={story.publicBylineSnapshot?.name ?? story.authorSnapshot?.name ?? "Courier Newsroom"} status={story.status} scheduledAt={story.scheduledAt?.toISOString() ?? null} publicationTimezone={configuration.publication.timezone} canPublish={canPublish} canSubmitReview={canPublish || Boolean(viewer.databaseId && story.authorId === viewer.databaseId)} />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -64,6 +64,13 @@ export default async function StudioStoryReviewPage({ params }: { params: Promis
               <Detail icon={<UserRound />} label="Owner" value={story.authorSnapshot?.name ?? "Unassigned"} />
               <Detail icon={<UserRound />} label="Public byline" value={story.publicBylineSnapshot?.name ?? story.authorSnapshot?.name ?? "Courier Newsroom"} />
               <Detail icon={<CalendarClock />} label="Updated" value={formatDate(story.updatedAt)} />
+              {story.scheduledAt ? (
+                <Detail
+                  icon={<CalendarClock />}
+                  label={story.status === "scheduled" ? "Scheduled publication" : "Planned publication"}
+                  value={formatDate(story.scheduledAt)}
+                />
+              ) : null}
               <Separator />
               <div><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Dateline</p><p className="mt-1">{story.location}</p></div>
               <div><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Tags</p><div className="mt-2 flex flex-wrap gap-1.5">{story.tags.length ? story.tags.map((tag) => <Badge key={tag} variant="secondary">{tag}</Badge>) : <span className="text-muted-foreground">No tags</span>}</div></div>

@@ -225,7 +225,7 @@ export function DistributionPackageConsole({
       </div>
     );
   return (
-    <div className="max-w-6xl">
+    <div className="mx-auto w-full max-w-6xl">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm font-semibold text-primary">Distribution package</p>
