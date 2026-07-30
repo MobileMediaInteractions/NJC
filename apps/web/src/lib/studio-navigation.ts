@@ -272,18 +272,49 @@ export function getVisibleStudioNavigation(
 }
 
 export function isStudioRouteActive(pathname: string, href: string) {
+  pathname = normalizeStudioNavigationPathname(pathname);
   if (href === "/studio") return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export function normalizeStudioNavigationPathname(pathname: string) {
+  const withoutQuery = pathname.split(/[?#]/, 1)[0] || "/";
+  const normalized =
+    withoutQuery.length > 1 ? withoutQuery.replace(/\/+$/, "") : withoutQuery;
+  if (normalized === "/studio" || normalized.startsWith("/studio/")) {
+    return normalized;
+  }
+  return normalized === "/" ? "/studio" : `/studio${normalized}`;
+}
+
+export function studioNavigationHref(href: string, cleanStudioPaths: boolean) {
+  if (!cleanStudioPaths) return href;
+  if (href === "/studio") return "/";
+  return href.startsWith("/studio/") ? href.slice("/studio".length) : href;
+}
+
+export function usesCleanStudioNavigationPaths(pathname: string) {
+  return pathname !== "/studio" && !pathname.startsWith("/studio/");
+}
+
+export function getStudioHubSecondaryItems(hub: StudioNavigationHub) {
+  const defaultHref = hub.items[0]?.href;
+  return hub.items.filter((item) => item.href !== defaultHref);
 }
 
 export function resolveStudioNavigation(
   pathname: string,
   context: StudioNavigationContext,
 ) {
+  const normalizedPathname = normalizeStudioNavigationPathname(pathname);
   const hubs = getVisibleStudioNavigation(context);
   const matches = hubs.flatMap((hub) =>
     hub.items
-      .filter((item) => !item.external && isStudioRouteActive(pathname, item.href))
+      .filter(
+        (item) =>
+          !item.external &&
+          isStudioRouteActive(normalizedPathname, item.href),
+      )
       .map((item) => ({ hub, item })),
   );
   matches.sort((left, right) => right.item.href.length - left.item.href.length);

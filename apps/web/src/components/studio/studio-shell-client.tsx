@@ -65,7 +65,10 @@ import {
 } from "@/components/ui/sheet";
 import { formatTipBadge } from "@/lib/newsroom-tips";
 import {
+  getStudioHubSecondaryItems,
   resolveStudioNavigation,
+  studioNavigationHref,
+  usesCleanStudioNavigationPaths,
   type StudioHubId,
   type StudioNavigationHub,
   type StudioNavigationItem,
@@ -137,6 +140,7 @@ export function StudioShellClient({
   financeEnabled: boolean;
 }) {
   const pathname = usePathname();
+  const cleanStudioPaths = usesCleanStudioNavigationPaths(pathname);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const communication = useStudioCommunication({
@@ -176,6 +180,7 @@ export function StudioShellClient({
     newTipCount,
     chatBadge,
     unreadChatCount: communication.unreadChat,
+    cleanStudioPaths,
   };
   const primaryAction = getPrimaryAction(activeHub.id, pressEnabled);
 
@@ -345,6 +350,7 @@ function SidebarNavigation({
   newTipCount,
   chatBadge,
   unreadChatCount,
+  cleanStudioPaths,
   onNavigate,
 }: {
   collapsed: boolean;
@@ -355,6 +361,7 @@ function SidebarNavigation({
   newTipCount: number;
   chatBadge: string | null;
   unreadChatCount: number;
+  cleanStudioPaths: boolean;
   onNavigate?: () => void;
 }) {
   return (
@@ -383,7 +390,10 @@ function SidebarNavigation({
             return (
               <Link
                 key={hub.id}
-                href={hub.items[0]!.href}
+                href={studioNavigationHref(
+                  hub.items[0]!.href,
+                  cleanStudioPaths,
+                )}
                 onClick={onNavigate}
                 title={collapsed ? hub.label : undefined}
                 className={cn(
@@ -394,7 +404,11 @@ function SidebarNavigation({
                   active &&
                     "bg-brand-yellow text-brand-navy shadow-sm hover:bg-brand-yellow hover:text-brand-navy",
                 )}
-                aria-current={active ? "page" : undefined}
+                aria-current={
+                  active && activeItem?.href === hub.items[0]?.href
+                    ? "page"
+                    : undefined
+                }
               >
                 <Icon className="size-4 shrink-0" />
                 {!collapsed ? (
@@ -425,7 +439,9 @@ function SidebarNavigation({
           })}
         </div>
 
-        {!collapsed ? (
+        {!collapsed &&
+        (getStudioHubSecondaryItems(activeHub).length > 0 ||
+          activeHub.id === "njc-plus") ? (
           <section className="mt-5 border-t border-white/10 pt-4">
             <div className="mb-2 flex items-center justify-between gap-3 px-2">
               <div className="min-w-0">
@@ -439,7 +455,7 @@ function SidebarNavigation({
               <ChevronDown className="size-3.5 shrink-0 text-white/25" />
             </div>
             <div className="space-y-0.5">
-              {activeHub.items.map((item) => {
+              {getStudioHubSecondaryItems(activeHub).map((item) => {
                 const Icon = itemIcons[item.id] ?? LayoutDashboard;
                 const active = activeItem?.id === item.id;
                 const badge = badgeForItem(
@@ -452,7 +468,10 @@ function SidebarNavigation({
                 return (
                   <Link
                     key={item.id}
-                    href={item.href}
+                    href={studioNavigationHref(
+                      item.href,
+                      cleanStudioPaths,
+                    )}
                     onClick={onNavigate}
                     className={cn(
                       "relative flex min-w-0 items-center gap-2.5 rounded-md px-2.5 py-2 text-xs font-semibold text-white/45 transition-colors hover:bg-white/7 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-yellow",

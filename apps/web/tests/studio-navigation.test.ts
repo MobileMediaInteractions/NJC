@@ -1,9 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import {
+  getStudioHubSecondaryItems,
   getVisibleStudioNavigation,
   isStudioRouteActive,
+  normalizeStudioNavigationPathname,
   resolveStudioNavigation,
+  studioNavigationHref,
+  studioNavigationHubs,
+  usesCleanStudioNavigationPaths,
 } from "../src/lib/studio-navigation";
 
 test("Studio route matching respects complete path segments", () => {
@@ -17,6 +24,70 @@ test("Studio route matching respects complete path segments", () => {
     true,
   );
   assert.equal(isStudioRouteActive("/studio/stories", "/studio"), false);
+  assert.equal(
+    isStudioRouteActive("/finance/ledger", "/studio/finance/ledger"),
+    true,
+  );
+  assert.equal(isStudioRouteActive("/", "/studio"), true);
+});
+
+test("clean Studio-host paths resolve to canonical navigation entries", () => {
+  assert.equal(
+    normalizeStudioNavigationPathname("/finance/ledger/"),
+    "/studio/finance/ledger",
+  );
+  assert.equal(
+    studioNavigationHref("/studio/finance/ledger", true),
+    "/finance/ledger",
+  );
+  assert.equal(
+    studioNavigationHref("/studio/finance/ledger", false),
+    "/studio/finance/ledger",
+  );
+  assert.equal(studioNavigationHref("/studio", true), "/");
+  assert.equal(usesCleanStudioNavigationPaths("/finance/ledger"), true);
+  assert.equal(usesCleanStudioNavigationPaths("/studio/finance/ledger"), false);
+  assert.equal(usesCleanStudioNavigationPaths("/studio/finance/"), false);
+
+  const resolved = resolveStudioNavigation("/finance/ledger", {
+    role: "admin",
+    chatEnabled: true,
+    pressEnabled: true,
+    alertsEnabled: true,
+    financeEnabled: true,
+  });
+  assert.equal(resolved.activeHub.id, "finance");
+  assert.equal(resolved.activeItem?.id, "finance-ledger");
+});
+
+test("Studio navigation IDs and destinations are unique", () => {
+  const items = studioNavigationHubs.flatMap((hub) => hub.items);
+  assert.equal(new Set(items.map((item) => item.id)).size, items.length);
+  assert.equal(new Set(items.map((item) => item.href)).size, items.length);
+});
+
+test("every Studio navigation destination resolves to an implemented page", () => {
+  for (const item of studioNavigationHubs.flatMap((hub) => hub.items)) {
+    if (item.external) continue;
+    const page = fileURLToPath(
+      new URL(`../src/app${item.href}/page.tsx`, import.meta.url),
+    );
+    assert.equal(existsSync(page), true, `Missing page for ${item.href}`);
+  }
+});
+
+test("a workspace default destination is not repeated in its child list", () => {
+  for (const hub of studioNavigationHubs) {
+    const secondary = getStudioHubSecondaryItems({
+      ...hub,
+      items: [...hub.items],
+    });
+    assert.equal(
+      secondary.some((item) => item.href === hub.items[0]?.href),
+      false,
+      `${hub.label} repeats its default destination`,
+    );
+  }
 });
 
 test("navigation hides unauthorized and unavailable destinations", () => {
