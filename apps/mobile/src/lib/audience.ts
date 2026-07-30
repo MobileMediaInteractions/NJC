@@ -15,6 +15,19 @@ function createInstallationId() {
   return `${Date.now().toString(36)}${random}`.slice(0, 64);
 }
 
+function createEventId(prefix: string) {
+  const random = Array.from({ length: 5 }, () => Math.random().toString(36).slice(2)).join('');
+  return `${prefix}_${Date.now().toString(36)}${random}`.slice(0, 80);
+}
+
+function applicationBuildNumber() {
+  const value =
+    Platform.OS === 'ios'
+      ? Constants.expoConfig?.ios?.buildNumber
+      : Constants.expoConfig?.android?.versionCode;
+  return value == null ? 'unknown' : String(value);
+}
+
 async function getInstallationId() {
   const existing = await deviceStorage.getItem(installationKey);
   if (existing) return existing;
@@ -39,10 +52,17 @@ export async function reportAudiencePresence(getToken?: GetToken, force = false)
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     body: JSON.stringify({
+      eventId: createEventId('presence'),
       installationId: await getInstallationId(),
       platform,
       source: platform === 'web' ? 'mobile-app-web' : 'mobile-app',
+      product: 'reader-mobile',
       appVersion: Constants.expoConfig?.version ?? '1.0.0',
+      buildNumber: applicationBuildNumber(),
+      releaseChannel: 'production',
+      osVersion: String(Platform.Version),
+      deviceClass: platform === 'web' ? 'browser' : 'phone',
+      occurredAt: new Date(now).toISOString(),
     }),
   }).catch(() => undefined);
 }

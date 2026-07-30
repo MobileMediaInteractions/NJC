@@ -24,6 +24,7 @@ test("navigation hides unauthorized and unavailable destinations", () => {
     role: "contributor",
     chatEnabled: false,
     pressEnabled: false,
+    alertsEnabled: false,
   });
   const contributorIds = contributor.flatMap((hub) =>
     hub.items.map((item) => item.id),
@@ -39,11 +40,12 @@ test("navigation hides unauthorized and unavailable destinations", () => {
     role: "admin",
     chatEnabled: true,
     pressEnabled: true,
+    alertsEnabled: true,
   });
   const administratorIds = administrator.flatMap((hub) =>
     hub.items.map((item) => item.id),
   );
-  for (const id of ["tips", "twenty-under-twenty", "team", "settings", "legal-registry", "chat", "press-releases", "distribution-manager"]) {
+  for (const id of ["tips", "twenty-under-twenty", "team", "notification-campaigns", "settings", "legal-registry", "chat", "press-releases", "distribution-manager"]) {
     assert.equal(administratorIds.includes(id), true);
   }
   assert.equal(
@@ -55,21 +57,21 @@ test("navigation hides unauthorized and unavailable destinations", () => {
 test("active navigation selects the most specific visible destination", () => {
   const resolved = resolveStudioNavigation(
     "/studio/njc-plus/content/8e828c80-7a65-4cf4-b912-9ed2fbd6a3bd",
-    { role: "editor", chatEnabled: true, pressEnabled: true },
+    { role: "editor", chatEnabled: true, pressEnabled: true, alertsEnabled: true },
   );
   assert.equal(resolved.activeHub.id, "njc-plus");
   assert.equal(resolved.activeItem?.id, "njc-plus-content");
 
   const pressRelease = resolveStudioNavigation(
     "/studio/press-releases/new",
-    { role: "producer", chatEnabled: true, pressEnabled: true },
+    { role: "producer", chatEnabled: true, pressEnabled: true, alertsEnabled: true },
   );
   assert.equal(pressRelease.activeHub.id, "distribution");
   assert.equal(pressRelease.activeItem?.id, "press-releases");
 
   const distributionManager = resolveStudioNavigation(
     "/studio/distribution",
-    { role: "editor", chatEnabled: false, pressEnabled: false },
+    { role: "editor", chatEnabled: false, pressEnabled: false, alertsEnabled: false },
   );
   assert.equal(distributionManager.activeHub.id, "distribution");
   assert.equal(distributionManager.activeItem?.id, "distribution-manager");

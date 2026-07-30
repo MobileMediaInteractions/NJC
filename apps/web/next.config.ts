@@ -30,6 +30,7 @@ const studioSections = [
   "legal",
   "media",
   "njc-plus",
+  "notifications",
   "press",
   "press-releases",
   "profile",

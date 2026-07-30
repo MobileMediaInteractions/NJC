@@ -852,6 +852,91 @@ export const pushDevices = pgTable(
   (table) => [uniqueIndex("push_devices_token_idx").on(table.token)],
 );
 
+export const webPushSubscriptions = pgTable(
+  "web_push_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    endpoint: text("endpoint").notNull(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    userClerkId: text("user_clerk_id"),
+    userAgentFamily: text("user_agent_family"),
+    locale: text("locale"),
+    isActive: boolean("is_active").notNull().default(true),
+    failureCount: integer("failure_count").notNull().default(0),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("web_push_subscriptions_endpoint_idx").on(table.endpoint),
+    index("web_push_subscriptions_user_idx").on(table.userClerkId, table.isActive),
+    index("web_push_subscriptions_active_idx").on(table.isActive, table.lastSeenAt),
+  ],
+);
+
+export const notificationCampaigns = pgTable(
+  "notification_campaigns",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    destination: text("destination").notNull().default("/"),
+    audienceType: text("audience_type").notNull(),
+    audienceSpec: jsonb("audience_spec").$type<{
+      userClerkIds?: string[];
+      roles?: string[];
+      segment?: string;
+    }>().notNull().default({}),
+    status: text("status").notNull().default("sending"),
+    createdByClerkId: text("created_by_clerk_id").notNull(),
+    recipientCount: integer("recipient_count").notNull().default(0),
+    subscriptionCount: integer("subscription_count").notNull().default(0),
+    acceptedCount: integer("accepted_count").notNull().default(0),
+    failedCount: integer("failed_count").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("notification_campaigns_created_idx").on(table.createdAt),
+    index("notification_campaigns_actor_idx").on(table.createdByClerkId, table.createdAt),
+    check(
+      "notification_campaigns_audience_type_check",
+      sql`${table.audienceType} in ('sitewide', 'accounts', 'staff_roles', 'njc_plus_segment')`,
+    ),
+    check(
+      "notification_campaigns_status_check",
+      sql`${table.status} in ('sending', 'completed', 'partial', 'failed')`,
+    ),
+  ],
+);
+
+export const notificationDeliveries = pgTable(
+  "notification_deliveries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    campaignId: uuid("campaign_id").notNull().references(() => notificationCampaigns.id, { onDelete: "cascade" }),
+    subscriptionId: uuid("subscription_id").notNull().references(() => webPushSubscriptions.id, { onDelete: "restrict" }),
+    recipientClerkId: text("recipient_clerk_id"),
+    status: text("status").notNull().default("pending"),
+    providerStatus: integer("provider_status"),
+    errorCode: text("error_code"),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("notification_deliveries_campaign_subscription_idx").on(table.campaignId, table.subscriptionId),
+    index("notification_deliveries_campaign_status_idx").on(table.campaignId, table.status),
+    index("notification_deliveries_recipient_idx").on(table.recipientClerkId, table.createdAt),
+    check(
+      "notification_deliveries_status_check",
+      sql`${table.status} in ('pending', 'accepted', 'failed')`,
+    ),
+  ],
+);
+
 export const audienceInstallations = pgTable(
   "audience_installations",
   {
@@ -859,7 +944,14 @@ export const audienceInstallations = pgTable(
     installationId: text("installation_id").notNull(),
     platform: text("platform").notNull(),
     source: text("source").notNull().default("unknown"),
+    product: text("product").notNull().default("unknown"),
+    releaseChannel: text("release_channel").notNull().default("production"),
     appVersion: text("app_version"),
+    buildNumber: text("build_number").notNull().default("unknown"),
+    osVersion: text("os_version"),
+    deviceClass: text("device_class"),
+    environment: text("environment").notNull().default("production"),
+    qualityStatus: text("quality_status").notNull().default("verified"),
     userClerkId: text("user_clerk_id"),
     eventCount: integer("event_count").notNull().default(1),
     firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
@@ -869,6 +961,79 @@ export const audienceInstallations = pgTable(
     uniqueIndex("audience_installations_installation_idx").on(table.installationId),
     index("audience_installations_platform_seen_idx").on(table.platform, table.lastSeenAt),
     index("audience_installations_user_idx").on(table.userClerkId),
+  ],
+);
+
+export const audienceInstallationVersions = pgTable(
+  "audience_installation_versions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    installationId: text("installation_id")
+      .notNull()
+      .references(() => audienceInstallations.installationId, { onDelete: "cascade" }),
+    platform: text("platform").notNull(),
+    product: text("product").notNull(),
+    releaseChannel: text("release_channel").notNull().default("production"),
+    appVersion: text("app_version").notNull().default("unknown"),
+    buildNumber: text("build_number").notNull().default("unknown"),
+    osVersion: text("os_version"),
+    deviceClass: text("device_class"),
+    environment: text("environment").notNull().default("production"),
+    qualityStatus: text("quality_status").notNull().default("verified"),
+    eventCount: integer("event_count").notNull().default(1),
+    firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("audience_installation_versions_identity_idx").on(
+      table.installationId,
+      table.product,
+      table.releaseChannel,
+      table.appVersion,
+      table.buildNumber,
+    ),
+    index("audience_installation_versions_platform_seen_idx").on(
+      table.platform,
+      table.lastSeenAt,
+    ),
+    index("audience_installation_versions_version_seen_idx").on(
+      table.product,
+      table.appVersion,
+      table.buildNumber,
+      table.lastSeenAt,
+    ),
+  ],
+);
+
+export const audiencePresenceEvents = pgTable(
+  "audience_presence_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventId: text("event_id").notNull(),
+    installationId: text("installation_id").notNull(),
+    platform: text("platform").notNull(),
+    product: text("product").notNull(),
+    releaseChannel: text("release_channel").notNull().default("production"),
+    appVersion: text("app_version").notNull().default("unknown"),
+    buildNumber: text("build_number").notNull().default("unknown"),
+    osVersion: text("os_version"),
+    deviceClass: text("device_class"),
+    environment: text("environment").notNull().default("production"),
+    qualityStatus: text("quality_status").notNull().default("verified"),
+    userClerkId: text("user_clerk_id"),
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+    receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("audience_presence_events_event_idx").on(table.eventId),
+    index("audience_presence_events_installation_time_idx").on(
+      table.installationId,
+      table.receivedAt,
+    ),
+    index("audience_presence_events_platform_time_idx").on(
+      table.platform,
+      table.receivedAt,
+    ),
   ],
 );
 
@@ -900,6 +1065,10 @@ export const analyticsDailyViews = pgTable(
   "analytics_daily_views",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    calculationVersion: integer("calculation_version").notNull().default(2),
+    qualityStatus: text("quality_status").notNull().default("verified"),
+    environment: text("environment").notNull().default("production"),
+    product: text("product").notNull().default("news-web"),
     day: text("day").notNull(),
     pathname: text("pathname").notNull(),
     storyId: uuid("story_id").references(() => stories.id, {
@@ -916,6 +1085,10 @@ export const analyticsDailyViews = pgTable(
   },
   (table) => [
     uniqueIndex("analytics_daily_views_day_path_source_device_idx").on(
+      table.calculationVersion,
+      table.qualityStatus,
+      table.environment,
+      table.product,
       table.day,
       table.pathname,
       table.trafficSource,
@@ -928,10 +1101,58 @@ export const analyticsDailyViews = pgTable(
   ],
 );
 
+export const analyticsEvents = pgTable(
+  "analytics_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventId: text("event_id").notNull(),
+    eventType: text("event_type").notNull().default("page_view"),
+    calculationVersion: integer("calculation_version").notNull().default(2),
+    qualityStatus: text("quality_status").notNull().default("verified"),
+    environment: text("environment").notNull().default("production"),
+    product: text("product").notNull().default("news-web"),
+    platform: text("platform").notNull().default("web"),
+    installationId: text("installation_id"),
+    sessionId: text("session_id"),
+    pathname: text("pathname").notNull(),
+    storyId: uuid("story_id").references(() => stories.id, { onDelete: "set null" }),
+    storySlug: text("story_slug"),
+    storyHeadline: text("story_headline"),
+    trafficSource: text("traffic_source").notNull().default("direct"),
+    attributionModel: text("attribution_model").notNull().default("session_first_touch"),
+    devicePlatform: text("device_platform").notNull().default("unknown"),
+    isEntry: boolean("is_entry").notNull().default(false),
+    appVersion: text("app_version").notNull().default("unknown"),
+    buildNumber: text("build_number").notNull().default("unknown"),
+    releaseChannel: text("release_channel").notNull().default("production"),
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+    receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("analytics_events_event_idx").on(table.eventId),
+    index("analytics_events_received_idx").on(table.receivedAt),
+    index("analytics_events_story_received_idx").on(table.storySlug, table.receivedAt),
+    index("analytics_events_installation_received_idx").on(
+      table.installationId,
+      table.receivedAt,
+    ),
+    index("analytics_events_quality_received_idx").on(
+      table.calculationVersion,
+      table.qualityStatus,
+      table.environment,
+      table.receivedAt,
+    ),
+  ],
+);
+
 export const analyticsPeriodArchives = pgTable(
   "analytics_period_archives",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    calculationVersion: integer("calculation_version").notNull().default(2),
+    revision: integer("revision").notNull().default(1),
+    qualityStatus: text("quality_status").notNull().default("verified"),
+    correctionReason: text("correction_reason"),
     period: text("period").notNull(),
     periodStart: text("period_start").notNull(),
     periodEnd: text("period_end").notNull(),
@@ -945,6 +1166,35 @@ export const analyticsPeriodArchives = pgTable(
   (table) => [
     uniqueIndex("analytics_period_archives_period_start_idx").on(table.period, table.periodStart),
     index("analytics_period_archives_period_end_idx").on(table.period, table.periodEnd),
+  ],
+);
+
+export const analyticsArchiveRevisions = pgTable(
+  "analytics_archive_revisions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    period: text("period").notNull(),
+    periodStart: text("period_start").notNull(),
+    periodEnd: text("period_end").notNull(),
+    revision: integer("revision").notNull(),
+    calculationVersion: integer("calculation_version").notNull(),
+    qualityStatus: text("quality_status").notNull(),
+    correctionReason: text("correction_reason"),
+    totalViews: integer("total_views").notNull().default(0),
+    storyViews: jsonb("story_views").$type<AnalyticsStoryView[]>().notNull().default([]),
+    pathViews: jsonb("path_views").$type<AnalyticsPathView[]>().notNull().default([]),
+    sourceViews: jsonb("source_views").$type<AnalyticsSourceView[]>().notNull().default([]),
+    deviceViews: jsonb("device_views").$type<AnalyticsDeviceView[]>().notNull().default([]),
+    generatedAt: timestamp("generated_at", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("analytics_archive_revisions_period_revision_idx").on(
+      table.period,
+      table.periodStart,
+      table.revision,
+    ),
+    index("analytics_archive_revisions_generated_idx").on(table.generatedAt),
   ],
 );
 

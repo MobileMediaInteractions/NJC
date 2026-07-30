@@ -70,6 +70,13 @@ const tokenKey = "harborline:tv:device-token";
 const installationKey = "harborline:tv:installation";
 const themeKey = "harborline:tv:theme";
 
+function createAudienceEventId() {
+  return `presence_${Date.now().toString(36)}${Array.from(
+    { length: 5 },
+    () => Math.random().toString(36).slice(2),
+  ).join("")}`.slice(0, 80);
+}
+
 type Account = { name: string; platform: string; expiresAt?: string };
 type ThemeContextValue = {
   colors: TvColors;
@@ -162,10 +169,19 @@ async function reportPresence(token?: string) {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify({
+      eventId: createAudienceEventId(),
       installationId,
       platform: tvAudiencePlatform,
       source: "tv-app",
+      product: "reader-tv",
       appVersion: Constants.expoConfig?.version ?? "1.0.0",
+      buildNumber: Platform.isTVOS
+        ? Constants.expoConfig?.ios?.buildNumber ?? "unknown"
+        : String(Constants.expoConfig?.android?.versionCode ?? "unknown"),
+      releaseChannel: "production",
+      osVersion: String(Platform.Version),
+      deviceClass: "tv",
+      occurredAt: new Date().toISOString(),
     }),
   }).catch(() => undefined);
 }

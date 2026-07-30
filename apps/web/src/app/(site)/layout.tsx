@@ -1,7 +1,15 @@
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { GoogleAdSenseScript } from "@/components/google-ads";
-import { getSiteConfiguration, isGoogleAdsLive, normalizePublisherId } from "@/lib/site-settings";
+import { GoogleAnalytics } from "@/components/google-analytics";
+import { AdBlockNotice } from "@/components/ad-block-notice";
+import { hasAdFreeNjcPlusAccess } from "@/lib/advertising";
+import {
+  getSiteConfiguration,
+  isGoogleAdsLive,
+  isGoogleAnalyticsLive,
+  normalizePublisherId,
+} from "@/lib/site-settings";
 import { isNjcPlusPublicEnabled } from "@/lib/feature-flags";
 import { normalizeStudioHref } from "@/lib/site-account";
 import { hasPublicStaffProfiles } from "@/lib/staff-profiles";
@@ -9,19 +17,32 @@ import { hasPublicStaffProfiles } from "@/lib/staff-profiles";
 export const dynamic = "force-dynamic";
 
 export default async function PublicSiteLayout({ children }: { children: React.ReactNode }) {
-  const [configuration, plusEnabled, staffPageEnabled] = await Promise.all([
+  const [configuration, plusEnabled, staffPageEnabled, adFree] = await Promise.all([
     getSiteConfiguration(),
     isNjcPlusPublicEnabled(),
     hasPublicStaffProfiles().catch((error) => {
       console.error("Public staff navigation lookup failed", error);
       return false;
     }),
+    hasAdFreeNjcPlusAccess(),
   ]);
   const advertising = configuration.advertising;
+  const googleAnalytics = configuration.measurement.googleAnalytics;
   const hasConfiguredSurface = advertising.autoAds || Object.values(advertising.placements).some((placement) => placement.enabled);
+  const advertisingLive = !adFree && isGoogleAdsLive(configuration) && hasConfiguredSurface;
   return (
     <>
-      <GoogleAdSenseScript enabled={isGoogleAdsLive(configuration) && hasConfiguredSurface} publisherId={normalizePublisherId(advertising.publisherId)} />
+      <GoogleAnalytics
+        enabled={isGoogleAnalyticsLive(configuration)}
+        measurementId={googleAnalytics.measurementId}
+      />
+      <GoogleAdSenseScript enabled={advertisingLive} publisherId={normalizePublisherId(advertising.publisherId)} />
+      <AdBlockNotice
+        enabled={advertisingLive && advertising.adBlockNoticeEnabled}
+        promoEnabled={advertising.adFreePromoEnabled}
+        promoText={advertising.adFreePromoText}
+        promoHref={advertising.adFreePromoHref}
+      />
       <SiteHeader
         publication={configuration.publication}
         navigation={configuration.navigation.filter(

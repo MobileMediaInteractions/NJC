@@ -1,7 +1,10 @@
-import { and, asc, desc, eq, gte, inArray, isNotNull, lte, sql } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
+import { and, asc, desc, eq, gte, inArray, isNotNull, lte, or, sql } from "drizzle-orm";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import {
+  analyticsArchiveRevisions,
   analyticsDailyViews,
+  analyticsEvents,
   analyticsPeriodArchives,
   stories,
   type AnalyticsDeviceView,
@@ -17,6 +20,10 @@ export type AnalyticsArchive = {
   period: AnalyticsPeriod;
   periodStart: string;
   periodEnd: string;
+  revision: number;
+  calculationVersion: number;
+  qualityStatus: string;
+  correctionReason: string | null;
   totalViews: number;
   storyViews: AnalyticsStoryView[];
   pathViews: AnalyticsPathView[];
@@ -55,6 +62,14 @@ export type TrafficAnalyticsSummary = {
   sources: TrafficSourceMetric[];
   devices: TrafficDeviceMetric[];
   archives: Record<AnalyticsPeriod, AnalyticsArchive[]>;
+  dataQuality: {
+    status: "verified" | "provisional";
+    calculationVersion: number;
+    verifiedEvents: number;
+    legacyViews: number;
+    duplicateProtection: "event-id";
+    notes: string[];
+  };
 };
 
 export type AnalyticsPeriodRange = {
@@ -246,10 +261,21 @@ function emptySummary(): TrafficAnalyticsSummary {
     sources: [],
     devices: [],
     archives: { week: [], month: [], year: [] },
+    dataQuality: {
+      status: "provisional",
+      calculationVersion: 2,
+      verifiedEvents: 0,
+      legacyViews: 0,
+      duplicateProtection: "event-id",
+      notes: ["The database is not configured, so traffic cannot be verified."],
+    },
   };
 }
 
 export async function recordPageView(input: {
+  eventId?: string | null;
+  installationId?: string | null;
+  sessionId?: string | null;
   pathname: string;
   referrer?: string | null;
   sourceHint?: string | null;
@@ -257,9 +283,20 @@ export async function recordPageView(input: {
   userAgent?: string | null;
   mobileHint?: string | null;
   siteOrigin?: string | null;
+  occurredAt?: Date | null;
+  environment?: string | null;
+  product?: string | null;
+  appVersion?: string | null;
+  buildNumber?: string | null;
+  releaseChannel?: string | null;
 }, now = new Date()) {
   const pathname = normalizeAnalyticsPathname(input.pathname);
-  if (!pathname || !hasDatabase()) return { recorded: false as const, reason: pathname ? "database" : "pathname" };
+  if (!pathname || !hasDatabase())
+    return {
+      recorded: false as const,
+      aggregated: false as const,
+      reason: pathname ? "database" as const : "pathname" as const,
+    };
 
   const db = getDb();
   const storyMatch = /^\/story\/([^/]+)$/.exec(pathname);
@@ -268,7 +305,11 @@ export async function recordPageView(input: {
     try {
       slug = decodeURIComponent(storyMatch[1]);
     } catch {
-      return { recorded: false as const, reason: "pathname" };
+      return {
+        recorded: false as const,
+        aggregated: false as const,
+        reason: "pathname" as const,
+      };
     }
   }
   const [story] = slug
@@ -282,38 +323,106 @@ export async function recordPageView(input: {
   const trafficSource = classifyTrafficSource(input.referrer, input.sourceHint, input.siteOrigin);
   const devicePlatform = classifyDevicePlatform(input.userAgent, input.mobileHint);
   const entries = input.isEntry ? 1 : 0;
+  const suppliedEventId = Boolean(input.eventId);
+  const eventId = input.eventId ?? `legacy_${randomUUID()}`;
+  const environment = input.environment ?? "production";
+  const product = input.product ?? "news-web";
+  const qualityStatus = suppliedEventId ? "verified" : "legacy";
+  const occurredAt = input.occurredAt ?? now;
+  const appVersion = input.appVersion ?? "unknown";
+  const buildNumber = input.buildNumber ?? "unknown";
+  const releaseChannel = input.releaseChannel ?? "production";
 
-  await db
-    .insert(analyticsDailyViews)
-    .values({
-      day,
-      pathname,
-      storyId: story?.id ?? null,
-      storySlug: story?.slug ?? null,
-      storyHeadline: story?.headline ?? null,
-      trafficSource,
-      devicePlatform,
-      entries,
-      views: 1,
-      updatedAt: now,
-    })
-    .onConflictDoUpdate({
-      target: [
-        analyticsDailyViews.day,
-        analyticsDailyViews.pathname,
-        analyticsDailyViews.trafficSource,
-        analyticsDailyViews.devicePlatform,
-      ],
-      set: {
+  const result = await db.transaction(async (tx) => {
+    const [event] = await tx
+      .insert(analyticsEvents)
+      .values({
+        eventId,
+        calculationVersion: 2,
+        qualityStatus,
+        environment,
+        product,
+        platform: "web",
+        installationId: input.installationId,
+        sessionId: input.sessionId,
+        pathname,
         storyId: story?.id ?? null,
         storySlug: story?.slug ?? null,
         storyHeadline: story?.headline ?? null,
-        entries: sql`${analyticsDailyViews.entries} + ${entries}`,
-        views: sql`${analyticsDailyViews.views} + 1`,
+        trafficSource,
+        devicePlatform,
+        isEntry: Boolean(input.isEntry),
+        appVersion,
+        buildNumber,
+        releaseChannel,
+        occurredAt,
+        receivedAt: now,
+      })
+      .onConflictDoNothing({ target: analyticsEvents.eventId })
+      .returning({ id: analyticsEvents.id });
+    if (!event)
+      return {
+        recorded: false as const,
+        aggregated: false as const,
+        reason: "duplicate" as const,
+      };
+    if (qualityStatus !== "verified" || environment !== "production")
+      return {
+        recorded: true as const,
+        aggregated: false as const,
+        reason: qualityStatus === "legacy" ? "legacy_client" as const : "non_production" as const,
+      };
+
+    await tx
+      .insert(analyticsDailyViews)
+      .values({
+        calculationVersion: 2,
+        qualityStatus,
+        environment,
+        product,
+        day,
+        pathname,
+        storyId: story?.id ?? null,
+        storySlug: story?.slug ?? null,
+        storyHeadline: story?.headline ?? null,
+        trafficSource,
+        devicePlatform,
+        entries,
+        views: 1,
         updatedAt: now,
-      },
-    });
-  return { recorded: true as const, day, pathname, storySlug: story?.slug ?? null, trafficSource, devicePlatform };
+      })
+      .onConflictDoUpdate({
+        target: [
+          analyticsDailyViews.calculationVersion,
+          analyticsDailyViews.qualityStatus,
+          analyticsDailyViews.environment,
+          analyticsDailyViews.product,
+          analyticsDailyViews.day,
+          analyticsDailyViews.pathname,
+          analyticsDailyViews.trafficSource,
+          analyticsDailyViews.devicePlatform,
+        ],
+        set: {
+          storyId: story?.id ?? null,
+          storySlug: story?.slug ?? null,
+          storyHeadline: story?.headline ?? null,
+          entries: sql`${analyticsDailyViews.entries} + ${entries}`,
+          views: sql`${analyticsDailyViews.views} + 1`,
+          updatedAt: now,
+        },
+      });
+    return { recorded: true as const, aggregated: true as const, reason: null };
+  });
+  return {
+    ...result,
+    day,
+    pathname,
+    storySlug: story?.slug ?? null,
+    trafficSource,
+    devicePlatform,
+    qualityStatus,
+    calculationVersion: 2,
+  };
 }
 
 async function createPeriodArchive(range: AnalyticsPeriodRange) {
@@ -331,7 +440,13 @@ async function createPeriodArchive(range: AnalyticsPeriodRange) {
       day: analyticsDailyViews.day,
     })
     .from(analyticsDailyViews)
-    .where(and(gte(analyticsDailyViews.day, range.periodStart), lte(analyticsDailyViews.day, range.periodEnd)))
+    .where(and(
+      eq(analyticsDailyViews.calculationVersion, 2),
+      eq(analyticsDailyViews.qualityStatus, "verified"),
+      eq(analyticsDailyViews.environment, "production"),
+      gte(analyticsDailyViews.day, range.periodStart),
+      lte(analyticsDailyViews.day, range.periodEnd),
+    ))
     .orderBy(asc(analyticsDailyViews.day));
 
   const paths = new Map<string, number>();
@@ -347,7 +462,7 @@ async function createPeriodArchive(range: AnalyticsPeriodRange) {
       source: row.trafficSource,
       entries: (source?.entries ?? 0) + row.entries,
       views: (source?.views ?? 0) + row.views,
-    });
+  });
     const device = deviceMetrics.get(row.devicePlatform);
     deviceMetrics.set(row.devicePlatform, {
       platform: row.devicePlatform,
@@ -368,12 +483,40 @@ async function createPeriodArchive(range: AnalyticsPeriodRange) {
   const sourceViews = [...sourceMetrics.values()].sort((a, b) => b.entries - a.entries || b.views - a.views || a.source.localeCompare(b.source));
   const deviceViews = [...deviceMetrics.values()].sort((a, b) => b.views - a.views || a.platform.localeCompare(b.platform));
 
-  await db
-    .insert(analyticsPeriodArchives)
-    .values({ ...range, totalViews, storyViews, pathViews, sourceViews, deviceViews, generatedAt: new Date() })
-    .onConflictDoUpdate({
-      target: [analyticsPeriodArchives.period, analyticsPeriodArchives.periodStart],
-      set: { periodEnd: range.periodEnd, totalViews, storyViews, pathViews, sourceViews, deviceViews, generatedAt: new Date() },
+  const generatedAt = new Date();
+  await db.transaction(async (tx) => {
+    const [current] = await tx
+      .select({ revision: analyticsPeriodArchives.revision })
+      .from(analyticsPeriodArchives)
+      .where(and(
+        eq(analyticsPeriodArchives.period, range.period),
+        eq(analyticsPeriodArchives.periodStart, range.periodStart),
+      ))
+      .limit(1);
+    const revision = (current?.revision ?? 0) + 1;
+    const values = {
+      ...range,
+      revision,
+      calculationVersion: 2,
+      qualityStatus: "verified",
+      correctionReason: current
+        ? "Recalculated by analytics calculation version 2"
+        : null,
+      totalViews,
+      storyViews,
+      pathViews,
+      sourceViews,
+      deviceViews,
+      generatedAt,
+    };
+    await tx.insert(analyticsArchiveRevisions).values(values);
+    await tx
+      .insert(analyticsPeriodArchives)
+      .values(values)
+      .onConflictDoUpdate({
+        target: [analyticsPeriodArchives.period, analyticsPeriodArchives.periodStart],
+        set: values,
+      });
     });
 }
 
@@ -381,8 +524,21 @@ export async function refreshAnalyticsArchives(now = new Date()) {
   if (!hasDatabase()) return { created: 0, database: "not configured" as const };
   const db = getDb();
   const [[first], existing] = await Promise.all([
-    db.select({ day: sql<string | null>`min(${analyticsDailyViews.day})` }).from(analyticsDailyViews),
-    db.select({ period: analyticsPeriodArchives.period, periodStart: analyticsPeriodArchives.periodStart }).from(analyticsPeriodArchives),
+    db
+      .select({ day: sql<string | null>`min(${analyticsDailyViews.day})` })
+      .from(analyticsDailyViews)
+      .where(and(
+        eq(analyticsDailyViews.calculationVersion, 2),
+        eq(analyticsDailyViews.qualityStatus, "verified"),
+        eq(analyticsDailyViews.environment, "production"),
+      )),
+    db
+      .select({
+        period: analyticsPeriodArchives.period,
+        periodStart: analyticsPeriodArchives.periodStart,
+      })
+      .from(analyticsPeriodArchives)
+      .where(eq(analyticsPeriodArchives.calculationVersion, 2)),
   ]);
   if (!first?.day) return { created: 0, database: "connected" as const };
   const existingKeys = new Set(existing.map((item) => `${item.period}:${item.periodStart}`));
@@ -400,49 +556,112 @@ export async function getTrafficAnalyticsSummary(now = new Date()): Promise<Traf
   const todayDate = dateFromKey(today) ?? new Date();
   const since7d = dateKey(addUtcDays(todayDate, -6));
   const since30d = dateKey(addUtcDays(todayDate, -29));
+  const verifiedRows = and(
+    eq(analyticsDailyViews.calculationVersion, 2),
+    eq(analyticsDailyViews.qualityStatus, "verified"),
+    eq(analyticsDailyViews.environment, "production"),
+  );
 
-  const [[total], [storyTotal], [recent], dailyRows, storyRows, sourceRows, deviceRows, archiveRows] = await Promise.all([
-    db.select({ views: sql<number>`coalesce(sum(${analyticsDailyViews.views}), 0)::int` }).from(analyticsDailyViews),
-    db.select({ views: sql<number>`coalesce(sum(${analyticsDailyViews.views}), 0)::int` }).from(analyticsDailyViews).where(isNotNull(analyticsDailyViews.storySlug)),
-    db.select({
-      views7d: sql<number>`coalesce(sum(${analyticsDailyViews.views}) filter (where ${analyticsDailyViews.day} >= ${since7d}), 0)::int`,
-      views30d: sql<number>`coalesce(sum(${analyticsDailyViews.views}) filter (where ${analyticsDailyViews.day} >= ${since30d}), 0)::int`,
-    }).from(analyticsDailyViews),
-    db.select({ day: analyticsDailyViews.day, views: sql<number>`sum(${analyticsDailyViews.views})::int` })
+  const [
+    [total],
+    [storyTotal],
+    [recent],
+    [eventTotal],
+    [legacyTotal],
+    dailyRows,
+    storyRows,
+    sourceRows,
+    deviceRows,
+    archiveRows,
+  ] = await Promise.all([
+    db
+      .select({ views: sql<number>`coalesce(sum(${analyticsDailyViews.views}), 0)::int` })
       .from(analyticsDailyViews)
-      .where(gte(analyticsDailyViews.day, since30d))
+      .where(verifiedRows),
+    db
+      .select({ views: sql<number>`coalesce(sum(${analyticsDailyViews.views}), 0)::int` })
+      .from(analyticsDailyViews)
+      .where(and(verifiedRows, isNotNull(analyticsDailyViews.storySlug))),
+    db
+      .select({
+        views7d: sql<number>`coalesce(sum(${analyticsDailyViews.views}) filter (where ${analyticsDailyViews.day} >= ${since7d}), 0)::int`,
+        views30d: sql<number>`coalesce(sum(${analyticsDailyViews.views}) filter (where ${analyticsDailyViews.day} >= ${since30d}), 0)::int`,
+      })
+      .from(analyticsDailyViews)
+      .where(verifiedRows),
+    db
+      .select({ value: sql<number>`count(*)::int` })
+      .from(analyticsEvents)
+      .where(and(
+        eq(analyticsEvents.calculationVersion, 2),
+        eq(analyticsEvents.qualityStatus, "verified"),
+        eq(analyticsEvents.environment, "production"),
+      )),
+    db
+      .select({ views: sql<number>`coalesce(sum(${analyticsDailyViews.views}), 0)::int` })
+      .from(analyticsDailyViews)
+      .where(or(
+        eq(analyticsDailyViews.calculationVersion, 1),
+        eq(analyticsDailyViews.qualityStatus, "legacy"),
+      )),
+    db
+      .select({
+        day: analyticsDailyViews.day,
+        views: sql<number>`sum(${analyticsDailyViews.views})::int`,
+      })
+      .from(analyticsDailyViews)
+      .where(and(verifiedRows, gte(analyticsDailyViews.day, since30d)))
       .groupBy(analyticsDailyViews.day)
       .orderBy(asc(analyticsDailyViews.day)),
-    db.select({
-      slug: stories.slug,
-      storyId: stories.id,
-      headline: stories.headline,
-      views: sql<number>`coalesce(sum(${analyticsDailyViews.views}), 0)::int`,
-      views7d: sql<number>`coalesce(sum(${analyticsDailyViews.views}) filter (where ${analyticsDailyViews.day} >= ${since7d}), 0)::int`,
-      views30d: sql<number>`coalesce(sum(${analyticsDailyViews.views}) filter (where ${analyticsDailyViews.day} >= ${since30d}), 0)::int`,
-    })
+    db
+      .select({
+        slug: stories.slug,
+        storyId: stories.id,
+        headline: stories.headline,
+        views: sql<number>`coalesce(sum(${analyticsDailyViews.views}), 0)::int`,
+        views7d: sql<number>`coalesce(sum(${analyticsDailyViews.views}) filter (where ${analyticsDailyViews.day} >= ${since7d}), 0)::int`,
+        views30d: sql<number>`coalesce(sum(${analyticsDailyViews.views}) filter (where ${analyticsDailyViews.day} >= ${since30d}), 0)::int`,
+      })
       .from(stories)
-      .leftJoin(analyticsDailyViews, eq(analyticsDailyViews.storySlug, stories.slug))
+      .leftJoin(
+        analyticsDailyViews,
+        and(eq(analyticsDailyViews.storySlug, stories.slug), verifiedRows),
+      )
       .where(inArray(stories.status, ["published", "archived"]))
       .groupBy(stories.id, stories.slug, stories.headline)
-      .orderBy(desc(sql`coalesce(sum(${analyticsDailyViews.views}), 0)`), asc(stories.headline)),
-    db.select({
-      source: analyticsDailyViews.trafficSource,
-      entries: sql<number>`coalesce(sum(${analyticsDailyViews.entries}), 0)::int`,
-      views: sql<number>`coalesce(sum(${analyticsDailyViews.views}), 0)::int`,
-    })
+      .orderBy(
+        desc(sql`coalesce(sum(${analyticsDailyViews.views}), 0)`),
+        asc(stories.headline),
+      ),
+    db
+      .select({
+        source: analyticsDailyViews.trafficSource,
+        entries: sql<number>`coalesce(sum(${analyticsDailyViews.entries}), 0)::int`,
+        views: sql<number>`coalesce(sum(${analyticsDailyViews.views}), 0)::int`,
+      })
       .from(analyticsDailyViews)
+      .where(verifiedRows)
       .groupBy(analyticsDailyViews.trafficSource)
-      .orderBy(desc(sql`coalesce(sum(${analyticsDailyViews.entries}), 0)`), desc(sql`coalesce(sum(${analyticsDailyViews.views}), 0)`)),
-    db.select({
-      platform: analyticsDailyViews.devicePlatform,
-      entries: sql<number>`coalesce(sum(${analyticsDailyViews.entries}), 0)::int`,
-      views: sql<number>`coalesce(sum(${analyticsDailyViews.views}), 0)::int`,
-    })
+      .orderBy(
+        desc(sql`coalesce(sum(${analyticsDailyViews.entries}), 0)`),
+        desc(sql`coalesce(sum(${analyticsDailyViews.views}), 0)`),
+      ),
+    db
+      .select({
+        platform: analyticsDailyViews.devicePlatform,
+        entries: sql<number>`coalesce(sum(${analyticsDailyViews.entries}), 0)::int`,
+        views: sql<number>`coalesce(sum(${analyticsDailyViews.views}), 0)::int`,
+      })
       .from(analyticsDailyViews)
+      .where(verifiedRows)
       .groupBy(analyticsDailyViews.devicePlatform)
       .orderBy(desc(sql`coalesce(sum(${analyticsDailyViews.views}), 0)`)),
-    db.select().from(analyticsPeriodArchives).orderBy(desc(analyticsPeriodArchives.periodStart)).limit(500),
+    db
+      .select()
+      .from(analyticsPeriodArchives)
+      .where(eq(analyticsPeriodArchives.calculationVersion, 2))
+      .orderBy(desc(analyticsPeriodArchives.periodStart))
+      .limit(500),
   ]);
 
   const dailyMap = new Map(dailyRows.map((item) => [item.day, item.views]));
@@ -479,6 +698,10 @@ export async function getTrafficAnalyticsSummary(now = new Date()): Promise<Traf
       period,
       periodStart: row.periodStart,
       periodEnd: row.periodEnd,
+      revision: row.revision,
+      calculationVersion: row.calculationVersion,
+      qualityStatus: row.qualityStatus,
+      correctionReason: row.correctionReason,
       totalViews: row.totalViews,
       storyViews: row.storyViews,
       pathViews: row.pathViews,
@@ -487,6 +710,29 @@ export async function getTrafficAnalyticsSummary(now = new Date()): Promise<Traf
       generatedAt: row.generatedAt.toISOString(),
     });
   }
+
+  const verifiedEventCount = eventTotal?.value ?? 0;
+  const verifiedAggregateCount = total?.views ?? 0;
+  const baselineApproved =
+    process.env.ANALYTICS_V2_BASELINE_APPROVED === "true";
+  const reconciled = verifiedEventCount === verifiedAggregateCount;
+  const qualityNotes = [
+    ...(!baselineApproved
+      ? [
+          "The analytics v2 production baseline is awaiting documented product and editorial approval.",
+        ]
+      : []),
+    ...(!reconciled
+      ? [
+          `Verified event evidence and daily aggregates differ by ${verifiedAggregateCount - verifiedEventCount} view${Math.abs(verifiedAggregateCount - verifiedEventCount) === 1 ? "" : "s"}.`,
+        ]
+      : []),
+    ...((legacyTotal?.views ?? 0) > 0
+      ? [
+          `${legacyTotal?.views ?? 0} pre-audit page views are retained as legacy evidence and excluded from authoritative totals.`,
+        ]
+      : []),
+  ];
 
   return {
     database: "connected",
@@ -503,5 +749,14 @@ export async function getTrafficAnalyticsSummary(now = new Date()): Promise<Traf
     sources,
     devices,
     archives,
+    dataQuality: {
+      status:
+        baselineApproved && reconciled ? "verified" : "provisional",
+      calculationVersion: 2,
+      verifiedEvents: verifiedEventCount,
+      legacyViews: legacyTotal?.views ?? 0,
+      duplicateProtection: "event-id",
+      notes: qualityNotes,
+    },
   };
 }

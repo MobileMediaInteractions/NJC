@@ -2,9 +2,50 @@
 
 This file tracks known follow-up work. Items here are requirements, not claims that the feature is already implemented.
 
-## Mandatory first product implementation — pseudonyms, approval-gated scheduling and complete Studio control
+## Mandatory first implementation — remaining analytics v2 production validation
 
-> **Execution-order requirement:** This is the first product implementation to complete after the finished [Bun and Protocol Buffers investigation](docs/investigations/BUN_PROTOBUF_2026-07-28.md). Finish and verify this entire section before internal-domain work or any platform-specific implementation.
+> The ground-up code and documentation rebuild is complete. The legacy dashboard
+> has been replaced by an event-backed v2 model, but the new figures must remain
+> **provisional** until the production migration and evidence checks below are
+> completed with real credentials and real devices. See
+> [the audit report](docs/analytics/AUDIT_2026-07-30.md),
+> [measurement dictionary](docs/analytics/MEASUREMENT_DICTIONARY.md) and
+> [rollout procedure](docs/analytics/ROLL_OUT.md).
+
+- [ ] Apply `apps/web/drizzle/0024_clear_viper.sql` to the production database,
+  deploy the updated web/mobile/employee/TV/Roku producers and run
+  `pnpm analytics:audit` with production credentials. Attach the grouped,
+  privacy-safe output to the release evidence and resolve any event-to-aggregate
+  mismatch before trusting the v2 totals.
+- [ ] Complete the real production control with two approved test accounts,
+  separate browser profiles, anonymous and authenticated browsing, a linked
+  Roku installation upgraded across two builds, and a second distinct Roku
+  installation. Reconcile the dashboard, CSV evidence and the first closed
+  weekly/monthly/yearly archives by hand.
+- [ ] Add database-backed integration coverage for page/presence ingestion,
+  retry and concurrent-event deduplication, late arrival, consent withdrawal,
+  archive revision creation and aggregate/export reconciliation. The completed
+  pure controlled-model and UI contract tests do not replace these database
+  transaction tests.
+- [ ] Verify the signed-in Studio workspace at 1440×900 and 1920×1080 on the
+  production deployment. Confirm there is no page, panel, table or nested
+  scrollbar, no clipped control, and no unreadably reduced text at normal zoom.
+- [ ] Add the remaining permission-controlled drill-down from grouped version
+  rows into **installation/device → linked account** evidence. Keep raw
+  identifiers pseudonymized and do not expose account details to roles that
+  cannot export analytics.
+- [ ] Add a shared time-range/filter control with a visible reset for the
+  Content, Acquisition and Platforms views. Preserve the selection across
+  analytics tabs and keep the single-viewport/no-scroll contract.
+- [ ] Obtain product and editorial approval for the measurement dictionary and
+  record the production baseline/reset decision. Set
+  `ANALYTICS_V2_BASELINE_APPROVED=true` only after this approval and every
+  preceding production check passes; do not bypass a reconciliation or
+  application-identity warning merely to remove the provisional badge.
+
+## Mandatory second product implementation — pseudonyms, approval-gated scheduling and complete Studio control
+
+> **Execution-order requirement:** Complete this after the mandatory statistical audit and analytics rebuild above. The [Bun and Protocol Buffers investigation](docs/investigations/BUN_PROTOBUF_2026-07-28.md) is already finished. Finish and verify this entire section before internal-domain work or any platform-specific implementation.
 
 - [ ] Complete the remaining advanced pseudonym operations now that the
   privacy-safe profile, story selector, immutable byline snapshot and public
@@ -206,8 +247,9 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 - [ ] Replace remaining placeholder contact, legal-entity, newsroom and distribution details after those decisions are finalized.
 - [ ] Complete a launch-day checklist covering rollback, incident response, editorial escalation, backups and status communication.
 
-## Measurement and advertising — complete last
+## Measurement and advertising — external activation remaining
 
-- [ ] Connect Google Analytics after the final domain, consent behavior and privacy disclosures are approved; validate events without collecting unnecessary personal or sensitive data.
+- [ ] Create or connect the publication’s GA4 property, approve its retention and internal-traffic settings, enter the real `G-…` measurement ID in Studio, and validate the consent-gated production events.
 - [ ] Create and approve the external AdSense account, register the production domain, configure a Google-certified consent message, create ad units, review Google’s site approval, then enter the real publisher and slot IDs in Studio before disabling Preview mode.
 - [ ] After live inventory is approved, validate consent withdrawal, reporting, fill failures, accessibility, layout shift, Core Web Vitals, placement policy compliance and reasonable ad density on real desktop and mobile pages.
+- [ ] Move the monetized production deployment to a hosting plan or provider whose terms permit commercial use; Vercel Hobby is for personal, non-commercial use.

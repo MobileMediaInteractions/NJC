@@ -169,6 +169,20 @@
       "when": 1785257495753,
       "tag": "0023_graceful_nightcrawler",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1785437631598,
+      "tag": "0024_clear_viper",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1785440870625,
+      "tag": "0025_abnormal_red_ghost",
+      "breakpoints": true
     }
   ]
 }

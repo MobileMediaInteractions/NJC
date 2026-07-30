@@ -43,11 +43,19 @@ sub loadWeather()
 end sub
 
 sub reportPresence()
+  deviceInfo = CreateObject("roDeviceInfo")
   body = {}
+  body["eventId"] = "presence_" + deviceInfo.GetRandomUUID()
   body["installationId"] = m.top.installationId
   body["platform"] = "roku"
   body["source"] = "roku-app"
+  body["product"] = "reader-roku"
   body["appVersion"] = m.top.appVersion
+  body["buildNumber"] = m.top.buildNumber
+  body["releaseChannel"] = m.top.releaseChannel
+  body["osVersion"] = m.top.osVersion
+  body["deviceClass"] = "tv"
+  body["occurredAt"] = CreateObject("roDateTime").ToISOString()
   result = apiRequest("/api/v1/audience/presence", "POST", body)
   if result.ok
     m.top.response = { ok: true }

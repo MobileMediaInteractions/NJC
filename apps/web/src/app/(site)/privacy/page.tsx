@@ -21,18 +21,23 @@ export default function PrivacyPage() {
           Account and developer details may include name, verified email, Clerk
           identifier, role, API-key metadata and security events. Reader
           services may include newsletter choices, comments, tips, alert-device
-          tokens, saved preferences, approximate region, request logs and
+          tokens or browser push endpoints and encryption keys, saved preferences, approximate region, request logs and
           privacy requests. Audience totals use a random or app-scoped
           pseudonymous installation identifier, Web/iOS/Android/tvOS/Android TV/Roku
-          platform, app version, account link
-          when authenticated and first/last-active timestamps. They do not store
-          individual article-reading history or an advertising identifier. With
-          analytics consent, public page and story views are added to daily aggregate
-          counters that are not linked to an installation or account. The referring
+          platform, product, release channel, app version, build number, broad
+          device and operating-system class, account link when authenticated,
+          and first/last-active timestamps. With analytics consent, public page
+          and story views are assigned a random event ID, installation ID and
+          session ID so duplicate requests can be rejected and reported totals
+          can be audited. Page-view events are not connected to a Clerk account
+          and do not contain an advertising identifier, IP address or raw user
+          agent. The referring
           page is reduced to a broad acquisition category such as Google, X,
           Facebook, Instagram, email, direct or other, and the raw referring URL is
           discarded. A broad device class such as desktop, phone, tablet or smart TV
-          is retained with those aggregate counters. We do not store
+          is retained with those event records and aggregate counters. Pre-audit
+          aggregate statistics are retained as labeled legacy evidence and are
+          excluded from verified totals. We do not store
           raw developer API keys after creation. Device sign-in handles
           short-lived pairing status, hashed sync codes and requester network
           information for abuse prevention. Apple TV, Android TV and Roku sessions retain account,
@@ -71,6 +76,11 @@ export default function PrivacyPage() {
           limits. Expo, Apple and Google may process mobile build or
           notification data. Third-party analytics, advertising and payment
           providers are disabled until separately configured and disclosed.
+          Website notifications use the browser’s standards-based push service;
+          the Courier stores only the endpoint and public encryption material
+          needed to deliver a reader-requested alert. Notification campaigns
+          may target all subscribers, selected accounts, newsroom roles or a
+          separately defined NJC+ entitlement group.
           Cross-border transfer mechanisms must be reviewed for the final entity
           and audience.
         </p>
@@ -84,10 +94,13 @@ export default function PrivacyPage() {
           needs. Unapproved pairing requests expire after ten minutes. Television
           sessions expire after 90 days unless renewed and can be revoked by
           signing out. Revoked API-key records and security audit logs may be
-          retained to investigate abuse. Audience installation records are
-          removed when a mobile reader disables measurement and the deletion
-          request reaches The New Jersey Courier; website records can be addressed through a
-          privacy request. Backups are encrypted and access-controlled; raw
+          retained to investigate abuse. Audience installation, version-history
+          and presence-event records are removed when a mobile reader disables
+          measurement and the deletion request reaches The New Jersey Courier.
+          Page-view events contain no account identifier; website records can be
+          addressed through a privacy request. Evidence exports pseudonymize
+          installation, session and account identifiers. Backups are encrypted
+          and access-controlled; raw
           secrets are excluded. Final retention periods, incident contacts and
           breach-response duties must be approved before production.
         </p>
@@ -103,6 +116,12 @@ export default function PrivacyPage() {
           advertising or sale/sharing of personal information in this launch
           build. We verify identity before fulfilling requests and will explain
           lawful exceptions.
+        </p>
+        <p className="mt-3">
+          Browser notifications are opt-in. You can disable them from the
+          Newsletters & alerts page or your browser settings. Signing out
+          removes the browser subscription’s account association so later
+          account-targeted alerts are not delivered to a shared browser.
         </p>
         <p className="mt-3">
           <Link

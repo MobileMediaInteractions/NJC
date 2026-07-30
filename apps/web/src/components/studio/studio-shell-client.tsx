@@ -27,6 +27,7 @@ import {
   Menu,
   MessageCircleMore,
   MessageSquareWarning,
+  Megaphone,
   Newspaper,
   PanelLeftClose,
   PanelLeftOpen,
@@ -97,6 +98,7 @@ const itemIcons: Record<string, typeof LayoutDashboard> = {
   analytics: BarChart3,
   settings: Settings,
   "legal-registry": Scale,
+  "notification-campaigns": Megaphone,
   "njc-plus-overview": Activity,
   "njc-plus-content": FileVideo2,
   "njc-plus-homepage": Home,
@@ -116,6 +118,7 @@ export function StudioShellClient({
   unreadChatCount,
   chatEnabled,
   pressEnabled,
+  alertsEnabled,
 }: {
   children: React.ReactNode;
   viewer: StudioUser;
@@ -123,6 +126,7 @@ export function StudioShellClient({
   unreadChatCount: number;
   chatEnabled: boolean;
   pressEnabled: boolean;
+  alertsEnabled: boolean;
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -131,7 +135,7 @@ export function StudioShellClient({
     enabled: chatEnabled,
     initialUnread: unreadChatCount,
   });
-  const context = { role: viewer.role, chatEnabled, pressEnabled };
+  const context = { role: viewer.role, chatEnabled, pressEnabled, alertsEnabled };
   const { hubs, activeHub, activeItem } = resolveStudioNavigation(
     pathname,
     context,

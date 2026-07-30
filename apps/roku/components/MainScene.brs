@@ -42,7 +42,9 @@ sub init()
   m.apiBase = appInfo.GetValue("api_url")
   if Right(m.apiBase, 1) = "/" then m.apiBase = Left(m.apiBase, Len(m.apiBase) - 1)
   m.appVersion = appInfo.GetValue("major_version") + "." + appInfo.GetValue("minor_version") + "." + appInfo.GetValue("build_version")
+  m.buildNumber = appInfo.GetValue("build_version")
   deviceInfo = CreateObject("roDeviceInfo")
+  m.osVersion = deviceInfo.GetVersion()
   m.installationId = "roku_" + deviceInfo.GetChannelClientId()
   m.live = invalid
   m.weather = invalid
@@ -93,6 +95,9 @@ function createApiTask(operation as String, callback as String) as Object
   task.operation = operation
   task.apiBase = m.apiBase
   task.appVersion = m.appVersion
+  task.buildNumber = m.buildNumber
+  task.releaseChannel = m.releaseChannel
+  task.osVersion = m.osVersion
   task.installationId = m.installationId
   task.accessToken = m.accessToken
   task.observeField("response", callback)

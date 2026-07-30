@@ -5,6 +5,7 @@ import {
   formatDatelines,
   include20Under20Navigation,
   isGoogleAdsLive,
+  isGoogleAnalyticsLive,
   normalizePublisherId,
   parseNavigation,
   parseDatelines,
@@ -50,6 +51,22 @@ test("publisher IDs normalize to the AdSense client form", () => {
   assert.equal(normalizePublisherId(""), "");
 });
 
+test("Google Analytics is disabled by default and requires a valid GA4 measurement ID", () => {
+  const configuration = configurationCopy();
+  assert.equal(configuration.measurement.googleAnalytics.enabled, false);
+  assert.equal(isGoogleAnalyticsLive(configuration), false);
+
+  configuration.measurement.googleAnalytics.enabled = true;
+  assert.equal(siteConfigurationSchema.safeParse(configuration).success, false);
+
+  configuration.measurement.googleAnalytics.measurementId = "UA-123456-1";
+  assert.equal(siteConfigurationSchema.safeParse(configuration).success, false);
+
+  configuration.measurement.googleAnalytics.measurementId = "G-AB12CD34EF";
+  assert.equal(siteConfigurationSchema.safeParse(configuration).success, true);
+  assert.equal(isGoogleAnalyticsLive(configuration), true);
+});
+
 test("navigation accepts local paths and rejects external destinations", () => {
   const local = { ...configurationCopy(), navigation: parseNavigation("Latest | /latest\nWeather | /weather") };
   assert.equal(siteConfigurationSchema.safeParse(local).success, true);
@@ -86,6 +103,17 @@ test("older stored configuration receives default datelines", () => {
   delete configuration.editorial;
   const parsed = siteConfigurationSchema.parse(configuration);
   assert.ok(parsed.editorial.datelines.includes("New Brunswick"));
+});
+
+test("older stored configuration keeps external analytics off", () => {
+  const configuration = configurationCopy() as Partial<ReturnType<typeof configurationCopy>>;
+  delete configuration.measurement;
+  const parsed = siteConfigurationSchema.parse(configuration);
+  assert.deepEqual(parsed.measurement.googleAnalytics, {
+    enabled: false,
+    measurementId: "",
+  });
+  assert.equal(isGoogleAnalyticsLive(parsed), false);
 });
 
 test("older stored configuration enables pseudonyms and Distribution by default", () => {

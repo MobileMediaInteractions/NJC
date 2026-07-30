@@ -12,6 +12,7 @@ const reportIntervalMs = 15 * 60 * 1000;
 const trafficSessionTimeoutMs = 30 * 60 * 1000;
 
 type TrafficSession = {
+  id: string;
   referrer: string;
   sourceHint: string;
   entrySent: boolean;
@@ -38,12 +39,18 @@ function getInstallationId() {
 function getTrafficSession(now: number): TrafficSession {
   try {
     const existing = JSON.parse(sessionStorage.getItem(trafficSessionKey) ?? "null") as TrafficSession | null;
-    if (existing && now - existing.lastSeenAt < trafficSessionTimeoutMs) return existing;
+    if (
+      existing?.id &&
+      typeof existing.lastSeenAt === "number" &&
+      now - existing.lastSeenAt < trafficSessionTimeoutMs
+    )
+      return existing;
   } catch {
     /* A blocked or malformed session store starts a privacy-safe new session. */
   }
   const query = new URLSearchParams(window.location.search);
   return {
+    id: `session_${crypto.randomUUID().replaceAll("-", "")}`,
     referrer: document.referrer.slice(0, 2048),
     sourceHint: (query.get("utm_source") ?? query.get("ref") ?? "").slice(0, 80),
     entrySent: false,
@@ -88,10 +95,14 @@ export function AudienceTracker() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            eventId: `view_${crypto.randomUUID().replaceAll("-", "")}`,
+            installationId,
+            sessionId: trafficSession.id,
             pathname,
             referrer: trafficSession.referrer,
             sourceHint: trafficSession.sourceHint,
             isEntry,
+            occurredAt: new Date(now).toISOString(),
           }),
           keepalive: true,
         }).catch(() => undefined);
@@ -111,10 +122,17 @@ export function AudienceTracker() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        eventId: `presence_${crypto.randomUUID().replaceAll("-", "")}`,
         installationId,
         platform: "web",
         source: "news-site",
+        product: "news-web",
         appVersion: process.env.NEXT_PUBLIC_APP_VERSION ?? "web",
+        buildNumber: process.env.NEXT_PUBLIC_BUILD_NUMBER ?? "unknown",
+        releaseChannel:
+          process.env.NODE_ENV === "production" ? "production" : "development",
+        deviceClass: "browser",
+        occurredAt: new Date(now).toISOString(),
       }),
       keepalive: true,
     }).catch(() => undefined);

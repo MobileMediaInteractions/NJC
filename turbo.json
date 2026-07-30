@@ -34,6 +34,7 @@
         "NEXT_PUBLIC_CLERK_SIGN_UP_URL",
         "NEXT_PUBLIC_SEO_INDEXING_ENABLED",
         "NEXT_PUBLIC_SITE_URL",
+        "NEXT_PUBLIC_WEB_PUSH_VAPID_KEY",
         "NWS_USER_AGENT",
         "PLATFORM_ED25519_PREVIOUS_PUBLIC_KEYS_JSON",
         "PLATFORM_ED25519_PRIVATE_KEY_PEM",
@@ -49,7 +50,9 @@
         "STRIPE_SECRET_KEY",
         "STRIPE_WEBHOOK_SECRET",
         "UPSTASH_REDIS_REST_TOKEN",
-        "UPSTASH_REDIS_REST_URL"
+        "UPSTASH_REDIS_REST_URL",
+        "WEB_PUSH_CONTACT",
+        "WEB_PUSH_VAPID_PRIVATE_KEY"
       ],
       "outputs": [".next/**", "dist/**", "build/**"]
     },

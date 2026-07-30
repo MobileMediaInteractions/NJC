@@ -2,8 +2,21 @@ import { Pool } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import * as schema from "./schema";
 
+function configuredDatabaseUrl() {
+  const value = process.env.DATABASE_URL?.trim();
+  if (!value || value === "[SENSITIVE]" || value === "[encrypted]") return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "postgres:" || url.protocol === "postgresql:"
+      ? value
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 function createDb() {
-  const databaseUrl = process.env.DATABASE_URL;
+  const databaseUrl = configuredDatabaseUrl();
 
   if (!databaseUrl) {
     throw new Error("DATABASE_URL is not configured");
@@ -19,7 +32,7 @@ function createDb() {
 let database: ReturnType<typeof createDb> | null = null;
 
 export function hasDatabase() {
-  return Boolean(process.env.DATABASE_URL);
+  return Boolean(configuredDatabaseUrl());
 }
 
 export function getDb() {

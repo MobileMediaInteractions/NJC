@@ -48,7 +48,7 @@ Errors follow:
 - Use HLS for the value in `live.streamUrl`; native players can consume the same stream.
 - Add cursor pagination before the story archive exceeds the first launch market.
 - Use universal links / app links for `/story/:slug`, `/category/:slug`, `/weather` and `/live`.
-- Platform presence records contain a random installation ID, platform, app version and activity timestamps. They do not contain reading history or an advertising identifier.
+- Platform presence records use an idempotent event ID and contain a random installation ID, product, platform, release channel, semantic version, build number, broad device/OS class and activity timestamps. An upgrade adds version history without creating a second installation. Presence records do not contain reading history or an advertising identifier.
 
 ## Device pairing and television apps
 
@@ -122,4 +122,6 @@ Rate responses include `X-RateLimit-Limit-Minute`, `X-RateLimit-Remaining-Minute
 
 The CMS uses `/api/v1/studio/*`. These endpoints require an authenticated staff user and server-side role checks. They are not public mobile endpoints.
 
-`GET /api/v1/studio/audience` returns 24-hour, 7-day, 30-day and all-time platform totals. Web totals include only visitors who allow optional analytics. iOS and Android users can remove their installation record by disabling anonymous audience measurement in the app. Apple TV, Android TV and Roku are reported separately as `tvos`, `androidtv` and `roku`.
+`GET /api/v1/studio/audience` returns verified 24-hour, 7-day, 30-day and all-time installation totals plus distinct known-account, anonymous-installation, legacy-evidence and application-version groups. It never labels an installation as a person. Web totals include only visitors who allow optional analytics. iOS and Android users can remove their installation, version and presence records by disabling anonymous audience measurement in the app. Apple TV, Android TV and Roku are reported separately as `tvos`, `androidtv` and `roku`.
+
+Administrator/editor audit exports are available from `/api/v1/studio/analytics/export`. Exported installation, session and account identifiers are pseudonymized. Page and presence event IDs make ingestion retries idempotent; calculation version 2 excludes internal, preview, development and pre-audit legacy evidence from authoritative production totals.

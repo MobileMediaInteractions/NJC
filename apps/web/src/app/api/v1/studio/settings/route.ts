@@ -63,6 +63,10 @@ export async function PATCH(request: Request) {
       event: "site.configuration_updated",
       request,
       metadata: {
+        googleAnalyticsEnabled: configuration.measurement.googleAnalytics.enabled,
+        googleAnalyticsMeasurementIdConfigured: Boolean(
+          configuration.measurement.googleAnalytics.measurementId,
+        ),
         advertisingEnabled: configuration.advertising.enabled,
         advertisingPreviewMode: configuration.advertising.previewMode,
         autoAds: configuration.advertising.autoAds,

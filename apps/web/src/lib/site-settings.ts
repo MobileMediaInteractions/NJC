@@ -24,6 +24,22 @@ const adPlacementSchema = z.object({
   slotId: z.string().trim().refine((value) => value === "" || /^\d{10}$/.test(value), "Ad unit IDs must contain 10 digits"),
 });
 
+const googleAnalyticsSchema = z.object({
+  enabled: z.boolean(),
+  measurementId: z.string().trim().refine(
+    (value) => value === "" || /^G-[A-Z0-9]{6,20}$/.test(value),
+    "Use a GA4 measurement ID such as G-AB12CD34EF",
+  ),
+}).superRefine((configuration, context) => {
+  if (configuration.enabled && !configuration.measurementId) {
+    context.addIssue({
+      code: "custom",
+      path: ["measurementId"],
+      message: "A GA4 measurement ID is required before Google Analytics can be enabled",
+    });
+  }
+});
+
 export const siteConfigurationSchema = z.object({
   publication: z.object({
     name: z.string().trim().min(3).max(100),
@@ -60,6 +76,14 @@ export const siteConfigurationSchema = z.object({
         "Datelines must be unique",
       ),
   }).default({ datelines: [...defaultDatelines] }),
+  measurement: z.object({
+    googleAnalytics: googleAnalyticsSchema,
+  }).default({
+    googleAnalytics: {
+      enabled: false,
+      measurementId: "",
+    },
+  }),
   advertising: z.object({
     enabled: z.boolean(),
     provider: z.literal("google-adsense"),
@@ -71,6 +95,11 @@ export const siteConfigurationSchema = z.object({
     previewMode: z.boolean(),
     privacyMessageConfigured: z.boolean(),
     adsTxtEnabled: z.boolean(),
+    adBlockNoticeEnabled: z.boolean().default(true),
+    adFreeNjcPlusEnabled: z.boolean().default(false),
+    adFreePromoEnabled: z.boolean().default(false),
+    adFreePromoText: z.string().trim().min(10).max(180).default("Support local journalism and enjoy The Courier without site ads with NJC+."),
+    adFreePromoHref: z.string().trim().regex(/^\/[A-Za-z0-9/_-]*$/, "The NJC+ promotion must use a local path").max(160).default("/plus"),
     placements: z.object({
       homepageLeaderboard: adPlacementSchema,
       articleInline: adPlacementSchema,
@@ -145,6 +174,12 @@ export const defaultSiteConfiguration: SiteConfiguration = {
   editorial: {
     datelines: [...defaultDatelines],
   },
+  measurement: {
+    googleAnalytics: {
+      enabled: false,
+      measurementId: "",
+    },
+  },
   advertising: {
     enabled: false,
     provider: "google-adsense",
@@ -153,6 +188,11 @@ export const defaultSiteConfiguration: SiteConfiguration = {
     previewMode: true,
     privacyMessageConfigured: false,
     adsTxtEnabled: false,
+    adBlockNoticeEnabled: true,
+    adFreeNjcPlusEnabled: false,
+    adFreePromoEnabled: false,
+    adFreePromoText: "Support local journalism and enjoy The Courier without site ads with NJC+.",
+    adFreePromoHref: "/plus",
     placements: {
       homepageLeaderboard: { enabled: false, slotId: "" },
       articleInline: { enabled: false, slotId: "" },
@@ -173,6 +213,12 @@ export function isGoogleAdsLive(configuration: SiteConfiguration) {
     !advertising.previewMode &&
     advertising.privacyMessageConfigured &&
     /^(?:ca-)?pub-\d{16}$/.test(advertising.publisherId);
+}
+
+export function isGoogleAnalyticsLive(configuration: SiteConfiguration) {
+  const googleAnalytics = configuration.measurement.googleAnalytics;
+  return googleAnalytics.enabled &&
+    /^G-[A-Z0-9]{6,20}$/.test(googleAnalytics.measurementId);
 }
 
 export function parseNavigation(value: string) {

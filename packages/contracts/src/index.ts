@@ -175,8 +175,27 @@ export interface AudiencePlatformMetric {
   knownAccounts: number;
 }
 
+export interface AudienceApplicationVersionMetric {
+  platform: AudiencePlatform;
+  platformLabel: string;
+  product: string;
+  releaseChannel: string;
+  environment: string;
+  appVersion: string;
+  buildNumber: string;
+  installations: number;
+  active24h: number;
+  active7d: number;
+  active30d: number;
+  knownAccounts: number;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  qualityStatus: "verified" | "legacy";
+}
+
 export interface AudienceSummary {
   platforms: AudiencePlatformMetric[];
+  versions: AudienceApplicationVersionMetric[];
   totals: {
     trackedInstallations: number;
     active24h: number;
@@ -184,6 +203,19 @@ export interface AudienceSummary {
     active30d: number;
     knownAccountLinks: number;
     apiConsumers: number;
+  };
+  identity: {
+    knownAccounts: number;
+    anonymousInstallations: number;
+  };
+  legacy: {
+    installations: number;
+    active30d: number;
+  };
+  dataQuality: {
+    status: "verified" | "provisional";
+    calculationVersion: number;
+    notes: string[];
   };
   generatedAt: string;
   database: "connected" | "not configured";

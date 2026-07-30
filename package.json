@@ -47,6 +47,8 @@
     "db:push": "pnpm --dir apps/web db:push",
     "backup:export": "pnpm --dir apps/web backup:export",
     "backup:restore": "pnpm --dir apps/web backup:restore",
+    "analytics:audit": "pnpm --dir apps/web analytics:audit",
+    "push:generate-vapid": "pnpm --dir apps/web push:generate-vapid",
     "domain:verify": "node apps/web/scripts/verify-domain-readiness.mjs"
   },
   "devDependencies": {

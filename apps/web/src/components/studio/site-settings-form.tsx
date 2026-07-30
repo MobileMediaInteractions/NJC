@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import {
+  Activity,
   BadgeDollarSign,
   CheckCircle2,
   ExternalLink,
@@ -60,6 +61,22 @@ export function SiteSettingsForm({
     setConfiguration((current) => ({ ...current, features: { ...current.features, [key]: value } }));
   }
 
+  function updateGoogleAnalytics<Key extends keyof SiteConfiguration["measurement"]["googleAnalytics"]>(
+    key: Key,
+    value: SiteConfiguration["measurement"]["googleAnalytics"][Key],
+  ) {
+    setConfiguration((current) => ({
+      ...current,
+      measurement: {
+        ...current.measurement,
+        googleAnalytics: {
+          ...current.measurement.googleAnalytics,
+          [key]: value,
+        },
+      },
+    }));
+  }
+
   function updateAdvertising<Key extends keyof SiteConfiguration["advertising"]>(key: Key, value: SiteConfiguration["advertising"][Key]) {
     setConfiguration((current) => ({ ...current, advertising: { ...current.advertising, [key]: value } }));
   }
@@ -105,6 +122,8 @@ export function SiteSettingsForm({
   const adsReady = configuration.advertising.enabled &&
     Boolean(configuration.advertising.publisherId) &&
     configuration.advertising.privacyMessageConfigured;
+  const googleAnalyticsReady = configuration.measurement.googleAnalytics.enabled &&
+    Boolean(configuration.measurement.googleAnalytics.measurementId);
   const enabledFeatureCount = Object.values(configuration.features).filter(Boolean).length;
   const totalFeatureCount = Object.keys(configuration.features).length;
 
@@ -129,10 +148,11 @@ export function SiteSettingsForm({
       {message ? <p role="status" className={`mt-5 rounded-lg border p-4 text-sm ${state === "error" ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-primary/30 bg-primary/10"}`}>{message}</p> : null}
 
       <section className="mt-7 overflow-hidden rounded-2xl bg-[#102f25] text-white ring-1 ring-black/10">
-        <div className="grid sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid sm:grid-cols-2 xl:grid-cols-5">
           <ControlStatus label="Release state" value={canManage ? "Administrator" : "Read only"} detail={canManage ? "Validated save access" : "Review access only"} />
           <ControlStatus label="Navigation" value={`${configuration.navigation.length} destinations`} detail="Public primary menu" />
           <ControlStatus label="Runtime features" value={`${enabledFeatureCount} of ${totalFeatureCount} on`} detail="Shared availability flags" />
+          <ControlStatus label="Measurement" value={configuration.measurement.googleAnalytics.enabled ? "GA4 requested" : "First-party only"} detail={googleAnalyticsReady ? "Consent-gated ID present" : "External analytics off"} />
           <ControlStatus label="Advertising" value={configuration.advertising.enabled ? configuration.advertising.previewMode ? "Preview" : "Live requested" : "Off"} detail={adsReady ? "Required fields present" : "Setup incomplete"} />
         </div>
         <div className="border-t border-white/10 px-5 py-3 text-[0.68rem] text-white/48 sm:px-6">
@@ -148,6 +168,7 @@ export function SiteSettingsForm({
               <TabsTrigger value="publication" className="h-10 shrink-0 justify-start px-3 lg:w-full"><Navigation /> Publication</TabsTrigger>
               <TabsTrigger value="editorial" className="h-10 shrink-0 justify-start px-3 lg:w-full"><FileText /> Editorial</TabsTrigger>
               <TabsTrigger value="features" className="h-10 shrink-0 justify-start px-3 lg:w-full"><SlidersHorizontal /> Features</TabsTrigger>
+              <TabsTrigger value="measurement" className="h-10 shrink-0 justify-start px-3 lg:w-full"><Activity /> Measurement</TabsTrigger>
               <TabsTrigger value="advertising" className="h-10 shrink-0 justify-start px-3 lg:w-full"><BadgeDollarSign /> Advertising</TabsTrigger>
             </TabsList>
             <div className="mt-4 hidden rounded-lg border bg-muted/25 p-3 text-xs leading-5 text-muted-foreground lg:block">
@@ -226,6 +247,47 @@ export function SiteSettingsForm({
           </CardContent></Card>
         </TabsContent>
 
+        <TabsContent value="measurement">
+          <Card>
+            <CardHeader>
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <CardTitle>Google Analytics 4</CardTitle>
+                  <CardDescription>
+                    Optional external measurement for public site pages. The
+                    existing first-party newsroom analytics remains independent.
+                  </CardDescription>
+                </div>
+                <Badge variant={googleAnalyticsReady ? "secondary" : "outline"}>
+                  {googleAnalyticsReady ? "Consent gated" : "Off"}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <Toggle
+                label="Enable Google Analytics"
+                description="Loads GA4 only on public pages and only after the reader allows analytics. Studio and employee surfaces are not measured."
+                checked={configuration.measurement.googleAnalytics.enabled}
+                disabled={!canManage}
+                onCheckedChange={(value) => updateGoogleAnalytics("enabled", value)}
+              />
+              <TextField
+                label="GA4 measurement ID"
+                value={configuration.measurement.googleAnalytics.measurementId}
+                onChange={(value) => updateGoogleAnalytics("measurementId", value.trim().toUpperCase())}
+                disabled={!canManage}
+                placeholder="G-AB12CD34EF"
+              />
+              <div className="rounded-lg border bg-muted/30 p-4 text-xs leading-5 text-muted-foreground">
+                Keep this disabled until the GA4 property, data-retention
+                settings, internal-traffic exclusions and public privacy
+                disclosures have been reviewed. Saving an ID does not enable
+                measurement by itself.
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="advertising" className="space-y-6">
           <Card><CardHeader><div className="flex flex-wrap items-start justify-between gap-4"><div><CardTitle>Google AdSense</CardTitle><CardDescription>Global delivery controls. No ad code loads while advertising is disabled or Preview mode is on.</CardDescription></div><Badge variant={adsReady ? "secondary" : "outline"}>{adsReady ? configuration.advertising.previewMode ? "Preview only" : "Ready for live delivery" : "Not ready"}</Badge></div></CardHeader><CardContent className="space-y-5">
             <Toggle label="Enable advertising" description="Makes configured ad placements eligible to render." checked={configuration.advertising.enabled} disabled={!canManage} onCheckedChange={(value) => updateAdvertising("enabled", value)} />
@@ -234,6 +296,7 @@ export function SiteSettingsForm({
             <TextField label="AdSense publisher ID" value={configuration.advertising.publisherId} onChange={(value) => updateAdvertising("publisherId", value)} disabled={!canManage} placeholder="pub-1234567890123456" />
             <Toggle label="Publish ads.txt authorization" description="Serves Google’s DIRECT authorization record at /ads.txt when a publisher ID is present." checked={configuration.advertising.adsTxtEnabled} disabled={!canManage} onCheckedChange={(value) => updateAdvertising("adsTxtEnabled", value)} />
             <Toggle label="Google-certified privacy messaging is configured" description="Required before ads can be enabled. Configure Google Privacy & messaging or another certified CMP in the AdSense account." checked={configuration.advertising.privacyMessageConfigured} disabled={!canManage} onCheckedChange={(value) => updateAdvertising("privacyMessageConfigured", value)} />
+            <Toggle label="Non-blocking ad-filter notice" description="Detects likely ad filtering and asks readers to support the publication without hiding or locking any journalism." checked={configuration.advertising.adBlockNoticeEnabled} disabled={!canManage} onCheckedChange={(value) => updateAdvertising("adBlockNoticeEnabled", value)} />
             <div className="rounded-lg border bg-muted/30 p-4 text-xs leading-5 text-muted-foreground">Studio cannot verify external AdSense approval, site review or consent-message status. Confirm those in AdSense before turning off Preview mode. <Link href="https://support.google.com/adsense/answer/13554116" target="_blank" rel="noreferrer" className="font-semibold text-primary underline">Consent requirements <ExternalLink className="inline size-3" /></Link></div>
           </CardContent></Card>
 
@@ -241,6 +304,13 @@ export function SiteSettingsForm({
             const value = configuration.advertising.placements[placement.key];
             return <div key={placement.key} className="grid gap-4 border-b pb-6 last:border-0 last:pb-0 sm:grid-cols-[1fr_14rem] sm:items-end"><Toggle label={placement.label} description={placement.description} checked={value.enabled} disabled={!canManage} onCheckedChange={(checked) => updatePlacement(placement.key, "enabled", checked)} /><TextField id={`ad-slot-${placement.key}`} label="Ad unit ID" value={value.slotId} onChange={(slotId) => updatePlacement(placement.key, "slotId", slotId)} disabled={!canManage || !value.enabled} placeholder="1234567890" /></div>;
           })}</CardContent></Card>
+
+          <Card><CardHeader><CardTitle>NJC+ ad-free controls</CardTitle><CardDescription>The benefit and its promotion are independent switches. Both remain disabled until NJC+ is ready to promise an ad-free experience.</CardDescription></CardHeader><CardContent className="space-y-5">
+            <Toggle label="Remove site ads for NJC+ access" description="Suppresses site advertising for active paid members, trials and complimentary NJC+ access. Invited beta access alone does not qualify." checked={configuration.advertising.adFreeNjcPlusEnabled} disabled={!canManage} onCheckedChange={(value) => updateAdvertising("adFreeNjcPlusEnabled", value)} />
+            <Toggle label="Promote ad-free NJC+" description="Shows the configured NJC+ message inside the non-blocking ad-filter notice. Keep this off until the benefit and destination are public." checked={configuration.advertising.adFreePromoEnabled} disabled={!canManage || !configuration.advertising.adFreeNjcPlusEnabled} onCheckedChange={(value) => updateAdvertising("adFreePromoEnabled", value)} />
+            <TextField label="Promotion message" value={configuration.advertising.adFreePromoText} onChange={(value) => updateAdvertising("adFreePromoText", value)} disabled={!canManage || !configuration.advertising.adFreePromoEnabled} />
+            <TextField label="Promotion destination" value={configuration.advertising.adFreePromoHref} onChange={(value) => updateAdvertising("adFreePromoHref", value)} disabled={!canManage || !configuration.advertising.adFreePromoEnabled} placeholder="/plus" />
+          </CardContent></Card>
         </TabsContent>
         </div>
       </Tabs>

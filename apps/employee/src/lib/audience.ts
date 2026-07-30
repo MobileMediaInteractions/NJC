@@ -6,12 +6,30 @@ import { deviceStorage } from "@/lib/storage";
 const idKey = "njcourier:employee:installation";
 const seenKey = "njcourier:employee:last-presence";
 function createId() { return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`.slice(0, 64); }
+function createEventId() { return `presence_${Date.now().toString(36)}${Array.from({ length: 5 }, () => Math.random().toString(36).slice(2)).join("")}`.slice(0, 80); }
 export async function reportEmployeeAudience(token: string) {
   const last = Number(await deviceStorage.getItem(seenKey) ?? 0);
   if (Date.now() - last < 15 * 60_000) return;
   let installationId = await deviceStorage.getItem(idKey);
   if (!installationId) { installationId = createId(); await deviceStorage.setItem(idKey, installationId); }
   const platform = Platform.OS === "ios" ? "ios" : Platform.OS === "android" ? "android" : "web";
-  const response = await fetch(`${apiBaseUrl}/api/v1/audience/presence`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ installationId, platform, source: "employee-app", appVersion: Constants.expoConfig?.version ?? "1.0.0" }) });
+  const buildNumber = Platform.OS === "ios" ? Constants.expoConfig?.ios?.buildNumber : Constants.expoConfig?.android?.versionCode;
+  const response = await fetch(`${apiBaseUrl}/api/v1/audience/presence`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      eventId: createEventId(),
+      installationId,
+      platform,
+      source: "employee-app",
+      product: "employee-mobile",
+      appVersion: Constants.expoConfig?.version ?? "1.0.0",
+      buildNumber: buildNumber == null ? "unknown" : String(buildNumber),
+      releaseChannel: "production",
+      osVersion: String(Platform.Version),
+      deviceClass: platform === "web" ? "browser" : "phone",
+      occurredAt: new Date().toISOString(),
+    }),
+  });
   if (response.ok) await deviceStorage.setItem(seenKey, String(Date.now()));
 }

@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AudienceTracker } from "@/components/audience-tracker";
 import { CookieConsent } from "@/components/cookie-consent";
+import { SitePushReconciler } from "@/components/site-push-reconciler";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export function AppProviders({
@@ -18,6 +19,7 @@ export function AppProviders({
       <TooltipProvider>
         {children}
         <AudienceTracker />
+        <SitePushReconciler clerkEnabled={clerkEnabled} />
         <CookieConsent />
       </TooltipProvider>
     </ThemeProvider>

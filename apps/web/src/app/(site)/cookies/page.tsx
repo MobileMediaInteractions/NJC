@@ -41,7 +41,9 @@ export default function CookiesPage() {
           acquisition reporting, the raw referring URL is classified into a broad
           source such as Google, X, Facebook, Instagram, email, direct or other and is
           then discarded. The aggregate also records a broad web device class such as
-          desktop, phone, tablet or smart TV.
+          desktop, phone, tablet or smart TV. Google Analytics 4 is separately
+          controlled by the publisher and remains disabled by default. If it is
+          enabled, its code loads only after the reader allows analytics.
         </p>
         <p className="mt-3">
           Google AdSense is available to the publisher but remains disabled by
@@ -56,8 +58,9 @@ export default function CookiesPage() {
       <section>
         <h2 className="text-2xl font-black text-brand-navy">Change a choice</h2>
         <p className="mt-3">
-          Clear the site’s local storage or browser data to reset the website
-          consent banner. Use the mobile privacy switch to stop mobile
+          Use “Change privacy choices” in the site footer to reopen the website
+          consent banner. Clearing the site’s local storage or browser data also
+          resets that choice. Use the mobile privacy switch to stop mobile
           measurement and request deletion of that installation record. A
           Google’s privacy message provides advertising choices when AdSense is
           active. Clear the site’s browser data or use that message’s privacy

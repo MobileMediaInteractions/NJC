@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { BellRing, CalendarDays, CloudLightning, MailOpen } from "lucide-react";
 import { NewsletterForm } from "@/components/newsletter-form";
+import { SiteNotificationControl } from "@/components/site-notification-control";
 
 export const metadata: Metadata = { title: "Newsletters & alerts" };
 
@@ -13,7 +14,10 @@ export default function NewsletterPage() {
         <NewsletterOption icon={<CloudLightning />} title="Weather Alerts" schedule="As conditions warrant" copy="Severe-weather warnings and clear, municipality-level impact guidance." />
         <NewsletterOption icon={<CalendarDays />} title="The Weekend" schedule="Thursdays · 4 p.m." copy="The best local events, food, arts and outdoor plans for the days ahead." />
       </div>
-      <section className="mx-auto mt-10 max-w-2xl border-t-4 border-brand-yellow bg-brand-navy p-8 text-white"><div className="flex items-center gap-3"><BellRing className="size-6 text-brand-yellow" /><h2 className="text-2xl font-black">Start with The Middlesex Morning</h2></div><p className="mb-5 mt-3 text-sm text-white/65">You can manage every subscription from one click in any email.</p><NewsletterForm inverse /></section>
+      <div className="mx-auto mt-10 grid max-w-5xl gap-6 lg:grid-cols-2">
+        <SiteNotificationControl />
+        <section className="border-t-4 border-brand-yellow bg-brand-navy p-8 text-white"><div className="flex items-center gap-3"><BellRing className="size-6 text-brand-yellow" /><h2 className="text-2xl font-black">Start with The Middlesex Morning</h2></div><p className="mb-5 mt-3 text-sm text-white/65">You can manage every subscription from one click in any email.</p><NewsletterForm inverse /></section>
+      </div>
     </div>
   );
 }

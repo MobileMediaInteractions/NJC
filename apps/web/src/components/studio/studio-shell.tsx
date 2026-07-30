@@ -18,6 +18,7 @@ export async function StudioShell({
   let unreadChatCount = 0;
   let chatEnabled = false;
   let pressEnabled = false;
+  let alertsEnabled = false;
   if (hasDatabase() && canViewNewsTips(viewer.role)) {
     try {
       const [result] = await getDb()
@@ -35,6 +36,7 @@ export async function StudioShell({
       const employeeViewer = await getEmployeeViewer();
       chatEnabled = Boolean(employeeViewer?.capabilities.includes("chat:read"));
       pressEnabled = Boolean(employeeViewer?.capabilities.includes("tools:press"));
+      alertsEnabled = Boolean(employeeViewer?.capabilities.includes("tools:alerts"));
       if (employeeViewer && chatEnabled) unreadChatCount = await getEmployeeUnreadChatCount(employeeViewer);
     } catch (error) {
       console.error("Studio chat badge lookup failed", error);
@@ -42,7 +44,7 @@ export async function StudioShell({
   }
 
   return (
-    <StudioShellClient viewer={viewer} newTipCount={newTipCount} unreadChatCount={unreadChatCount} chatEnabled={chatEnabled} pressEnabled={pressEnabled}>
+    <StudioShellClient viewer={viewer} newTipCount={newTipCount} unreadChatCount={unreadChatCount} chatEnabled={chatEnabled} pressEnabled={pressEnabled} alertsEnabled={alertsEnabled}>
       {children}
     </StudioShellClient>
   );

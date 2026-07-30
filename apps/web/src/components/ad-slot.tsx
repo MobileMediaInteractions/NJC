@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { GoogleAdUnit } from "@/components/google-ads";
+import { hasAdFreeNjcPlusAccess } from "@/lib/advertising";
 import { getSiteConfiguration, isGoogleAdsLive, normalizePublisherId, type AdPlacementName } from "@/lib/site-settings";
 
 export async function AdSlot({
@@ -13,10 +14,13 @@ export async function AdSlot({
   size?: "standard" | "leaderboard";
   className?: string;
 }) {
-  const configuration = await getSiteConfiguration();
+  const [configuration, adFree] = await Promise.all([
+    getSiteConfiguration(),
+    hasAdFreeNjcPlusAccess(),
+  ]);
   const advertising = configuration.advertising;
   const placementConfiguration = advertising.placements[placement];
-  if (!advertising.enabled || !placementConfiguration.enabled) return null;
+  if (adFree || !advertising.enabled || !placementConfiguration.enabled) return null;
 
   const publisherId = normalizePublisherId(advertising.publisherId);
   const live = isGoogleAdsLive(configuration) && Boolean(placementConfiguration.slotId);

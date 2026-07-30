@@ -11,9 +11,21 @@ if (!isProductionDeployment) {
 
 const databaseUrl = process.env.DATABASE_URL;
 
-if (!databaseUrl || databaseUrl === "[encrypted]") {
+let databaseProtocol = null;
+try {
+  databaseProtocol = new URL(databaseUrl).protocol;
+} catch {
+  databaseProtocol = null;
+}
+
+if (
+  !databaseUrl ||
+  databaseUrl === "[encrypted]" ||
+  databaseUrl === "[SENSITIVE]" ||
+  !["postgres:", "postgresql:"].includes(databaseProtocol)
+) {
   throw new Error(
-    "DATABASE_URL must be available to the Vercel production build before migrations can run.",
+    "DATABASE_URL must be a valid Postgres URL available to the Vercel production build before migrations can run.",
   );
 }
 

@@ -1,13 +1,21 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { authorizeReaderApiRequest, evaluateReaderApiAccess } from "@/lib/reader-api-access";
+import {
+  getAnalyticsRequestContext,
+  getWebApplicationIdentity,
+} from "@/lib/analytics-request-context";
 import { recordPageView } from "@/lib/traffic-analytics";
 
 const input = z.object({
+  eventId: z.string().regex(/^[A-Za-z0-9_-]{20,100}$/).optional(),
+  installationId: z.string().regex(/^[A-Za-z0-9_-]{20,100}$/).optional(),
+  sessionId: z.string().regex(/^[A-Za-z0-9_-]{20,100}$/).optional(),
   pathname: z.string().min(1).max(500),
   referrer: z.string().max(2048).optional(),
   sourceHint: z.string().max(80).optional(),
   isEntry: z.boolean().optional().default(false),
+  occurredAt: z.string().datetime({ offset: true }).optional(),
 });
 
 const botPattern = /bot|crawler|spider|slurp|preview|facebookexternalhit|discordbot|twitterbot|linkedinbot/i;
@@ -29,11 +37,20 @@ export async function POST(request: Request) {
   }
 
   try {
+    const [context, application] = await Promise.all([
+      getAnalyticsRequestContext(),
+      Promise.resolve(getWebApplicationIdentity()),
+    ]);
     const result = await recordPageView({
       ...parsed.data,
+      occurredAt: parsed.data.occurredAt
+        ? new Date(parsed.data.occurredAt)
+        : undefined,
       userAgent: request.headers.get("user-agent"),
       mobileHint: request.headers.get("sec-ch-ua-mobile"),
       siteOrigin: new URL(request.url).origin,
+      environment: context.environment,
+      ...application,
     });
     console.log(JSON.stringify({
       level: "info",
@@ -41,6 +58,8 @@ export async function POST(request: Request) {
       route: "/api/v1/analytics/page-view",
       requestId: request.headers.get("x-vercel-id"),
       recorded: result.recorded,
+      aggregated: result.aggregated,
+      reason: result.reason,
       pathname: result.recorded ? result.pathname : undefined,
       duration_ms: Date.now() - startedAt,
     }));

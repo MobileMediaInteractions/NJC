@@ -3,7 +3,10 @@
   <interface>
     <field id="operation" type="string" />
     <field id="apiBase" type="string" />
-    <field id="appVersion" type="string" />
+     <field id="appVersion" type="string" />
+    <field id="buildNumber" type="string" />
+    <field id="releaseChannel" type="string" />
+    <field id="osVersion" type="string" />
     <field id="installationId" type="string" />
     <field id="sessionId" type="string" />
     <field id="deviceSecret" type="string" />

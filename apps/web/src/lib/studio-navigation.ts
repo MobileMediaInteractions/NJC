@@ -13,6 +13,7 @@ export type StudioNavigationContext = {
   role: StaffRole;
   chatEnabled: boolean;
   pressEnabled: boolean;
+  alertsEnabled: boolean;
 };
 
 export type StudioNavigationItem = {
@@ -23,6 +24,7 @@ export type StudioNavigationItem = {
   roles?: readonly StaffRole[];
   requiresChat?: boolean;
   requiresPress?: boolean;
+  requiresAlerts?: boolean;
 };
 
 export type StudioNavigationHub = {
@@ -148,6 +150,13 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         href: "/studio/team",
         roles: ["admin"],
       },
+      {
+        id: "notification-campaigns",
+        label: "Site notifications",
+        href: "/studio/notifications",
+        roles: publishingRoles,
+        requiresAlerts: true,
+      },
     ],
   },
   {
@@ -208,6 +217,7 @@ export function isStudioNavigationItemVisible(
   if (item.roles && !item.roles.includes(context.role)) return false;
   if (item.requiresChat && !context.chatEnabled) return false;
   if (item.requiresPress && !context.pressEnabled) return false;
+  if (item.requiresAlerts && !context.alertsEnabled) return false;
   return true;
 }
 
