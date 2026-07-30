@@ -95,22 +95,8 @@ export function AnalyticsWorkbench({
     audience.dataQuality.status === "provisional";
 
   return (
-    <section
-      className="h-[calc(100dvh-8rem)] min-h-[36rem] overflow-hidden"
-      aria-labelledby="analytics-title"
-    >
-      <div className="grid h-full place-items-center rounded-xl border border-dashed px-8 text-center lg:hidden">
-        <div>
-          <Monitor className="mx-auto size-8 text-primary" />
-          <h1 className="mt-4 text-xl font-bold">Analytics needs a larger workspace</h1>
-          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Open Studio at 1440×900 or larger. This deliberate desktop workspace
-            never hides data behind a page or panel scrollbar.
-          </p>
-        </div>
-      </div>
-
-      <div className="hidden h-full min-h-0 grid-rows-[auto_auto_minmax(0,1fr)] gap-3 lg:grid">
+    <section className="space-y-4" aria-labelledby="analytics-title">
+      <div className="grid min-h-[42rem] grid-rows-[auto_auto_minmax(0,1fr)] gap-3 xl:h-[calc(100dvh-8.75rem)]">
         <header className="flex min-w-0 items-center justify-between gap-5">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -142,7 +128,7 @@ export function AnalyticsWorkbench({
         </header>
 
         <nav
-          className="grid grid-cols-7 rounded-xl border bg-card p-1"
+          className="grid grid-cols-2 gap-1 rounded-xl border bg-card p-1 sm:grid-cols-4 xl:grid-cols-7"
           aria-label="Analytics views"
         >
           {views.map((item) => {
@@ -159,7 +145,7 @@ export function AnalyticsWorkbench({
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
-                aria-current={active ? "page" : undefined}
+                aria-pressed={active}
               >
                 <Icon className="size-3.5" />
                 <span className="truncate">{item.label}</span>
@@ -168,7 +154,7 @@ export function AnalyticsWorkbench({
           })}
         </nav>
 
-        <div className="min-h-0 overflow-hidden">
+        <div className="min-h-0">
           {view === "overview" ? (
             <Overview traffic={traffic} audience={audience} />
           ) : null}
@@ -200,8 +186,8 @@ function Overview({
     traffic.totals.siteViews - traffic.totals.storyViews,
   );
   return (
-    <div className="grid h-full min-h-0 grid-rows-[6.25rem_minmax(0,1fr)] gap-3">
-      <div className="grid grid-cols-5 gap-3">
+    <div className="grid min-h-0 gap-3 xl:h-full xl:grid-rows-[6.25rem_minmax(0,1fr)]">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         <Metric label="Verified site views" value={traffic.totals.siteViews} icon={Eye} />
         <Metric label="Story views" value={traffic.totals.storyViews} icon={Newspaper} />
         <Metric label="Other page views" value={nonStoryViews} icon={FileChartColumn} />
@@ -216,7 +202,7 @@ function Overview({
           icon={Activity}
         />
       </div>
-      <div className="grid min-h-0 grid-cols-[1.45fr_0.75fr] gap-3">
+      <div className="grid min-h-0 gap-3 xl:grid-cols-[1.45fr_0.75fr]">
         <Panel title="30-day verified traffic" icon={BarChart3}>
           <DailyChart rows={traffic.daily} />
         </Panel>
@@ -263,7 +249,7 @@ function Content({ traffic }: { traffic: TrafficAnalyticsSummary }) {
   const rows = traffic.stories.slice(page * pageSize, (page + 1) * pageSize);
   const pages = Math.max(1, Math.ceil(traffic.stories.length / pageSize));
   return (
-    <div className="grid h-full min-h-0 grid-cols-[0.72fr_1.28fr] gap-3">
+    <div className="grid min-h-0 gap-3 xl:h-full xl:grid-cols-[0.72fr_1.28fr]">
       <Panel title="Readership distribution" icon={Gauge}>
         <StoryWheel stories={traffic.stories} total={traffic.totals.storyViews} />
       </Panel>
@@ -298,7 +284,7 @@ function Acquisition({
   devices: TrafficDeviceMetric[];
 }) {
   return (
-    <div className="grid h-full min-h-0 grid-cols-2 gap-3">
+    <div className="grid min-h-0 gap-3 lg:h-full lg:grid-cols-2">
       <Panel title="Session first-touch acquisition" icon={Compass}>
         <RankedBars
           rows={sources
@@ -333,8 +319,8 @@ function Acquisition({
 
 function Platforms({ audience }: { audience: AudienceSummary }) {
   return (
-    <div className="grid h-full min-h-0 grid-rows-[6.25rem_minmax(0,1fr)] gap-3">
-      <div className="grid grid-cols-5 gap-3">
+    <div className="grid min-h-0 gap-3 xl:h-full xl:grid-rows-[6.25rem_minmax(0,1fr)]">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         <Metric
           label="Known people/accounts"
           value={audience.identity.knownAccounts}
@@ -358,7 +344,7 @@ function Platforms({ audience }: { audience: AudienceSummary }) {
         />
       </div>
       <Panel title="Verified installations by platform" icon={Users}>
-        <div className="grid h-full grid-cols-4 gap-2">
+        <div className="grid h-full grid-cols-2 gap-2 lg:grid-cols-4">
           {audience.platforms.map((item) => (
             <PlatformCard key={item.platform} item={item} />
           ))}
@@ -474,7 +460,7 @@ function Audit({
 }) {
   const notes = [...traffic.dataQuality.notes, ...audience.dataQuality.notes];
   return (
-    <div className="grid h-full min-h-0 grid-cols-[0.9fr_1.1fr] gap-3">
+    <div className="grid min-h-0 gap-3 xl:h-full xl:grid-cols-[0.9fr_1.1fr]">
       <Panel title="Data-quality control" icon={ShieldCheck}>
         <div className="grid h-full grid-rows-[auto_auto_1fr] gap-3">
           <div className="grid grid-cols-3 gap-2">
@@ -542,7 +528,7 @@ function Panel({
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="h-[calc(100%-2.9rem)] min-h-0 p-4">
+      <CardContent className="h-[calc(100%-2.9rem)] min-h-0 overflow-x-auto p-4">
         {children}
       </CardContent>
     </Card>

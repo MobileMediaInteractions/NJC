@@ -5,6 +5,7 @@ export type StudioHubId =
   | "overview"
   | "editorial"
   | "distribution"
+  | "teamspace"
   | "communications"
   | "njc-plus"
   | "finance"
@@ -154,9 +155,9 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
     ],
   },
   {
-    id: "communications",
-    label: "Communications",
-    description: "Coordinate the newsroom",
+    id: "teamspace",
+    label: "Teamspace",
+    description: "Live newsroom conversation",
     items: [
       {
         id: "chat",
@@ -166,6 +167,13 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         requiresChat: true,
         module: "chat",
       },
+    ],
+  },
+  {
+    id: "communications",
+    label: "People",
+    description: "Team access and reader outreach",
+    items: [
       {
         id: "team",
         label: "Team & roles",
@@ -178,7 +186,6 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         label: "Site notifications",
         href: "/studio/notifications",
         roles: publishingRoles,
-        requiresAlerts: true,
         module: "notifications",
       },
     ],
@@ -263,7 +270,6 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         label: "Configuration control room",
         href: "/studio/settings",
         roles: ["admin"],
-        module: "legal",
       },
       {
         id: "legal-registry",

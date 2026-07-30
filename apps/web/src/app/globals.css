@@ -156,6 +156,51 @@
   }
 }
 
+/* Studio is an operational application, so every control must communicate
+   hover, keyboard focus, press, and persisted selection independently of color. */
+.studio-app :where(button, [role="button"], [data-slot="button"]) {
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    transform 90ms ease,
+    opacity 150ms ease;
+}
+
+.studio-app :where(button, [role="button"], [data-slot="button"]):not(:disabled):active {
+  transform: translateY(1px) scale(0.985);
+}
+
+.studio-app
+  :where(button, [role="button"], [data-slot="button"]):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.studio-app
+  :where(
+    button,
+    [role="button"],
+    [data-slot="button"],
+    [data-slot="tabs-trigger"]
+  ):is(
+    [aria-pressed="true"],
+    [aria-current="page"],
+    [data-active="true"],
+    [data-state="active"],
+    [data-state="open"]
+  ) {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--ring) 38%, transparent),
+    0 7px 20px color-mix(in srgb, var(--ring) 10%, transparent);
+}
+
+.studio-app [data-slot="tabs-trigger"][data-active] {
+  color: var(--foreground);
+  font-weight: 700;
+}
+
 html.dark .text-brand-navy {
   color: #f6f1e7 !important;
 }

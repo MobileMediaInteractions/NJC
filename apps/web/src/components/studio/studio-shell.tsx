@@ -19,7 +19,7 @@ export async function StudioShell({
   let unreadChatCount = 0;
   let chatEnabled = false;
   let pressEnabled = false;
-  let alertsEnabled = false;
+  let alertsEnabled = ["admin", "editor", "producer"].includes(viewer.role);
   let financeEnabled = false;
   const configurationPromise = getSiteConfiguration();
   if (hasDatabase() && canViewNewsTips(viewer.role)) {
@@ -34,17 +34,17 @@ export async function StudioShell({
     }
   }
 
-  if (hasDatabase()) {
-    try {
-      const employeeViewer = await getEmployeeViewer();
-      chatEnabled = Boolean(employeeViewer?.capabilities.includes("chat:read"));
-      pressEnabled = Boolean(employeeViewer?.capabilities.includes("tools:press"));
-      alertsEnabled = Boolean(employeeViewer?.capabilities.includes("tools:alerts"));
-      financeEnabled = Boolean(employeeViewer?.capabilities.includes("tools:finance"));
-      if (employeeViewer && chatEnabled) unreadChatCount = await getEmployeeUnreadChatCount(employeeViewer);
-    } catch (error) {
-      console.error("Studio chat badge lookup failed", error);
+  try {
+    const employeeViewer = await getEmployeeViewer();
+    chatEnabled = Boolean(employeeViewer?.capabilities.includes("chat:read"));
+    pressEnabled = Boolean(employeeViewer?.capabilities.includes("tools:press"));
+    alertsEnabled = Boolean(employeeViewer?.capabilities.includes("tools:alerts"));
+    financeEnabled = Boolean(employeeViewer?.capabilities.includes("tools:finance"));
+    if (hasDatabase() && employeeViewer && chatEnabled) {
+      unreadChatCount = await getEmployeeUnreadChatCount(employeeViewer);
     }
+  } catch (error) {
+    console.error("Studio capability lookup failed", error);
   }
 
   const configuration = await configurationPromise;

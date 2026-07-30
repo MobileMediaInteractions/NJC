@@ -140,6 +140,25 @@ test("navigation hides unauthorized and unavailable destinations", () => {
     administrator.find((hub) => hub.id === "configuration")?.items[0]?.id,
     "settings",
   );
+  assert.equal(
+    administrator.find((hub) => hub.id === "teamspace")?.items[0]?.id,
+    "chat",
+  );
+
+  const publisherWithDeliveryPaused = getVisibleStudioNavigation({
+    role: "producer",
+    chatEnabled: true,
+    pressEnabled: true,
+    alertsEnabled: false,
+    financeEnabled: false,
+  });
+  assert.equal(
+    publisherWithDeliveryPaused
+      .flatMap((hub) => hub.items)
+      .some((item) => item.id === "notification-campaigns"),
+    true,
+    "notification controls remain reachable while public delivery is paused",
+  );
 
   const modules = { ...defaultStudioModules };
   modules.stories = false;

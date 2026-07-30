@@ -7,20 +7,13 @@ const workbenchPath = new URL(
   import.meta.url,
 );
 
-test("the analytics workspace uses a bounded desktop canvas without scroll containers", async () => {
+test("the analytics workspace renders at every supported viewport", async () => {
   const source = await readFile(workbenchPath, "utf8");
 
-  assert.match(source, /h-\[calc\(100dvh-8rem\)\]/);
-  assert.match(source, /overflow-hidden/);
-  assert.doesNotMatch(source, /\boverflow-(?:auto|scroll|x-auto|x-scroll|y-auto|y-scroll)\b/);
-});
-
-test("unsupported smaller viewports receive an intentional size notice", async () => {
-  const source = await readFile(workbenchPath, "utf8");
-
-  assert.match(source, /lg:hidden/);
-  assert.match(source, /Analytics needs a larger workspace/);
-  assert.match(source, /1440×900 or larger/);
+  assert.match(source, /min-h-\[42rem\]/);
+  assert.match(source, /sm:grid-cols-4/);
+  assert.doesNotMatch(source, /Analytics needs a larger workspace/);
+  assert.doesNotMatch(source, /lg:hidden/);
 });
 
 test("dense analytics datasets are segmented and paginated instead of stacked", async () => {
