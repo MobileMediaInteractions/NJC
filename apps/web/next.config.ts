@@ -128,6 +128,12 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/analytics",
+        has: onHost(canonicalSiteHostname),
+        destination: `${studioOrigin}/analytics`,
+        permanent: true,
+      },
+      {
         source: "/studio",
         has: onHost(canonicalSiteHostname),
         destination: studioOrigin,
