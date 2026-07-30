@@ -17,9 +17,11 @@ import {
   Settings2,
   ShieldAlert,
   SlidersHorizontal,
+  Sparkles,
   Trash2,
   Zap,
 } from "lucide-react";
+import { CourierEasterEggReveal } from "@/components/courier-easter-egg";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -92,6 +94,7 @@ export function SiteSettingsForm({
   const [lastSavedConfiguration, setLastSavedConfiguration] = useState(initialConfiguration);
   const [state, setState] = useState<SaveState>("idle");
   const [message, setMessage] = useState("");
+  const [easterEggPreviewOpen, setEasterEggPreviewOpen] = useState(false);
   const dirty = JSON.stringify(configuration) !== JSON.stringify(lastSavedConfiguration);
 
   function updatePublication(key: keyof SiteConfiguration["publication"], value: string) {
@@ -100,6 +103,16 @@ export function SiteSettingsForm({
 
   function updateFeature(key: keyof SiteConfiguration["features"], value: boolean) {
     setConfiguration((current) => ({ ...current, features: { ...current.features, [key]: value } }));
+  }
+
+  function updateEasterEgg<Key extends keyof SiteConfiguration["easterEgg"]>(
+    key: Key,
+    value: SiteConfiguration["easterEgg"][Key],
+  ) {
+    setConfiguration((current) => ({
+      ...current,
+      easterEgg: { ...current.easterEgg, [key]: value },
+    }));
   }
 
   function updateGoogleAnalytics<Key extends keyof SiteConfiguration["measurement"]["googleAnalytics"]>(
@@ -241,6 +254,7 @@ export function SiteSettingsForm({
               <TabsTrigger value="publication" className="h-10 shrink-0 justify-start px-3 lg:w-full"><Navigation /> Publication</TabsTrigger>
               <TabsTrigger value="editorial" className="h-10 shrink-0 justify-start px-3 lg:w-full"><FileText /> Editorial</TabsTrigger>
               <TabsTrigger value="features" className="h-10 shrink-0 justify-start px-3 lg:w-full"><SlidersHorizontal /> Features</TabsTrigger>
+              <TabsTrigger value="easter-egg" className="h-10 shrink-0 justify-start px-3 lg:w-full"><Sparkles /> Easter egg</TabsTrigger>
               <TabsTrigger value="studio" className="h-10 shrink-0 justify-start px-3 lg:w-full"><LayoutGrid /> Studio</TabsTrigger>
               <TabsTrigger value="notifications" className="h-10 shrink-0 justify-start px-3 lg:w-full"><BellRing /> Notifications</TabsTrigger>
               <TabsTrigger value="automations" className="h-10 shrink-0 justify-start px-3 lg:w-full"><Bot /> Automations</TabsTrigger>
@@ -321,6 +335,94 @@ export function SiteSettingsForm({
             <Toggle label="Membership" description="Reserved membership surfaces for a future provider." checked={configuration.features.membership} disabled={!canManage} onCheckedChange={(value) => updateFeature("membership", value)} />
             <Toggle label="Donations" description="Reserved reader-support surfaces for a future provider." checked={configuration.features.donations} disabled={!canManage} onCheckedChange={(value) => updateFeature("donations", value)} />
           </CardContent></Card>
+        </TabsContent>
+
+        <TabsContent value="easter-egg" className="space-y-6">
+          <Card className="overflow-hidden border-[#c49545]/35">
+            <CardHeader className="bg-[#102f25] text-white">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="text-[0.62rem] font-black uppercase tracking-[0.2em] text-[#d9ad62]">
+                    Classified circulation
+                  </p>
+                  <CardTitle className="mt-2 text-white">The Night Courier</CardTitle>
+                  <CardDescription className="text-white/60">
+                    An intentionally unreasonable secret with no authorization,
+                    account, payment, or data effect.
+                  </CardDescription>
+                </div>
+                <Badge variant={configuration.easterEgg.enabled ? "secondary" : "outline"}>
+                  {configuration.easterEgg.enabled ? "Hidden and live" : "Disabled"}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6 pt-6">
+              <Toggle
+                label="Enable the public easter egg"
+                description="Mounts the local-only interaction on public pages. The trigger is never included in public configuration APIs or navigation."
+                checked={configuration.easterEgg.enabled}
+                disabled={!canManage}
+                onCheckedChange={(value) => updateEasterEgg("enabled", value)}
+              />
+
+              <div className="grid gap-4 rounded-xl border bg-muted/25 p-5">
+                <div>
+                  <p className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-primary">Exact location</p>
+                  <p className="mt-1 text-sm font-semibold">Public footer → the newsroom desk and city line</p>
+                </div>
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="rounded-lg border bg-background p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.12em]">Desktop ritual</p>
+                    <ol className="mt-3 list-decimal space-y-2 pl-4 text-xs leading-5 text-muted-foreground">
+                      <li>With no text field focused, type <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">exit nine keeps the presses awake</code>.</li>
+                      <li>Within 12 seconds, press <strong className="text-foreground">Option/Alt + Shift + 9</strong>.</li>
+                      <li>Within five seconds, select the footer desk line exactly five times.</li>
+                    </ol>
+                  </div>
+                  <div className="rounded-lg border bg-background p-4">
+                    <p className="text-xs font-black uppercase tracking-[0.12em]">Touch ritual</p>
+                    <ol className="mt-3 list-decimal space-y-2 pl-4 text-xs leading-5 text-muted-foreground">
+                      <li>Press the footer desk line for between 0.8 and 1.3 seconds.</li>
+                      <li>Release, then tap the same line nine times within six seconds.</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <TextField
+                  label="Reveal title"
+                  value={configuration.easterEgg.title}
+                  onChange={(value) => updateEasterEgg("title", value)}
+                  disabled={!canManage}
+                />
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="easter-egg-message">Reveal message</Label>
+                  <Textarea
+                    id="easter-egg-message"
+                    value={configuration.easterEgg.message}
+                    disabled={!canManage}
+                    maxLength={240}
+                    onChange={(event) => updateEasterEgg("message", event.target.value)}
+                    className="min-h-24"
+                  />
+                  <p className="text-right text-xs text-muted-foreground">
+                    {configuration.easterEgg.message.length}/240
+                  </p>
+                </div>
+              </div>
+
+              <Button type="button" variant="outline" onClick={() => setEasterEggPreviewOpen(true)}>
+                <Sparkles /> Preview the reveal
+              </Button>
+            </CardContent>
+          </Card>
+          <CourierEasterEggReveal
+            configuration={configuration.easterEgg}
+            open={easterEggPreviewOpen}
+            onOpenChange={setEasterEggPreviewOpen}
+            preview
+          />
         </TabsContent>
 
         <TabsContent value="studio" className="space-y-6">

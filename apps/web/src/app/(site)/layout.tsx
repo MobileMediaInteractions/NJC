@@ -3,6 +3,7 @@ import { SiteHeader } from "@/components/site-header";
 import { GoogleAdSenseScript } from "@/components/google-ads";
 import { GoogleAnalytics } from "@/components/google-analytics";
 import { AdBlockNotice } from "@/components/ad-block-notice";
+import { CourierEasterEgg } from "@/components/courier-easter-egg";
 import { hasAdFreeNjcPlusAccess } from "@/lib/advertising";
 import {
   getSiteConfiguration,
@@ -43,6 +44,7 @@ export default async function PublicSiteLayout({ children }: { children: React.R
         promoText={advertising.adFreePromoText}
         promoHref={advertising.adFreePromoHref}
       />
+      <CourierEasterEgg configuration={configuration.easterEgg} />
       <SiteHeader
         publication={configuration.publication}
         navigation={configuration.navigation.filter(
@@ -58,6 +60,7 @@ export default async function PublicSiteLayout({ children }: { children: React.R
         publication={configuration.publication}
         features={configuration.features}
         staffPageEnabled={staffPageEnabled}
+        easterEggEnabled={configuration.easterEgg.enabled}
       />
     </>
   );

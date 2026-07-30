@@ -76,6 +76,7 @@ export async function PATCH(request: Request) {
         enabledStudioModules: Object.entries(configuration.studio.modules)
           .filter(([, enabled]) => enabled)
           .map(([name]) => name),
+        easterEggEnabled: configuration.easterEgg.enabled,
         studioExperience: configuration.studio.experience,
         notificationPolicy: configuration.studio.notifications,
         automations: configuration.studio.automations,

@@ -14,6 +14,13 @@ export const defaultDatelines = [
   "Woodbridge",
 ] as const;
 
+export const defaultEasterEggConfiguration = {
+  enabled: true,
+  title: "The Night Courier",
+  message:
+    "Some stories arrive after the presses stop. Somewhere between the Turnpike lights and the first morning train, this one found you.",
+};
+
 export const studioModuleKeys = [
   "commandReference",
   "stories",
@@ -202,6 +209,11 @@ export const siteConfigurationSchema = z.object({
       sectionInline: adPlacementSchema,
     }),
   }),
+  easterEgg: z.object({
+    enabled: z.boolean(),
+    title: z.string().trim().min(3).max(80),
+    message: z.string().trim().min(20).max(240),
+  }).default(defaultEasterEggConfiguration),
   studio: z.object({
     modules: z.object({
       commandReference: z.boolean(),
@@ -355,6 +367,7 @@ export const defaultSiteConfiguration: SiteConfiguration = {
       sectionInline: { enabled: false, slotId: "" },
     },
   },
+  easterEgg: { ...defaultEasterEggConfiguration },
   studio: {
     modules: { ...defaultStudioModules },
     experience: { ...defaultStudioConfiguration.experience },

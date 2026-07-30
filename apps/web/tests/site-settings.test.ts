@@ -117,6 +117,16 @@ test("older stored configuration keeps external analytics off", () => {
   assert.equal(isGoogleAnalyticsLive(parsed), false);
 });
 
+test("older stored configuration receives the enabled Night Courier easter egg", () => {
+  const configuration = configurationCopy() as Partial<ReturnType<typeof configurationCopy>>;
+  delete configuration.easterEgg;
+  const parsed = siteConfigurationSchema.parse(configuration);
+
+  assert.equal(parsed.easterEgg.enabled, true);
+  assert.equal(parsed.easterEgg.title, "The Night Courier");
+  assert.ok(parsed.easterEgg.message.length >= 20);
+});
+
 test("older stored configuration enables pseudonyms and Distribution by default", () => {
   const configuration = configurationCopy();
   const features = configuration.features as Partial<typeof configuration.features>;
