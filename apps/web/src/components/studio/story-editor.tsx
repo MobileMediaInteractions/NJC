@@ -42,8 +42,9 @@ export interface StoryEditorInitialStory {
   noIndex: boolean;
   isBreaking: boolean;
   bylineMode: "account" | "pseudonym";
-  status: "draft" | "review" | "scheduled";
+  status: "draft" | "review" | "scheduled" | "published";
   scheduledAt: string | null;
+  isActive: boolean;
 }
 
 export function StoryEditor({
@@ -136,8 +137,21 @@ export function StoryEditor({
       const payload = await response.json().catch(() => null);
       if (response.ok && payload?.data?.slug) {
         setState("saved");
-        setMessage(status === "review" ? "Story submitted for review." : initialStory ? "Draft updated in the newsroom." : "Draft created in the newsroom.");
-        window.location.assign(status === "review" ? `/studio/stories/${payload.data.id}` : "/studio/stories");
+        const liveRevision = initialStory?.status === "published";
+        setMessage(
+          liveRevision
+            ? "Update submitted for independent approval."
+            : status === "review"
+              ? "Story submitted for review."
+              : initialStory
+                ? "Draft updated in the newsroom."
+                : "Draft created in the newsroom.",
+        );
+        window.location.assign(
+          status === "review" || liveRevision
+            ? `/studio/stories/${payload.data.id}`
+            : "/studio/stories",
+        );
       } else {
         const responseErrors = payload?.error?.details?.fieldErrors as StoryFieldErrors | undefined;
         if (responseErrors) {
@@ -220,11 +234,11 @@ export function StoryEditor({
 
   return (
     <div className="mx-auto max-w-7xl">
-      <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><Button variant="ghost" size="sm" asChild className="mb-2 -ml-3 text-muted-foreground"><Link href="/studio/stories"><ArrowLeft /> All stories</Link></Button><h1 className="text-3xl font-bold tracking-tight">{initialStory ? "Edit story" : "Create story"}</h1><p className="mt-1 text-sm text-muted-foreground">{initialStory ? initialStory.status !== "draft" ? "Any pre-publication change returns this story to Draft so it can be reviewed again." : "Continue writing or submit this saved draft for editorial review." : "Every story starts as a draft. Save it first, then submit it for review."}</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => save("draft")} disabled={state === "saving" || uploadState === "uploading"}>{state === "saving" ? <Loader2 className="animate-spin" /> : <Save />} {initialStory && initialStory.status !== "draft" ? "Save changes as draft" : "Save draft"}</Button>{initialStory?.status === "draft" ? <Button onClick={() => save("review")} disabled={state === "saving" || uploadState === "uploading"}>{state === "saving" ? <Loader2 className="animate-spin" /> : <Send />} Send to review</Button> : null}</div></div>
+      <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><Button variant="ghost" size="sm" asChild className="mb-2 -ml-3 text-muted-foreground"><Link href="/studio/stories"><ArrowLeft /> All stories</Link></Button><h1 className="text-3xl font-bold tracking-tight">{initialStory?.status === "published" ? "Propose live-story update" : initialStory ? "Edit story" : "Create story"}</h1><p className="mt-1 text-sm text-muted-foreground">{initialStory?.status === "published" ? "The live article stays unchanged until a different publisher approves this comparison." : initialStory ? initialStory.status !== "draft" ? "Any pre-publication change returns this story to Draft so it can be reviewed again." : "Continue writing or submit this saved draft for editorial review." : "Every story starts as a draft. Save it first, then submit it for review."}</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => save("draft")} disabled={state === "saving" || uploadState === "uploading"}>{state === "saving" ? <Loader2 className="animate-spin" /> : <Save />} {initialStory?.status === "published" ? "Submit update for approval" : initialStory && initialStory.status !== "draft" ? "Save changes as draft" : "Save draft"}</Button>{initialStory?.status === "draft" ? <Button onClick={() => save("review")} disabled={state === "saving" || uploadState === "uploading"}>{state === "saving" ? <Loader2 className="animate-spin" /> : <Send />} Send to review</Button> : null}</div></div>
       {message && <div className={`mb-5 flex items-center gap-2 rounded-md border p-3 text-sm ${state === "error" ? "border-destructive/30 bg-destructive/10 text-destructive" : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"}`}><CheckCircle2 className="size-4" />{message}</div>}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Card><CardHeader><CardTitle>Story</CardTitle><CardDescription>Required fields are checked before the story enters review.</CardDescription></CardHeader><CardContent className="space-y-6">
-          <div className="space-y-2"><div className="flex justify-between"><Label htmlFor="headline">Headline <span className="text-destructive">*</span></Label><span className="text-xs text-muted-foreground">{headline.length}/180</span></div><Textarea id="headline" value={headline} onChange={(e) => { const value = e.target.value; setHeadline(value); setSlug(value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")); }} placeholder="Write a clear, specific local headline" className="min-h-24 resize-none text-xl font-semibold" maxLength={180} aria-invalid={Boolean(fieldError("headline") || fieldError("slug"))} /><p className="text-xs text-muted-foreground">/{slug || "story-slug"}</p>{(fieldError("headline") || fieldError("slug")) && <p className="text-xs text-destructive">{fieldError("headline") || fieldError("slug")}</p>}</div>
+          <div className="space-y-2"><div className="flex justify-between"><Label htmlFor="headline">Headline <span className="text-destructive">*</span></Label><span className="text-xs text-muted-foreground">{headline.length}/180</span></div><Textarea id="headline" value={headline} onChange={(e) => { const value = e.target.value; setHeadline(value); if (initialStory?.status !== "published") setSlug(value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")); }} placeholder="Write a clear, specific local headline" className="min-h-24 resize-none text-xl font-semibold" maxLength={180} aria-invalid={Boolean(fieldError("headline") || fieldError("slug"))} /><p className="text-xs text-muted-foreground">/{slug || "story-slug"}{initialStory?.status === "published" ? " · URL locked after publication" : ""}</p>{(fieldError("headline") || fieldError("slug")) && <p className="text-xs text-destructive">{fieldError("headline") || fieldError("slug")}</p>}</div>
           <div className="space-y-2"><div className="flex justify-between"><Label htmlFor="dek">Summary <span className="text-destructive">*</span></Label><span className="text-xs text-muted-foreground">{dek.length}/320</span></div><Textarea id="dek" value={dek} onChange={(e) => setDek(e.target.value)} placeholder="One or two sentences explaining what happened and why it matters" maxLength={320} aria-invalid={Boolean(fieldError("dek"))} />{fieldError("dek") && <p className="text-xs text-destructive">{fieldError("dek")}</p>}</div>
           <Separator />
           <div className="space-y-2"><div className="flex items-center justify-between"><Label htmlFor="body">Story body <span className="text-destructive">*</span></Label><Button variant="ghost" size="sm" className="text-primary"><Sparkles /> Suggest structure</Button></div><Textarea id="body" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Write the story here. Separate paragraphs with a blank line." className="min-h-[34rem] resize-y leading-7" aria-invalid={Boolean(fieldError("body"))} /><p className="text-xs text-muted-foreground">{wordCount} words · about {Math.max(1, Math.ceil(wordCount / 220))} min read</p>{fieldError("body") && <p className="text-xs text-destructive">{fieldError("body")}</p>}</div>
@@ -284,7 +298,11 @@ export function StoryEditor({
                     <Switch
                       id="use-pseudonym"
                       checked={bylineMode === "pseudonym"}
-                      disabled={!pseudonymsEnabled || !pseudonymByline.available}
+                      disabled={
+                        initialStory?.status === "published" ||
+                        !pseudonymsEnabled ||
+                        !pseudonymByline.available
+                      }
                       onCheckedChange={(checked) =>
                         setBylineMode(checked ? "pseudonym" : "account")
                       }
@@ -305,9 +323,16 @@ export function StoryEditor({
                   </p>
                 )}
               </div>
+              {initialStory?.status === "published" ? (
+                <p className="rounded-md border bg-muted/40 p-3 text-xs leading-5 text-muted-foreground">
+                  The public byline and story URL are immutable after
+                  publication. Copy, context, media and search presentation may
+                  still be proposed while this story is active.
+                </p>
+              ) : null}
               <Separator />
               <div className="flex items-center justify-between"><div><Label htmlFor="breaking">Breaking news</Label><p className="mt-1 text-xs text-muted-foreground">Adds urgent public treatment.</p></div><Switch id="breaking" checked={breaking} onCheckedChange={setBreaking} /></div>
-              <Separator />
+              {initialStory?.status !== "published" ? <><Separator />
               <div className="flex items-start justify-between gap-4">
                 <div><Label htmlFor="plan-publication">Plan publication</Label><p className="mt-1 text-xs leading-5 text-muted-foreground">Choose an intended time while drafting. The clock remains inactive until editorial review confirms the schedule.</p></div>
                 <Switch id="plan-publication" checked={schedulePlanned} onCheckedChange={(checked) => { setSchedulePlanned(checked); if (!checked) setScheduledAt(""); }} />
@@ -319,7 +344,7 @@ export function StoryEditor({
                   {fieldError("scheduledAt") ? <p className="text-xs text-destructive">{fieldError("scheduledAt")}</p> : null}
                   <p className="text-xs leading-5 text-muted-foreground"><CalendarClock className="mr-1 inline size-3.5" /> Entered in your device timezone. Courier publishes in {publicationTimezone}. A Draft or Review story never auto-publishes, even if this time passes; an authorized publisher must activate or replace the schedule after review.</p>
                 </div>
-              ) : null}
+              ) : null}</> : null}
             </CardContent>
           </Card>
           <Card>

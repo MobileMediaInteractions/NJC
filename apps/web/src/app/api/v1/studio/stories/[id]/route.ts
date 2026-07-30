@@ -29,8 +29,19 @@ const transitionInput = z.discriminatedUnion("status", [
   z.object({
     status: z.literal("scheduled"),
     scheduledAt: z.iso.datetime(),
+    isActive: z.boolean().default(false),
   }),
-  z.object({ status: z.literal("published") }),
+  z.object({
+    status: z.literal("published"),
+    isActive: z.boolean().default(false),
+  }),
+]);
+const storyActionInput = z.union([
+  transitionInput,
+  z.object({
+    action: z.literal("close_editing"),
+    confirmation: z.literal("CLOSE STORY"),
+  }),
 ]);
 
 export async function PATCH(
@@ -50,7 +61,7 @@ export async function PATCH(
     );
 
   const parsedId = storyId.safeParse((await context.params).id);
-  const parsedBody = transitionInput.safeParse(await request.json().catch(() => null));
+  const parsedBody = storyActionInput.safeParse(await request.json().catch(() => null));
   if (!parsedId.success || !parsedBody.success)
     return NextResponse.json(
       { error: { code: "invalid_request", message: "Choose a valid story and editorial action" } },
@@ -64,10 +75,99 @@ export async function PATCH(
       { status: 404 },
     );
 
-  const nextStatus = parsedBody.data.status;
+  const mutation = parsedBody.data;
+  if ("action" in mutation) {
+    if (!canPublishStory(viewer.role)) {
+      return NextResponse.json(
+        { error: { code: "forbidden", message: "Publisher access is required to close a live story" } },
+        { status: 403 },
+      );
+    }
+    if (current.status !== "published" || !current.isActive) {
+      return NextResponse.json(
+        { error: { code: "story_locked", message: "This story is already closed to further editing" } },
+        { status: 409 },
+      );
+    }
+    const [pendingRevision] = await getDb()
+      .select({ id: storyRevisions.id })
+      .from(storyRevisions)
+      .where(and(
+        eq(storyRevisions.storyId, current.id),
+        eq(storyRevisions.reviewStatus, "pending"),
+      ))
+      .limit(1);
+    if (pendingRevision) {
+      return NextResponse.json(
+        {
+          error: {
+            code: "revision_pending",
+            message:
+              "Approve or reject the pending update before marking this story final.",
+          },
+        },
+        { status: 409 },
+      );
+    }
+    const now = new Date();
+    const updated = await getDb().transaction(async (tx) => {
+      const [story] = await tx
+        .update(stories)
+        .set({ isActive: false, editingClosedAt: now, updatedAt: now })
+        .where(and(
+          eq(stories.id, current.id),
+          eq(stories.status, "published"),
+          eq(stories.isActive, true),
+        ))
+        .returning();
+      if (!story) return null;
+      const [latest] = await tx
+        .select({ version: storyRevisions.version })
+        .from(storyRevisions)
+        .where(eq(storyRevisions.storyId, story.id))
+        .orderBy(desc(storyRevisions.version))
+        .limit(1);
+      await tx.insert(storyRevisions).values({
+        storyId: story.id,
+        editorId: viewer.databaseId ?? null,
+        version: (latest?.version ?? 0) + 1,
+        snapshot: story,
+        note: `Live editing closed by ${viewer.name}`,
+        reviewStatus: "applied",
+      });
+      return story;
+    });
+    if (!updated) {
+      return NextResponse.json(
+        { error: { code: "conflict", message: "The story changed while editing was being closed. Reload and try again." } },
+        { status: 409 },
+      );
+    }
+    await writeApiAudit({
+      actorClerkId: viewer.id,
+      event: "story.editing_closed",
+      request,
+      metadata: { storyId: updated.id, slug: updated.slug },
+    });
+    revalidateStoryPaths(updated);
+    return NextResponse.json({ data: updated, meta: { apiVersion: "1" } });
+  }
+
+  const nextStatus = mutation.status;
+  if (
+    (nextStatus === "scheduled" || nextStatus === "published") &&
+    mutation.isActive &&
+    !(await getSiteConfiguration()).studio.editorialWorkflow
+      .activeStoryRevisions
+  ) {
+    return NextResponse.json(
+      { error: { code: "feature_disabled", message: "Active-story revisions are disabled in Studio Configuration" } },
+      { status: 409 },
+    );
+  }
   const scheduledAt =
     nextStatus === "scheduled"
-      ? new Date(parsedBody.data.scheduledAt)
+      ? new Date(mutation.scheduledAt)
       : null;
   if (
     nextStatus === "scheduled" &&
@@ -137,6 +237,16 @@ export async function PATCH(
       const [story] = await tx.update(stories).set({
         status: nextStatus,
         publicBylineSnapshot: publishByline,
+        isActive:
+          nextStatus === "scheduled" || nextStatus === "published"
+            ? mutation.isActive
+            : current.isActive,
+        editingClosedAt:
+          nextStatus === "published"
+            ? mutation.isActive
+              ? null
+              : now
+            : current.editingClosedAt,
         publishedAt: nextStatus === "published" ? now : current.publishedAt,
         scheduledAt:
           nextStatus === "scheduled"
@@ -240,9 +350,26 @@ export async function PUT(
       { error: { code: "not_found", message: "Story not found" } },
       { status: 404 },
     );
-  if (current.status !== "draft" && current.status !== "review" && current.status !== "scheduled")
+  const isPublishedUpdate =
+    current.status === "published" && current.isActive;
+  if (
+    isPublishedUpdate &&
+    !(await getSiteConfiguration()).studio.editorialWorkflow
+      .activeStoryRevisions
+  ) {
     return NextResponse.json(
-      { error: { code: "story_locked", message: "Only unpublished stories can be edited in this workspace" } },
+      { error: { code: "feature_disabled", message: "Active-story revisions are disabled in Studio Configuration" } },
+      { status: 409 },
+    );
+  }
+  if (
+    current.status !== "draft" &&
+    current.status !== "review" &&
+    current.status !== "scheduled" &&
+    !isPublishedUpdate
+  )
+    return NextResponse.json(
+      { error: { code: "story_locked", message: "This published story is closed to further editing" } },
       { status: 409 },
     );
 
@@ -256,9 +383,10 @@ export async function PUT(
       { status: 403 },
     );
   if (
-    parsedBody.data.status === "scheduled" ||
-    parsedBody.data.status === "published" ||
-    parsedBody.data.publishedAt
+    !isPublishedUpdate &&
+    (parsedBody.data.status === "scheduled" ||
+      parsedBody.data.status === "published" ||
+      parsedBody.data.publishedAt)
   )
     return NextResponse.json(
       {
@@ -281,6 +409,17 @@ export async function PUT(
       { error: { code: "slug_conflict", message: "A story with this headline URL already exists. Change the headline before saving." } },
       { status: 409 },
     );
+  if (isPublishedUpdate && parsedBody.data.slug !== current.slug) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "published_slug_locked",
+          message: "A published story keeps its original URL. Update the headline without changing the slug.",
+        },
+      },
+      { status: 409 },
+    );
+  }
 
   const now = new Date();
   const {
@@ -307,17 +446,20 @@ export async function PUT(
         { status: 409 },
       );
     }
-    const nextPublicByline = current.authorId
-      ? await resolvePublicByline(current.authorId, bylineMode)
-      : bylineMode === "account"
-        ? legacyPublicBylineSnapshot({
-            authorSnapshot: current.authorSnapshot,
-          })
-        : (() => {
-            throw new BylineUnavailableError(
-              "A legacy story without an assigned owner cannot use a pseudonym.",
-            );
-          })();
+    const nextPublicByline = isPublishedUpdate
+      ? current.publicBylineSnapshot ??
+        legacyPublicBylineSnapshot({ authorSnapshot: current.authorSnapshot })
+      : current.authorId
+        ? await resolvePublicByline(current.authorId, bylineMode)
+        : bylineMode === "account"
+          ? legacyPublicBylineSnapshot({
+              authorSnapshot: current.authorSnapshot,
+            })
+          : (() => {
+              throw new BylineUnavailableError(
+                "A legacy story without an assigned owner cannot use a pseudonym.",
+              );
+            })();
     const previousPublicByline =
       current.publicBylineSnapshot ??
       legacyPublicBylineSnapshot({ authorSnapshot: current.authorSnapshot });
@@ -326,6 +468,33 @@ export async function PUT(
       previousPublicByline.name !== nextPublicByline.name ||
       previousPublicByline.pseudonymRevision !==
         nextPublicByline.pseudonymRevision;
+    if (isPublishedUpdate && bylineChanged) {
+      return NextResponse.json(
+        { error: { code: "published_byline_locked", message: "The public byline cannot change after publication" } },
+        { status: 409 },
+      );
+    }
+    if (isPublishedUpdate) {
+      const [pending] = await getDb()
+        .select({ id: storyRevisions.id })
+        .from(storyRevisions)
+        .where(and(
+          eq(storyRevisions.storyId, current.id),
+          eq(storyRevisions.reviewStatus, "pending"),
+        ))
+        .limit(1);
+      if (pending) {
+        return NextResponse.json(
+          {
+            error: {
+              code: "revision_pending",
+              message: "An update is already awaiting approval. Review or reject it before submitting another.",
+            },
+          },
+          { status: 409 },
+        );
+      }
+    }
     const effectiveStatus =
       current.status === "review" || current.status === "scheduled"
         ? "draft"
@@ -351,6 +520,78 @@ export async function PUT(
         { status: 403 },
       );
     }
+    if (isPublishedUpdate) {
+      const proposedSnapshot = {
+        ...current,
+        ...storyValues,
+        publicBylineSnapshot: nextPublicByline,
+        whyItMatters: includeWhyItMatters
+          ? generateWhyItMatters(parsedBody.data)
+          : null,
+        imageUrl: parsedBody.data.imageUrl || null,
+        imageAlt: parsedBody.data.imageAlt || null,
+        seoTitle: parsedBody.data.seoTitle || null,
+        seoDescription: parsedBody.data.seoDescription || null,
+        canonicalUrl: parsedBody.data.canonicalUrl || null,
+        scheduledAt: null,
+        publishedAt: current.publishedAt,
+        status: "published",
+        isActive: true,
+        editingClosedAt: null,
+        readingMinutes: Math.max(
+          1,
+          Math.ceil(parsedBody.data.body.join(" ").split(/\s+/).length / 220),
+        ),
+        updatedAt: now,
+      };
+      const revision = await getDb().transaction(async (tx) => {
+        const [latest] = await tx
+          .select({ version: storyRevisions.version })
+          .from(storyRevisions)
+          .where(eq(storyRevisions.storyId, current.id))
+          .orderBy(desc(storyRevisions.version))
+          .limit(1);
+        const [latestApplied] = await tx
+          .select({ version: storyRevisions.version })
+          .from(storyRevisions)
+          .where(and(
+            eq(storyRevisions.storyId, current.id),
+            eq(storyRevisions.reviewStatus, "applied"),
+          ))
+          .orderBy(desc(storyRevisions.version))
+          .limit(1);
+        const version = (latest?.version ?? 0) + 1;
+        const [created] = await tx
+          .insert(storyRevisions)
+          .values({
+            storyId: current.id,
+            editorId: viewer.databaseId ?? null,
+            version,
+            baseVersion: latestApplied?.version ?? 0,
+            snapshot: proposedSnapshot,
+            note: `Published-story update submitted by ${viewer.name}`,
+            reviewStatus: "pending",
+          })
+          .returning();
+        return created;
+      });
+      await writeApiAudit({
+        actorClerkId: viewer.id,
+        event: "story.revision_submitted",
+        request,
+        metadata: {
+          storyId: current.id,
+          revisionId: revision?.id,
+          version: revision?.version,
+        },
+      });
+      revalidatePath(`/studio/stories/${current.id}`);
+      return NextResponse.json({
+        data: { ...current, revisionPending: true },
+        meta: { apiVersion: "1", revisionId: revision?.id },
+      });
+    }
+
     const updated = await getDb().transaction(async (tx) => {
       const [story] = await tx.update(stories).set({
         ...storyValues,
@@ -426,6 +667,21 @@ export async function PUT(
       { status: 500 },
     );
   }
+}
+
+function revalidateStoryPaths(story: typeof stories.$inferSelect) {
+  revalidatePath("/studio");
+  revalidatePath("/studio/stories");
+  revalidatePath(`/studio/stories/${story.id}`);
+  revalidatePath(`/studio/stories/${story.id}/edit`);
+  revalidatePath("/");
+  revalidatePath("/latest");
+  revalidatePath(`/category/${story.categorySlug}`);
+  revalidatePath(`/story/${story.slug}`);
+  revalidatePath("/api/v1/stories");
+  revalidatePath("/feed.xml");
+  revalidatePath("/sitemap.xml");
+  revalidatePath("/news-sitemap.xml");
 }
 
 export async function DELETE(

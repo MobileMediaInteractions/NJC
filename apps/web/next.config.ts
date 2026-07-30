@@ -25,6 +25,7 @@ const studioSections = [
   "20-under-20",
   "analytics",
   "chat",
+  "commands",
   "distribution",
   "exports",
   "finance",

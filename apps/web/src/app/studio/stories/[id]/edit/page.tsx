@@ -1,8 +1,8 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { getDb, hasDatabase } from "@harborline/backend/db";
-import { stories } from "@harborline/backend/schema";
+import { stories, storyRevisions } from "@harborline/backend/schema";
 import { StoryEditor } from "@/components/studio/story-editor";
 import { StudioGate } from "@/components/studio/studio-gate";
 import { StudioShell } from "@/components/studio/studio-shell";
@@ -32,6 +32,7 @@ export default async function EditStoryPage({ params }: { params: Promise<{ id: 
     return <StudioShell viewer={viewer}><StatusCard title="Story editor unavailable" description="The production database could not be reached. No editorial changes were made." /></StudioShell>;
   }
   if (!story) notFound();
+  const configuration = await getSiteConfiguration();
 
   const canPublish = canPublishStory(viewer.role);
   const canEdit =
@@ -40,11 +41,37 @@ export default async function EditStoryPage({ params }: { params: Promise<{ id: 
   if (!canEdit) {
     return <StudioShell viewer={viewer}><StatusCard title="Editing access required" description="Only the story owner or a publisher can change this newsroom draft." /></StudioShell>;
   }
-  if (story.status !== "draft" && story.status !== "review" && story.status !== "scheduled") {
-    return <StudioShell viewer={viewer}><StatusCard title="This story is locked" description="Published and archived stories cannot be changed in the draft editor." /></StudioShell>;
+  const publishedEditingAllowed =
+    story.status === "published" &&
+    story.isActive &&
+    configuration.studio.editorialWorkflow.activeStoryRevisions;
+  if (
+    story.status !== "draft" &&
+    story.status !== "review" &&
+    story.status !== "scheduled" &&
+    !publishedEditingAllowed
+  ) {
+    return <StudioShell viewer={viewer}><StatusCard title="This story is final" description="Editing privileges were closed when this published story stopped being active." /></StudioShell>;
   }
+  if (publishedEditingAllowed) {
+    const [pendingRevision] = await getDb()
+      .select({ id: storyRevisions.id })
+      .from(storyRevisions)
+      .where(and(
+        eq(storyRevisions.storyId, story.id),
+        eq(storyRevisions.reviewStatus, "pending"),
+      ))
+      .limit(1);
+    if (pendingRevision) {
+      return <StudioShell viewer={viewer}><StatusCard title="Update already awaiting approval" description="Review or reject the pending comparison before another live-story edit can be submitted." /></StudioShell>;
+    }
+  }
+  const editorStatus = story.status as
+    | "draft"
+    | "review"
+    | "scheduled"
+    | "published";
 
-  const configuration = await getSiteConfiguration();
   const bylineOptions = story.authorId
     ? await getStoryBylineOptions(story.authorId)
     : [{
@@ -77,8 +104,9 @@ export default async function EditStoryPage({ params }: { params: Promise<{ id: 
           noIndex: story.noIndex,
           isBreaking: story.isBreaking,
           bylineMode: story.publicBylineSnapshot?.mode ?? "account",
-          status: story.status,
+          status: editorStatus,
           scheduledAt: story.scheduledAt?.toISOString() ?? null,
+          isActive: story.isActive,
         }}
       />
     </StudioShell>

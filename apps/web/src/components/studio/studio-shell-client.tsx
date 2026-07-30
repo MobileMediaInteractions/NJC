@@ -13,6 +13,7 @@ import {
   Clapperboard,
   Coins,
   CircleDollarSign,
+  CircleHelp,
   ExternalLink,
   FilePlus2,
   FileText,
@@ -95,6 +96,7 @@ const hubIcons: Record<StudioHubId, typeof LayoutDashboard> = {
 
 const itemIcons: Record<string, typeof LayoutDashboard> = {
   dashboard: LayoutDashboard,
+  "command-reference": CircleHelp,
   stories: BookOpenText,
   media: Library,
   tips: Inbox,
@@ -280,6 +282,24 @@ export function StudioShellClient({
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2">
+              {studioConfiguration.modules.commandReference ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  asChild
+                  aria-label="Open Studio commands and shortcuts"
+                  title="Commands and shortcuts"
+                >
+                  <Link
+                    href={studioNavigationHref(
+                      "/studio/commands",
+                      cleanStudioPaths,
+                    )}
+                  >
+                    <CircleHelp />
+                  </Link>
+                </Button>
+              ) : null}
               {studioConfiguration.experience.commandPalette ? (
                 <Button
                   type="button"

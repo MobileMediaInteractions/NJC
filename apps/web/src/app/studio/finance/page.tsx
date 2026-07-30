@@ -8,10 +8,12 @@ import {
   CircleDollarSign,
   CreditCard,
   FileDown,
+  Gauge,
   Landmark,
   ReceiptText,
   ShieldCheck,
   TrendingUp,
+  Target,
   WalletCards,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +27,8 @@ import {
 } from "@/components/ui/card";
 import { getEmployeeViewer } from "@/lib/employee-auth";
 import { loadFinanceDashboard } from "@/lib/finance";
+import { calculateRevenueOpportunity } from "@/lib/finance-model";
+import { getTrafficAnalyticsSummary } from "@/lib/traffic-analytics";
 
 export default async function FinancePage({
   searchParams,
@@ -34,13 +38,33 @@ export default async function FinancePage({
   const viewer = await getEmployeeViewer();
   const { range } = await searchParams;
   const period = financeRange(range);
-  const data = await loadFinanceDashboard({
-    ...period,
-    actorClerkId: viewer?.id,
-  });
+  const [data, traffic] = await Promise.all([
+    loadFinanceDashboard({
+      ...period,
+      actorClerkId: viewer?.id,
+    }),
+    getTrafficAnalyticsSummary(),
+  ]);
   const currency = data.settings.reportingCurrency;
   const summary = data.summary;
   const reservePolicyMissing = !data.configured.reservePolicy;
+  const opportunity = calculateRevenueOpportunity({
+    actualGrossRevenueCents: summary.grossRevenueCents,
+    periodDays: Math.max(
+      1,
+      (period.end.getTime() - period.start.getTime()) / 86_400_000,
+    ),
+    views30d: traffic.totals.views30d,
+    currentMembershipMrrCents: data.subscriptions.mrrCents,
+    targetMonthlyPageViews: data.settings.targetMonthlyPageViews,
+    modeledAdvertisingRpmCents:
+      data.settings.modeledAdvertisingRpmCents,
+    targetPaidMembers: data.settings.targetPaidMembers,
+    modeledMemberRevenueCents:
+      data.settings.modeledMemberRevenueCents,
+    monthlySponsorshipTargetCents:
+      data.settings.monthlySponsorshipTargetCents,
+  });
 
   return (
     <div className="space-y-7">
@@ -141,6 +165,104 @@ export default async function FinancePage({
           detail={`${money(summary.reserves.unallocatedProfitAfterReservesCents, currency)} unallocated after targets`}
           tone="neutral"
         />
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1.15fr_.85fr]">
+        <Card className="overflow-hidden">
+          <CardHeader className="bg-[#102f25] text-white">
+            <CardTitle className="flex items-center gap-2">
+              <Target className="size-5 text-brand-yellow" />
+              Current revenue versus configured opportunity
+            </CardTitle>
+            <CardDescription className="text-white/60">
+              Actual ledger receipts are compared with editable advertising,
+              membership and sponsorship assumptions.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5 p-6">
+            <div className="grid gap-4 sm:grid-cols-3">
+              <OpportunityMetric
+                label="Actual monthly run rate"
+                value={money(
+                  opportunity.actualMonthlyRunRateCents,
+                  currency,
+                )}
+                detail="Normalized from the selected ledger period"
+              />
+              <OpportunityMetric
+                label="Configured monthly opportunity"
+                value={money(
+                  opportunity.targetMonthlyRevenueCents,
+                  currency,
+                )}
+                detail="Scenario—not booked or guaranteed revenue"
+              />
+              <OpportunityMetric
+                label="Modeled gap"
+                value={money(opportunity.opportunityGapCents, currency)}
+                detail={`${opportunity.progressPercent.toFixed(1)}% of scenario reached`}
+              />
+            </div>
+            <div>
+              <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <span>Observed progress</span>
+                <span>{opportunity.progressPercent.toFixed(1)}%</span>
+              </div>
+              <div className="mt-2 h-3 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-primary"
+                  style={{ width: `${opportunity.progressPercent}%` }}
+                />
+              </div>
+            </div>
+            <p className="text-xs leading-5 text-muted-foreground">
+              Advertising opportunity uses verified 30-day page views and the
+              configured RPM. NJC+ opportunity uses target paid members and
+              modeled monthly revenue per member. Neither is a forecast,
+              appraisal or promise.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Gauge className="size-5 text-primary" /> Opportunity composition
+            </CardTitle>
+            <CardDescription>
+              See which assumptions create the target before relying on it.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Reserve
+              label={`Advertising at ${data.settings.targetMonthlyPageViews.toLocaleString()} monthly views`}
+              value={opportunity.targetAdvertisingCents}
+              currency={currency}
+            />
+            <Reserve
+              label={`${data.settings.targetPaidMembers.toLocaleString()} paid NJC+ members`}
+              value={opportunity.targetMembershipCents}
+              currency={currency}
+            />
+            <Reserve
+              label="Sponsorship target"
+              value={opportunity.monthlySponsorshipTargetCents}
+              currency={currency}
+            />
+            <div className="border-t pt-3">
+              <Reserve
+                label={`Current ${traffic.totals.views30d.toLocaleString()} verified views at modeled RPM`}
+                value={opportunity.currentTrafficAdPotentialCents}
+                currency={currency}
+              />
+            </div>
+            <Button asChild variant="outline" className="mt-2 w-full">
+              <Link href="/studio/finance/settings">
+                Edit opportunity assumptions
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.1fr_.9fr]">
@@ -306,4 +428,24 @@ function Reserve({ label, value, currency, exact = false }: { label: string; val
 }
 function Empty({ label }: { label: string }) {
   return <p className="px-6 py-12 text-center text-sm text-muted-foreground">{label}</p>;
+}
+
+function OpportunityMetric({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-xl border bg-muted/20 p-4">
+      <p className="text-[0.65rem] font-black uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-2 text-xl font-black">{value}</p>
+      <p className="mt-1 text-xs leading-5 text-muted-foreground">{detail}</p>
+    </div>
+  );
 }

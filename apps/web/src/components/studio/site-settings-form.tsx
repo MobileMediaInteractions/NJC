@@ -49,6 +49,7 @@ const studioModules: Array<{
   description: string;
   group: "Newsroom" | "Operations" | "Business";
 }> = [
+  { key: "commandReference", label: "Commands and shortcuts", description: "Searchable help for navigation and guarded actions.", group: "Operations" },
   { key: "stories", label: "Stories", description: "Draft, review, schedule and publish journalism.", group: "Newsroom" },
   { key: "media", label: "Media library", description: "Upload and reuse newsroom images.", group: "Newsroom" },
   { key: "tips", label: "News tips", description: "Review sensitive reader submissions.", group: "Newsroom" },
@@ -145,7 +146,11 @@ export function SiteSettingsForm({
   }
 
   function updateStudioGroup<
-    Group extends "experience" | "notifications" | "automations",
+    Group extends
+      | "experience"
+      | "notifications"
+      | "editorialWorkflow"
+      | "automations",
     Key extends keyof SiteConfiguration["studio"][Group],
   >(
     group: Group,
@@ -332,6 +337,51 @@ export function SiteSettingsForm({
               <Toggle label="Contextual quick actions" description="Shows the most useful creation action for the current workspace and inside the command center." checked={configuration.studio.experience.contextualQuickActions} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("experience", "contextualQuickActions", value)} />
               <Toggle label="Compact navigation" description="Uses the reduced-density workspace rail and keeps secondary destinations visible only for the current workspace." checked={configuration.studio.experience.compactNavigation} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("experience", "compactNavigation", value)} />
               <Toggle label="Operational status" description="Shows readiness and production-state summaries in supported Studio workspaces." checked={configuration.studio.experience.showOperationalStatus} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("experience", "showOperationalStatus", value)} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Editorial revision policy</CardTitle>
+              <CardDescription>
+                Control whether selected published stories may continue through
+                the verified update lane.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <Toggle
+                label="Active-story revisions"
+                description="Lets publishers mark a story active at publication so later edits can be proposed without changing the live article before approval."
+                checked={configuration.studio.editorialWorkflow.activeStoryRevisions}
+                disabled={!canManage}
+                onCheckedChange={(value) =>
+                  updateStudioGroup(
+                    "editorialWorkflow",
+                    "activeStoryRevisions",
+                    value,
+                  )
+                }
+              />
+              <Toggle
+                label="Independent revision approval"
+                description="Locked on: a different publisher must approve or reject every live-story update."
+                checked={
+                  configuration.studio.editorialWorkflow
+                    .requireIndependentRevisionApproval
+                }
+                disabled
+                onCheckedChange={() => undefined}
+              />
+              <Toggle
+                label="Finalization confirmation"
+                description="Locked on: closing an active story requires the exact CLOSE STORY phrase."
+                checked={
+                  configuration.studio.editorialWorkflow
+                    .requireFinalizationConfirmation
+                }
+                disabled
+                onCheckedChange={() => undefined}
+              />
             </CardContent>
           </Card>
 

@@ -72,9 +72,78 @@ export const financeSettingsInput = z.object({
   chargebackReserveBps: z.number().int().min(0).max(10_000),
   operatingReserveMonths: z.number().int().min(0).max(36),
   monthlyOperatingBudgetCents: z.number().int().min(0).max(1_000_000_000),
+  targetMonthlyPageViews: z.number().int().min(0).max(1_000_000_000),
+  modeledAdvertisingRpmCents: z.number().int().min(0).max(1_000_000),
+  targetPaidMembers: z.number().int().min(0).max(10_000_000),
+  modeledMemberRevenueCents: z.number().int().min(0).max(100_000_000),
+  monthlySponsorshipTargetCents: z.number().int().min(0).max(100_000_000_000),
   taxPolicyReviewed: z.boolean(),
   notes: z.string().trim().max(5_000),
 });
+
+export function calculateRevenueOpportunity({
+  actualGrossRevenueCents,
+  periodDays,
+  views30d,
+  currentMembershipMrrCents,
+  targetMonthlyPageViews,
+  modeledAdvertisingRpmCents,
+  targetPaidMembers,
+  modeledMemberRevenueCents,
+  monthlySponsorshipTargetCents,
+}: {
+  actualGrossRevenueCents: number;
+  periodDays: number;
+  views30d: number;
+  currentMembershipMrrCents: number;
+  targetMonthlyPageViews: number;
+  modeledAdvertisingRpmCents: number;
+  targetPaidMembers: number;
+  modeledMemberRevenueCents: number;
+  monthlySponsorshipTargetCents: number;
+}) {
+  const normalizedDays = Math.max(1, periodDays);
+  const actualMonthlyRunRateCents = Math.round(
+    (Math.max(0, actualGrossRevenueCents) / normalizedDays) * 30.4375,
+  );
+  const currentTrafficAdPotentialCents = Math.round(
+    (Math.max(0, views30d) / 1_000) *
+      Math.max(0, modeledAdvertisingRpmCents),
+  );
+  const targetAdvertisingCents = Math.round(
+    (Math.max(0, targetMonthlyPageViews) / 1_000) *
+      Math.max(0, modeledAdvertisingRpmCents),
+  );
+  const targetMembershipCents =
+    Math.max(0, targetPaidMembers) * Math.max(0, modeledMemberRevenueCents);
+  const targetMonthlyRevenueCents =
+    targetAdvertisingCents +
+    targetMembershipCents +
+    Math.max(0, monthlySponsorshipTargetCents);
+
+  return {
+    actualMonthlyRunRateCents,
+    currentTrafficAdPotentialCents,
+    currentMembershipMrrCents: Math.max(0, currentMembershipMrrCents),
+    targetAdvertisingCents,
+    targetMembershipCents,
+    monthlySponsorshipTargetCents: Math.max(
+      0,
+      monthlySponsorshipTargetCents,
+    ),
+    targetMonthlyRevenueCents,
+    opportunityGapCents: Math.max(
+      0,
+      targetMonthlyRevenueCents - actualMonthlyRunRateCents,
+    ),
+    progressPercent: targetMonthlyRevenueCents
+      ? Math.min(
+          100,
+          (actualMonthlyRunRateCents / targetMonthlyRevenueCents) * 100,
+        )
+      : 0,
+  };
+}
 
 export const manualFinanceEntryInput = z.object({
   entryKind: z.enum(["expense", "income", "tax_payment", "adjustment"]),

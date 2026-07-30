@@ -18,6 +18,7 @@ export interface StudioStoryRow {
   categoryLabel: string;
   ownerName: string;
   status: StoryStatus;
+  isActive: boolean;
   updatedLabel: string;
   canEdit: boolean;
 }
@@ -69,7 +70,12 @@ function StoryTable({ rows, canDelete, canReview }: { rows: StudioStoryRow[]; ca
       <TableHeader><TableRow><TableHead>Headline</TableHead><TableHead>Section</TableHead><TableHead>Owner</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Updated</TableHead><TableHead className="text-right"><span className="sr-only">Actions</span></TableHead></TableRow></TableHeader>
       <TableBody>{rows.map((story) => {
         const reviewAction = story.status === "review" && canReview;
-        const editAction = story.canEdit && (story.status === "draft" || story.status === "review" || story.status === "scheduled");
+        const editAction =
+          story.canEdit &&
+          (story.status === "draft" ||
+            story.status === "review" ||
+            story.status === "scheduled" ||
+            (story.status === "published" && story.isActive));
         const href = reviewAction ? `/studio/stories/${story.id}` : editAction ? `/studio/stories/${story.id}/edit` : `/studio/stories/${story.id}`;
         const label = reviewAction ? "Review" : editAction ? "Edit" : "Open";
         return (
@@ -77,7 +83,7 @@ function StoryTable({ rows, canDelete, canReview }: { rows: StudioStoryRow[]; ca
             <TableCell className="max-w-80 whitespace-normal"><Link href={href} className="font-medium hover:underline">{story.headline}</Link></TableCell>
             <TableCell className="text-muted-foreground">{story.categoryLabel}</TableCell>
             <TableCell>{story.ownerName}</TableCell>
-            <TableCell><StoryStatusBadge status={story.status} /></TableCell>
+            <TableCell><div className="flex flex-wrap gap-1"><StoryStatusBadge status={story.status} />{story.status === "published" ? <Badge variant={story.isActive ? "default" : "outline"}>{story.isActive ? "Active" : "Final"}</Badge> : null}</div></TableCell>
             <TableCell className="text-right text-xs text-muted-foreground">{story.updatedLabel}</TableCell>
             <TableCell><div className="flex justify-end gap-1"><Button variant={reviewAction ? "default" : "ghost"} size="sm" asChild><Link href={href}>{editAction && !reviewAction ? <FilePenLine /> : <FileSearch />} {label}</Link></Button>{story.status === "published" ? <Button variant="ghost" size="icon-sm" asChild><Link href={`/story/${story.slug}`} aria-label={`View ${story.headline} live`}><ExternalLink /></Link></Button> : null}{canDelete ? <StoryDeleteButton id={story.id} headline={story.headline} published={story.status === "published"} /> : null}</div></TableCell>
           </TableRow>

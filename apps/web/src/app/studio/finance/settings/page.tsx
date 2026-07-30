@@ -31,6 +31,12 @@ export default async function FinanceSettingsPage() {
           chargebackReserveBps: settings.chargebackReserveBps,
           operatingReserveMonths: settings.operatingReserveMonths,
           monthlyOperatingBudgetCents: settings.monthlyOperatingBudgetCents,
+          targetMonthlyPageViews: settings.targetMonthlyPageViews,
+          modeledAdvertisingRpmCents: settings.modeledAdvertisingRpmCents,
+          targetPaidMembers: settings.targetPaidMembers,
+          modeledMemberRevenueCents: settings.modeledMemberRevenueCents,
+          monthlySponsorshipTargetCents:
+            settings.monthlySponsorshipTargetCents,
           taxPolicyReviewedAt:
             settings.taxPolicyReviewedAt?.toISOString() ?? null,
           notes: settings.notes,

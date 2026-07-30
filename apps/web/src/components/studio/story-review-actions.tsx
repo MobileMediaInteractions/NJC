@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, CalendarClock, CheckCircle2, Loader2, Pencil, RotateCcw, Send } from "lucide-react";
+import { ArrowLeft, CalendarClock, CheckCircle2, Loader2, LockKeyhole, Pencil, RotateCcw, Send } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { toLocalDateTimeInput } from "@/lib/local-datetime";
 import type { StoryStatus } from "@/lib/types";
 
@@ -31,6 +32,8 @@ export function StoryReviewActions({
   publicationTimezone,
   canPublish,
   canSubmitReview,
+  isActive,
+  activeStoryRevisionsEnabled,
 }: {
   id: string;
   slug: string;
@@ -41,11 +44,18 @@ export function StoryReviewActions({
   publicationTimezone: string;
   canPublish: boolean;
   canSubmitReview: boolean;
+  isActive: boolean;
+  activeStoryRevisionsEnabled: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState<StoryStatus | null>(null);
   const [publishOpen, setPublishOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [closeOpen, setCloseOpen] = useState(false);
+  const [activePublication, setActivePublication] = useState(
+    isActive && activeStoryRevisionsEnabled,
+  );
+  const [closeConfirmation, setCloseConfirmation] = useState("");
   const [scheduleValue, setScheduleValue] = useState(() =>
     toLocalDateTimeInput(scheduledAt),
   );
@@ -77,6 +87,9 @@ export function StoryReviewActions({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           status: nextStatus,
+          ...((nextStatus === "scheduled" || nextStatus === "published")
+            ? { isActive: activePublication }
+            : {}),
           ...(parsedSchedule
             ? { scheduledAt: parsedSchedule.toISOString() }
             : {}),
@@ -110,6 +123,43 @@ export function StoryReviewActions({
     }
   }
 
+  async function closeEditing() {
+    if (closeConfirmation !== "CLOSE STORY") {
+      setError("Type CLOSE STORY exactly before closing editing.");
+      return;
+    }
+    setBusy("published");
+    setMessage("");
+    setError("");
+    try {
+      const response = await fetch(
+        `/api/v1/studio/stories/${encodeURIComponent(id)}`,
+        {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            action: "close_editing",
+            confirmation: closeConfirmation,
+          }),
+        },
+      );
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        setError(
+          payload?.error?.message ?? "Live editing could not be closed.",
+        );
+        return;
+      }
+      setCloseOpen(false);
+      setMessage("The story is final and can no longer be edited.");
+      router.refresh();
+    } catch {
+      setError("The newsroom service could not be reached.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-2">
@@ -130,6 +180,11 @@ export function StoryReviewActions({
                 <Label htmlFor="story-scheduled-at">Publication date and time</Label>
                 <Input id="story-scheduled-at" type="datetime-local" value={scheduleValue} onChange={(event) => setScheduleValue(event.target.value)} />
               </div>
+              {activeStoryRevisionsEnabled ? <ActiveStoryChoice
+                id="scheduled-active-story"
+                checked={activePublication}
+                onCheckedChange={setActivePublication}
+              /> : null}
               {error ? <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</p> : null}
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={busy !== null}>Keep reviewing</AlertDialogCancel>
@@ -145,6 +200,11 @@ export function StoryReviewActions({
                 <AlertDialogTitle>Publish this story now?</AlertDialogTitle>
                 <AlertDialogDescription>“{headline}” will immediately appear under “By {bylineName}” on the public site, apps, Roku, feeds and search sitemaps.</AlertDialogDescription>
               </AlertDialogHeader>
+              {activeStoryRevisionsEnabled ? <ActiveStoryChoice
+                id="publish-active-story"
+                checked={activePublication}
+                onCheckedChange={setActivePublication}
+              /> : null}
               {error ? <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</p> : null}
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={busy !== null}>Keep reviewing</AlertDialogCancel>
@@ -163,6 +223,11 @@ export function StoryReviewActions({
                 <AlertDialogTitle>Publish ahead of schedule?</AlertDialogTitle>
                 <AlertDialogDescription>“{headline}” is scheduled for {formatSchedule(scheduledAt, publicationTimezone)}. Publishing now will make it immediately public across the site, apps, Roku, feeds, and search sitemaps.</AlertDialogDescription>
               </AlertDialogHeader>
+              {activeStoryRevisionsEnabled ? <ActiveStoryChoice
+                id="early-publish-active-story"
+                checked={activePublication}
+                onCheckedChange={setActivePublication}
+              /> : null}
               {error ? <p role="alert" className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</p> : null}
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={busy !== null}>Keep schedule</AlertDialogCancel>
@@ -171,14 +236,115 @@ export function StoryReviewActions({
             </AlertDialogContent>
           </AlertDialog>
         </> : null}
+        {status === "published" && isActive && canSubmitReview ? (
+          <Button variant="outline" asChild>
+            <Link href={`/studio/stories/${id}/edit`}>
+              <Pencil /> Propose update
+            </Link>
+          </Button>
+        ) : null}
+        {status === "published" && isActive && canPublish ? (
+          <AlertDialog
+            open={closeOpen}
+            onOpenChange={(open) => {
+              if (!busy) {
+                setCloseOpen(open);
+                setCloseConfirmation("");
+                setError("");
+              }
+            }}
+          >
+            <AlertDialogTrigger asChild>
+              <Button variant="outline">
+                <LockKeyhole /> Mark story final
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogMedia className="bg-destructive/12 text-destructive">
+                  <LockKeyhole />
+                </AlertDialogMedia>
+                <AlertDialogTitle>End editing permanently?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  “{headline}” will remain published, but nobody will be able to
+                  submit more edits. Existing history remains available.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="space-y-2">
+                <Label htmlFor="close-story-confirmation">
+                  Type CLOSE STORY to verify
+                </Label>
+                <Input
+                  id="close-story-confirmation"
+                  value={closeConfirmation}
+                  onChange={(event) =>
+                    setCloseConfirmation(event.target.value)
+                  }
+                  autoComplete="off"
+                />
+              </div>
+              {error ? (
+                <p className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                  {error}
+                </p>
+              ) : null}
+              <AlertDialogFooter>
+                <AlertDialogCancel>Keep active</AlertDialogCancel>
+                <Button
+                  variant="destructive"
+                  onClick={() => void closeEditing()}
+                  disabled={
+                    busy !== null || closeConfirmation !== "CLOSE STORY"
+                  }
+                >
+                  <LockKeyhole /> Close editing
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        ) : null}
         {status === "published" ? <Button asChild><Link href={`/story/${slug}`}>View live story</Link></Button> : null}
       </div>
       {status === "review" && !canPublish ? <p className="text-sm text-muted-foreground">Awaiting an editor, producer or administrator.</p> : null}
       {status === "review" && scheduledAt ? <p className="text-sm text-muted-foreground"><CalendarClock className="mr-1.5 inline size-4" /> Planned for {formatSchedule(scheduledAt, publicationTimezone)}. An authorized publisher must confirm Schedule before the clock becomes active.</p> : null}
       {status === "scheduled" ? <p className="text-sm text-muted-foreground"><CalendarClock className="mr-1.5 inline size-4" /> Scheduled for {formatSchedule(scheduledAt, publicationTimezone)}.</p> : null}
+      {status === "published" ? (
+        <p className="text-sm text-muted-foreground">
+          {isActive
+            ? "Active story — approved updates may still be published."
+            : "Final story — editing privileges are permanently closed."}
+        </p>
+      ) : null}
       {status === "draft" && !canSubmitReview ? <p className="text-sm text-muted-foreground">Only the story owner or a publisher can submit this draft.</p> : null}
       {message ? <p role="status" className="flex items-center gap-2 text-sm text-emerald-400"><CheckCircle2 className="size-4" /> {message}</p> : null}
-      {error && !publishOpen && !scheduleOpen ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
+      {error && !publishOpen && !scheduleOpen && !closeOpen ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
+    </div>
+  );
+}
+
+function ActiveStoryChoice({
+  id,
+  checked,
+  onCheckedChange,
+}: {
+  id: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-5 rounded-lg border p-4">
+      <div>
+        <Label htmlFor={id}>Keep this as an active story</Label>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+          Active stories can receive proposed updates after publication. Every
+          update still requires approval from a different publisher.
+        </p>
+      </div>
+      <Switch
+        id={id}
+        checked={checked}
+        onCheckedChange={onCheckedChange}
+      />
     </div>
   );
 }

@@ -15,6 +15,7 @@ export const defaultDatelines = [
 ] as const;
 
 export const studioModuleKeys = [
+  "commandReference",
   "stories",
   "media",
   "tips",
@@ -47,6 +48,7 @@ export const studioModuleKeys = [
 export type StudioModuleKey = (typeof studioModuleKeys)[number];
 
 export const defaultStudioModules: Record<StudioModuleKey, boolean> = {
+  commandReference: true,
   stories: true,
   media: true,
   tips: true,
@@ -93,6 +95,11 @@ export const defaultStudioConfiguration = {
     requireAudiencePreflight: true,
     requireTypedConfirmationForBroadAudience: true,
     retainCampaignHistory: true,
+  },
+  editorialWorkflow: {
+    activeStoryRevisions: true,
+    requireIndependentRevisionApproval: true,
+    requireFinalizationConfirmation: true,
   },
   automations: {
     scheduledPublishing: true,
@@ -197,6 +204,7 @@ export const siteConfigurationSchema = z.object({
   }),
   studio: z.object({
     modules: z.object({
+      commandReference: z.boolean(),
       stories: z.boolean(),
       media: z.boolean(),
       tips: z.boolean(),
@@ -241,6 +249,11 @@ export const siteConfigurationSchema = z.object({
       requireTypedConfirmationForBroadAudience: z.boolean(),
       retainCampaignHistory: z.boolean(),
     }),
+    editorialWorkflow: z.object({
+      activeStoryRevisions: z.boolean(),
+      requireIndependentRevisionApproval: z.literal(true),
+      requireFinalizationConfirmation: z.literal(true),
+    }).default(defaultStudioConfiguration.editorialWorkflow),
     automations: z.object({
       scheduledPublishing: z.boolean(),
       analyticsArchives: z.boolean(),
@@ -346,6 +359,7 @@ export const defaultSiteConfiguration: SiteConfiguration = {
     modules: { ...defaultStudioModules },
     experience: { ...defaultStudioConfiguration.experience },
     notifications: { ...defaultStudioConfiguration.notifications },
+    editorialWorkflow: { ...defaultStudioConfiguration.editorialWorkflow },
     automations: { ...defaultStudioConfiguration.automations },
   },
 };

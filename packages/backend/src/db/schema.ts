@@ -153,6 +153,8 @@ export const stories = pgTable(
     isLive: boolean("is_live").notNull().default(false),
     isExclusive: boolean("is_exclusive").notNull().default(false),
     isDeveloping: boolean("is_developing").notNull().default(false),
+    isActive: boolean("is_active").notNull().default(false),
+    editingClosedAt: timestamp("editing_closed_at", { withTimezone: true }),
     publishedAt: timestamp("published_at", { withTimezone: true }),
     scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -182,11 +184,32 @@ export const storyRevisions = pgTable(
     version: integer("version").notNull(),
     snapshot: jsonb("snapshot").notNull(),
     note: text("note"),
+    reviewStatus: text("review_status").notNull().default("applied"),
+    baseVersion: integer("base_version"),
+    reviewedById: uuid("reviewed_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reviewNote: text("review_note"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
-  (table) => [index("story_revisions_story_idx").on(table.storyId)],
+  (table) => [
+    index("story_revisions_story_idx").on(table.storyId),
+    index("story_revisions_review_queue_idx").on(
+      table.storyId,
+      table.reviewStatus,
+      table.createdAt,
+    ),
+    uniqueIndex("story_revisions_one_pending_idx")
+      .on(table.storyId)
+      .where(sql`${table.reviewStatus} = 'pending'`),
+    check(
+      "story_revisions_review_status_check",
+      sql`${table.reviewStatus} in ('applied', 'pending', 'rejected', 'superseded')`,
+    ),
+  ],
 );
 
 export const mediaAssets = pgTable(
@@ -1518,6 +1541,11 @@ export const financialSettings = pgTable(
     chargebackReserveBps: integer("chargeback_reserve_bps").notNull().default(0),
     operatingReserveMonths: integer("operating_reserve_months").notNull().default(0),
     monthlyOperatingBudgetCents: integer("monthly_operating_budget_cents").notNull().default(0),
+    targetMonthlyPageViews: integer("target_monthly_page_views").notNull().default(100000),
+    modeledAdvertisingRpmCents: integer("modeled_advertising_rpm_cents").notNull().default(800),
+    targetPaidMembers: integer("target_paid_members").notNull().default(250),
+    modeledMemberRevenueCents: integer("modeled_member_revenue_cents").notNull().default(999),
+    monthlySponsorshipTargetCents: integer("monthly_sponsorship_target_cents").notNull().default(0),
     taxPolicyReviewedAt: timestamp("tax_policy_reviewed_at", { withTimezone: true }),
     taxPolicyReviewedBy: text("tax_policy_reviewed_by"),
     notes: text("notes").notNull().default(""),
@@ -1543,6 +1571,14 @@ export const financialSettings = pgTable(
       "financial_settings_operating_reserve_check",
       sql`${table.operatingReserveMonths} between 0 and 36
         and ${table.monthlyOperatingBudgetCents} >= 0`,
+    ),
+    check(
+      "financial_settings_opportunity_model_check",
+      sql`${table.targetMonthlyPageViews} between 0 and 1000000000
+        and ${table.modeledAdvertisingRpmCents} between 0 and 1000000
+        and ${table.targetPaidMembers} between 0 and 10000000
+        and ${table.modeledMemberRevenueCents} between 0 and 100000000
+        and ${table.monthlySponsorshipTargetCents} between 0 and 100000000000`,
     ),
   ],
 );

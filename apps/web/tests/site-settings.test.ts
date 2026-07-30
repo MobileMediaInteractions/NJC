@@ -139,6 +139,8 @@ test("older stored configuration receives the complete guarded Studio registry",
   assert.equal(parsed.studio.experience.commandPalette, true);
   assert.equal(parsed.studio.notifications.requireAudiencePreflight, true);
   assert.equal(parsed.studio.automations.manualVerificationRequired, true);
+  assert.equal(parsed.studio.editorialWorkflow.activeStoryRevisions, true);
+  assert.equal(parsed.studio.editorialWorkflow.requireIndependentRevisionApproval, true);
 });
 
 test("manual verification and notification preflight cannot be disabled", () => {
@@ -149,4 +151,8 @@ test("manual verification and notification preflight cannot be disabled", () => 
   const second = configurationCopy();
   (second.studio.notifications.requireAudiencePreflight as boolean) = false;
   assert.equal(siteConfigurationSchema.safeParse(second).success, false);
+
+  const third = configurationCopy();
+  (third.studio.editorialWorkflow.requireIndependentRevisionApproval as boolean) = false;
+  assert.equal(siteConfigurationSchema.safeParse(third).success, false);
 });

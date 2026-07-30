@@ -73,6 +73,13 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         href: "/studio",
         roles: allRoles,
       },
+      {
+        id: "command-reference",
+        label: "Commands & shortcuts",
+        href: "/studio/commands",
+        roles: allRoles,
+        module: "commandReference",
+      },
     ],
   },
   {

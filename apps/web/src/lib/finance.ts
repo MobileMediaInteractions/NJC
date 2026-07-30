@@ -39,13 +39,22 @@ export function financeSettingsDefaults(
   return {
     id: "00000000-0000-0000-0000-000000000000",
     singletonKey: "primary",
-    legalEntityName: "",
+    legalEntityName:
+      "The New Jersey Courier — working reporting identity (legal entity unverified)",
     reportingCurrency: "usd",
     fiscalYearStartMonth: 1,
     ...defaultFinancePolicy,
+    targetMonthlyPageViews: 100_000,
+    modeledAdvertisingRpmCents: 800,
+    targetPaidMembers: 250,
+    modeledMemberRevenueCents: 999,
+    monthlySponsorshipTargetCents: 0,
     taxPolicyReviewedAt: null,
     taxPolicyReviewedBy: null,
-    notes: "",
+    notes:
+      "UNREVIEWED NEW JERSEY STARTER POLICY\n" +
+      "Confirm the registered legal entity, federal tax classification, NJ-REG status, employer status and whether each NJC+ offering qualifies as an exempt newspaper or periodical before entering tax reserve rates. New Jersey corporation tax rates vary by entity and taxable income; payroll withholding and employer contributions vary by workforce facts. Publication exemptions do not automatically cover every premium product, event, advertisement or service.\n" +
+      "Official references: NJ Division of Revenue business registration; NJ Division of Taxation corporation filing responsibilities; NJ ANJ-21 newspapers and periodicals; NJ employer payroll tax; IRS business taxes and estimated taxes.",
     updatedByClerkId: actorClerkId,
     createdAt: now,
     updatedAt: now,

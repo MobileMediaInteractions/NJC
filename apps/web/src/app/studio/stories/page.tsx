@@ -37,10 +37,15 @@ export default async function StudioStoriesPage() {
     categoryLabel: story.categoryLabel,
     ownerName: story.authorSnapshot?.name ?? "Unassigned",
     status: story.status,
+    isActive: story.isActive,
     updatedLabel: formatUpdated(story.updatedAt),
     canEdit:
-      showReviewActions ||
-      Boolean(viewer.databaseId && story.authorId === viewer.databaseId),
+      story.status === "published"
+        ? story.isActive &&
+          (showReviewActions ||
+            Boolean(viewer.databaseId && story.authorId === viewer.databaseId))
+        : showReviewActions ||
+          Boolean(viewer.databaseId && story.authorId === viewer.databaseId),
   }));
 
   return (

@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   basisPoints,
   calculateFinanceSummary,
+  calculateRevenueOpportunity,
   financeSettingsInput,
   manualFinanceEntryInput,
 } from "../src/lib/finance-model";
@@ -97,11 +98,38 @@ test("reviewed finance settings reject impossible reserve percentages", () => {
       chargebackReserveBps: 0,
       operatingReserveMonths: 3,
       monthlyOperatingBudgetCents: 100_000,
+      targetMonthlyPageViews: 100_000,
+      modeledAdvertisingRpmCents: 800,
+      targetPaidMembers: 250,
+      modeledMemberRevenueCents: 999,
+      monthlySponsorshipTargetCents: 0,
       taxPolicyReviewed: true,
       notes: "",
     }).success,
     false,
   );
+});
+
+test("revenue opportunity separates recorded revenue from editable scenarios", () => {
+  const opportunity = calculateRevenueOpportunity({
+    actualGrossRevenueCents: 30_000,
+    periodDays: 30,
+    views30d: 25_000,
+    currentMembershipMrrCents: 12_500,
+    targetMonthlyPageViews: 100_000,
+    modeledAdvertisingRpmCents: 800,
+    targetPaidMembers: 250,
+    modeledMemberRevenueCents: 999,
+    monthlySponsorshipTargetCents: 50_000,
+  });
+
+  assert.equal(opportunity.currentTrafficAdPotentialCents, 20_000);
+  assert.equal(opportunity.targetAdvertisingCents, 80_000);
+  assert.equal(opportunity.targetMembershipCents, 249_750);
+  assert.equal(opportunity.targetMonthlyRevenueCents, 379_750);
+  assert.ok(opportunity.actualMonthlyRunRateCents > 30_000);
+  assert.ok(opportunity.opportunityGapCents > 0);
+  assert.ok(opportunity.progressPercent > 0);
 });
 
 function entry(

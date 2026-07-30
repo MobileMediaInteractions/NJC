@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "story_revisions_one_pending_idx" ON "story_revisions" USING btree ("story_id") WHERE "story_revisions"."review_status" = 'pending';
