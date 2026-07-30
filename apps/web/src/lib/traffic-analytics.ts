@@ -250,7 +250,9 @@ export function completedAnalyticsPeriods(earliestDay: string, today: string): A
   return ranges;
 }
 
-function emptySummary(): TrafficAnalyticsSummary {
+export function emptyTrafficAnalyticsSummary(
+  note = "The database is not configured, so traffic cannot be verified.",
+): TrafficAnalyticsSummary {
   return {
     database: "not configured",
     generatedAt: new Date().toISOString(),
@@ -267,7 +269,7 @@ function emptySummary(): TrafficAnalyticsSummary {
       verifiedEvents: 0,
       legacyViews: 0,
       duplicateProtection: "event-id",
-      notes: ["The database is not configured, so traffic cannot be verified."],
+      notes: [note],
     },
   };
 }
@@ -550,7 +552,7 @@ export async function refreshAnalyticsArchives(now = new Date()) {
 }
 
 export async function getTrafficAnalyticsSummary(now = new Date()): Promise<TrafficAnalyticsSummary> {
-  if (!hasDatabase()) return emptySummary();
+  if (!hasDatabase()) return emptyTrafficAnalyticsSummary();
   const db = getDb();
   const today = publicationDay(now);
   const todayDate = dateFromKey(today) ?? new Date();

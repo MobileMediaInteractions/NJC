@@ -32,6 +32,13 @@ const platformOrder: AudiencePlatform[] = [
   "api",
 ];
 
+export function normalizeAudienceTimestamp(value: Date | string) {
+  const timestamp = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(timestamp.getTime())
+    ? new Date(0).toISOString()
+    : timestamp.toISOString();
+}
+
 function emptyMetric(platform: AudiencePlatform): AudiencePlatformMetric {
   return {
     platform,
@@ -44,7 +51,9 @@ function emptyMetric(platform: AudiencePlatform): AudiencePlatformMetric {
   };
 }
 
-export function emptyAudienceSummary(): AudienceSummary {
+export function emptyAudienceSummary(
+  note = "The database is not configured, so no audience evidence is available.",
+): AudienceSummary {
   return {
     platforms: platformOrder.map(emptyMetric),
     versions: [],
@@ -61,7 +70,7 @@ export function emptyAudienceSummary(): AudienceSummary {
     dataQuality: {
       status: "provisional",
       calculationVersion: 2,
-      notes: ["The database is not configured, so no audience evidence is available."],
+      notes: [note],
     },
     generatedAt: new Date().toISOString(),
     database: "not configured",
@@ -212,8 +221,8 @@ export async function getAudienceSummary(): Promise<AudienceSummary> {
       active7d: row.active7d,
       active30d: row.active30d,
       knownAccounts: row.knownAccounts,
-      firstSeenAt: row.firstSeenAt.toISOString(),
-      lastSeenAt: row.lastSeenAt.toISOString(),
+      firstSeenAt: normalizeAudienceTimestamp(row.firstSeenAt),
+      lastSeenAt: normalizeAudienceTimestamp(row.lastSeenAt),
       qualityStatus: row.qualityStatus === "verified" ? "verified" : "legacy",
     }];
   });
