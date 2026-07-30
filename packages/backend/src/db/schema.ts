@@ -1501,6 +1501,192 @@ export const premiumSubscriptions = pgTable(
   ],
 );
 
+export const financialSettings = pgTable(
+  "financial_settings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    singletonKey: text("singleton_key").notNull().default("primary"),
+    legalEntityName: text("legal_entity_name").notNull().default(""),
+    reportingCurrency: text("reporting_currency").notNull().default("usd"),
+    fiscalYearStartMonth: integer("fiscal_year_start_month").notNull().default(1),
+    federalIncomeTaxReserveBps: integer("federal_income_tax_reserve_bps").notNull().default(0),
+    stateIncomeTaxReserveBps: integer("state_income_tax_reserve_bps").notNull().default(0),
+    payrollTaxReserveBps: integer("payroll_tax_reserve_bps").notNull().default(0),
+    contingencyReserveBps: integer("contingency_reserve_bps").notNull().default(0),
+    chargebackReserveBps: integer("chargeback_reserve_bps").notNull().default(0),
+    operatingReserveMonths: integer("operating_reserve_months").notNull().default(0),
+    monthlyOperatingBudgetCents: integer("monthly_operating_budget_cents").notNull().default(0),
+    taxPolicyReviewedAt: timestamp("tax_policy_reviewed_at", { withTimezone: true }),
+    taxPolicyReviewedBy: text("tax_policy_reviewed_by"),
+    notes: text("notes").notNull().default(""),
+    updatedByClerkId: text("updated_by_clerk_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("financial_settings_singleton_idx").on(table.singletonKey),
+    check(
+      "financial_settings_fiscal_month_check",
+      sql`${table.fiscalYearStartMonth} between 1 and 12`,
+    ),
+    check(
+      "financial_settings_reserve_rates_check",
+      sql`${table.federalIncomeTaxReserveBps} between 0 and 10000
+        and ${table.stateIncomeTaxReserveBps} between 0 and 10000
+        and ${table.payrollTaxReserveBps} between 0 and 10000
+        and ${table.contingencyReserveBps} between 0 and 10000
+        and ${table.chargebackReserveBps} between 0 and 10000`,
+    ),
+    check(
+      "financial_settings_operating_reserve_check",
+      sql`${table.operatingReserveMonths} between 0 and 36
+        and ${table.monthlyOperatingBudgetCents} >= 0`,
+    ),
+  ],
+);
+
+export const financialProviderEvents = pgTable(
+  "financial_provider_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    provider: text("provider").notNull().default("stripe"),
+    providerEventId: text("provider_event_id").notNull(),
+    eventType: text("event_type").notNull(),
+    providerObjectId: text("provider_object_id"),
+    livemode: boolean("livemode").notNull().default(false),
+    status: text("status").notNull().default("processing"),
+    attemptCount: integer("attempt_count").notNull().default(1),
+    lastErrorCode: text("last_error_code"),
+    receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+    processedAt: timestamp("processed_at", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("financial_provider_events_provider_idx").on(
+      table.provider,
+      table.providerEventId,
+    ),
+    index("financial_provider_events_status_idx").on(
+      table.status,
+      table.receivedAt,
+    ),
+    check(
+      "financial_provider_events_status_check",
+      sql`${table.status} in ('processing', 'processed', 'ignored', 'failed')`,
+    ),
+  ],
+);
+
+export const financialLedgerEntries = pgTable(
+  "financial_ledger_entries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    source: text("source").notNull(),
+    entryKind: text("entry_kind").notNull(),
+    revenueCategory: text("revenue_category").notNull().default("other"),
+    currency: text("currency").notNull().default("usd"),
+    grossAmountCents: integer("gross_amount_cents").notNull().default(0),
+    feeAmountCents: integer("fee_amount_cents").notNull().default(0),
+    taxAmountCents: integer("tax_amount_cents").notNull().default(0),
+    netAmountCents: integer("net_amount_cents").notNull().default(0),
+    status: text("status").notNull().default("posted"),
+    description: text("description").notNull(),
+    counterparty: text("counterparty"),
+    userClerkId: text("user_clerk_id"),
+    providerCustomerId: text("provider_customer_id"),
+    providerObjectId: text("provider_object_id"),
+    providerBalanceTransactionId: text("provider_balance_transaction_id"),
+    providerPayoutId: text("provider_payout_id"),
+    providerEventId: text("provider_event_id"),
+    idempotencyKey: text("idempotency_key").notNull(),
+    reversalOfId: uuid("reversal_of_id"),
+    availableOn: timestamp("available_on", { withTimezone: true }),
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+    createdByClerkId: text("created_by_clerk_id").notNull(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("financial_ledger_idempotency_idx").on(table.idempotencyKey),
+    uniqueIndex("financial_ledger_balance_transaction_idx").on(
+      table.providerBalanceTransactionId,
+    ),
+    index("financial_ledger_occurred_idx").on(table.occurredAt),
+    index("financial_ledger_kind_occurred_idx").on(
+      table.entryKind,
+      table.occurredAt,
+    ),
+    index("financial_ledger_category_occurred_idx").on(
+      table.revenueCategory,
+      table.occurredAt,
+    ),
+    check(
+      "financial_ledger_source_check",
+      sql`${table.source} in ('stripe', 'manual', 'import', 'system')`,
+    ),
+    check(
+      "financial_ledger_kind_check",
+      sql`${table.entryKind} in (
+        'payment', 'refund', 'dispute', 'dispute_reversal', 'fee',
+        'payout', 'tax_payment', 'expense', 'income', 'adjustment', 'reversal'
+      )`,
+    ),
+    check(
+      "financial_ledger_status_check",
+      sql`${table.status} in ('pending', 'available', 'posted', 'failed', 'void')`,
+    ),
+  ],
+);
+
+export const financialPeriodCloses = pgTable(
+  "financial_period_closes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    periodType: text("period_type").notNull(),
+    periodStart: timestamp("period_start", { withTimezone: true }).notNull(),
+    periodEnd: timestamp("period_end", { withTimezone: true }).notNull(),
+    version: integer("version").notNull().default(1),
+    status: text("status").notNull().default("closed"),
+    snapshot: jsonb("snapshot").$type<Record<string, unknown>>().notNull(),
+    reconciliationStatus: text("reconciliation_status").notNull().default("unreviewed"),
+    notes: text("notes").notNull().default(""),
+    supersedesId: uuid("supersedes_id"),
+    closedByClerkId: text("closed_by_clerk_id").notNull(),
+    reviewedByClerkId: text("reviewed_by_clerk_id"),
+    closedAt: timestamp("closed_at", { withTimezone: true }).notNull().defaultNow(),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("financial_period_close_version_idx").on(
+      table.periodType,
+      table.periodStart,
+      table.periodEnd,
+      table.version,
+    ),
+    index("financial_period_close_status_idx").on(
+      table.status,
+      table.periodEnd,
+    ),
+    check(
+      "financial_period_close_type_check",
+      sql`${table.periodType} in ('month', 'quarter', 'year')`,
+    ),
+    check(
+      "financial_period_close_status_check",
+      sql`${table.status} in ('closed', 'superseded')`,
+    ),
+    check(
+      "financial_period_close_reconciliation_check",
+      sql`${table.reconciliationStatus} in ('unreviewed', 'reviewed', 'exception')`,
+    ),
+    check(
+      "financial_period_close_dates_check",
+      sql`${table.periodEnd} > ${table.periodStart} and ${table.version} > 0`,
+    ),
+  ],
+);
+
 export const premiumEntitlements = pgTable(
   "premium_entitlements",
   {

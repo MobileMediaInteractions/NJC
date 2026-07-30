@@ -120,11 +120,16 @@ complete. Automated transcripts require editorial verification.
 
 ## Payments
 
-The code uses Stripe Checkout and signed webhooks, but no paid service has been
-activated by the repository changes. Configure these only when NJC+ is approved:
+The code provides hosted Stripe Checkout, a customer billing portal, signed and
+duplicate-safe subscription webhooks, provider settlement synchronization, an
+immutable operating ledger, period closes, exports and an internal Finance hub.
+No live paid service or tax registration has been activated by repository
+changes. Configure these only when NJC+ is approved:
 
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
+- optional `STRIPE_TAX_ENABLED`
+- optional `STRIPE_BILLING_PORTAL_CONFIGURATION_ID`
 - a recurring Stripe Price ID on each sellable tier;
 - a one-time $1 Stripe Price ID on the three-day offer;
 - a webhook for `/api/webhooks/stripe`.
@@ -132,7 +137,9 @@ activated by the repository changes. Configure these only when NJC+ is approved:
 The $1 offer is placed on the initial subscription invoice and the tier price
 starts after the configured three-day trial. Studio controls automatic renewal
 and the exact public disclosure. Signed webhook events—not the browser success
-page—create entitlements.
+page—create entitlements. See
+[`FINANCE_AND_PAYMENTS.md`](FINANCE_AND_PAYMENTS.md) for accounting boundaries,
+controls and the production activation procedure.
 
 The existing Hobby-compatible daily maintenance route publishes due NJC+
 productions and records Access Credit expirations as idempotent ledger

@@ -27,6 +27,7 @@ const studioSections = [
   "chat",
   "distribution",
   "exports",
+  "finance",
   "legal",
   "media",
   "njc-plus",

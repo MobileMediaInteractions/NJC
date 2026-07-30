@@ -8,6 +8,16 @@ test("role defaults are narrowed by active deny grants", () => {
   assert.equal(capabilities.includes("employee:access"), true);
   assert.equal(capabilities.includes("tools:alerts"), false);
 });
+test("finance access is explicit and defaults only to administrators", () => {
+  assert.equal(resolveEmployeeCapabilities("admin", []).includes("tools:finance"), true);
+  assert.equal(resolveEmployeeCapabilities("editor", []).includes("tools:finance"), false);
+  assert.equal(
+    resolveEmployeeCapabilities("editor", [
+      { capability: "tools:finance", effect: "allow" },
+    ]).includes("tools:finance"),
+    true,
+  );
+});
 test("revocation of employee access removes every privileged capability", () => {
   const capabilities = resolveEmployeeCapabilities("admin", [{ capability: "employee:access", effect: "deny" }]);
   assert.deepEqual(capabilities, []);

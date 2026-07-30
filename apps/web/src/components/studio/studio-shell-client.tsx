@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   Clapperboard,
   Coins,
+  CircleDollarSign,
   ExternalLink,
   FilePlus2,
   FileText,
@@ -80,6 +81,7 @@ const hubIcons: Record<StudioHubId, typeof LayoutDashboard> = {
   distribution: Share2,
   communications: MessageCircleMore,
   "njc-plus": Clapperboard,
+  finance: CircleDollarSign,
   control: Settings,
   configuration: SlidersHorizontal,
 };
@@ -109,6 +111,10 @@ const itemIcons: Record<string, typeof LayoutDashboard> = {
   "njc-plus-analytics": BarChart3,
   "njc-plus-audit": ScrollText,
   "njc-plus-flags": Flag,
+  "finance-overview": CircleDollarSign,
+  "finance-ledger": ScrollText,
+  "finance-reconciliation": Scale,
+  "finance-settings": SlidersHorizontal,
 };
 
 export function StudioShellClient({
@@ -119,6 +125,7 @@ export function StudioShellClient({
   chatEnabled,
   pressEnabled,
   alertsEnabled,
+  financeEnabled,
 }: {
   children: React.ReactNode;
   viewer: StudioUser;
@@ -127,6 +134,7 @@ export function StudioShellClient({
   chatEnabled: boolean;
   pressEnabled: boolean;
   alertsEnabled: boolean;
+  financeEnabled: boolean;
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
@@ -135,7 +143,7 @@ export function StudioShellClient({
     enabled: chatEnabled,
     initialUnread: unreadChatCount,
   });
-  const context = { role: viewer.role, chatEnabled, pressEnabled, alertsEnabled };
+  const context = { role: viewer.role, chatEnabled, pressEnabled, alertsEnabled, financeEnabled };
   const { hubs, activeHub, activeItem } = resolveStudioNavigation(
     pathname,
     context,

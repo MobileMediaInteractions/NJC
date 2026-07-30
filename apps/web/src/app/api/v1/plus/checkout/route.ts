@@ -1,4 +1,4 @@
-import { and, count, eq, gt, isNull, lte, or } from "drizzle-orm";
+import { and, count, desc, eq, gt, isNull, lte, or } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb, hasDatabase } from "@harborline/backend/db";
@@ -7,7 +7,7 @@ import { getAccountIdentity } from "@/lib/auth";
 import { isNjcPlusFeatureEnabled } from "@/lib/feature-flags";
 import { getRequestOrigin } from "@/lib/origin";
 import { resolveNjcPlusSurface, writePremiumAudit } from "@/lib/njc-plus";
-import { getStripe, hasStripe } from "@/lib/stripe";
+import { getStripe, hasStripe, stripeTaxEnabled } from "@/lib/stripe";
 
 const input = z.object({ tierId: z.uuid(), offerId: z.uuid().optional() });
 
@@ -45,9 +45,28 @@ export async function POST(request: Request) {
   const idempotencyKey = request.headers.get("idempotency-key")?.slice(0, 200);
   const metadata = { userClerkId: user.clerkId, tierId: tier.id, offerId: offer?.id ?? "" };
   try {
+    const [existingSubscription] = await getDb()
+      .select({ providerCustomerId: premiumSubscriptions.providerCustomerId })
+      .from(premiumSubscriptions)
+      .where(and(
+        eq(premiumSubscriptions.userClerkId, user.clerkId),
+        eq(premiumSubscriptions.provider, "stripe"),
+      ))
+      .orderBy(desc(premiumSubscriptions.updatedAt))
+      .limit(1);
+    const providerCustomerId = existingSubscription?.providerCustomerId ?? null;
     const session = await getStripe().checkout.sessions.create({
       mode: "subscription",
-      customer_email: user.email,
+      ...(providerCustomerId
+        ? {
+            customer: providerCustomerId,
+            customer_update: { address: "auto", name: "auto" },
+          }
+        : { customer_email: user.email }),
+      client_reference_id: user.clerkId,
+      billing_address_collection: "required",
+      tax_id_collection: { enabled: true },
+      automatic_tax: { enabled: stripeTaxEnabled() },
       line_items: [
         { price: tier.providerPriceId, quantity: 1 },
         ...(offer?.paymentRequired && offer.providerPriceId ? [{ price: offer.providerPriceId, quantity: 1 }] : []),

@@ -6,6 +6,7 @@ export type StudioHubId =
   | "distribution"
   | "communications"
   | "njc-plus"
+  | "finance"
   | "control"
   | "configuration";
 
@@ -14,6 +15,7 @@ export type StudioNavigationContext = {
   chatEnabled: boolean;
   pressEnabled: boolean;
   alertsEnabled: boolean;
+  financeEnabled: boolean;
 };
 
 export type StudioNavigationItem = {
@@ -25,6 +27,7 @@ export type StudioNavigationItem = {
   requiresChat?: boolean;
   requiresPress?: boolean;
   requiresAlerts?: boolean;
+  requiresFinance?: boolean;
 };
 
 export type StudioNavigationHub = {
@@ -177,6 +180,41 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
     ],
   },
   {
+    id: "finance",
+    label: "Finance",
+    description: "Revenue, reserves and reconciliation",
+    items: [
+      {
+        id: "finance-overview",
+        label: "Financial control room",
+        href: "/studio/finance",
+        roles: allRoles,
+        requiresFinance: true,
+      },
+      {
+        id: "finance-ledger",
+        label: "General ledger",
+        href: "/studio/finance/ledger",
+        roles: allRoles,
+        requiresFinance: true,
+      },
+      {
+        id: "finance-reconciliation",
+        label: "Reconciliation & closes",
+        href: "/studio/finance/reconciliation",
+        roles: allRoles,
+        requiresFinance: true,
+      },
+      {
+        id: "finance-settings",
+        label: "Reserve policy",
+        href: "/studio/finance/settings",
+        roles: allRoles,
+        requiresFinance: true,
+      },
+    ],
+  },
+  {
     id: "control",
     label: "Insights",
     description: "Audience and platform reporting",
@@ -218,6 +256,7 @@ export function isStudioNavigationItemVisible(
   if (item.requiresChat && !context.chatEnabled) return false;
   if (item.requiresPress && !context.pressEnabled) return false;
   if (item.requiresAlerts && !context.alertsEnabled) return false;
+  if (item.requiresFinance && !context.financeEnabled) return false;
   return true;
 }
 

@@ -258,6 +258,7 @@ export const employeeCapabilities = [
   "tools:editorial",
   "tools:press",
   "tools:alerts",
+  "tools:finance",
   "tools:live",
   "access:review",
   "platform:license-admin",

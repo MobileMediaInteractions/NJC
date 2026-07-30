@@ -5,15 +5,17 @@ import { getNjcPlusFlags } from "@/lib/feature-flags";
 import { getActiveBetaTesterGrant } from "@/lib/njc-plus-beta";
 import { njcPlusAssets } from "@/lib/njc-plus-assets";
 import { getSiteOrigin } from "@/lib/origin";
+import { getAccountIdentity } from "@/lib/auth";
 
 export function NjcPlusLogo({ compact = false }: { compact?: boolean }) {
   return <Image src={compact ? njcPlusAssets.icon : njcPlusAssets.primaryDark} width={compact ? 44 : 176} height={compact ? 44 : 50} alt="NJC+" priority className={compact ? "size-11" : "h-10 w-auto sm:h-12"} />;
 }
 
 export async function NjcPlusHeader({ studioPreview = false }: { studioPreview?: boolean }) {
-  const [storedFlags, betaGrant] = await Promise.all([
+  const [storedFlags, betaGrant, account] = await Promise.all([
     getNjcPlusFlags(),
     studioPreview ? Promise.resolve(null) : getActiveBetaTesterGrant(),
+    studioPreview ? Promise.resolve(null) : getAccountIdentity(),
   ]);
   const flags = new Map(storedFlags.map((flag) => [flag.key, flag.effective]));
   const visible = (key: string) =>
@@ -31,7 +33,7 @@ export async function NjcPlusHeader({ studioPreview = false }: { studioPreview?:
             {visible("njc_plus_live") ? <Link href={studioPreview ? "/plus/live?preview=studio" : "/plus/live"}><Radio /> Live</Link> : null}
             {visible("njc_plus_search") ? <Link href={studioPreview ? "/plus/search?preview=studio" : "/plus/search"}><Search /> Search</Link> : null}
           </nav>
-          <Link href={`${siteOrigin}/sign-in`} className="plus-account"><CircleUserRound /><span>Account</span></Link>
+          <Link href={account ? "/plus/account" : `${siteOrigin}/sign-in?redirect_url=/plus/account`} className="plus-account"><CircleUserRound /><span>{account ? "Account" : "Sign in"}</span></Link>
         </div>
       </header>
     </>

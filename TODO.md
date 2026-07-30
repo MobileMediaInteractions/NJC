@@ -253,3 +253,34 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 - [ ] Create and approve the external AdSense account, register the production domain, configure a Google-certified consent message, create ad units, review Google’s site approval, then enter the real publisher and slot IDs in Studio before disabling Preview mode.
 - [ ] After live inventory is approved, validate consent withdrawal, reporting, fill failures, accessibility, layout shift, Core Web Vitals, placement policy compliance and reasonable ad density on real desktop and mobile pages.
 - [ ] Move the monetized production deployment to a hosting plan or provider whose terms permit commercial use; Vercel Hobby is for personal, non-commercial use.
+
+## Finance and payments — external activation remaining
+
+> The code-backed Finance hub, hosted Stripe checkout, billing portal,
+> duplicate-safe webhook register, settlement subledger, reserve planning,
+> CSV/portable exports and versioned period-close workflow are implemented.
+> Complete this operational work before accepting real money. See
+> [the finance and payments runbook](docs/FINANCE_AND_PAYMENTS.md).
+
+- [ ] Apply `apps/web/drizzle/0026_first_doomsday.sql` to production, configure
+  Stripe test-mode secrets and every documented signed webhook event, then
+  prove successful, declined, action-required, renewal, cancellation, refund,
+  dispute and failed-payout scenarios end to end.
+- [ ] Choose the legal entity, accounting method, chart of accounts, bank
+  destination, payroll process and bookkeeping system with qualified
+  professionals. Reconcile Studio’s subledger to Stripe Balance/Payout reports
+  and bank statements; do not treat Studio as a filed return or full
+  double-entry accounting system.
+- [ ] Determine NJC+ sales-tax registrations, nexus, product tax codes and
+  customer-location evidence before setting `STRIPE_TAX_ENABLED=true`.
+  Validate collection, refund and remittance behavior in test mode and obtain
+  professional approval.
+- [ ] Have the publication’s CPA or tax adviser approve the federal, New Jersey,
+  payroll, contingency, chargeback and operating-reserve policy in Studio. Zero
+  remains the safe default until that review is complete.
+- [ ] Configure and legally review the Stripe Customer Portal, prices,
+  trial/renewal disclosures, refund/cancellation policy, privacy terms,
+  statement descriptor, receipts and support contact before live checkout.
+- [ ] Close and independently review a production-like test month, compare the
+  CSV and encrypted portable backup, and perform a restore/reconciliation drill
+  before moving Stripe Products, Prices and credentials to live mode.
