@@ -1,6 +1,7 @@
 import { and, eq, lte } from "drizzle-orm";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import { stories } from "@harborline/backend/schema";
+import { getSiteConfiguration } from "@/lib/site-settings";
 
 /**
  * Vercel Hobby only runs the maintenance cron once daily. Public news surfaces
@@ -11,6 +12,9 @@ import { stories } from "@harborline/backend/schema";
  */
 export async function publishDueStories(now = new Date()) {
   if (!hasDatabase()) return [];
+  if (!(await getSiteConfiguration()).studio.automations.scheduledPublishing) {
+    return [];
+  }
 
   return getDb()
     .update(stories)

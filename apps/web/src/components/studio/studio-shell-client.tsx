@@ -34,6 +34,7 @@ import {
   PanelLeftOpen,
   ScrollText,
   Scale,
+  Search,
   Settings,
   Share2,
   SlidersHorizontal,
@@ -41,6 +42,7 @@ import {
   Users,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
+import { StudioCommandPalette } from "@/components/studio/studio-command-palette";
 import {
   StudioCommunicationControls,
   formatUnread,
@@ -66,6 +68,7 @@ import {
 import { formatTipBadge } from "@/lib/newsroom-tips";
 import {
   getStudioHubSecondaryItems,
+  getStudioModuleForPathname,
   resolveStudioNavigation,
   studioNavigationHref,
   usesCleanStudioNavigationPaths,
@@ -74,6 +77,7 @@ import {
   type StudioNavigationItem,
 } from "@/lib/studio-navigation";
 import type { StudioUser } from "@/lib/types";
+import type { SiteConfiguration } from "@/lib/site-settings";
 import { cn } from "@/lib/utils";
 
 const sidebarStorageKey = "njc:studio:sidebar-collapsed:v1";
@@ -129,6 +133,7 @@ export function StudioShellClient({
   pressEnabled,
   alertsEnabled,
   financeEnabled,
+  studioConfiguration,
 }: {
   children: React.ReactNode;
   viewer: StudioUser;
@@ -138,20 +143,32 @@ export function StudioShellClient({
   pressEnabled: boolean;
   alertsEnabled: boolean;
   financeEnabled: boolean;
+  studioConfiguration: SiteConfiguration["studio"];
 }) {
   const pathname = usePathname();
   const cleanStudioPaths = usesCleanStudioNavigationPaths(pathname);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
   const communication = useStudioCommunication({
     enabled: chatEnabled,
     initialUnread: unreadChatCount,
   });
-  const context = { role: viewer.role, chatEnabled, pressEnabled, alertsEnabled, financeEnabled };
+  const context = {
+    role: viewer.role,
+    chatEnabled,
+    pressEnabled,
+    alertsEnabled,
+    financeEnabled,
+    modules: studioConfiguration.modules,
+  };
   const { hubs, activeHub, activeItem } = resolveStudioNavigation(
     pathname,
     context,
   );
+  const requestedModule = getStudioModuleForPathname(pathname);
+  const moduleDisabled =
+    requestedModule && studioConfiguration.modules[requestedModule] === false;
   const tipBadge = formatTipBadge(newTipCount);
   const chatBadge = communication.unreadChat
     ? formatUnread(communication.unreadChat)
@@ -163,6 +180,18 @@ export function StudioShellClient({
     });
     return () => window.cancelAnimationFrame(frame);
   }, []);
+
+  useEffect(() => {
+    if (!studioConfiguration.experience.commandPalette) return;
+    function handleShortcut(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setCommandOpen((current) => !current);
+      }
+    }
+    window.addEventListener("keydown", handleShortcut);
+    return () => window.removeEventListener("keydown", handleShortcut);
+  }, [studioConfiguration.experience.commandPalette]);
 
   function toggleCollapsed() {
     setCollapsed((current) => {
@@ -183,18 +212,21 @@ export function StudioShellClient({
     cleanStudioPaths,
   };
   const primaryAction = getPrimaryAction(activeHub.id, pressEnabled);
+  const quickActions = getQuickActions(hubs, pressEnabled);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-[#f4f1e9] text-foreground dark:bg-[#071a14]">
       <div
         className={cn(
           "min-h-screen transition-[grid-template-columns] duration-300 ease-out motion-reduce:transition-none lg:grid",
           collapsed
             ? "lg:grid-cols-[4.75rem_minmax(0,1fr)]"
-            : "lg:grid-cols-[16.5rem_minmax(0,1fr)]",
+            : studioConfiguration.experience.compactNavigation
+              ? "lg:grid-cols-[15.5rem_minmax(0,1fr)]"
+              : "lg:grid-cols-[17.5rem_minmax(0,1fr)]",
         )}
       >
-        <aside className="dark sticky top-0 hidden h-screen min-h-0 border-r border-white/10 bg-[#0b271e] text-white lg:flex lg:flex-col">
+        <aside className="dark sticky top-0 hidden h-screen min-h-0 border-r border-white/10 bg-[#071f18] text-white shadow-[8px_0_30px_rgba(0,0,0,.08)] lg:flex lg:flex-col">
           <SidebarHeader collapsed={collapsed} onToggle={toggleCollapsed} />
           <SidebarNavigation {...navigationProps} collapsed={collapsed} />
           <SidebarFooter collapsed={collapsed} />
@@ -223,7 +255,7 @@ export function StudioShellClient({
         </Sheet>
 
         <div className="min-w-0">
-          <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/92 px-3 backdrop-blur-xl sm:px-6">
+          <header className="sticky top-0 z-30 flex h-[4.75rem] items-center justify-between border-b bg-background/92 px-3 backdrop-blur-xl sm:px-6">
             <div className="flex min-w-0 items-center gap-3">
               <Button
                 variant="ghost"
@@ -238,18 +270,33 @@ export function StudioShellClient({
                 <BrandMark compact />
               </div>
               <div className="hidden min-w-0 sm:block">
-                <p className="truncate text-sm font-semibold">
-                  {activeItem?.label ?? activeHub.label}
+                <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-primary">
+                  {activeHub.label}
                 </p>
-                <p className="truncate text-[0.68rem] text-muted-foreground">
-                  {activeItem && activeItem.label !== activeHub.label
-                    ? activeHub.label
-                    : activeHub.description}
+                <p className="truncate text-sm font-semibold">
+                  {activeItem?.label ?? activeHub.description}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2">
+              {studioConfiguration.experience.commandPalette ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-9 gap-2 bg-background/60 px-2.5 text-muted-foreground sm:min-w-48 sm:justify-between"
+                  onClick={() => setCommandOpen(true)}
+                  aria-label="Open Studio command center"
+                >
+                  <span className="flex items-center gap-2">
+                    <Search />
+                    <span className="hidden sm:inline">Search Studio</span>
+                  </span>
+                  <kbd className="hidden rounded border bg-muted px-1.5 py-0.5 font-mono text-[0.62rem] sm:inline">
+                    ⌘K
+                  </kbd>
+                </Button>
+              ) : null}
               <StudioCommunicationControls
                 enabled={chatEnabled}
                 unreadNotifications={communication.unreadNotifications}
@@ -260,7 +307,12 @@ export function StudioShellClient({
               />
               {primaryAction ? (
                 <Button asChild size="sm">
-                  <Link href={primaryAction.href}>
+                  <Link
+                    href={studioNavigationHref(
+                      primaryAction.href,
+                      cleanStudioPaths,
+                    )}
+                  >
                     <FilePlus2 />
                     <span className="hidden md:inline">
                       {primaryAction.label}
@@ -274,11 +326,49 @@ export function StudioShellClient({
               <AccountMenu viewer={viewer} />
             </div>
           </header>
-          <main className="mx-auto w-full max-w-[96rem] p-4 sm:p-6 lg:p-8">
-            {children}
+          <main className="mx-auto w-full max-w-[92rem] p-4 sm:p-6 lg:p-8">
+            {moduleDisabled ? (
+              <div className="mx-auto grid min-h-[60vh] max-w-2xl place-items-center text-center">
+                <div className="rounded-2xl border bg-card p-8 shadow-sm">
+                  <SlidersHorizontal className="mx-auto size-9 text-primary" />
+                  <h1 className="mt-4 text-2xl font-bold">
+                    This workspace is paused
+                  </h1>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    An administrator disabled this Studio workspace in the
+                    central configuration. Its data has not been deleted.
+                  </p>
+                  {viewer.role === "admin" ? (
+                    <Button asChild className="mt-5">
+                      <Link
+                        href={studioNavigationHref(
+                          "/studio/settings",
+                          cleanStudioPaths,
+                        )}
+                      >
+                        Open Configuration
+                      </Link>
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ) : children}
           </main>
         </div>
       </div>
+      {studioConfiguration.experience.commandPalette ? (
+        <StudioCommandPalette
+          open={commandOpen}
+          onOpenChange={setCommandOpen}
+          hubs={hubs}
+          cleanStudioPaths={cleanStudioPaths}
+          quickActions={
+            studioConfiguration.experience.contextualQuickActions
+              ? quickActions
+              : []
+          }
+        />
+      ) : null}
     </div>
   );
 }
@@ -613,6 +703,41 @@ function getPrimaryAction(hub: StudioHubId, pressEnabled: boolean) {
     };
   }
   return null;
+}
+
+function getQuickActions(
+  hubs: StudioNavigationHub[],
+  pressEnabled: boolean,
+) {
+  const itemIds = new Set(
+    hubs.flatMap((hub) => hub.items.map((item) => item.id)),
+  );
+  return [
+    itemIds.has("stories")
+      ? {
+          id: "new-story",
+          label: "Create a story",
+          description: "Start a newsroom draft",
+          href: "/studio/stories/new",
+        }
+      : null,
+    pressEnabled && itemIds.has("press-releases")
+      ? {
+          id: "new-press-release",
+          label: "Create a press release",
+          description: "Start a release and PDF",
+          href: "/studio/press-releases/new",
+        }
+      : null,
+    itemIds.has("njc-plus-content")
+      ? {
+          id: "new-njc-plus",
+          label: "Create NJC+ content",
+          description: "Start premium video, audio, or editorial",
+          href: "/studio/njc-plus/content/new",
+        }
+      : null,
+  ].filter((action): action is NonNullable<typeof action> => action !== null);
 }
 
 function badgeForItem(

@@ -51,6 +51,7 @@ export async function deliverNotificationCampaign(input: {
   body: string;
   destination: string;
   subscriptions: NotificationSubscriptionTarget[];
+  cleanupStaleSubscriptions?: boolean;
 }) {
   const configuration = getWebPushConfiguration();
   if (!configuration) {
@@ -91,14 +92,6 @@ export async function deliverNotificationCampaign(input: {
     configuration.publicKey,
     configuration.privateKey,
   );
-  const payload = JSON.stringify({
-    version: 1,
-    campaignId: input.campaignId,
-    title: input.title,
-    body: input.body,
-    destination: input.destination,
-  });
-
   const results = await mapWithConcurrency(
     input.subscriptions,
     deliveryConcurrency,
@@ -108,6 +101,14 @@ export async function deliverNotificationCampaign(input: {
         return { accepted: false, stale: false, providerStatus: null, errorCode: "delivery_record_missing" };
       }
       try {
+        const payload = JSON.stringify({
+          version: 1,
+          campaignId: input.campaignId,
+          deliveryId,
+          title: input.title,
+          body: input.body,
+          destination: input.destination,
+        });
         const result = await webPush.sendNotification(
           {
             endpoint: subscription.endpoint,
@@ -137,7 +138,7 @@ export async function deliverNotificationCampaign(input: {
         }).where(eq(notificationDeliveries.id, deliveryId));
         await db.update(webPushSubscriptions).set({
           failureCount: sql`${webPushSubscriptions.failureCount} + 1`,
-          ...(failure.stale
+          ...(failure.stale && input.cleanupStaleSubscriptions !== false
             ? { isActive: false, revokedAt: new Date() }
             : {}),
           updatedAt: new Date(),

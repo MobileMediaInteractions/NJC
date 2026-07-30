@@ -1,0 +1,2 @@
+ALTER TABLE "notification_campaigns" ADD COLUMN "opened_count" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE "notification_deliveries" ADD COLUMN "opened_at" timestamp with time zone;

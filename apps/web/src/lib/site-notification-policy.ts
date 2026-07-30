@@ -35,13 +35,16 @@ export const notificationAudienceSchema = z.discriminatedUnion("type", [
   }).strict(),
 ]);
 
-export const notificationCampaignInputSchema = z.object({
+const notificationCampaignFields = {
   title: z.string().trim().min(3).max(120),
   body: z.string().trim().min(3).max(240),
   destination: z.string().trim().max(300).default("/"),
   audience: notificationAudienceSchema,
-  confirmed: z.literal(true),
-}).strict().transform((value, context) => {
+};
+
+function normalizeCampaignDestination<
+  Value extends { destination: string },
+>(value: Value, context: z.RefinementCtx) {
   const destination = normalizeNotificationDestination(value.destination);
   if (!destination) {
     context.addIssue({
@@ -52,7 +55,16 @@ export const notificationCampaignInputSchema = z.object({
     return z.NEVER;
   }
   return { ...value, destination };
-});
+}
+
+export const notificationCampaignDraftSchema = z.object(
+  notificationCampaignFields,
+).strict().transform(normalizeCampaignDestination);
+
+export const notificationCampaignInputSchema = z.object({
+  ...notificationCampaignFields,
+  confirmed: z.literal(true),
+}).strict().transform(normalizeCampaignDestination);
 
 export const webPushSubscriptionSchema = z.object({
   endpoint: z.url({ protocol: /^https$/ }).max(2_048),
@@ -68,7 +80,23 @@ export const webPushUnsubscribeSchema = z.object({
 }).strict();
 
 export type NotificationAudience = z.infer<typeof notificationAudienceSchema>;
+export type NotificationCampaignDraft = z.output<typeof notificationCampaignDraftSchema>;
 export type NotificationCampaignInput = z.output<typeof notificationCampaignInputSchema>;
+
+export function notificationAudienceAllowed(
+  audience: NotificationAudience,
+  policy: {
+    allowSitewideAudience: boolean;
+    allowAccountAudience: boolean;
+    allowRoleAudience: boolean;
+    allowNjcPlusAudience: boolean;
+  },
+) {
+  if (audience.type === "sitewide") return policy.allowSitewideAudience;
+  if (audience.type === "accounts") return policy.allowAccountAudience;
+  if (audience.type === "staff_roles") return policy.allowRoleAudience;
+  return policy.allowNjcPlusAudience;
+}
 
 const privateDestinationPrefixes = [
   "/api",

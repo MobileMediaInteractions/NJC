@@ -1,14 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   BellRing,
   CheckCircle2,
+  CircleAlert,
+  Copy,
   LoaderCircle,
   Megaphone,
   Plus,
   Send,
   ShieldAlert,
+  ShieldCheck,
   UserRound,
   X,
 } from "lucide-react";
@@ -65,13 +68,50 @@ type Campaign = {
   body: string;
   destination: string;
   audienceType: string;
+  audienceSpec: {
+    userClerkIds?: string[];
+    roles?: string[];
+    segment?: string;
+  };
   status: string;
   recipientCount: number;
   subscriptionCount: number;
   deliveredCount?: number;
   acceptedCount?: number;
   failedCount: number;
+  openedCount: number;
   createdAt: string;
+  completedAt: string | null;
+};
+
+type NotificationPolicy = {
+  deliveryEnabled: boolean;
+  allowSitewideAudience: boolean;
+  allowAccountAudience: boolean;
+  allowRoleAudience: boolean;
+  allowNjcPlusAudience: boolean;
+  requireAudiencePreflight: true;
+  requireTypedConfirmationForBroadAudience: boolean;
+  retainCampaignHistory: boolean;
+};
+
+type NotificationReadiness = {
+  database: boolean;
+  vapid: boolean;
+  readerEnrollment: boolean;
+  studioDelivery: boolean;
+  ready: boolean;
+  activeSubscriptions: number;
+  totalCampaigns: number;
+  lastCampaignAt: string | null;
+};
+
+type Preflight = {
+  recipients: number;
+  subscriptions: number;
+  destination: string;
+  ready: boolean;
+  fingerprint: string;
 };
 
 const audienceOptions: GuidedOption[] = [
@@ -123,16 +163,33 @@ const segmentLabels: Record<NjcPlusSegment, string> = {
 export function NotificationCampaignConsole({
   publicAlertsEnabled,
   canSearchAccounts,
+  policy,
+  readiness,
+  initialHistory,
+  showOperationalStatus,
 }: {
   publicAlertsEnabled: boolean;
   canSearchAccounts: boolean;
+  policy: NotificationPolicy;
+  readiness: NotificationReadiness;
+  initialHistory: Campaign[];
+  showOperationalStatus: boolean;
 }) {
-  const [history, setHistory] = useState<Campaign[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(true);
+  const allowedAudienceOptions = audienceOptions.filter((option) => {
+    if (option.value === "sitewide") return policy.allowSitewideAudience;
+    if (option.value === "accounts") return policy.allowAccountAudience;
+    if (option.value === "staff_roles") return policy.allowRoleAudience;
+    return policy.allowNjcPlusAudience;
+  });
+  const [history, setHistory] = useState<Campaign[]>(initialHistory);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [audienceType, setAudienceType] =
-    useState<AudienceType>("sitewide");
+    useState<AudienceType>(
+      (allowedAudienceOptions[0]?.value as AudienceType | undefined) ??
+        "sitewide",
+    );
   const [accountCandidate, setAccountCandidate] =
     useState<StudioAccountSummary | null>(null);
   const [accounts, setAccounts] = useState<StudioAccountSummary[]>([]);
@@ -141,6 +198,8 @@ export function NotificationCampaignConsole({
   const [destinationChoice, setDestinationChoice] = useState("/");
   const [customDestination, setCustomDestination] = useState("");
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [preflight, setPreflight] = useState<Preflight | null>(null);
+  const [preflighting, setPreflighting] = useState(false);
   const [confirmation, setConfirmation] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
@@ -171,11 +230,6 @@ export function NotificationCampaignConsole({
     }
   }, []);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => void loadHistory(), 0);
-    return () => window.clearTimeout(timer);
-  }, [loadHistory]);
-
   function addAccount() {
     if (!accountCandidate) return;
     setAccounts((current) =>
@@ -202,13 +256,15 @@ export function NotificationCampaignConsole({
     (audienceType === "staff_roles" && roles.length > 0) ||
     audienceType === "njc_plus_segment";
   const formValid =
-    publicAlertsEnabled &&
+    readiness.ready &&
     title.trim().length >= 3 &&
     body.trim().length >= 3 &&
     destination.startsWith("/") &&
     !destination.startsWith("//") &&
     audienceValid;
   const broadAudience = audienceType !== "accounts" || accounts.length > 1;
+  const typedConfirmationRequired =
+    broadAudience && policy.requireTypedConfirmationForBroadAudience;
   const audienceDescription = useMemo(() => {
     if (audienceType === "sitewide") return "Every active browser subscription";
     if (audienceType === "accounts") {
@@ -220,33 +276,76 @@ export function NotificationCampaignConsole({
     return segmentLabels[segment];
   }, [accounts.length, audienceType, roles, segment]);
 
+  function currentAudience() {
+    return audienceType === "sitewide"
+      ? { type: "sitewide" as const }
+      : audienceType === "accounts"
+        ? {
+            type: "accounts" as const,
+            userClerkIds: accounts.map((account) => account.id),
+          }
+        : audienceType === "staff_roles"
+          ? { type: "staff_roles" as const, roles }
+          : {
+              type: "njc_plus_segment" as const,
+              segment,
+            };
+  }
+
+  function campaignDraft() {
+    return {
+      title: title.trim(),
+      body: body.trim(),
+      destination,
+      audience: currentAudience(),
+    };
+  }
+
+  const campaignFingerprint = JSON.stringify(campaignDraft());
+  const verifiedPreflight =
+    preflight?.fingerprint === campaignFingerprint ? preflight : null;
+
+  async function reviewCampaign() {
+    if (!formValid || preflighting) return;
+    setPreflighting(true);
+    setError("");
+    try {
+      const response = await fetch("/api/v1/studio/notifications/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(campaignDraft()),
+      });
+      const payload = (await response.json()) as {
+        data?: Omit<Preflight, "fingerprint">;
+        error?: { message?: string };
+      };
+      if (!response.ok || !payload.data) {
+        throw new Error(payload.error?.message ?? "Audience preflight failed");
+      }
+      setPreflight({ ...payload.data, fingerprint: campaignFingerprint });
+      setConfirmation("");
+      setReviewOpen(true);
+    } catch (reviewError) {
+      setError(
+        reviewError instanceof Error
+          ? reviewError.message
+          : "Audience preflight failed",
+      );
+    } finally {
+      setPreflighting(false);
+    }
+  }
+
   async function sendCampaign() {
     setBusy(true);
     setError("");
     setNotice("");
     try {
-      const audience =
-        audienceType === "sitewide"
-          ? { type: "sitewide" as const }
-          : audienceType === "accounts"
-            ? {
-                type: "accounts" as const,
-                userClerkIds: accounts.map((account) => account.id),
-              }
-            : audienceType === "staff_roles"
-              ? { type: "staff_roles" as const, roles }
-              : {
-                  type: "njc_plus_segment" as const,
-                  segment,
-                };
       const response = await fetch("/api/v1/studio/notifications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: title.trim(),
-          body: body.trim(),
-          destination,
-          audience,
+          ...campaignDraft(),
           confirmed: true,
         }),
       });
@@ -276,6 +375,7 @@ export function NotificationCampaignConsole({
       setBody("");
       setAccounts([]);
       setRoles([]);
+      setPreflight(null);
       await loadHistory();
     } catch (sendError) {
       setError(
@@ -304,22 +404,32 @@ export function NotificationCampaignConsole({
             guarantee that a reader saw a notification.
           </p>
         </div>
-        <Badge variant={publicAlertsEnabled ? "secondary" : "destructive"}>
-          {publicAlertsEnabled ? "Reader alerts enabled" : "Disabled in Configuration"}
+        <Badge variant={readiness.ready ? "secondary" : "destructive"}>
+          {readiness.ready ? "Delivery ready" : "Setup needs attention"}
         </Badge>
       </div>
 
-      {!publicAlertsEnabled ? (
+      {!publicAlertsEnabled || !policy.deliveryEnabled ? (
         <Card className="border-amber-500/50 bg-amber-500/5">
           <CardHeader>
             <ShieldAlert className="size-6 text-amber-600" />
             <CardTitle>Public alerts are disabled</CardTitle>
             <CardDescription>
-              Enable Alerts in Studio → Site configuration before a campaign
-              can be sent. The API enforces the same boundary.
+              Enable both Breaking-news alerts and Studio campaign delivery in
+              Configuration before a campaign can be sent. The API enforces
+              both boundaries.
             </CardDescription>
           </CardHeader>
         </Card>
+      ) : null}
+
+      {showOperationalStatus ? (
+        <section className="grid overflow-hidden rounded-xl border bg-card sm:grid-cols-2 xl:grid-cols-4">
+          <ReadinessMetric label="Database" ready={readiness.database} detail={readiness.database ? "Campaign storage connected" : "Postgres is unavailable"} />
+          <ReadinessMetric label="Web Push keys" ready={readiness.vapid} detail={readiness.vapid ? "VAPID delivery configured" : "Add the three VAPID environment values"} />
+          <ReadinessMetric label="Reader enrollment" ready={readiness.readerEnrollment} detail={readiness.readerEnrollment ? `${readiness.activeSubscriptions} active subscription${readiness.activeSubscriptions === 1 ? "" : "s"}` : "Public enrollment is disabled"} />
+          <ReadinessMetric label="Studio delivery" ready={readiness.studioDelivery} detail={readiness.studioDelivery ? `${readiness.totalCampaigns} recorded campaign${readiness.totalCampaigns === 1 ? "" : "s"}` : "Campaign delivery is disabled"} />
+        </section>
       ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(22rem,.85fr)]">
@@ -368,7 +478,7 @@ export function NotificationCampaignConsole({
               <GuidedEntityPicker
                 label="Audience"
                 value={audienceType}
-                options={audienceOptions}
+                options={allowedAudienceOptions}
                 onChange={(value) => setAudienceType((value ?? "sitewide") as AudienceType)}
                 allowClear={false}
                 disabled={!publicAlertsEnabled}
@@ -516,13 +626,11 @@ export function NotificationCampaignConsole({
 
             <Button
               type="button"
-              disabled={!formValid || busy}
-              onClick={() => {
-                setConfirmation("");
-                setReviewOpen(true);
-              }}
+              disabled={!formValid || busy || preflighting}
+              onClick={() => void reviewCampaign()}
             >
-              <Send /> Review before sending
+              {preflighting ? <LoaderCircle className="animate-spin" /> : <ShieldCheck />}
+              Verify audience and review
             </Button>
           </CardContent>
         </Card>
@@ -541,6 +649,14 @@ export function NotificationCampaignConsole({
               <p className="flex items-center gap-2 py-10 text-sm text-muted-foreground" role="status">
                 <LoaderCircle className="animate-spin" /> Loading campaigns…
               </p>
+            ) : !policy.retainCampaignHistory ? (
+              <div className="py-16 text-center">
+                <BellRing className="mx-auto size-8 text-muted-foreground" />
+                <p className="mt-3 font-semibold">History display is disabled</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Delivery records remain in the audit-safe database.
+                </p>
+              </div>
             ) : history.length ? (
               history.map((campaign) => (
                 <article key={campaign.id} className="rounded-lg border p-4">
@@ -551,16 +667,39 @@ export function NotificationCampaignConsole({
                         {campaign.body}
                       </p>
                     </div>
-                    <Badge variant="outline" className="capitalize">
-                      {campaign.status}
-                    </Badge>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <Button
+                        type="button"
+                        size="icon-sm"
+                        variant="ghost"
+                        aria-label={`Reuse copy from ${campaign.title}`}
+                        title="Reuse this copy"
+                        onClick={() => {
+                          setTitle(campaign.title);
+                          setBody(campaign.body);
+                          setDestinationChoice(
+                            destinationOptions.some((item) => item.value === campaign.destination)
+                              ? campaign.destination
+                              : "custom",
+                          );
+                          setCustomDestination(campaign.destination);
+                          window.scrollTo({ top: 0, behavior: "smooth" });
+                        }}
+                      >
+                        <Copy />
+                      </Button>
+                      <Badge variant="outline" className="capitalize">
+                        {campaign.status}
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="mt-3 grid grid-cols-4 gap-2 text-center text-xs">
                     <CampaignMetric label="Recipients" value={campaign.recipientCount} />
                     <CampaignMetric
                       label="Accepted"
                       value={campaign.acceptedCount ?? campaign.deliveredCount ?? 0}
                     />
+                    <CampaignMetric label="Opened" value={campaign.openedCount ?? 0} />
                     <CampaignMetric label="Failed" value={campaign.failedCount} />
                   </div>
                   <p className="mt-3 text-[0.65rem] text-muted-foreground">
@@ -600,8 +739,22 @@ export function NotificationCampaignConsole({
               <dd className="font-semibold">{audienceDescription}</dd>
               <dt className="text-muted-foreground">Destination</dt>
               <dd className="font-mono text-xs">{destination}</dd>
+              <dt className="text-muted-foreground">Recipients</dt>
+              <dd className="font-semibold">
+                {verifiedPreflight?.recipients.toLocaleString() ?? "Checking"}
+              </dd>
+              <dt className="text-muted-foreground">Devices</dt>
+              <dd className="font-semibold">
+                {verifiedPreflight?.subscriptions.toLocaleString() ?? "Checking"}
+              </dd>
             </dl>
-            {broadAudience ? (
+            {verifiedPreflight && !verifiedPreflight.ready ? (
+              <div className="flex gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+                <CircleAlert className="mt-0.5 size-4 shrink-0" />
+                No active browser subscription matches this audience.
+              </div>
+            ) : null}
+            {typedConfirmationRequired ? (
               <div className="space-y-2">
                 <Label htmlFor="notification-confirmation">
                   Type SEND to confirm this broad audience
@@ -626,7 +779,11 @@ export function NotificationCampaignConsole({
             </Button>
             <Button
               type="button"
-              disabled={busy || (broadAudience && confirmation !== "SEND")}
+              disabled={
+                busy ||
+                !verifiedPreflight?.ready ||
+                (typedConfirmationRequired && confirmation !== "SEND")
+              }
               onClick={() => void sendCampaign()}
             >
               {busy ? <LoaderCircle className="animate-spin" /> : <Send />}
@@ -644,6 +801,30 @@ function CampaignMetric({ label, value }: { label: string; value: number }) {
     <div className="rounded-md bg-muted/35 px-2 py-2">
       <strong className="block text-sm">{value.toLocaleString()}</strong>
       <span className="text-muted-foreground">{label}</span>
+    </div>
+  );
+}
+
+function ReadinessMetric({
+  label,
+  ready,
+  detail,
+}: {
+  label: string;
+  ready: boolean;
+  detail: string;
+}) {
+  return (
+    <div className="border-b p-4 last:border-b-0 sm:border-r xl:border-b-0 xl:last:border-r-0">
+      <div className="flex items-center gap-2 text-sm font-semibold">
+        {ready ? (
+          <CheckCircle2 className="size-4 text-emerald-600" />
+        ) : (
+          <CircleAlert className="size-4 text-amber-600" />
+        )}
+        {label}
+      </div>
+      <p className="mt-1.5 text-xs leading-5 text-muted-foreground">{detail}</p>
     </div>
   );
 }

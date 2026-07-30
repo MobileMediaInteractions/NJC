@@ -5,9 +5,12 @@ import { useState } from "react";
 import {
   Activity,
   BadgeDollarSign,
+  BellRing,
+  Bot,
   CheckCircle2,
   ExternalLink,
   FileText,
+  LayoutGrid,
   Loader2,
   Navigation,
   Plus,
@@ -15,6 +18,7 @@ import {
   ShieldAlert,
   SlidersHorizontal,
   Trash2,
+  Zap,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +32,7 @@ import { EditableList } from "@/components/studio/editable-list";
 import {
   type AdPlacementName,
   type SiteConfiguration,
+  type StudioModuleKey,
 } from "@/lib/site-settings";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -36,6 +41,41 @@ const placements: Array<{ key: AdPlacementName; label: string; description: stri
   { key: "homepageLeaderboard", label: "Homepage leaderboard", description: "Wide placement above the homepage’s top-stories package." },
   { key: "articleInline", label: "Article inline", description: "Responsive unit after the article body and before tags." },
   { key: "sectionInline", label: "Section inline", description: "Responsive unit between the leading section package and story grid." },
+];
+
+const studioModules: Array<{
+  key: StudioModuleKey;
+  label: string;
+  description: string;
+  group: "Newsroom" | "Operations" | "Business";
+}> = [
+  { key: "stories", label: "Stories", description: "Draft, review, schedule and publish journalism.", group: "Newsroom" },
+  { key: "media", label: "Media library", description: "Upload and reuse newsroom images.", group: "Newsroom" },
+  { key: "tips", label: "News tips", description: "Review sensitive reader submissions.", group: "Newsroom" },
+  { key: "twentyUnderTwenty", label: "20 Under 20", description: "Program and nomination controls.", group: "Newsroom" },
+  { key: "distributionManager", label: "Secure distribution", description: "Pre-publication package delivery.", group: "Operations" },
+  { key: "pressReleases", label: "Press releases", description: "Release authoring and PDF generation.", group: "Operations" },
+  { key: "pressRequests", label: "Press requests", description: "Media-request intake and fulfillment.", group: "Operations" },
+  { key: "exports", label: "Portable exports", description: "Migration-ready newsroom backups.", group: "Operations" },
+  { key: "chat", label: "Team chat", description: "Internal channels and direct collaboration.", group: "Operations" },
+  { key: "team", label: "Team and roles", description: "Identity, access and staff management.", group: "Operations" },
+  { key: "notifications", label: "Site notifications", description: "Permission-aware reader push campaigns.", group: "Operations" },
+  { key: "njcPlusOverview", label: "NJC+ overview", description: "Premium network launch status.", group: "Business" },
+  { key: "njcPlusContent", label: "NJC+ content", description: "Premium editorial, audio and video.", group: "Business" },
+  { key: "njcPlusHomepage", label: "NJC+ homepage", description: "Premium landing-page curation.", group: "Business" },
+  { key: "njcPlusCommerce", label: "NJC+ tiers and offers", description: "Products, prices and offers.", group: "Business" },
+  { key: "njcPlusAccess", label: "NJC+ access", description: "Entitlements and invited beta testers.", group: "Business" },
+  { key: "njcPlusCredits", label: "NJC+ credits", description: "Access-credit grants and balances.", group: "Business" },
+  { key: "njcPlusComments", label: "NJC+ comments", description: "Premium discussion moderation.", group: "Business" },
+  { key: "njcPlusAnalytics", label: "NJC+ analytics", description: "Premium audience reporting.", group: "Business" },
+  { key: "njcPlusAudit", label: "NJC+ audit log", description: "Premium privileged-action history.", group: "Business" },
+  { key: "njcPlusFlags", label: "NJC+ feature flags", description: "Premium beta capability controls.", group: "Business" },
+  { key: "financeOverview", label: "Finance overview", description: "Revenue, liabilities and reserves.", group: "Business" },
+  { key: "financeLedger", label: "General ledger", description: "Double-entry financial records.", group: "Business" },
+  { key: "financeReconciliation", label: "Finance reconciliation", description: "Processor reconciliation and period close.", group: "Business" },
+  { key: "financeSettings", label: "Finance policy", description: "Reserve and tax planning assumptions.", group: "Business" },
+  { key: "analytics", label: "Analytics", description: "Audience and platform reporting.", group: "Business" },
+  { key: "legal", label: "Legal publishing", description: "High-verification legal document controls.", group: "Business" },
 ];
 
 export function SiteSettingsForm({
@@ -94,6 +134,33 @@ export function SiteSettingsForm({
     }));
   }
 
+  function updateStudioModule(key: StudioModuleKey, value: boolean) {
+    setConfiguration((current) => ({
+      ...current,
+      studio: {
+        ...current.studio,
+        modules: { ...current.studio.modules, [key]: value },
+      },
+    }));
+  }
+
+  function updateStudioGroup<
+    Group extends "experience" | "notifications" | "automations",
+    Key extends keyof SiteConfiguration["studio"][Group],
+  >(
+    group: Group,
+    key: Key,
+    value: SiteConfiguration["studio"][Group][Key],
+  ) {
+    setConfiguration((current) => ({
+      ...current,
+      studio: {
+        ...current.studio,
+        [group]: { ...current.studio[group], [key]: value },
+      },
+    }));
+  }
+
   async function save() {
     if (!canManage || state === "saving") return;
     setState("saving");
@@ -126,6 +193,7 @@ export function SiteSettingsForm({
     Boolean(configuration.measurement.googleAnalytics.measurementId);
   const enabledFeatureCount = Object.values(configuration.features).filter(Boolean).length;
   const totalFeatureCount = Object.keys(configuration.features).length;
+  const enabledStudioModuleCount = Object.values(configuration.studio.modules).filter(Boolean).length;
 
   return (
     <div className="mx-auto w-full max-w-6xl">
@@ -150,7 +218,7 @@ export function SiteSettingsForm({
       <section className="mt-7 overflow-hidden rounded-2xl bg-[#102f25] text-white ring-1 ring-black/10">
         <div className="grid sm:grid-cols-2 xl:grid-cols-5">
           <ControlStatus label="Release state" value={canManage ? "Administrator" : "Read only"} detail={canManage ? "Validated save access" : "Review access only"} />
-          <ControlStatus label="Navigation" value={`${configuration.navigation.length} destinations`} detail="Public primary menu" />
+          <ControlStatus label="Studio" value={`${enabledStudioModuleCount} of ${studioModules.length} workspaces`} detail="Permission checks still apply" />
           <ControlStatus label="Runtime features" value={`${enabledFeatureCount} of ${totalFeatureCount} on`} detail="Shared availability flags" />
           <ControlStatus label="Measurement" value={configuration.measurement.googleAnalytics.enabled ? "GA4 requested" : "First-party only"} detail={googleAnalyticsReady ? "Consent-gated ID present" : "External analytics off"} />
           <ControlStatus label="Advertising" value={configuration.advertising.enabled ? configuration.advertising.previewMode ? "Preview" : "Live requested" : "Off"} detail={adsReady ? "Required fields present" : "Setup incomplete"} />
@@ -168,6 +236,9 @@ export function SiteSettingsForm({
               <TabsTrigger value="publication" className="h-10 shrink-0 justify-start px-3 lg:w-full"><Navigation /> Publication</TabsTrigger>
               <TabsTrigger value="editorial" className="h-10 shrink-0 justify-start px-3 lg:w-full"><FileText /> Editorial</TabsTrigger>
               <TabsTrigger value="features" className="h-10 shrink-0 justify-start px-3 lg:w-full"><SlidersHorizontal /> Features</TabsTrigger>
+              <TabsTrigger value="studio" className="h-10 shrink-0 justify-start px-3 lg:w-full"><LayoutGrid /> Studio</TabsTrigger>
+              <TabsTrigger value="notifications" className="h-10 shrink-0 justify-start px-3 lg:w-full"><BellRing /> Notifications</TabsTrigger>
+              <TabsTrigger value="automations" className="h-10 shrink-0 justify-start px-3 lg:w-full"><Bot /> Automations</TabsTrigger>
               <TabsTrigger value="measurement" className="h-10 shrink-0 justify-start px-3 lg:w-full"><Activity /> Measurement</TabsTrigger>
               <TabsTrigger value="advertising" className="h-10 shrink-0 justify-start px-3 lg:w-full"><BadgeDollarSign /> Advertising</TabsTrigger>
             </TabsList>
@@ -245,6 +316,94 @@ export function SiteSettingsForm({
             <Toggle label="Membership" description="Reserved membership surfaces for a future provider." checked={configuration.features.membership} disabled={!canManage} onCheckedChange={(value) => updateFeature("membership", value)} />
             <Toggle label="Donations" description="Reserved reader-support surfaces for a future provider." checked={configuration.features.donations} disabled={!canManage} onCheckedChange={(value) => updateFeature("donations", value)} />
           </CardContent></Card>
+        </TabsContent>
+
+        <TabsContent value="studio" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Studio experience</CardTitle>
+              <CardDescription>
+                Keep common work one shortcut away while allowing each newsroom
+                to simplify the interface without changing authorization.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <Toggle label="Command center" description="Enables the searchable ⌘K / Ctrl+K launcher for every permitted workspace and common creation action." checked={configuration.studio.experience.commandPalette} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("experience", "commandPalette", value)} />
+              <Toggle label="Contextual quick actions" description="Shows the most useful creation action for the current workspace and inside the command center." checked={configuration.studio.experience.contextualQuickActions} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("experience", "contextualQuickActions", value)} />
+              <Toggle label="Compact navigation" description="Uses the reduced-density workspace rail and keeps secondary destinations visible only for the current workspace." checked={configuration.studio.experience.compactNavigation} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("experience", "compactNavigation", value)} />
+              <Toggle label="Operational status" description="Shows readiness and production-state summaries in supported Studio workspaces." checked={configuration.studio.experience.showOperationalStatus} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("experience", "showOperationalStatus", value)} />
+            </CardContent>
+          </Card>
+
+          {(["Newsroom", "Operations", "Business"] as const).map((group) => (
+            <Card key={group}>
+              <CardHeader>
+                <CardTitle>{group} workspaces</CardTitle>
+                <CardDescription>
+                  Disabled workspaces leave the Studio navigation. Existing
+                  role and capability checks remain the security boundary.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-5 lg:grid-cols-2">
+                {studioModules.filter((module) => module.group === group).map((module) => (
+                  <Toggle
+                    key={module.key}
+                    label={module.label}
+                    description={module.description}
+                    checked={configuration.studio.modules[module.key]}
+                    disabled={!canManage}
+                    onCheckedChange={(value) => updateStudioModule(module.key, value)}
+                  />
+                ))}
+              </CardContent>
+            </Card>
+          ))}
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Campaign policy</CardTitle>
+              <CardDescription>
+                These controls govern Studio campaign composition. Public reader
+                enrollment remains controlled by Breaking-news alerts under Features.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <Toggle label="Allow campaign delivery" description="Enables verified staff to send browser push campaigns when VAPID and Postgres are ready." checked={configuration.studio.notifications.deliveryEnabled} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("notifications", "deliveryEnabled", value)} />
+              <Toggle label="Sitewide audience" description="Allows campaigns to every active browser subscription." checked={configuration.studio.notifications.allowSitewideAudience} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("notifications", "allowSitewideAudience", value)} />
+              <Toggle label="Selected accounts" description="Allows administrators to build a recipient list with account search instead of IDs." checked={configuration.studio.notifications.allowAccountAudience} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("notifications", "allowAccountAudience", value)} />
+              <Toggle label="Newsroom roles" description="Allows a campaign to resolve current active staff by selected role." checked={configuration.studio.notifications.allowRoleAudience} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("notifications", "allowRoleAudience", value)} />
+              <Toggle label="NJC+ access groups" description="Allows separate member, trial, complimentary and invited-beta audiences." checked={configuration.studio.notifications.allowNjcPlusAudience} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("notifications", "allowNjcPlusAudience", value)} />
+              <Toggle label="Typed confirmation for broad sends" description="Requires SEND after audience preflight for sitewide, role, NJC+ or multi-account campaigns." checked={configuration.studio.notifications.requireTypedConfirmationForBroadAudience} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("notifications", "requireTypedConfirmationForBroadAudience", value)} />
+              <Toggle label="Campaign history" description="Shows recent provider acceptance and failure totals inside Studio." checked={configuration.studio.notifications.retainCampaignHistory} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("notifications", "retainCampaignHistory", value)} />
+              <Toggle label="Audience preflight" description="Locked on: Studio resolves and shows recipients and device subscriptions before any send can be confirmed." checked={configuration.studio.notifications.requireAudiencePreflight} disabled onCheckedChange={() => undefined} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="automations" className="space-y-6">
+          <Card className="border-amber-500/40">
+            <CardHeader>
+              <div className="flex items-start gap-3">
+                <div className="grid size-10 shrink-0 place-items-center rounded-full bg-amber-500/12 text-amber-600"><Zap /></div>
+                <div>
+                  <CardTitle>Guarded newsroom automations</CardTitle>
+                  <CardDescription>
+                    These switches control existing background work only.
+                    Automation never approves editorial or public-facing changes.
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <Toggle label="Scheduled publishing" description="Publishes a story only after an authorized editor approved the schedule and its due time arrives." checked={configuration.studio.automations.scheduledPublishing} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("automations", "scheduledPublishing", value)} />
+              <Toggle label="Analytics archives" description="Creates weekly, monthly and yearly reporting snapshots during maintenance." checked={configuration.studio.automations.analyticsArchives} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("automations", "analyticsArchives", value)} />
+              <Toggle label="Access-credit expiration" description="Expires time-limited NJC+ access credits after their reviewed end date." checked={configuration.studio.automations.accessCreditExpiration} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("automations", "accessCreditExpiration", value)} />
+              <Toggle label="Stale push cleanup" description="Deactivates browser subscriptions only after the push provider reports them expired or gone." checked={configuration.studio.automations.stalePushSubscriptionCleanup} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("automations", "stalePushSubscriptionCleanup", value)} />
+              <Toggle label="Manual verification boundary" description="Locked on: publication, broad notifications, access grants, legal changes and destructive actions retain explicit human confirmation." checked={configuration.studio.automations.manualVerificationRequired} disabled onCheckedChange={() => undefined} />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="measurement">

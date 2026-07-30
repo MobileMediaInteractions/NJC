@@ -32,6 +32,8 @@ self.addEventListener("push", (event) => {
     typeof payload.body === "string" ? payload.body.trim() : "";
   const campaignId =
     typeof payload.campaignId === "string" ? payload.campaignId : "news";
+  const deliveryId =
+    typeof payload.deliveryId === "string" ? payload.deliveryId : null;
 
   event.waitUntil(
     self.registration.showNotification(title, {
@@ -42,6 +44,8 @@ self.addEventListener("push", (event) => {
       renotify: false,
       data: {
         destination: safeDestination(payload.destination),
+        campaignId,
+        deliveryId,
       },
     }),
   );
@@ -53,11 +57,27 @@ self.addEventListener("notificationclick", (event) => {
     event.notification.data && event.notification.data.destination,
   );
   const target = new URL(destination, self.location.origin).href;
+  const campaignId =
+    event.notification.data && event.notification.data.campaignId;
+  const deliveryId =
+    event.notification.data && event.notification.data.deliveryId;
 
   event.waitUntil(
-    self.clients
-      .matchAll({ type: "window", includeUncontrolled: true })
-      .then(async (clients) => {
+    Promise.all([
+      typeof campaignId === "string" && typeof deliveryId === "string"
+        ? fetch("/api/v1/push/events", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              event: "opened",
+              campaignId,
+              deliveryId,
+            }),
+          }).catch(() => null)
+        : Promise.resolve(null),
+      self.clients
+        .matchAll({ type: "window", includeUncontrolled: true })
+        .then(async (clients) => {
         const sameOrigin = clients.find((client) => {
           try {
             return new URL(client.url).origin === self.location.origin;
@@ -70,6 +90,7 @@ self.addEventListener("notificationclick", (event) => {
           return sameOrigin.focus();
         }
         return self.clients.openWindow(target);
-      }),
+        }),
+    ]),
   );
 });

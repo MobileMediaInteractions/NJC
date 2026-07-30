@@ -18,6 +18,7 @@ import {
   NotificationDeliveryError,
 } from "@/lib/site-notification-delivery";
 import {
+  notificationAudienceAllowed,
   notificationAudienceSpec,
   notificationCampaignInputSchema,
 } from "@/lib/site-notification-policy";
@@ -77,10 +78,18 @@ export async function POST(request: Request) {
       503,
     );
   }
-  if (!(await getSiteConfiguration()).features.alerts) {
+  const configuration = await getSiteConfiguration();
+  if (!configuration.features.alerts) {
     return errorResponse(
       "alerts_disabled",
       "Enable Breaking-news alerts in Studio Configuration before sending",
+      409,
+    );
+  }
+  if (!configuration.studio.notifications.deliveryEnabled) {
+    return errorResponse(
+      "delivery_disabled",
+      "Notification delivery is disabled in Studio Configuration",
       409,
     );
   }
@@ -105,6 +114,16 @@ export async function POST(request: Request) {
         details: parsed.error.flatten(),
       },
     }, { status: 400, headers: privateHeaders() });
+  }
+  if (!notificationAudienceAllowed(
+    parsed.data.audience,
+    configuration.studio.notifications,
+  )) {
+    return errorResponse(
+      "audience_disabled",
+      "This notification audience is disabled in Studio Configuration",
+      409,
+    );
   }
 
   let campaignId: string | null = null;
@@ -138,6 +157,8 @@ export async function POST(request: Request) {
       body: campaign.body,
       destination: campaign.destination,
       subscriptions: resolved.subscriptions,
+      cleanupStaleSubscriptions:
+        configuration.studio.automations.stalePushSubscriptionCleanup,
     });
     const [completedCampaign] = await getDb()
       .select()

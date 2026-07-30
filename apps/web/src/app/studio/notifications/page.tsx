@@ -5,6 +5,10 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { getStudioUser } from "@/lib/auth";
 import { getEmployeeViewer } from "@/lib/employee-auth";
 import { getSiteConfiguration } from "@/lib/site-settings";
+import {
+  getRecentNotificationCampaigns,
+  getSiteNotificationReadiness,
+} from "@/lib/site-notification-readiness";
 
 export default async function StudioNotificationsPage() {
   const viewer = await getStudioUser();
@@ -28,11 +32,23 @@ export default async function StudioNotificationsPage() {
       </StudioShell>
     );
   }
+  const [readiness, campaigns] = await Promise.all([
+    getSiteNotificationReadiness(configuration),
+    configuration.studio.notifications.retainCampaignHistory
+      ? getRecentNotificationCampaigns()
+      : Promise.resolve([]),
+  ]);
   return (
     <StudioShell viewer={viewer}>
       <NotificationCampaignConsole
         publicAlertsEnabled={configuration.features.alerts}
         canSearchAccounts={viewer.role === "admin"}
+        policy={configuration.studio.notifications}
+        readiness={readiness}
+        initialHistory={campaigns}
+        showOperationalStatus={
+          configuration.studio.experience.showOperationalStatus
+        }
       />
     </StudioShell>
   );

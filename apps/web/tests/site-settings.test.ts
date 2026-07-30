@@ -10,6 +10,7 @@ import {
   parseNavigation,
   parseDatelines,
   siteConfigurationSchema,
+  studioModuleKeys,
 } from "../src/lib/site-settings";
 
 function configurationCopy() {
@@ -125,4 +126,27 @@ test("older stored configuration enables pseudonyms and Distribution by default"
   const parsed = siteConfigurationSchema.parse(configuration);
   assert.equal(parsed.features.pseudonyms, true);
   assert.equal(parsed.features.distribution, true);
+});
+
+test("older stored configuration receives the complete guarded Studio registry", () => {
+  const configuration = configurationCopy() as Partial<ReturnType<typeof configurationCopy>>;
+  delete configuration.studio;
+  const parsed = siteConfigurationSchema.parse(configuration);
+  assert.deepEqual(
+    Object.keys(parsed.studio.modules).sort(),
+    [...studioModuleKeys].sort(),
+  );
+  assert.equal(parsed.studio.experience.commandPalette, true);
+  assert.equal(parsed.studio.notifications.requireAudiencePreflight, true);
+  assert.equal(parsed.studio.automations.manualVerificationRequired, true);
+});
+
+test("manual verification and notification preflight cannot be disabled", () => {
+  const configuration = configurationCopy();
+  (configuration.studio.automations.manualVerificationRequired as boolean) = false;
+  assert.equal(siteConfigurationSchema.safeParse(configuration).success, false);
+
+  const second = configurationCopy();
+  (second.studio.notifications.requireAudiencePreflight as boolean) = false;
+  assert.equal(siteConfigurationSchema.safeParse(second).success, false);
 });

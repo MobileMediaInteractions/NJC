@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { defaultStudioModules } from "../src/lib/site-settings";
 import {
   getStudioHubSecondaryItems,
+  getStudioModuleForPathname,
   getVisibleStudioNavigation,
   isStudioRouteActive,
   normalizeStudioNavigationPathname,
@@ -66,6 +68,19 @@ test("Studio navigation IDs and destinations are unique", () => {
   assert.equal(new Set(items.map((item) => item.href)).size, items.length);
 });
 
+test("every configurable Studio destination maps to its exact module switch", () => {
+  const configurableItems = studioNavigationHubs
+    .flatMap((hub) => hub.items)
+    .filter((item) => item.module);
+  for (const item of configurableItems) {
+    assert.equal(
+      getStudioModuleForPathname(`${item.href}/nested-resource`),
+      item.module,
+      item.href,
+    );
+  }
+});
+
 test("every Studio navigation destination resolves to an implemented page", () => {
   for (const item of studioNavigationHubs.flatMap((hub) => hub.items)) {
     if (item.external) continue;
@@ -124,6 +139,21 @@ test("navigation hides unauthorized and unavailable destinations", () => {
   assert.equal(
     administrator.find((hub) => hub.id === "configuration")?.items[0]?.id,
     "settings",
+  );
+
+  const modules = { ...defaultStudioModules };
+  modules.stories = false;
+  const withoutStories = getVisibleStudioNavigation({
+    role: "admin",
+    chatEnabled: true,
+    pressEnabled: true,
+    alertsEnabled: true,
+    financeEnabled: true,
+    modules,
+  });
+  assert.equal(
+    withoutStories.flatMap((hub) => hub.items).some((item) => item.id === "stories"),
+    false,
   );
 });
 

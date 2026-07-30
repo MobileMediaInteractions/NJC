@@ -3,7 +3,9 @@ import test from "node:test";
 import {
   countNotificationRecipients,
   normalizeNotificationDestination,
+  notificationAudienceAllowed,
   notificationAudienceSchema,
+  notificationCampaignDraftSchema,
   notificationCampaignInputSchema,
   resolveExclusiveNjcPlusSegment,
   webPushSubscriptionSchema,
@@ -51,6 +53,39 @@ test("campaign input requires confirmation and canonical audience choices", () =
     type: "njc_plus_segment",
     segment: "paid_or_beta",
   }).success, false);
+});
+
+test("notification preflight accepts a draft while delivery still requires confirmation", () => {
+  const draft = {
+    title: "School budget vote",
+    body: "The council meeting begins at 7 p.m.",
+    destination: "/story/school-budget-vote",
+    audience: { type: "sitewide" as const },
+  };
+  assert.equal(notificationCampaignDraftSchema.safeParse(draft).success, true);
+  assert.equal(notificationCampaignInputSchema.safeParse(draft).success, false);
+});
+
+test("configuration can disable each notification audience independently", () => {
+  const policy = {
+    allowSitewideAudience: false,
+    allowAccountAudience: true,
+    allowRoleAudience: false,
+    allowNjcPlusAudience: true,
+  };
+  assert.equal(notificationAudienceAllowed({ type: "sitewide" }, policy), false);
+  assert.equal(notificationAudienceAllowed({
+    type: "accounts",
+    userClerkIds: ["user_reader123"],
+  }, policy), true);
+  assert.equal(notificationAudienceAllowed({
+    type: "staff_roles",
+    roles: ["editor"],
+  }, policy), false);
+  assert.equal(notificationAudienceAllowed({
+    type: "njc_plus_segment",
+    segment: "member",
+  }, policy), true);
 });
 
 test("browser subscription input accepts standard Web Push keys only over HTTPS", () => {

@@ -896,6 +896,7 @@ export const notificationCampaigns = pgTable(
     subscriptionCount: integer("subscription_count").notNull().default(0),
     acceptedCount: integer("accepted_count").notNull().default(0),
     failedCount: integer("failed_count").notNull().default(0),
+    openedCount: integer("opened_count").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
   },
@@ -924,6 +925,7 @@ export const notificationDeliveries = pgTable(
     providerStatus: integer("provider_status"),
     errorCode: text("error_code"),
     sentAt: timestamp("sent_at", { withTimezone: true }),
+    openedAt: timestamp("opened_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

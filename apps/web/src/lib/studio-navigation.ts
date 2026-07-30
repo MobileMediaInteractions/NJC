@@ -1,4 +1,5 @@
 import type { StaffRole } from "@/lib/types";
+import type { StudioModuleKey } from "@/lib/site-settings";
 
 export type StudioHubId =
   | "overview"
@@ -16,6 +17,7 @@ export type StudioNavigationContext = {
   pressEnabled: boolean;
   alertsEnabled: boolean;
   financeEnabled: boolean;
+  modules?: Record<StudioModuleKey, boolean>;
 };
 
 export type StudioNavigationItem = {
@@ -28,6 +30,7 @@ export type StudioNavigationItem = {
   requiresPress?: boolean;
   requiresAlerts?: boolean;
   requiresFinance?: boolean;
+  module?: StudioModuleKey;
 };
 
 export type StudioNavigationHub = {
@@ -82,24 +85,28 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         label: "Stories",
         href: "/studio/stories",
         roles: allRoles,
+        module: "stories",
       },
       {
         id: "media",
         label: "Media library",
         href: "/studio/media",
         roles: allRoles,
+        module: "media",
       },
       {
         id: "tips",
         label: "News tips",
         href: "/studio/tips",
         roles: editorialRoles,
+        module: "tips",
       },
       {
         id: "twenty-under-twenty",
         label: "20 Under 20",
         href: "/studio/20-under-20",
         roles: ["admin", "editor"],
+        module: "twentyUnderTwenty",
       },
     ],
   },
@@ -113,6 +120,7 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         label: "File manager",
         href: "/studio/distribution",
         roles: publishingRoles,
+        module: "distributionManager",
       },
       {
         id: "press-releases",
@@ -120,18 +128,21 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         href: "/studio/press-releases",
         roles: publishingRoles,
         requiresPress: true,
+        module: "pressReleases",
       },
       {
         id: "press-requests",
         label: "Press requests",
         href: "/studio/press",
         roles: publishingRoles,
+        module: "pressRequests",
       },
       {
         id: "exports",
         label: "Portable exports",
         href: "/studio/exports",
         roles: allRoles,
+        module: "exports",
       },
     ],
   },
@@ -146,12 +157,14 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         href: "/studio/chat",
         roles: allRoles,
         requiresChat: true,
+        module: "chat",
       },
       {
         id: "team",
         label: "Team & roles",
         href: "/studio/team",
         roles: ["admin"],
+        module: "team",
       },
       {
         id: "notification-campaigns",
@@ -159,6 +172,7 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         href: "/studio/notifications",
         roles: publishingRoles,
         requiresAlerts: true,
+        module: "notifications",
       },
     ],
   },
@@ -167,16 +181,16 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
     label: "NJC+",
     description: "Premium network controls",
     items: [
-      { id: "njc-plus-overview", label: "Overview", href: "/studio/njc-plus", roles: allRoles },
-      { id: "njc-plus-content", label: "Content", href: "/studio/njc-plus/content", roles: allRoles },
-      { id: "njc-plus-homepage", label: "Homepage", href: "/studio/njc-plus/homepage", roles: allRoles },
-      { id: "njc-plus-commerce", label: "Tiers & offers", href: "/studio/njc-plus/commerce", roles: allRoles },
-      { id: "njc-plus-access", label: "Access", href: "/studio/njc-plus/access", roles: allRoles },
-      { id: "njc-plus-credits", label: "Credits", href: "/studio/njc-plus/credits", roles: allRoles },
-      { id: "njc-plus-comments", label: "Comments", href: "/studio/njc-plus/comments", roles: allRoles },
-      { id: "njc-plus-analytics", label: "Analytics", href: "/studio/njc-plus/analytics", roles: allRoles },
-      { id: "njc-plus-audit", label: "Audit log", href: "/studio/njc-plus/audit", roles: allRoles },
-      { id: "njc-plus-flags", label: "Feature flags", href: "/studio/njc-plus/flags", roles: allRoles },
+      { id: "njc-plus-overview", label: "Overview", href: "/studio/njc-plus", roles: allRoles, module: "njcPlusOverview" },
+      { id: "njc-plus-content", label: "Content", href: "/studio/njc-plus/content", roles: allRoles, module: "njcPlusContent" },
+      { id: "njc-plus-homepage", label: "Homepage", href: "/studio/njc-plus/homepage", roles: allRoles, module: "njcPlusHomepage" },
+      { id: "njc-plus-commerce", label: "Tiers & offers", href: "/studio/njc-plus/commerce", roles: allRoles, module: "njcPlusCommerce" },
+      { id: "njc-plus-access", label: "Access", href: "/studio/njc-plus/access", roles: allRoles, module: "njcPlusAccess" },
+      { id: "njc-plus-credits", label: "Credits", href: "/studio/njc-plus/credits", roles: allRoles, module: "njcPlusCredits" },
+      { id: "njc-plus-comments", label: "Comments", href: "/studio/njc-plus/comments", roles: allRoles, module: "njcPlusComments" },
+      { id: "njc-plus-analytics", label: "Analytics", href: "/studio/njc-plus/analytics", roles: allRoles, module: "njcPlusAnalytics" },
+      { id: "njc-plus-audit", label: "Audit log", href: "/studio/njc-plus/audit", roles: allRoles, module: "njcPlusAudit" },
+      { id: "njc-plus-flags", label: "Feature flags", href: "/studio/njc-plus/flags", roles: allRoles, module: "njcPlusFlags" },
     ],
   },
   {
@@ -190,6 +204,7 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         href: "/studio/finance",
         roles: allRoles,
         requiresFinance: true,
+        module: "financeOverview",
       },
       {
         id: "finance-ledger",
@@ -197,6 +212,7 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         href: "/studio/finance/ledger",
         roles: allRoles,
         requiresFinance: true,
+        module: "financeLedger",
       },
       {
         id: "finance-reconciliation",
@@ -204,6 +220,7 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         href: "/studio/finance/reconciliation",
         roles: allRoles,
         requiresFinance: true,
+        module: "financeReconciliation",
       },
       {
         id: "finance-settings",
@@ -211,6 +228,7 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         href: "/studio/finance/settings",
         roles: allRoles,
         requiresFinance: true,
+        module: "financeSettings",
       },
     ],
   },
@@ -224,6 +242,7 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         label: "Analytics",
         href: "/studio/analytics",
         roles: allRoles,
+        module: "analytics",
       },
     ],
   },
@@ -237,6 +256,7 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         label: "Configuration control room",
         href: "/studio/settings",
         roles: ["admin"],
+        module: "legal",
       },
       {
         id: "legal-registry",
@@ -257,6 +277,7 @@ export function isStudioNavigationItemVisible(
   if (item.requiresPress && !context.pressEnabled) return false;
   if (item.requiresAlerts && !context.alertsEnabled) return false;
   if (item.requiresFinance && !context.financeEnabled) return false;
+  if (item.module && context.modules?.[item.module] === false) return false;
   return true;
 }
 
@@ -300,6 +321,17 @@ export function usesCleanStudioNavigationPaths(pathname: string) {
 export function getStudioHubSecondaryItems(hub: StudioNavigationHub) {
   const defaultHref = hub.items[0]?.href;
   return hub.items.filter((item) => item.href !== defaultHref);
+}
+
+export function getStudioModuleForPathname(pathname: string) {
+  const normalizedPathname = normalizeStudioNavigationPathname(pathname);
+  return studioNavigationHubs
+    .flatMap((hub) => hub.items)
+    .filter(
+      (item) =>
+        item.module && isStudioRouteActive(normalizedPathname, item.href),
+    )
+    .sort((left, right) => right.href.length - left.href.length)[0]?.module;
 }
 
 export function resolveStudioNavigation(

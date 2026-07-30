@@ -6,6 +6,7 @@ import { premiumContent } from "@harborline/backend/schema";
 import { expireAccessCredits } from "@/lib/access-credits";
 import { refreshAnalyticsArchives } from "@/lib/traffic-analytics";
 import { publishDueStories } from "@/lib/scheduled-publication";
+import { getSiteConfiguration } from "@/lib/site-settings";
 
 export async function GET(request: Request) {
   const startedAt = Date.now();
@@ -14,11 +15,18 @@ export async function GET(request: Request) {
   }
   if (!hasDatabase()) return NextResponse.json({ error: "DATABASE_URL is not configured" }, { status: 503 });
   const now = new Date();
+  const configuration = await getSiteConfiguration();
   const published = await publishDueStories(now);
-  const premiumPublished = await getDb().update(premiumContent).set({ status: "published", publishedAt: now, updatedAt: now }).where(and(eq(premiumContent.status, "scheduled"), lte(premiumContent.scheduledAt, now))).returning({ id: premiumContent.id, slug: premiumContent.slug });
+  const premiumPublished = configuration.studio.automations.scheduledPublishing
+    ? await getDb().update(premiumContent).set({ status: "published", publishedAt: now, updatedAt: now }).where(and(eq(premiumContent.status, "scheduled"), lte(premiumContent.scheduledAt, now))).returning({ id: premiumContent.id, slug: premiumContent.slug })
+    : [];
   const [archives, creditExpirations] = await Promise.all([
-    refreshAnalyticsArchives(now),
-    expireAccessCredits(now),
+    configuration.studio.automations.analyticsArchives
+      ? refreshAnalyticsArchives(now)
+      : Promise.resolve({ created: 0, database: "connected" as const }),
+    configuration.studio.automations.accessCreditExpiration
+      ? expireAccessCredits(now)
+      : Promise.resolve({ created: 0 }),
   ]);
   if (published.length) {
     revalidatePath("/");

@@ -73,6 +73,12 @@ export async function PATCH(request: Request) {
         enabledPlacements: Object.entries(configuration.advertising.placements)
           .filter(([, placement]) => placement.enabled)
           .map(([name]) => name),
+        enabledStudioModules: Object.entries(configuration.studio.modules)
+          .filter(([, enabled]) => enabled)
+          .map(([name]) => name),
+        studioExperience: configuration.studio.experience,
+        notificationPolicy: configuration.studio.notifications,
+        automations: configuration.studio.automations,
       },
     });
     revalidatePath("/", "layout");
@@ -81,6 +87,7 @@ export async function PATCH(request: Request) {
     revalidatePath("/feed.xml");
     revalidatePath("/news-sitemap.xml");
     revalidatePath("/ads.txt");
+    revalidatePath("/studio", "layout");
     return NextResponse.json({
       data: configuration,
       meta: {

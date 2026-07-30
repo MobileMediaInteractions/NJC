@@ -5,6 +5,7 @@ import { StudioShellClient } from "@/components/studio/studio-shell-client";
 import { getEmployeeViewer } from "@/lib/employee-auth";
 import { getEmployeeUnreadChatCount } from "@/lib/employee-chat";
 import { canViewNewsTips } from "@/lib/newsroom-tips";
+import { getSiteConfiguration } from "@/lib/site-settings";
 import type { StudioUser } from "@/lib/types";
 
 export async function StudioShell({
@@ -20,6 +21,7 @@ export async function StudioShell({
   let pressEnabled = false;
   let alertsEnabled = false;
   let financeEnabled = false;
+  const configurationPromise = getSiteConfiguration();
   if (hasDatabase() && canViewNewsTips(viewer.role)) {
     try {
       const [result] = await getDb()
@@ -45,8 +47,19 @@ export async function StudioShell({
     }
   }
 
+  const configuration = await configurationPromise;
+
   return (
-    <StudioShellClient viewer={viewer} newTipCount={newTipCount} unreadChatCount={unreadChatCount} chatEnabled={chatEnabled} pressEnabled={pressEnabled} alertsEnabled={alertsEnabled} financeEnabled={financeEnabled}>
+    <StudioShellClient
+      viewer={viewer}
+      newTipCount={newTipCount}
+      unreadChatCount={unreadChatCount}
+      chatEnabled={chatEnabled}
+      pressEnabled={pressEnabled}
+      alertsEnabled={alertsEnabled}
+      financeEnabled={financeEnabled}
+      studioConfiguration={configuration.studio}
+    >
       {children}
     </StudioShellClient>
   );
