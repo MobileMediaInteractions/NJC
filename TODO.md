@@ -4,39 +4,30 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 
 ## Mandatory first implementation — remaining analytics v2 production validation
 
-> The ground-up code and documentation rebuild is complete. The legacy dashboard
-> has been replaced by an event-backed v2 model, but the new figures must remain
-> **provisional** until the production migration and evidence checks below are
-> completed with real credentials and real devices. See
+> The ground-up code/documentation rebuild, production migration, protected
+> reconciliation control, database-backed transaction suite, shared ranges and
+> permission-controlled version drill-down are complete. The figures must remain
+> **provisional** until the signed-in and real-device checks below are completed.
+> See
 > [the audit report](docs/analytics/AUDIT_2026-07-30.md),
 > [measurement dictionary](docs/analytics/MEASUREMENT_DICTIONARY.md) and
 > [rollout procedure](docs/analytics/ROLL_OUT.md).
 
-- [ ] Apply `apps/web/drizzle/0024_clear_viper.sql` to the production database,
-  deploy the updated web/mobile/employee/TV/Roku producers and run
-  `pnpm analytics:audit` with production credentials. Attach the grouped,
-  privacy-safe output to the release evidence and resolve any event-to-aggregate
-  mismatch before trusting the v2 totals.
+- [ ] Sign into production Studio as an administrator/editor, open
+  **Analytics → Audit**, run **Production reconciliation**, attach its grouped,
+  privacy-safe counts to
+  `docs/analytics/PRODUCTION_VALIDATION_2026-08-01.md`, and resolve any
+  event-to-aggregate mismatch before trusting the v2 totals. The migration and
+  deployment are current; this protected query remains because production
+  credentials are intentionally non-exportable.
 - [ ] Complete the real production control with two approved test accounts,
   separate browser profiles, anonymous and authenticated browsing, a linked
   Roku installation upgraded across two builds, and a second distinct Roku
   installation. Reconcile the dashboard, CSV evidence and the first closed
   weekly/monthly/yearly archives by hand.
-- [ ] Add database-backed integration coverage for page/presence ingestion,
-  retry and concurrent-event deduplication, late arrival, consent withdrawal,
-  archive revision creation and aggregate/export reconciliation. The completed
-  pure controlled-model and UI contract tests do not replace these database
-  transaction tests.
 - [ ] Verify the signed-in Studio workspace at 1440×900 and 1920×1080 on the
   production deployment. Confirm there is no page, panel, table or nested
   scrollbar, no clipped control, and no unreadably reduced text at normal zoom.
-- [ ] Add the remaining permission-controlled drill-down from grouped version
-  rows into **installation/device → linked account** evidence. Keep raw
-  identifiers pseudonymized and do not expose account details to roles that
-  cannot export analytics.
-- [ ] Add a shared time-range/filter control with a visible reset for the
-  Content, Acquisition and Platforms views. Preserve the selection across
-  analytics tabs and keep the single-viewport/no-scroll contract.
 - [ ] Obtain product and editorial approval for the measurement dictionary and
   record the production baseline/reset decision. Set
   `ANALYTICS_V2_BASELINE_APPROVED=true` only after this approval and every

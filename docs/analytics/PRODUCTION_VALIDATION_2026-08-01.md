@@ -22,6 +22,19 @@ until the final controlled production exercise and product/editorial sign-off.
   `ANALYTICS_TEST_DATABASE_URL` explicitly skip those tests rather than silently
   substituting mocks.
 
+## Recorded release evidence
+
+- GitHub application CI for commit `2437650` completed successfully, including
+  the PostgreSQL-backed test suite, web typecheck/build, playground, employee,
+  mobile, TV, Roku and migration-freshness checks:
+  <https://github.com/MobileMediaInteractions/NJC/actions/runs/30724030398>
+- Vercel production deployment `dpl_FejkXen1tSsZUXy4H5HtxqhZNdrf` reached
+  **Ready** and the canonical Studio hostname serves the new protected routes.
+- Signed-out requests to both production evidence endpoints return `403`,
+  `Cache-Control: private, no-store, max-age=0`, and no evidence payload. This
+  confirms the unauthenticated boundary without weakening the remaining
+  signed-in verification requirement.
+
 ## Evidence still requiring production access or people
 
 - Record the live reconciliation counts and resolve any mismatch.
