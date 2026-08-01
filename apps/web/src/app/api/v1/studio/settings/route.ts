@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { hasDatabase } from "@harborline/backend/db";
 import { writeApiAudit } from "@/lib/api-keys";
 import { canManageSiteSettings, getStudioUser } from "@/lib/auth";
@@ -8,7 +9,9 @@ import {
   normalizePublisherId,
   saveSiteConfiguration,
   siteConfigurationSchema,
+  StaleSiteConfigurationError,
 } from "@/lib/site-settings";
+import { configurationImpact } from "@/lib/platform-feature-registry";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +26,7 @@ export async function GET() {
       canManage: canManageSiteSettings(viewer.role),
       updatedAt: record.updatedAt?.toISOString() ?? null,
       updatedByClerkId: record.updatedByClerkId,
+      revision: record.revision,
     },
   });
 }
@@ -37,7 +41,13 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: { code: "service_not_configured", message: "Postgres is required to save site settings" } }, { status: 503 });
   }
 
-  const parsed = siteConfigurationSchema.safeParse(await request.json().catch(() => null));
+  const saveInput = z.object({
+    configuration: siteConfigurationSchema,
+    expectedRevision: z.number().int().nonnegative(),
+    reason: z.string().trim().min(8).max(500),
+    confirmation: z.string().optional(),
+  });
+  const parsed = saveInput.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({
       error: {
@@ -49,15 +59,22 @@ export async function PATCH(request: Request) {
   }
 
   const configuration = {
-    ...parsed.data,
+    ...parsed.data.configuration,
     advertising: {
-      ...parsed.data.advertising,
-      publisherId: normalizePublisherId(parsed.data.advertising.publisherId),
+      ...parsed.data.configuration.advertising,
+      publisherId: normalizePublisherId(parsed.data.configuration.advertising.publisherId),
     },
   };
 
   try {
-    const record = await saveSiteConfiguration(configuration, viewer.id);
+    const before = (await getSiteConfigurationRecord()).configuration;
+    const impact = configurationImpact(before, configuration);
+    const highImpactDisabled = impact.some((entry) => entry.defaultState === "enabled" && entry.configurationPath && entry.key.match(/pseudonym|scheduling|authorization|audit/));
+    if (highImpactDisabled && parsed.data.confirmation !== "APPLY PRODUCTION CHANGE") {
+      return NextResponse.json({ error: { code: "confirmation_required", message: "Type APPLY PRODUCTION CHANGE in the review screen for this high-impact change" } }, { status: 409 });
+    }
+    const affectedPlatforms = [...new Set(impact.flatMap((entry) => entry.platforms))];
+    const record = await saveSiteConfiguration(configuration, viewer.id, { expectedRevision: parsed.data.expectedRevision, reason: parsed.data.reason, affectedPlatforms, affectedFeatures: impact.map((entry) => entry.key) });
     await writeApiAudit({
       actorClerkId: viewer.id,
       event: "site.configuration_updated",
@@ -80,6 +97,10 @@ export async function PATCH(request: Request) {
         studioExperience: configuration.studio.experience,
         notificationPolicy: configuration.studio.notifications,
         automations: configuration.studio.automations,
+        configurationRevision: record.revision,
+        reason: parsed.data.reason,
+        affectedFeatureKeys: impact.map((entry) => entry.key),
+        affectedPlatforms,
       },
     });
     revalidatePath("/", "layout");
@@ -95,9 +116,13 @@ export async function PATCH(request: Request) {
         apiVersion: "1",
         updatedAt: record.updatedAt.toISOString(),
         updatedByClerkId: record.updatedByClerkId,
+        revision: record.revision,
       },
     });
   } catch (error) {
+    if (error instanceof StaleSiteConfigurationError) {
+      return NextResponse.json({ error: { code: "stale_configuration", message: error.message } }, { status: 409 });
+    }
     console.error("Site configuration save failed", { actorId: viewer.id, error });
     return NextResponse.json({ error: { code: "save_failed", message: "The configuration could not be saved" } }, { status: 500 });
   }

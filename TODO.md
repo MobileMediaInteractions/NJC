@@ -43,58 +43,38 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   preceding production check passes; do not bypass a reconciliation or
   application-identity warning merely to remove the provisional badge.
 
-## Mandatory second product implementation — pseudonyms, approval-gated scheduling and complete Studio control
+## Mandatory second product implementation — remaining production validation
 
-> **Execution-order requirement:** Complete this after the mandatory statistical audit and analytics rebuild above. The [Bun and Protocol Buffers investigation](docs/investigations/BUN_PROTOBUF_2026-07-28.md) is already finished. Finish and verify this entire section before internal-domain work or any platform-specific implementation.
+> The pseudonym/byline system, approval-gated publishing state machine, durable
+> scheduling queue, typed Studio configuration registry, migrations, portable
+> backup support, and code-level verification are implemented. Completed work
+> has been removed from this TODO. Operational details live in
+> [Pseudonyms and public bylines](docs/editorial/PSEUDONYMS_AND_BYLINES.md),
+> [Approval and scheduled publication](docs/editorial/APPROVAL_AND_SCHEDULING.md),
+> and the [Studio configuration registry](docs/operations/CONFIGURATION_REGISTRY.md).
 
-- [ ] Complete the remaining advanced pseudonym operations now that the
-  privacy-safe profile, story selector, immutable byline snapshot and public
-  API/SEO protections are implemented.
-  - Add an administrator moderation workflow to disable, restore or require
-    correction of a pseudonym with an auditable reason, without letting an
-    administrator silently invent a new public identity for another person.
-  - Add an authorized historical byline-correction workflow; ordinary profile
-    edits must continue to leave published snapshots unchanged.
-  - Define and implement reassignment and collaborative/multiple-author
-    behavior without allowing one employee to select another person’s
-    pseudonym through client-supplied identifiers.
-  - Re-run the implemented pseudonym validation inside the future
-    approval-gated scheduling worker immediately before a scheduled
-    publication is committed.
-- [ ] Complete a production-grade **approval-gated story scheduler** using the existing story workflow, scheduled status, `scheduledAt` data and publication queue where they are valid.
-  - Enforce the state machine on the server: a draft cannot be scheduled, a story in review cannot self-publish and only a story that has received the required approval may enter the scheduled queue.
-  - Record approval as an auditable event with approver, approved revision/content hash, timestamp and any required note. “Review” status alone must not be treated as approval.
-  - Add permission-aware scheduling controls only after approval, including date, exact time, newsroom timezone and an unambiguous UTC preview.
-  - Use accessible date/time pickers and safe presets, reject invalid or past times and explain daylight-saving-time ambiguities before saving.
-  - Publish at or immediately after the selected instant—never before it—and make the operation transactional and idempotent so retries or concurrent workers cannot publish twice.
-  - Re-check approval, content revision, author/byline validity, required media, embargoes, permissions and publication configuration immediately before the scheduled transition.
-  - Any material edit after approval—including headline, body, lead media, canonical URL, section, public byline or scheduled destination—must invalidate approval and remove the story from automatic publication until it is reviewed again.
-  - Support reschedule and cancel actions with confirmations, permissions and audit history. Show who changed the schedule, the original time and the current effective time.
-  - Provide clear queued, due, publishing, published, cancelled, blocked and failed states in Studio, with retry and escalation information that does not require reading server logs.
-  - Select a reliable free-tier-compatible execution mechanism rather than pretending the current once-daily Hobby cron can deliver precise publication. Document timing guarantees, outage recovery and what happens when the scheduler is delayed.
-  - On recovery, publish eligible overdue stories once according to documented newsroom policy, while holding stories whose approval, revision or validation no longer matches.
-  - Invalidate relevant caches and update feeds, sitemaps, APIs, mobile/TV/Roku clients, notifications and analytics only after the database publication transaction succeeds.
-- [ ] Turn **Studio → Configuration** into a complete, typed registry and control center for the entire platform.
-  - Inventory every current feature, route, page, navigation item, content module, API capability, integration, experiment, release channel and platform-specific experience across web, iOS, Android, employee app, Apple TV, Android TV, Roku, NJC+, CDN, developer API, Studio NJ Dev and the feature/animation platform.
-  - Register every feature with a stable key, human-readable name, description, owner, category, supported platforms, current availability, default state, dependencies, conflicts, required permissions, rollout behavior and whether changing it requires a rebuild, redeploy or migration.
-  - Classify each registry entry as **toggleable**, **configuration-only**, **environment-managed**, **release-gated**, **planned**, **deprecated** or **mandatory safety control** so administrators can see every feature even when it cannot safely be switched off in the UI.
-  - Provide enable/disable controls for every feature that can safely support runtime switching. Authentication, authorization, audit integrity, encryption, backups and other mandatory safeguards must remain visible but cannot become a casual off switch.
-  - Use one versioned, schema-validated configuration source of truth with scoped platform overrides instead of unrelated booleans and hardcoded navigation arrays scattered across clients.
-  - Make navigation visibility, order and labels configuration-driven where supported while preventing arbitrary URLs, invalid destinations, inaccessible routes and a configuration that leaves users trapped without navigation.
-  - Include pseudonyms and scheduled publication in the registry, with separate controls for feature availability, role eligibility and operational readiness; disabling either must preserve existing records safely.
-  - Add dependency-aware controls: explain downstream effects before a change, block invalid combinations and offer an impact preview showing affected pages, APIs, roles, platforms and currently scheduled or published content.
-  - Use the minimum-necessary-typing patterns defined later in this TODO: searchable selectors, grouped toggles, presets, generated keys, inline guidance and clear defaults instead of manual IDs or raw JSON.
-  - Add search, category/platform filters, status summaries, “changed recently,” unsaved-change indicators and a review screen for pending modifications.
-  - Require typed confirmation and, where risk warrants it, a second authorized approval for disabling high-impact production capabilities.
-  - Record actor, timestamp, before/after value, reason, target environment and affected platforms for every change; provide a permission-checked history and safe rollback to a known-good configuration.
-  - Apply changes atomically, reject stale concurrent edits and distribute a versioned configuration to clients with last-known-good caching and fail-safe defaults.
-  - Never expose secrets in the configuration document, browser responses, history or exports. Keep credentials in environment/secret storage and show only connection health or safe identifiers.
-- [ ] Add migration and verification coverage for the complete section.
-  - Migrate existing users and stories without inventing pseudonyms, changing public bylines or marking unapproved content as approved.
-  - Add database constraints and indexes needed for byline history, approval revisions, scheduled work and configuration versions, with a reversible migration and portable-backup support.
-  - Add unit, integration and end-to-end tests for profile pseudonyms, public identity privacy, byline snapshots, authorization, approval invalidation, scheduling accuracy, retries, overdue recovery, configuration dependencies, concurrent edits, audit history and rollback.
-  - Verify public web, Studio, developer/reader APIs, mobile, employee, TV and Roku clients against enabled, disabled, stale and unavailable configuration states.
-  - Test the scheduler across timezone and daylight-saving boundaries and perform a real production-like scheduled publication rehearsal before relying on it for news.
+- [ ] Confirm Vercel applied database migrations `0030` through `0032`, retain
+  the deployment evidence, and verify that existing scheduled stories were
+  returned to Review without inventing approvals or rewriting public bylines.
+- [ ] Set the GitHub Actions secret `NJC_CRON_SECRET` to the same value as
+  Vercel `CRON_SECRET`, manually dispatch the scheduled-publication workflow,
+  and confirm the authenticated worker runs successfully. Until this is done,
+  the daily Vercel cron and first-reader recovery are fallbacks, not a precise
+  five-minute publication service.
+- [ ] Run a production-like newsroom rehearsal with separate author, approver,
+  and publisher accounts: Draft → Review → approval → scheduled → Published;
+  then verify material-edit invalidation, cancellation, rescheduling, overdue
+  recovery, failed/blocked visibility, pseudonym moderation, collaborative
+  bylines, and an audited historical correction.
+- [ ] Add database-backed concurrency and browser E2E coverage for competing
+  approvals/workers/configuration saves, rollback, every supported Studio role,
+  and scheduled publication around a real daylight-saving transition. The
+  completed unit, type, lint, and production-build checks do not replace these
+  environment-backed tests.
+- [ ] Verify the versioned configuration and platform overrides on deployed
+  web, iOS, Android, employee, Apple TV, Android TV, Roku, NJC+, CDN, developer
+  API, and Studio NJ Dev clients, including enabled, disabled, stale, and
+  unavailable states on real devices where applicable.
 
 ## Mandatory third product implementation — repository-wide internal boundary and `int` subdomain
 

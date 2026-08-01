@@ -211,6 +211,27 @@
       "when": 1785446272942,
       "tag": "0029_nappy_doctor_doom",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1785623891062,
+      "tag": "0030_cloudy_mongu",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1785624933491,
+      "tag": "0031_late_stephen_strange",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1785625248223,
+      "tag": "0032_minor_malcolm_colcord",
+      "breakpoints": true
     }
   ]
 }

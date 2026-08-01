@@ -73,6 +73,8 @@ export interface Story {
   image: string;
   imageAlt: string;
   author: Author;
+  /** Ordered, verified public contributors. `author` remains the primary byline for older clients. */
+  authors?: Author[];
   tags: string[];
   seoTitle?: string;
   seoDescription?: string;
@@ -108,6 +110,8 @@ export interface WeatherSnapshot {
 }
 
 export interface PublicConfig {
+  configurationVersion?: number;
+  schemaVersion?: number;
   name: string;
   shortName: string;
   tagline: string;
@@ -125,7 +129,11 @@ export interface PublicConfig {
     alerts: boolean;
     liveVideo: boolean;
     weather: boolean;
+    membership?: boolean;
+    donations?: boolean;
+    advertising?: boolean;
   };
+  platformOverrides?: Record<string, Record<string, boolean>>;
 }
 
 export interface LiveSnapshot {

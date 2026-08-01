@@ -37,6 +37,8 @@ export type StaffProfileDraft = {
   bio: string;
   pseudonym: string;
   pseudonymEnabled: boolean;
+  pseudonymModerationStatus: "active" | "disabled" | "correction_required";
+  pseudonymModerationReason: string | null;
   pseudonymRevision: number;
   publicSlug: string | null;
   publicProfilePublishedAt: string | null;
@@ -264,6 +266,8 @@ export async function getStaffProfileDraft(clerkId: string): Promise<StaffProfil
     bio: record.bio ?? "",
     pseudonym: record.pseudonym ?? "",
     pseudonymEnabled: record.pseudonymEnabled,
+    pseudonymModerationStatus: record.pseudonymModerationStatus as "active" | "disabled" | "correction_required",
+    pseudonymModerationReason: record.pseudonymModerationReason,
     pseudonymRevision: record.pseudonymRevision,
     publicSlug: record.publicSlug,
     publicProfilePublishedAt:

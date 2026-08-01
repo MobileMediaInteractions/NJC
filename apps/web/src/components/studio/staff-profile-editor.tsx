@@ -200,7 +200,7 @@ export function StaffProfileEditor({
               id="staff-pseudonym"
               value={pseudonym}
               maxLength={pseudonymMaximumLength}
-              disabled={!pseudonymsEnabled || !profile.pseudonymEnabled || busy}
+              disabled={!pseudonymsEnabled || profile.pseudonymModerationStatus === "disabled" || busy}
               onChange={(event) => setPseudonym(event.target.value)}
               placeholder="Optional public pen name"
             />
@@ -214,10 +214,14 @@ export function StaffProfileEditor({
                 Pseudonyms are currently disabled in Studio Configuration.
                 Saved information has not been removed.
               </p>
-            ) : !profile.pseudonymEnabled ? (
+            ) : profile.pseudonymModerationStatus === "disabled" ? (
               <p className="text-xs font-semibold text-amber-500">
                 This pseudonym is unavailable. Contact an administrator before
                 using or changing it.
+              </p>
+            ) : profile.pseudonymModerationStatus === "correction_required" ? (
+              <p className="text-xs font-semibold text-amber-500">
+                A correction is required{profile.pseudonymModerationReason ? `: ${profile.pseudonymModerationReason}` : "."} Save your change, then ask an administrator to restore publication use.
               </p>
             ) : (
               <p className="text-xs leading-5 text-muted-foreground">

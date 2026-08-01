@@ -13,16 +13,7 @@ export function canTransitionStoryStatus(
   if (current === "draft" && next === "review") {
     return isOwner || canPublishStory(role);
   }
-  if (
-    current === "review" &&
-    (next === "draft" || next === "scheduled" || next === "published")
-  ) {
-    return canPublishStory(role);
-  }
-  if (
-    current === "scheduled" &&
-    (next === "review" || next === "published")
-  ) {
+  if (current === "review" && next === "draft") {
     return canPublishStory(role);
   }
   return false;

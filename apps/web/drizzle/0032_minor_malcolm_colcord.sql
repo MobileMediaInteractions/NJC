@@ -1,0 +1,2 @@
+ALTER TABLE "site_configuration_revisions" ADD COLUMN "previous_value" jsonb NOT NULL;--> statement-breakpoint
+ALTER TABLE "site_configuration_revisions" ADD COLUMN "affected_features" jsonb DEFAULT '[]'::jsonb NOT NULL;

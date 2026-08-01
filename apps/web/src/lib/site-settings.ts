@@ -1,8 +1,8 @@
-import { eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { cache } from "react";
 import { z } from "zod";
 import { getDb, hasDatabase } from "@harborline/backend/db";
-import { siteSettings } from "@harborline/backend/schema";
+import { siteConfigurationRevisions, siteSettings } from "@harborline/backend/schema";
 import { siteConfig } from "@/lib/site";
 
 export const siteConfigurationKey = "site_configuration_v1";
@@ -107,6 +107,8 @@ export const defaultStudioConfiguration = {
     activeStoryRevisions: true,
     requireIndependentRevisionApproval: true,
     requireFinalizationConfirmation: true,
+    pseudonymEligibleRoles: Array.from(["admin", "editor", "producer", "reporter", "contributor"] as const),
+    schedulingEligibleRoles: Array.from(["admin", "editor", "producer"] as const),
   },
   automations: {
     scheduledPublishing: true,
@@ -265,6 +267,8 @@ export const siteConfigurationSchema = z.object({
       activeStoryRevisions: z.boolean(),
       requireIndependentRevisionApproval: z.literal(true),
       requireFinalizationConfirmation: z.literal(true),
+      pseudonymEligibleRoles: z.array(z.enum(["admin", "editor", "producer", "reporter", "contributor"])).min(1).default(["admin", "editor", "producer", "reporter", "contributor"]),
+      schedulingEligibleRoles: z.array(z.enum(["admin", "editor", "producer"])).min(1).default(["admin", "editor", "producer"]),
     }).default(defaultStudioConfiguration.editorialWorkflow),
     automations: z.object({
       scheduledPublishing: z.boolean(),
@@ -274,6 +278,13 @@ export const siteConfigurationSchema = z.object({
       manualVerificationRequired: z.literal(true),
     }),
   }).default(defaultStudioConfiguration),
+  registry: z.object({
+    schemaVersion: z.literal(1),
+    platformOverrides: z.record(
+      z.string().regex(/^[a-z0-9-]+$/),
+      z.record(z.string().regex(/^[a-z0-9.-]+$/), z.boolean()),
+    ).default({}),
+  }).default({ schemaVersion: 1, platformOverrides: {} }),
 }).superRefine((configuration, context) => {
   const advertising = configuration.advertising;
   const liveDeliveryRequested = advertising.enabled && !advertising.previewMode;
@@ -375,6 +386,7 @@ export const defaultSiteConfiguration: SiteConfiguration = {
     editorialWorkflow: { ...defaultStudioConfiguration.editorialWorkflow },
     automations: { ...defaultStudioConfiguration.automations },
   },
+  registry: { schemaVersion: 1, platformOverrides: {} },
 };
 
 export function normalizePublisherId(value: string) {
@@ -447,29 +459,47 @@ export const getSiteConfiguration = cache(async function getSiteConfiguration() 
 
 export async function getSiteConfigurationRecord() {
   const configuration = await getSiteConfiguration();
-  if (!hasDatabase()) return { configuration, updatedAt: null, updatedByClerkId: null };
+  if (!hasDatabase()) return { configuration, updatedAt: null, updatedByClerkId: null, revision: 0 };
   try {
     const [record] = await getDb()
-      .select({ updatedAt: siteSettings.updatedAt, updatedByClerkId: siteSettings.updatedByClerkId })
+      .select({ updatedAt: siteSettings.updatedAt, updatedByClerkId: siteSettings.updatedByClerkId, revision: siteSettings.revision })
       .from(siteSettings)
       .where(eq(siteSettings.key, siteConfigurationKey))
       .limit(1);
-    return { configuration, updatedAt: record?.updatedAt ?? null, updatedByClerkId: record?.updatedByClerkId ?? null };
+    return { configuration, updatedAt: record?.updatedAt ?? null, updatedByClerkId: record?.updatedByClerkId ?? null, revision: record?.revision ?? 0 };
   } catch (error) {
     console.error("Site configuration metadata lookup failed", error);
-    return { configuration, updatedAt: null, updatedByClerkId: null };
+    return { configuration, updatedAt: null, updatedByClerkId: null, revision: 0 };
   }
 }
 
-export async function saveSiteConfiguration(configuration: SiteConfiguration, clerkId: string) {
-  const [record] = await getDb()
-    .insert(siteSettings)
-    .values({ key: siteConfigurationKey, value: configuration, updatedByClerkId: clerkId })
-    .onConflictDoUpdate({
-      target: siteSettings.key,
-      set: { value: configuration, updatedByClerkId: clerkId, updatedAt: new Date() },
-    })
-    .returning({ value: siteSettings.value, updatedAt: siteSettings.updatedAt, updatedByClerkId: siteSettings.updatedByClerkId });
-  if (!record) throw new Error("Site configuration was not returned after saving");
-  return record;
+export class StaleSiteConfigurationError extends Error {
+  constructor() { super("Production configuration changed in another session. Reload before applying these edits."); this.name = "StaleSiteConfigurationError"; }
+}
+
+export async function saveSiteConfiguration(configuration: SiteConfiguration, clerkId: string, options: { expectedRevision: number; reason: string; affectedPlatforms: string[]; affectedFeatures?: string[]; environment?: "development" | "preview" | "staging" | "production"; rolledBackFromRevision?: number }) {
+  return getDb().transaction(async (tx) => {
+    const [existing] = await tx.select().from(siteSettings).where(eq(siteSettings.key, siteConfigurationKey)).limit(1);
+    if ((existing?.revision ?? 0) !== options.expectedRevision) throw new StaleSiteConfigurationError();
+    const nextRevision = options.expectedRevision + 1;
+    const now = new Date();
+    const [record] = existing
+      ? await tx.update(siteSettings).set({ value: configuration, updatedByClerkId: clerkId, updatedAt: now, revision: nextRevision }).where(and(eq(siteSettings.key, siteConfigurationKey), eq(siteSettings.revision, options.expectedRevision))).returning({ value: siteSettings.value, updatedAt: siteSettings.updatedAt, updatedByClerkId: siteSettings.updatedByClerkId, revision: siteSettings.revision })
+      : await tx.insert(siteSettings).values({ key: siteConfigurationKey, value: configuration, updatedByClerkId: clerkId, revision: nextRevision }).returning({ value: siteSettings.value, updatedAt: siteSettings.updatedAt, updatedByClerkId: siteSettings.updatedByClerkId, revision: siteSettings.revision });
+    if (!record) throw new StaleSiteConfigurationError();
+    await tx.insert(siteConfigurationRevisions).values({ settingKey: siteConfigurationKey, revision: nextRevision, value: configuration, previousValue: existing?.value ?? defaultSiteConfiguration, reason: options.reason, environment: options.environment ?? "production", affectedPlatforms: options.affectedPlatforms, affectedFeatures: options.affectedFeatures ?? [], changedByClerkId: clerkId, rolledBackFromRevision: options.rolledBackFromRevision });
+    return record;
+  });
+}
+
+export async function getSiteConfigurationHistory(limit = 25) {
+  if (!hasDatabase()) return [];
+  return getDb().select().from(siteConfigurationRevisions).where(eq(siteConfigurationRevisions.settingKey, siteConfigurationKey)).orderBy(desc(siteConfigurationRevisions.revision)).limit(Math.min(limit, 100));
+}
+
+export async function rollbackSiteConfiguration(input: { revision: number; expectedRevision: number; clerkId: string; reason: string }) {
+  const [target] = await getDb().select().from(siteConfigurationRevisions).where(and(eq(siteConfigurationRevisions.settingKey, siteConfigurationKey), eq(siteConfigurationRevisions.revision, input.revision))).limit(1);
+  if (!target) throw new Error("Configuration revision not found");
+  const parsed = siteConfigurationSchema.parse(target.value);
+  return saveSiteConfiguration(parsed, input.clerkId, { expectedRevision: input.expectedRevision, reason: input.reason, affectedPlatforms: ["all"], rolledBackFromRevision: input.revision });
 }

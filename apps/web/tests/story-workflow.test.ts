@@ -18,13 +18,13 @@ test("review transitions follow the newsroom workflow", () => {
   assert.equal(canTransitionStoryStatus("draft", "review", "reporter", true), true);
   assert.equal(canTransitionStoryStatus("draft", "review", "reporter", false), false);
   assert.equal(canTransitionStoryStatus("draft", "review", "editor", false), true);
-  assert.equal(canTransitionStoryStatus("review", "published", "editor"), true);
-  assert.equal(canTransitionStoryStatus("review", "scheduled", "editor"), true);
+  assert.equal(canTransitionStoryStatus("review", "published", "editor"), false);
+  assert.equal(canTransitionStoryStatus("review", "scheduled", "editor"), false);
   assert.equal(canTransitionStoryStatus("review", "draft", "producer"), true);
   assert.equal(canTransitionStoryStatus("review", "published", "reporter"), false);
   assert.equal(canTransitionStoryStatus("review", "scheduled", "reporter"), false);
-  assert.equal(canTransitionStoryStatus("scheduled", "review", "editor"), true);
-  assert.equal(canTransitionStoryStatus("scheduled", "published", "producer"), true);
+  assert.equal(canTransitionStoryStatus("scheduled", "review", "editor"), false);
+  assert.equal(canTransitionStoryStatus("scheduled", "published", "producer"), false);
   assert.equal(canTransitionStoryStatus("scheduled", "draft", "admin"), false);
   assert.equal(canTransitionStoryStatus("published", "draft", "admin"), false);
   assert.equal(canTransitionStoryStatus("draft", "published", "admin"), false);

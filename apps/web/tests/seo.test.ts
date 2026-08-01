@@ -40,13 +40,13 @@ test("story structured data includes news and breadcrumb entities", () => {
   const breadcrumbs = graph.find((item) => item["@type"] === "BreadcrumbList");
   assert.ok(article);
   assert.ok(breadcrumbs);
-  const author = article["author"] as { name: string };
+  const authors = article["author"] as Array<{ name: string }>;
   const items = breadcrumbs["itemListElement"] as unknown[];
 
   assert.equal(article["@type"], "NewsArticle");
   assert.equal(article["headline"], testStory.headline);
   assert.equal(article["datePublished"], testStory.publishedAt);
-  assert.equal(author.name, testStory.author.name);
+  assert.equal(authors[0]?.name, testStory.author.name);
   assert.ok(Number(article["wordCount"]) > 0);
   assert.equal(breadcrumbs["@type"], "BreadcrumbList");
   assert.equal(items.length, 3);

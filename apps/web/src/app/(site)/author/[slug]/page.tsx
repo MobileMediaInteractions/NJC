@@ -18,10 +18,12 @@ async function getProfileStories(profile: PublicStaffProfile) {
   const stories = await getPublishedStories({ limit: 100 });
   const normalizedName = profile.name.trim().toLocaleLowerCase("en-US");
   return stories.filter(
-    (story) =>
-      story.author.profileSlug === profile.slug ||
-      (story.author.mode !== "pseudonym" &&
-        story.author.name.trim().toLocaleLowerCase("en-US") === normalizedName),
+    (story) => (story.authors?.length ? story.authors : [story.author]).some(
+      (author) =>
+        author.profileSlug === profile.slug ||
+        (author.mode !== "pseudonym" &&
+          author.name.trim().toLocaleLowerCase("en-US") === normalizedName),
+    ),
   );
 }
 

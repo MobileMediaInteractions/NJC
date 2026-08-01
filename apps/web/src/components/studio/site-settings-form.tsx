@@ -20,7 +20,10 @@ import {
   Sparkles,
   Trash2,
   Zap,
+  DatabaseZap,
 } from "lucide-react";
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ConfigurationRegistryPanel, type ConfigurationHistoryRow } from "@/components/studio/configuration-registry-panel";
 import { CourierEasterEggReveal } from "@/components/courier-easter-egg";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,6 +39,7 @@ import {
   type SiteConfiguration,
   type StudioModuleKey,
 } from "@/lib/site-settings";
+import { configurationImpact } from "@/lib/platform-feature-registry";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -85,17 +89,29 @@ export function SiteSettingsForm({
   initialConfiguration,
   canManage,
   updatedAt,
+  initialRevision,
+  history,
+  operationalHealth,
 }: {
   initialConfiguration: SiteConfiguration;
   canManage: boolean;
   updatedAt: string | null;
+  initialRevision: number;
+  history: ConfigurationHistoryRow[];
+  operationalHealth: { database: boolean; identity: boolean; scheduler: boolean };
 }) {
   const [configuration, setConfiguration] = useState(initialConfiguration);
   const [lastSavedConfiguration, setLastSavedConfiguration] = useState(initialConfiguration);
   const [state, setState] = useState<SaveState>("idle");
   const [message, setMessage] = useState("");
   const [easterEggPreviewOpen, setEasterEggPreviewOpen] = useState(false);
+  const [revision, setRevision] = useState(initialRevision);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [changeReason, setChangeReason] = useState("");
+  const [confirmation, setConfirmation] = useState("");
   const dirty = JSON.stringify(configuration) !== JSON.stringify(lastSavedConfiguration);
+  const impact = configurationImpact(lastSavedConfiguration, configuration);
+  const highImpact = impact.some((entry) => /pseudonym|scheduling|authorization|audit/.test(entry.key));
 
   function updatePublication(key: keyof SiteConfiguration["publication"], value: string) {
     setConfiguration((current) => ({ ...current, publication: { ...current.publication, [key]: value } }));
@@ -179,6 +195,15 @@ export function SiteSettingsForm({
     }));
   }
 
+  function toggleWorkflowRole(
+    key: "pseudonymEligibleRoles" | "schedulingEligibleRoles",
+    role: "admin" | "editor" | "producer" | "reporter" | "contributor",
+    enabled: boolean,
+  ) {
+    const current = configuration.studio.editorialWorkflow[key] as string[];
+    updateStudioGroup("editorialWorkflow", key, (enabled ? [...new Set([...current, role])] : current.filter((value) => value !== role)) as never);
+  }
+
   async function save() {
     if (!canManage || state === "saving") return;
     setState("saving");
@@ -187,15 +212,19 @@ export function SiteSettingsForm({
       const response = await fetch("/api/v1/studio/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(configuration),
+        body: JSON.stringify({ configuration, expectedRevision: revision, reason: changeReason, confirmation }),
       });
-      const result = await response.json() as { data?: SiteConfiguration; error?: { message?: string; details?: { formErrors?: string[]; fieldErrors?: Record<string, string[]> } } };
+      const result = await response.json() as { data?: SiteConfiguration; meta?: { revision?: number }; error?: { message?: string; details?: { formErrors?: string[]; fieldErrors?: Record<string, string[]> } } };
       if (!response.ok || !result.data) {
         const detail = result.error?.details?.formErrors?.[0] ?? Object.values(result.error?.details?.fieldErrors ?? {}).flat()[0];
         throw new Error(detail ?? result.error?.message ?? "The configuration could not be saved");
       }
       setConfiguration(result.data);
       setLastSavedConfiguration(result.data);
+      setRevision(result.meta?.revision ?? revision + 1);
+      setReviewOpen(false);
+      setChangeReason("");
+      setConfirmation("");
       setState("saved");
       setMessage("Production configuration saved. Public pages will use the new values on their next request.");
     } catch (error) {
@@ -223,7 +252,7 @@ export function SiteSettingsForm({
         </div>
         <div className="flex flex-wrap items-center justify-end gap-3">
           <Badge variant={dirty ? "default" : "secondary"}>{dirty ? "Unsaved changes" : "Production saved"}</Badge>
-          <Button onClick={save} disabled={!canManage || state === "saving" || !dirty}>
+          <Button onClick={() => setReviewOpen(true)} disabled={!canManage || state === "saving" || !dirty}>
             {state === "saving" ? <Loader2 className="animate-spin" /> : state === "saved" && !dirty ? <CheckCircle2 /> : null}
             Save configuration
           </Button>
@@ -232,6 +261,7 @@ export function SiteSettingsForm({
 
       {!canManage ? <div className="mt-6 flex gap-3 rounded-lg border border-amber-400/40 bg-amber-400/10 p-4 text-sm"><ShieldAlert className="mt-0.5 size-5 shrink-0" /><p>You can review these values, but only an administrator can change production site configuration.</p></div> : null}
       {message ? <p role="status" className={`mt-5 rounded-lg border p-4 text-sm ${state === "error" ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-primary/30 bg-primary/10"}`}>{message}</p> : null}
+      <AlertDialog open={reviewOpen} onOpenChange={setReviewOpen}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Review production changes</AlertDialogTitle><AlertDialogDescription>This atomic save expects revision {revision}. If another administrator saves first, Studio rejects this request instead of overwriting their work.</AlertDialogDescription></AlertDialogHeader><div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border p-3">{impact.length ? impact.map((entry) => <div key={entry.key} className="text-sm"><strong>{entry.name}</strong><p className="text-xs text-muted-foreground">Affects {entry.platforms.join(", ")} · {entry.rollout} rollout · {entry.dependencies.length ? `depends on ${entry.dependencies.join(", ")}` : "no registered dependencies"}</p></div>) : <p className="text-sm text-muted-foreground">Publication text, navigation, or provider configuration changed.</p>}</div><div className="space-y-2"><Label htmlFor="configuration-change-reason">Required change reason</Label><Input id="configuration-change-reason" value={changeReason} onChange={(event) => setChangeReason(event.target.value)} placeholder="Choose and explain the production outcome" /></div>{highImpact ? <div className="space-y-2"><Label htmlFor="configuration-confirmation">Type APPLY PRODUCTION CHANGE</Label><Input id="configuration-confirmation" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} /></div> : null}<AlertDialogFooter><AlertDialogCancel>Continue editing</AlertDialogCancel><Button onClick={() => void save()} disabled={state === "saving" || changeReason.trim().length < 8 || (highImpact && confirmation !== "APPLY PRODUCTION CHANGE")}>{state === "saving" ? <Loader2 className="animate-spin" /> : null}Apply revision {revision + 1}</Button></AlertDialogFooter></AlertDialogContent></AlertDialog>
 
       <section className="mt-7 overflow-hidden rounded-2xl bg-[#102f25] text-white ring-1 ring-black/10">
         <div className="grid sm:grid-cols-2 xl:grid-cols-5">
@@ -260,6 +290,7 @@ export function SiteSettingsForm({
               <TabsTrigger value="automations" className="h-10 shrink-0 justify-start px-3 lg:w-full"><Bot /> Automations</TabsTrigger>
               <TabsTrigger value="measurement" className="h-10 shrink-0 justify-start px-3 lg:w-full"><Activity /> Measurement</TabsTrigger>
               <TabsTrigger value="advertising" className="h-10 shrink-0 justify-start px-3 lg:w-full"><BadgeDollarSign /> Advertising</TabsTrigger>
+              <TabsTrigger value="registry" className="h-10 shrink-0 justify-start px-3 lg:w-full"><DatabaseZap /> Registry & history</TabsTrigger>
             </TabsList>
             <div className="mt-4 hidden rounded-lg border bg-muted/25 p-3 text-xs leading-5 text-muted-foreground lg:block">
               <Settings2 className="mb-2 size-4 text-primary" />
@@ -295,7 +326,7 @@ export function SiteSettingsForm({
         </TabsContent>
 
         <TabsContent value="editorial">
-          <Card>
+          <div className="space-y-6"><Card>
             <CardHeader>
               <CardTitle>Story datelines</CardTitle>
               <CardDescription>
@@ -320,7 +351,7 @@ export function SiteSettingsForm({
                 rewrite datelines on already published stories.
               </p>
             </CardContent>
-          </Card>
+          </Card><Card><CardHeader><CardTitle>Editorial role eligibility</CardTitle><CardDescription>Feature availability and eligible newsroom roles are separate controls. Mandatory independent approval cannot be disabled.</CardDescription></CardHeader><CardContent className="space-y-5"><div><p className="text-sm font-medium">Pseudonym eligibility</p><div className="mt-3 grid gap-3 sm:grid-cols-2">{(["admin", "editor", "producer", "reporter", "contributor"] as const).map((role) => <Toggle key={role} label={role} description={`Allow ${role}s to select their own verified pseudonym.`} checked={configuration.studio.editorialWorkflow.pseudonymEligibleRoles.includes(role)} disabled={!canManage || (configuration.studio.editorialWorkflow.pseudonymEligibleRoles.length === 1 && configuration.studio.editorialWorkflow.pseudonymEligibleRoles.includes(role))} onCheckedChange={(enabled) => toggleWorkflowRole("pseudonymEligibleRoles", role, enabled)} />)}</div></div><div><p className="text-sm font-medium">Scheduling eligibility</p><div className="mt-3 grid gap-3 sm:grid-cols-2">{(["admin", "editor", "producer"] as const).map((role) => <Toggle key={role} label={role} description={`Allow ${role}s to schedule an independently approved story.`} checked={configuration.studio.editorialWorkflow.schedulingEligibleRoles.includes(role)} disabled={!canManage || (configuration.studio.editorialWorkflow.schedulingEligibleRoles.length === 1 && configuration.studio.editorialWorkflow.schedulingEligibleRoles.includes(role))} onCheckedChange={(enabled) => toggleWorkflowRole("schedulingEligibleRoles", role, enabled)} />)}</div></div><div className="rounded-lg border bg-muted/30 p-4 text-xs text-muted-foreground">Operational readiness is reported separately in Registry &amp; history. Authentication, authorization, audit integrity, hash-bound approval and backup protections remain visible and immutable.</div></CardContent></Card></div>
         </TabsContent>
 
         <TabsContent value="features">
@@ -623,6 +654,7 @@ export function SiteSettingsForm({
             <TextField label="Promotion destination" value={configuration.advertising.adFreePromoHref} onChange={(value) => updateAdvertising("adFreePromoHref", value)} disabled={!canManage || !configuration.advertising.adFreePromoEnabled} placeholder="/plus" />
           </CardContent></Card>
         </TabsContent>
+        <TabsContent value="registry"><ConfigurationRegistryPanel configuration={configuration} revision={revision} history={history} operationalHealth={operationalHealth} canManage={canManage} /></TabsContent>
         </div>
       </Tabs>
     </div>

@@ -4,6 +4,7 @@ import { UserProfileEditor } from "@/components/studio/user-profile-editor";
 import { StudioGate } from "@/components/studio/studio-gate";
 import { StudioShell } from "@/components/studio/studio-shell";
 import { PresenceIndicator } from "@/components/studio/presence-indicator";
+import { PseudonymModerationCard } from "@/components/studio/pseudonym-moderation-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
         <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(20rem,0.75fr)]">
           <div className="space-y-6">
             <UserProfileEditor initialAccount={account} currentUserId={viewer.id} />
+            {account.databaseProfile ? <PseudonymModerationCard accountId={account.id} pseudonym={account.databaseProfile.pseudonym} status={account.databaseProfile.pseudonymModerationStatus} reason={account.databaseProfile.pseudonymModerationReason} /> : null}
 
             <Card><CardHeader><CardTitle>Identity methods</CardTitle><CardDescription>Verified identifiers and connected sign-in providers from Clerk. Email and phone changes stay in Clerk’s verification flows.</CardDescription></CardHeader><CardContent className="space-y-6">
               <IdentitySection icon={<Mail />} title="Email addresses" empty="No email addresses" items={account.emails.map((email) => ({ id: email.id, primary: email.primary, label: email.address, detail: `${email.verificationStatus}${email.verificationStrategy ? ` · ${email.verificationStrategy}` : ""}` }))} />

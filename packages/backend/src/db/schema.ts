@@ -67,6 +67,14 @@ export const users = pgTable(
     pseudonym: text("pseudonym"),
     pseudonymNormalized: text("pseudonym_normalized"),
     pseudonymEnabled: boolean("pseudonym_enabled").notNull().default(true),
+    pseudonymModerationStatus: text("pseudonym_moderation_status")
+      .notNull()
+      .default("active"),
+    pseudonymModerationReason: text("pseudonym_moderation_reason"),
+    pseudonymModeratedByClerkId: text("pseudonym_moderated_by_clerk_id"),
+    pseudonymModeratedAt: timestamp("pseudonym_moderated_at", {
+      withTimezone: true,
+    }),
     pseudonymRevision: integer("pseudonym_revision").notNull().default(0),
     pseudonymUpdatedAt: timestamp("pseudonym_updated_at", {
       withTimezone: true,
@@ -91,6 +99,7 @@ export const users = pgTable(
     uniqueIndex("users_pseudonym_normalized_idx")
       .on(table.pseudonymNormalized)
       .where(sql`${table.pseudonymNormalized} is not null`),
+    check("users_pseudonym_moderation_status_check", sql`${table.pseudonymModerationStatus} in ('active', 'disabled', 'correction_required')`),
   ],
 );
 
@@ -140,6 +149,18 @@ export const stories = pgTable(
       profileSlug?: string;
       pseudonymRevision?: number;
     }>(),
+    publicBylinesSnapshot: jsonb("public_bylines_snapshot").$type<Array<{
+      userId: string;
+      mode: "account" | "pseudonym";
+      name: string;
+      initials: string;
+      role: string;
+      avatar?: string;
+      profileSlug?: string;
+      pseudonymRevision?: number;
+    }>>().notNull().default([]),
+    contentVersion: integer("content_version").notNull().default(1),
+    contentHash: text("content_hash"),
     imageUrl: text("image_url"),
     imageAlt: text("image_alt"),
     videoUrl: text("video_url"),
@@ -168,6 +189,98 @@ export const stories = pgTable(
     uniqueIndex("stories_slug_idx").on(table.slug),
     index("stories_status_published_idx").on(table.status, table.publishedAt),
     index("stories_category_idx").on(table.categorySlug, table.publishedAt),
+    check("stories_content_version_positive_check", sql`${table.contentVersion} > 0`),
+  ],
+);
+
+export const storyAuthors = pgTable(
+  "story_authors",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storyId: uuid("story_id").notNull().references(() => stories.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "restrict" }),
+    position: integer("position").notNull().default(0),
+    bylineMode: text("byline_mode").notNull().default("account"),
+    addedByClerkId: text("added_by_clerk_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("story_authors_story_user_idx").on(table.storyId, table.userId),
+    index("story_authors_story_position_idx").on(table.storyId, table.position),
+    check("story_authors_byline_mode_check", sql`${table.bylineMode} in ('account', 'pseudonym')`),
+  ],
+);
+
+export const pseudonymModerationEvents = pgTable(
+  "pseudonym_moderation_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    actorClerkId: text("actor_clerk_id").notNull(),
+    action: text("action").notNull(),
+    reason: text("reason").notNull(),
+    previousStatus: text("previous_status").notNull(),
+    nextStatus: text("next_status").notNull(),
+    pseudonymRevision: integer("pseudonym_revision").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("pseudonym_moderation_user_idx").on(table.userId, table.createdAt),
+    check("pseudonym_moderation_action_check", sql`${table.action} in ('disable', 'restore', 'require_correction')`),
+    check("pseudonym_moderation_previous_status_check", sql`${table.previousStatus} in ('active', 'disabled', 'correction_required')`),
+    check("pseudonym_moderation_next_status_check", sql`${table.nextStatus} in ('active', 'disabled', 'correction_required')`),
+  ],
+);
+
+export const storyApprovals = pgTable(
+  "story_approvals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storyId: uuid("story_id").notNull().references(() => stories.id, { onDelete: "cascade" }),
+    contentVersion: integer("content_version").notNull(),
+    contentHash: text("content_hash").notNull(),
+    approvedById: uuid("approved_by_id").references(() => users.id, { onDelete: "set null" }),
+    approvedByClerkId: text("approved_by_clerk_id").notNull(),
+    note: text("note"),
+    approvedAt: timestamp("approved_at", { withTimezone: true }).notNull().defaultNow(),
+    invalidatedAt: timestamp("invalidated_at", { withTimezone: true }),
+    invalidatedByClerkId: text("invalidated_by_clerk_id"),
+    invalidationReason: text("invalidation_reason"),
+  },
+  (table) => [
+    index("story_approvals_story_idx").on(table.storyId, table.approvedAt),
+    uniqueIndex("story_approvals_one_active_idx").on(table.storyId).where(sql`${table.invalidatedAt} is null`),
+  ],
+);
+
+export const storyPublicationJobs = pgTable(
+  "story_publication_jobs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    storyId: uuid("story_id").notNull().references(() => stories.id, { onDelete: "cascade" }),
+    approvalId: uuid("approval_id").notNull().references(() => storyApprovals.id, { onDelete: "restrict" }),
+    status: text("status").notNull().default("queued"),
+    scheduledAt: timestamp("scheduled_at", { withTimezone: true }).notNull(),
+    originalScheduledAt: timestamp("original_scheduled_at", { withTimezone: true }).notNull(),
+    contentHash: text("content_hash").notNull(),
+    attemptCount: integer("attempt_count").notNull().default(0),
+    lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    lastErrorCode: text("last_error_code"),
+    lastErrorMessage: text("last_error_message"),
+    createdByClerkId: text("created_by_clerk_id").notNull(),
+    updatedByClerkId: text("updated_by_clerk_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("story_publication_jobs_due_idx").on(table.status, table.scheduledAt),
+    uniqueIndex("story_publication_jobs_one_open_idx")
+      .on(table.storyId)
+      .where(sql`${table.status} in ('queued', 'publishing', 'blocked', 'failed')`),
+    check("story_publication_jobs_status_check", sql`${table.status} in ('queued', 'publishing', 'published', 'cancelled', 'blocked', 'failed')`),
   ],
 );
 
@@ -1271,8 +1384,32 @@ export const siteSettings = pgTable("site_settings", {
   key: text("key").primaryKey(),
   value: jsonb("value").notNull(),
   updatedByClerkId: text("updated_by_clerk_id"),
+  revision: integer("revision").notNull().default(1),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const siteConfigurationRevisions = pgTable(
+  "site_configuration_revisions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    settingKey: text("setting_key").notNull(),
+    revision: integer("revision").notNull(),
+    value: jsonb("value").notNull(),
+    previousValue: jsonb("previous_value").notNull(),
+    reason: text("reason").notNull(),
+    environment: text("environment").notNull().default("production"),
+    affectedPlatforms: jsonb("affected_platforms").$type<string[]>().notNull().default([]),
+    affectedFeatures: jsonb("affected_features").$type<string[]>().notNull().default([]),
+    changedByClerkId: text("changed_by_clerk_id").notNull(),
+    rolledBackFromRevision: integer("rolled_back_from_revision"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("site_configuration_revisions_key_revision_idx").on(table.settingKey, table.revision),
+    index("site_configuration_revisions_created_idx").on(table.settingKey, table.createdAt),
+    check("site_configuration_environment_check", sql`${table.environment} in ('development', 'preview', 'staging', 'production')`),
+  ],
+);
 
 export interface LegalPublishedSnapshot {
   title: string;

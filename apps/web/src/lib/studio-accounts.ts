@@ -144,6 +144,11 @@ export async function getStudioAccount(clerkId: string): Promise<StudioAccountPr
       id: databaseProfile.id,
       isActive: databaseProfile.isActive,
       bio: databaseProfile.bio,
+      pseudonym: databaseProfile.pseudonym,
+      pseudonymEnabled: databaseProfile.pseudonymEnabled,
+      pseudonymModerationStatus: databaseProfile.pseudonymModerationStatus as "active" | "disabled" | "correction_required",
+      pseudonymModerationReason: databaseProfile.pseudonymModerationReason,
+      pseudonymModeratedAt: databaseProfile.pseudonymModeratedAt?.toISOString() ?? null,
       publicSlug: databaseProfile.publicSlug,
       publicProfilePublishedAt:
         databaseProfile.publicProfilePublishedAt?.toISOString() ?? null,

@@ -24,7 +24,11 @@ export function buildPublicBylineSnapshot(
   mode: BylineMode,
 ): PublicBylineSnapshot {
   if (mode === "pseudonym") {
-    if (!owner.pseudonym || !owner.pseudonymEnabled) {
+    if (
+      !owner.pseudonym ||
+      !owner.pseudonymEnabled ||
+      owner.pseudonymModerationStatus !== "active"
+    ) {
       throw new BylineUnavailableError(
         "This author does not have an active saved pseudonym.",
       );
@@ -79,7 +83,10 @@ export async function getStoryBylineOptions(
           {
             mode: "pseudonym" as const,
             name: owner.pseudonym,
-            available: owner.isActive && owner.pseudonymEnabled,
+            available:
+              owner.isActive &&
+              owner.pseudonymEnabled &&
+              owner.pseudonymModerationStatus === "active",
           },
         ]
       : []),
@@ -94,6 +101,7 @@ export function validateSavedPublicByline(
   if (snapshot.mode === "account") return true;
   return Boolean(
     owner.pseudonymEnabled &&
+      owner.pseudonymModerationStatus === "active" &&
       owner.pseudonym &&
       snapshot.pseudonymRevision === owner.pseudonymRevision &&
       snapshot.name === owner.pseudonym,

@@ -15,6 +15,12 @@ export function normalizeStory(row: typeof stories.$inferSelect): Story {
     row.publicBylineSnapshot ??
     legacyPublicBylineSnapshot({ authorSnapshot: row.authorSnapshot });
 
+  const authors = row.publicBylinesSnapshot.length
+    ? row.publicBylinesSnapshot.map((byline, index) =>
+        publicStoryAuthor(`${row.id}-${index}`, byline),
+      )
+    : [publicStoryAuthor(row.id, publicByline)];
+
   return {
     id: row.id,
     slug: row.slug,
@@ -30,7 +36,8 @@ export function normalizeStory(row: typeof stories.$inferSelect): Story {
     readingMinutes: row.readingMinutes,
     image: row.imageUrl ?? DEFAULT_STORY_IMAGE,
     imageAlt: row.imageAlt ?? "Middlesex County news",
-    author: publicStoryAuthor(row.id, publicByline),
+    author: authors[0]!,
+    authors,
     tags: row.tags,
     seoTitle: row.seoTitle ?? undefined,
     seoDescription: row.seoDescription ?? undefined,

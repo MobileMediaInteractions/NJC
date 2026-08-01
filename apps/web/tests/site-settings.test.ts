@@ -151,6 +151,8 @@ test("older stored configuration receives the complete guarded Studio registry",
   assert.equal(parsed.studio.automations.manualVerificationRequired, true);
   assert.equal(parsed.studio.editorialWorkflow.activeStoryRevisions, true);
   assert.equal(parsed.studio.editorialWorkflow.requireIndependentRevisionApproval, true);
+  assert.ok(parsed.studio.editorialWorkflow.schedulingEligibleRoles.includes("editor"));
+  assert.equal(parsed.registry.schemaVersion, 1);
 });
 
 test("manual verification and notification preflight cannot be disabled", () => {

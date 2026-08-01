@@ -59,6 +59,11 @@ export type StudioAccountProfile = StudioAccountSummary & {
     id: string;
     isActive: boolean;
     bio: string | null;
+    pseudonym: string | null;
+    pseudonymEnabled: boolean;
+    pseudonymModerationStatus: "active" | "disabled" | "correction_required";
+    pseudonymModerationReason: string | null;
+    pseudonymModeratedAt: string | null;
     publicSlug: string | null;
     publicProfilePublishedAt: string | null;
     createdAt: string;

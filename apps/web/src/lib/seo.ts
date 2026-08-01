@@ -80,6 +80,7 @@ export function storyPageJsonLd(
         ? getAuthorProfileUrl(story.author.name)
         : undefined;
   const wordCount = story.body.join(" ").trim().split(/\s+/).filter(Boolean).length;
+  const publicAuthors = story.authors?.length ? story.authors : [story.author];
 
   return {
     "@context": "https://schema.org",
@@ -95,22 +96,22 @@ export function storyPageJsonLd(
         image: [absoluteUrl(story.image)],
         datePublished: story.publishedAt,
         dateModified: story.updatedAt || story.publishedAt,
-        author: {
+        author: publicAuthors.map((author, authorIndex) => ({
           "@type": "Person",
-          name: story.author.name,
-          ...(story.author.mode !== "pseudonym" && authorProfile?.title
+          name: author.name,
+          ...(authorIndex === 0 && author.mode !== "pseudonym" && authorProfile?.title
             ? { jobTitle: authorProfile.title }
             : {}),
-          ...(story.author.mode !== "pseudonym" && authorProfile?.avatarUrl
+          ...(authorIndex === 0 && author.mode !== "pseudonym" && authorProfile?.avatarUrl
             ? { image: absoluteUrl(authorProfile.avatarUrl) }
             : {}),
-          ...(authorUrl
+          ...(authorIndex === 0 && authorUrl
             ? {
                 "@id": `${authorUrl}#person`,
                 url: authorUrl,
               }
             : {}),
-        },
+        })),
         publisher: { "@id": `${getSiteOrigin()}/#publisher` },
         articleSection: story.categoryLabel,
         keywords: story.tags.join(", "),

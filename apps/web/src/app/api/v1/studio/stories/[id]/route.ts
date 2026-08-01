@@ -1,9 +1,14 @@
-import { and, desc, eq, ne } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb, hasDatabase } from "@harborline/backend/db";
-import { stories, storyRevisions } from "@harborline/backend/schema";
+import {
+  stories,
+  storyApprovals,
+  storyPublicationJobs,
+  storyRevisions,
+} from "@harborline/backend/schema";
 import { writeApiAudit } from "@/lib/api-keys";
 import { canDeleteStory, getStudioUser } from "@/lib/auth";
 import { storyInput } from "@/lib/story-input";
@@ -21,6 +26,8 @@ import {
 } from "@/lib/bylines";
 import { legacyPublicBylineSnapshot } from "@/lib/pseudonyms";
 import { getSiteConfiguration } from "@/lib/site-settings";
+import { storyContentHash, storyPublicationBlockers } from "@/lib/story-content-integrity";
+import { canApproveStory } from "@/lib/story-scheduling-policy";
 
 const storyId = z.uuid();
 const transitionInput = z.discriminatedUnion("status", [
@@ -38,6 +45,22 @@ const transitionInput = z.discriminatedUnion("status", [
 ]);
 const storyActionInput = z.union([
   transitionInput,
+  z.object({
+    action: z.literal("approve"),
+    note: z.string().trim().max(500).default(""),
+  }),
+  z.object({
+    action: z.literal("reschedule"),
+    scheduledAt: z.iso.datetime(),
+    confirmation: z.literal("RESCHEDULE"),
+  }),
+  z.object({
+    action: z.literal("cancel_schedule"),
+    confirmation: z.literal("CANCEL SCHEDULE"),
+  }),
+  z.object({
+    action: z.literal("retry_schedule"),
+  }),
   z.object({
     action: z.literal("close_editing"),
     confirmation: z.literal("CLOSE STORY"),
@@ -77,6 +100,94 @@ export async function PATCH(
 
   const mutation = parsedBody.data;
   if ("action" in mutation) {
+    if (mutation.action === "approve") {
+      if (!canApproveStory({
+        role: viewer.role,
+        storyStatus: current.status,
+        viewerUserId: viewer.databaseId,
+        authorId: current.authorId,
+      })) {
+        return NextResponse.json(
+          { error: { code: "independent_approval_required", message: "A publisher other than the story owner must approve this reviewed revision." } },
+          { status: 403 },
+        );
+      }
+      const blockers = storyPublicationBlockers(current);
+      if (blockers.length) {
+        return NextResponse.json(
+          { error: { code: "publication_blocked", message: `Resolve the publication checks first: ${blockers.join(", ")}` } },
+          { status: 409 },
+        );
+      }
+      const hash = storyContentHash(current);
+      const approval = await getDb().transaction(async (tx) => {
+        await tx.update(storyApprovals).set({
+          invalidatedAt: new Date(),
+          invalidatedByClerkId: viewer.id,
+          invalidationReason: "Superseded by a newer approval",
+        }).where(and(eq(storyApprovals.storyId, current.id), isNull(storyApprovals.invalidatedAt)));
+        const [created] = await tx.insert(storyApprovals).values({
+          storyId: current.id,
+          contentVersion: current.contentVersion,
+          contentHash: hash,
+          approvedById: viewer.databaseId ?? null,
+          approvedByClerkId: viewer.id,
+          note: mutation.note || null,
+        }).returning();
+        await tx.update(stories).set({ contentHash: hash, updatedAt: new Date() }).where(eq(stories.id, current.id));
+        return created;
+      });
+      await writeApiAudit({
+        actorClerkId: viewer.id,
+        event: "story.approved",
+        request,
+        metadata: { storyId: current.id, approvalId: approval?.id, contentVersion: current.contentVersion, contentHash: hash },
+      });
+      revalidatePath(`/studio/stories/${current.id}`);
+      return NextResponse.json({ data: approval, meta: { apiVersion: "1" } });
+    }
+
+    if (mutation.action === "reschedule") {
+      if (!canPublishStory(viewer.role) || current.status !== "scheduled") {
+        return NextResponse.json({ error: { code: "forbidden", message: "Publisher access and an active schedule are required" } }, { status: 403 });
+      }
+      const nextTime = new Date(mutation.scheduledAt);
+      if (!isValidScheduledPublication(nextTime)) {
+        return NextResponse.json({ error: { code: "invalid_schedule", message: "Choose a valid future publication time." } }, { status: 400 });
+      }
+      const [job] = await getDb().select().from(storyPublicationJobs)
+        .where(and(eq(storyPublicationJobs.storyId, current.id), inArray(storyPublicationJobs.status, ["queued", "blocked", "failed"]))).limit(1);
+      if (!job) return NextResponse.json({ error: { code: "schedule_missing", message: "No active publication job was found." } }, { status: 409 });
+      await getDb().transaction(async (tx) => {
+        await tx.update(storyPublicationJobs).set({ status: "queued", scheduledAt: nextTime, updatedByClerkId: viewer.id, lastErrorCode: null, lastErrorMessage: null, updatedAt: new Date() }).where(eq(storyPublicationJobs.id, job.id));
+        await tx.update(stories).set({ scheduledAt: nextTime, updatedAt: new Date() }).where(eq(stories.id, current.id));
+      });
+      await writeApiAudit({ actorClerkId: viewer.id, event: "story.schedule_changed", request, metadata: { storyId: current.id, originalScheduledAt: job.originalScheduledAt.toISOString(), previousScheduledAt: job.scheduledAt.toISOString(), scheduledAt: nextTime.toISOString() } });
+      revalidatePath(`/studio/stories/${current.id}`);
+      return NextResponse.json({ data: { scheduledAt: nextTime.toISOString(), status: "queued" }, meta: { apiVersion: "1" } });
+    }
+
+    if (mutation.action === "cancel_schedule") {
+      if (!canPublishStory(viewer.role) || current.status !== "scheduled") {
+        return NextResponse.json({ error: { code: "forbidden", message: "Publisher access and an active schedule are required" } }, { status: 403 });
+      }
+      const now = new Date();
+      await getDb().transaction(async (tx) => {
+        await tx.update(storyPublicationJobs).set({ status: "cancelled", cancelledAt: now, updatedByClerkId: viewer.id, updatedAt: now }).where(and(eq(storyPublicationJobs.storyId, current.id), inArray(storyPublicationJobs.status, ["queued", "blocked", "failed"])));
+        await tx.update(stories).set({ status: "review", scheduledAt: null, updatedAt: now }).where(and(eq(stories.id, current.id), eq(stories.status, "scheduled")));
+      });
+      await writeApiAudit({ actorClerkId: viewer.id, event: "story.schedule_cancelled", request, metadata: { storyId: current.id, previousScheduledAt: current.scheduledAt?.toISOString() } });
+      revalidatePath(`/studio/stories/${current.id}`);
+      return NextResponse.json({ data: { status: "review" }, meta: { apiVersion: "1" } });
+    }
+
+    if (mutation.action === "retry_schedule") {
+      if (!canPublishStory(viewer.role) || current.status !== "review") {
+        return NextResponse.json({ error: { code: "forbidden", message: "Publisher access is required to retry a held schedule" } }, { status: 403 });
+      }
+      return NextResponse.json({ error: { code: "approval_required", message: "A blocked publication must be reviewed and approved again before it can be rescheduled." } }, { status: 409 });
+    }
+
     if (!canPublishStory(viewer.role)) {
       return NextResponse.json(
         { error: { code: "forbidden", message: "Publisher access is required to close a live story" } },
@@ -121,6 +232,7 @@ export async function PATCH(
         ))
         .returning();
       if (!story) return null;
+
       const [latest] = await tx
         .select({ version: storyRevisions.version })
         .from(storyRevisions)
@@ -154,10 +266,25 @@ export async function PATCH(
   }
 
   const nextStatus = mutation.status;
+  const workflowConfiguration = await getSiteConfiguration();
+  if (
+    nextStatus === "scheduled" &&
+    !workflowConfiguration.studio.automations.scheduledPublishing
+  ) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "feature_disabled",
+          message: "Scheduled publication is disabled in Studio Configuration.",
+        },
+      },
+      { status: 409 },
+    );
+  }
   if (
     (nextStatus === "scheduled" || nextStatus === "published") &&
     mutation.isActive &&
-    !(await getSiteConfiguration()).studio.editorialWorkflow
+    !workflowConfiguration.studio.editorialWorkflow
       .activeStoryRevisions
   ) {
     return NextResponse.json(
@@ -187,7 +314,40 @@ export async function PATCH(
   const isOwner = Boolean(
     viewer.databaseId && current.authorId === viewer.databaseId,
   );
-  if (!canTransitionStoryStatus(current.status, nextStatus, viewer.role, isOwner)) {
+  const [activeApproval] =
+    nextStatus === "scheduled" || nextStatus === "published"
+      ? await getDb()
+          .select()
+          .from(storyApprovals)
+          .where(and(eq(storyApprovals.storyId, current.id), isNull(storyApprovals.invalidatedAt)))
+          .limit(1)
+      : [];
+  const currentHash = storyContentHash(current);
+  const approvalMatches = Boolean(
+    activeApproval &&
+      activeApproval.contentVersion === current.contentVersion &&
+      activeApproval.contentHash === currentHash,
+  );
+  const isApprovedPublicationTransition =
+    (nextStatus === "scheduled" || nextStatus === "published") &&
+    (current.status === "review" || current.status === "scheduled") &&
+    canPublishStory(viewer.role) &&
+    workflowConfiguration.studio.editorialWorkflow.schedulingEligibleRoles.includes(viewer.role as "admin" | "editor" | "producer") &&
+    !isOwner &&
+    approvalMatches;
+  if (!canTransitionStoryStatus(current.status, nextStatus, viewer.role, isOwner) && !isApprovedPublicationTransition) {
+    if ((nextStatus === "scheduled" || nextStatus === "published") && isOwner) {
+      return NextResponse.json(
+        { error: { code: "independent_publication_required", message: "The story owner cannot publish their own reviewed work. Ask another publisher to complete the action." } },
+        { status: 403 },
+      );
+    }
+    if ((nextStatus === "scheduled" || nextStatus === "published") && !approvalMatches) {
+      return NextResponse.json(
+        { error: { code: "approval_required", message: "Approve the current content revision before scheduling or publishing." } },
+        { status: 409 },
+      );
+    }
     if (current.status === "review" && !canPublishStory(viewer.role)) {
       return NextResponse.json(
         { error: { code: "forbidden", message: "Your role cannot complete editorial review" } },
@@ -212,7 +372,7 @@ export async function PATCH(
     if (nextStatus === "scheduled" || nextStatus === "published") {
       if (
         publishByline?.mode === "pseudonym" &&
-        !(await getSiteConfiguration()).features.pseudonyms
+        !workflowConfiguration.features.pseudonyms
       ) {
         throw new BylineUnavailableError(
           "Pseudonymous publication is currently disabled in Studio Configuration.",
@@ -222,7 +382,11 @@ export async function PATCH(
         const owner = current.authorId
           ? await getBylineOwner(current.authorId)
           : null;
-        if (!owner || !validateSavedPublicByline(owner, publishByline)) {
+        if (
+          !owner ||
+          !workflowConfiguration.studio.editorialWorkflow.pseudonymEligibleRoles.includes(owner.role) ||
+          !validateSavedPublicByline(owner, publishByline)
+        ) {
           throw new BylineUnavailableError(
             "The saved pseudonym changed or is no longer available. Return the story to draft and review the public byline.",
           );
@@ -257,6 +421,34 @@ export async function PATCH(
         updatedAt: now,
       }).where(and(eq(stories.id, current.id), eq(stories.status, current.status))).returning();
       if (!story) return null;
+
+      if (nextStatus === "draft") {
+        await tx.update(storyApprovals).set({ invalidatedAt: now, invalidatedByClerkId: viewer.id, invalidationReason: "Story returned to draft" }).where(and(eq(storyApprovals.storyId, story.id), isNull(storyApprovals.invalidatedAt)));
+        await tx.update(storyPublicationJobs).set({ status: "cancelled", cancelledAt: now, updatedByClerkId: viewer.id, updatedAt: now }).where(and(eq(storyPublicationJobs.storyId, story.id), inArray(storyPublicationJobs.status, ["queued", "blocked", "failed"])));
+      }
+
+      if (nextStatus === "scheduled" && scheduledAt && activeApproval) {
+        await tx
+          .update(storyPublicationJobs)
+          .set({ status: "cancelled", cancelledAt: now, updatedByClerkId: viewer.id, updatedAt: now })
+          .where(and(eq(storyPublicationJobs.storyId, story.id), inArray(storyPublicationJobs.status, ["queued", "blocked", "failed"])));
+        await tx.insert(storyPublicationJobs).values({
+          storyId: story.id,
+          approvalId: activeApproval.id,
+          status: "queued",
+          scheduledAt,
+          originalScheduledAt: scheduledAt,
+          contentHash: activeApproval.contentHash,
+          createdByClerkId: viewer.id,
+          updatedByClerkId: viewer.id,
+        });
+      }
+      if (nextStatus === "published") {
+        await tx
+          .update(storyPublicationJobs)
+          .set({ status: "published", publishedAt: now, updatedByClerkId: viewer.id, updatedAt: now })
+          .where(and(eq(storyPublicationJobs.storyId, story.id), inArray(storyPublicationJobs.status, ["queued", "publishing", "blocked", "failed"])));
+      }
 
       const [latest] = await tx.select({ version: storyRevisions.version }).from(storyRevisions).where(eq(storyRevisions.storyId, story.id)).orderBy(desc(storyRevisions.version)).limit(1);
       await tx.insert(storyRevisions).values({
@@ -439,7 +631,7 @@ export async function PUT(
   try {
     if (
       bylineMode === "pseudonym" &&
-      !(await getSiteConfiguration()).features.pseudonyms
+      (!(await getSiteConfiguration()).features.pseudonyms || !(await getSiteConfiguration()).studio.editorialWorkflow.pseudonymEligibleRoles.includes(viewer.role))
     ) {
       return NextResponse.json(
         { error: { code: "feature_disabled", message: "Pseudonyms are currently disabled in Studio Configuration" } },
@@ -597,6 +789,11 @@ export async function PUT(
         ...storyValues,
         status: effectiveStatus,
         publicBylineSnapshot: nextPublicByline,
+        publicBylinesSnapshot: current.authorId
+          ? [{ userId: current.authorId, ...nextPublicByline }]
+          : [],
+        contentVersion: current.contentVersion + 1,
+        contentHash: null,
         whyItMatters: includeWhyItMatters
           ? generateWhyItMatters(parsedBody.data)
           : null,
@@ -611,6 +808,20 @@ export async function PUT(
         updatedAt: now,
       }).where(and(eq(stories.id, current.id), eq(stories.status, current.status))).returning();
       if (!story) return null;
+
+      await tx.update(storyApprovals).set({
+        invalidatedAt: now,
+        invalidatedByClerkId: viewer.id,
+        invalidationReason: "Material story content changed",
+      }).where(and(eq(storyApprovals.storyId, story.id), isNull(storyApprovals.invalidatedAt)));
+      await tx.update(storyPublicationJobs).set({
+        status: "cancelled",
+        cancelledAt: now,
+        updatedByClerkId: viewer.id,
+        lastErrorCode: "content_changed",
+        lastErrorMessage: "The schedule was removed because approved content changed.",
+        updatedAt: now,
+      }).where(and(eq(storyPublicationJobs.storyId, story.id), inArray(storyPublicationJobs.status, ["queued", "blocked", "failed"])));
 
       const [latest] = await tx.select({ version: storyRevisions.version }).from(storyRevisions).where(eq(storyRevisions.storyId, story.id)).orderBy(desc(storyRevisions.version)).limit(1);
       await tx.insert(storyRevisions).values({

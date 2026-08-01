@@ -1,16 +1,17 @@
-import { desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { Activity, CalendarClock, ImageIcon, Search, UserRound } from "lucide-react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { getDb, hasDatabase } from "@harborline/backend/db";
-import { stories, storyRevisions, users } from "@harborline/backend/schema";
+import { stories, storyApprovals, storyAuthors, storyPublicationJobs, storyRevisions, users } from "@harborline/backend/schema";
 import { StudioGate } from "@/components/studio/studio-gate";
 import {
   StoryRevisionHistory,
   type StoryRevisionRow,
 } from "@/components/studio/story-revision-history";
 import { StoryReviewActions } from "@/components/studio/story-review-actions";
+import { StoryAuthorControl } from "@/components/studio/story-author-control";
 import { StudioShell } from "@/components/studio/studio-shell";
 import { StoryTimestampEditor } from "@/components/studio/story-timestamp-editor";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +42,12 @@ export default async function StudioStoryReviewPage({ params }: { params: Promis
   if (!story) notFound();
   const canPublish = canPublishStory(viewer.role);
   const configuration = await getSiteConfiguration();
+  const [[approval], [publicationJob], authorRows, activeStaff] = await Promise.all([
+    getDb().select().from(storyApprovals).where(and(eq(storyApprovals.storyId, story.id), isNull(storyApprovals.invalidatedAt))).limit(1),
+    getDb().select().from(storyPublicationJobs).where(eq(storyPublicationJobs.storyId, story.id)).orderBy(desc(storyPublicationJobs.createdAt)).limit(1),
+    getDb().select({ userId: storyAuthors.userId, mode: storyAuthors.bylineMode }).from(storyAuthors).where(eq(storyAuthors.storyId, story.id)).orderBy(storyAuthors.position),
+    getDb().select({ id: users.id, name: users.displayName, clerkId: users.clerkId, pseudonym: users.pseudonym, pseudonymEnabled: users.pseudonymEnabled, pseudonymStatus: users.pseudonymModerationStatus }).from(users).where(eq(users.isActive, true)).orderBy(users.displayName),
+  ]);
   const revisionRecords = await getDb()
     .select()
     .from(storyRevisions)
@@ -93,7 +100,7 @@ export default async function StudioStoryReviewPage({ params }: { params: Promis
             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{story.headline}</h1>
             <p className="mt-3 text-lg leading-7 text-muted-foreground">{story.dek}</p>
           </div>
-          <StoryReviewActions id={story.id} slug={story.slug} headline={story.headline} bylineName={story.publicBylineSnapshot?.name ?? story.authorSnapshot?.name ?? "Courier Newsroom"} status={story.status} scheduledAt={story.scheduledAt?.toISOString() ?? null} publicationTimezone={configuration.publication.timezone} canPublish={canPublish} canSubmitReview={canPublish || Boolean(viewer.databaseId && story.authorId === viewer.databaseId)} isActive={story.isActive} activeStoryRevisionsEnabled={configuration.studio.editorialWorkflow.activeStoryRevisions} />
+          <StoryReviewActions id={story.id} slug={story.slug} headline={story.headline} bylineName={story.publicBylineSnapshot?.name ?? story.authorSnapshot?.name ?? "Courier Newsroom"} status={story.status} scheduledAt={story.scheduledAt?.toISOString() ?? null} publicationTimezone={configuration.publication.timezone} canPublish={canPublish} canApprove={canPublish && Boolean(viewer.databaseId) && viewer.databaseId !== story.authorId} canSubmitReview={canPublish || Boolean(viewer.databaseId && story.authorId === viewer.databaseId)} isActive={story.isActive} activeStoryRevisionsEnabled={configuration.studio.editorialWorkflow.activeStoryRevisions} approval={approval ? { approvedAt: approval.approvedAt.toISOString(), note: approval.note } : null} publicationJob={publicationJob ? { status: publicationJob.status === "queued" && publicationJob.scheduledAt <= new Date() ? "due" : publicationJob.status, originalScheduledAt: publicationJob.originalScheduledAt.toISOString(), scheduledAt: publicationJob.scheduledAt.toISOString(), attempts: publicationJob.attemptCount, error: publicationJob.lastErrorMessage } : null} />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -134,6 +141,7 @@ export default async function StudioStoryReviewPage({ params }: { params: Promis
             </CardContent></Card>
             {story.whyItMatters ? <Card className="overflow-hidden rounded-none border-t-4 border-t-brand-yellow bg-brand-navy text-white"><CardHeader><CardTitle className="eyebrow text-brand-yellow">Why it matters</CardTitle><CardDescription className="text-white/55">Automatically generated from the reviewed article copy.</CardDescription></CardHeader><CardContent><p className="text-sm leading-6 text-white/75">{story.whyItMatters}</p><p className="mt-3 text-[0.65rem] text-white/45">{story.whyItMatters.length} characters</p></CardContent></Card> : null}
             {story.status === "published" && story.publishedAt && canPublish ? <StoryTimestampEditor id={story.id} publishedAt={story.publishedAt.toISOString()} updatedAt={story.updatedAt.toISOString()} publicationTimezone={configuration.publication.timezone} /> : null}
+            {(canPublish || story.authorId === viewer.databaseId) ? <StoryAuthorControl storyId={story.id} published={story.status === "published"} canManage={canPublish} canCorrectPseudonym={story.authorId === viewer.databaseId && Boolean(activeStaff.find((person) => person.id === viewer.databaseId)?.pseudonymEnabled)} choices={activeStaff.map((person) => ({ id: person.id, name: person.name, isViewer: person.clerkId === viewer.id, pseudonymAvailable: Boolean(person.pseudonym && person.pseudonymEnabled && person.pseudonymStatus === "active") }))} initialAuthors={(authorRows.length ? authorRows : story.authorId ? [{ userId: story.authorId, mode: story.publicBylineSnapshot?.mode ?? "account" }] : []).map((author) => ({ userId: author.userId, mode: author.mode === "pseudonym" ? "pseudonym" as const : "account" as const }))} /> : null}
             <Card><CardHeader><CardTitle className="flex items-center gap-2 text-base"><Search className="size-4" /> Search appearance</CardTitle></CardHeader><CardContent className="space-y-4 text-sm"><div><p className="font-medium">{story.seoTitle || story.headline}</p><p className="mt-1 leading-6 text-muted-foreground">{story.seoDescription || story.dek}</p></div><p className="break-all text-xs text-emerald-400">/story/{story.slug}</p>{story.noIndex ? <Badge variant="destructive">Excluded from search</Badge> : <Badge variant="secondary">Indexable</Badge>}</CardContent></Card>
           </div>
         </div>

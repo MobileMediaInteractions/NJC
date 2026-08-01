@@ -46,11 +46,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     ? getAuthorProfileUrlBySlug(authorProfile.slug)
     : undefined;
   const index = isSearchIndexingEnabled() && !story.noIndex;
+  const publicAuthors = story.authors?.length ? story.authors : [story.author];
   return {
     title,
     description,
     keywords: story.tags,
-    authors: [{ name: story.author.name, ...(authorUrl ? { url: authorUrl } : {}) }],
+    authors: publicAuthors.map((author, authorIndex) => ({ name: author.name, ...(authorIndex === 0 && authorUrl ? { url: authorUrl } : {}) })),
     category: story.categoryLabel,
     alternates: { canonical },
     robots: {
@@ -73,7 +74,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description,
       publishedTime: story.publishedAt,
       modifiedTime: story.updatedAt || story.publishedAt,
-      authors: [authorUrl ?? story.author.name],
+      authors: publicAuthors.map((author, authorIndex) => authorIndex === 0 && authorUrl ? authorUrl : author.name),
       section: story.categoryLabel,
       tags: story.tags,
       images: [{ url: socialImage, width: 1200, height: 630, type: "image/png", alt: story.imageAlt }],
@@ -116,6 +117,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     slug: story.slug,
     updatedAt: story.updatedAt,
   });
+  const publicAuthors = story.authors?.length ? story.authors : [story.author];
 
   return (
     <article>
@@ -132,7 +134,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         <div className="mt-7 flex flex-col gap-5 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="size-11"><AvatarImage src={authorProfile?.avatarUrl ?? story.author.avatar} /><AvatarFallback className="bg-brand-navy font-bold text-white">{story.author.initials}</AvatarFallback></Avatar>
-            <div><p className="text-sm font-bold text-brand-navy">By {authorProfile ? <Link href={`/author/${authorProfile.slug}`} rel="author" className="underline-offset-4 hover:underline">{story.author.name}</Link> : story.author.name}</p><p className="text-xs text-muted-foreground">{story.author.role} · Published {formatStoryDate(story.publishedAt)}{story.updatedAt && story.updatedAt !== story.publishedAt ? ` · Updated ${formatStoryDate(story.updatedAt)}` : ""}</p></div>
+            <div><p className="text-sm font-bold text-brand-navy">By {publicAuthors.map((author, index) => <span key={author.id}>{index ? index === publicAuthors.length - 1 ? " and " : ", " : ""}{index === 0 && authorProfile ? <Link href={`/author/${authorProfile.slug}`} rel="author" className="underline-offset-4 hover:underline">{author.name}</Link> : author.name}</span>)}</p><p className="text-xs text-muted-foreground">{story.author.role} · Published {formatStoryDate(story.publishedAt)}{story.updatedAt && story.updatedAt !== story.publishedAt ? ` · Updated ${formatStoryDate(story.updatedAt)}` : ""}</p></div>
           </div>
           <StoryActions {...shareLinks} headline={story.headline} />
         </div>

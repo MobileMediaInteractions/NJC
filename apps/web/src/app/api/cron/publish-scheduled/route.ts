@@ -28,14 +28,15 @@ export async function GET(request: Request) {
       ? expireAccessCredits(now)
       : Promise.resolve({ created: 0 }),
   ]);
-  if (published.length) {
+  const successfullyPublished = published.filter((story) => story.outcome === "published");
+  if (successfullyPublished.length) {
     revalidatePath("/");
     revalidatePath("/latest");
     revalidatePath("/api/v1/stories");
     revalidatePath("/feed.xml");
     revalidatePath("/sitemap.xml");
     revalidatePath("/news-sitemap.xml");
-    for (const story of published) {
+    for (const story of successfullyPublished) {
       revalidatePath(`/story/${story.slug}`);
       revalidatePath(`/category/${story.categorySlug}`);
     }
@@ -45,11 +46,13 @@ export async function GET(request: Request) {
     message: "Daily newsroom maintenance completed",
     route: "/api/cron/publish-scheduled",
     requestId: request.headers.get("x-vercel-id"),
-    published: published.length,
+    published: successfullyPublished.length,
+    blocked: published.filter((story) => story.outcome === "blocked").length,
+    failed: published.filter((story) => story.outcome === "failed").length,
     premiumPublished: premiumPublished.length,
     accessCreditExpirations: creditExpirations.created,
     analyticsArchivesCreated: archives.created,
     duration_ms: Date.now() - startedAt,
   }));
-  return NextResponse.json({ ok: true, published: published.length, stories: published, premiumPublished: premiumPublished.length, premiumContent: premiumPublished, accessCreditExpirations: creditExpirations.created, analyticsArchives: archives.created });
+  return NextResponse.json({ ok: true, published: successfullyPublished.length, stories: published, premiumPublished: premiumPublished.length, premiumContent: premiumPublished, accessCreditExpirations: creditExpirations.created, analyticsArchives: archives.created });
 }

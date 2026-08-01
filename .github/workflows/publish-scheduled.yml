@@ -1,0 +1,28 @@
+name: Scheduled newsroom publication
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: newsroom-publication-worker
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Run the idempotent publication queue
+        env:
+          CRON_SECRET: ${{ secrets.NJC_CRON_SECRET }}
+        run: |
+          test -n "$CRON_SECRET"
+          curl --fail-with-body --retry 2 --retry-all-errors \
+            --max-time 90 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            https://www.thejerseycourier.com/api/cron/publish-scheduled

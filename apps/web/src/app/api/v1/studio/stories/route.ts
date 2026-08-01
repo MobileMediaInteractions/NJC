@@ -37,9 +37,10 @@ export async function POST(request: Request) {
       { status: 409 },
     );
   }
+  const configuration = await getSiteConfiguration();
   if (
     parsed.data.bylineMode === "pseudonym" &&
-    !(await getSiteConfiguration()).features.pseudonyms
+    (!configuration.features.pseudonyms || !configuration.studio.editorialWorkflow.pseudonymEligibleRoles.includes(viewer.role))
   ) {
     return NextResponse.json(
       { error: { code: "feature_disabled", message: "Pseudonyms are currently disabled in Studio Configuration" } },
@@ -91,6 +92,9 @@ export async function POST(request: Request) {
       authorId: viewer.databaseId ?? null,
       authorSnapshot: { id: viewer.id, name: viewer.name, role: viewer.role, initials: viewer.name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase() },
       publicBylineSnapshot,
+      publicBylinesSnapshot: [
+        { userId: viewer.databaseId, ...publicBylineSnapshot },
+      ],
     }).returning();
     await getDb().insert(storyRevisions).values({
       storyId: story.id,

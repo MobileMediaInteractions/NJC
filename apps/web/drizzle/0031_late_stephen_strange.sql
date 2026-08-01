@@ -1,0 +1,2 @@
+ALTER TABLE "stories" ADD CONSTRAINT "stories_content_version_positive_check" CHECK ("stories"."content_version" > 0);--> statement-breakpoint
+ALTER TABLE "users" ADD CONSTRAINT "users_pseudonym_moderation_status_check" CHECK ("users"."pseudonym_moderation_status" in ('active', 'disabled', 'correction_required'));
