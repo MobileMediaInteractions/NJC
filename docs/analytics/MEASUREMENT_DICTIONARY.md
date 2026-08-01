@@ -46,6 +46,10 @@ a synonym for another in Studio, exports, sales material or public reporting.
   category, not the source URL.
 - First-touch, last-touch and per-view attribution must never be combined into
   one unlabeled percentage.
+- Studio's shared range means 7-day and 30-day values use rolling windows while
+  all-time values include the complete verified v2 ledger. Source share is
+  recalculated within the selected window rather than reusing an all-time
+  percentage.
 
 ## Quality and environment
 
@@ -65,7 +69,9 @@ a synonym for another in Studio, exports, sales material or public reporting.
 - Do not use covert browser or hardware fingerprinting.
 - Do not store raw referrer URLs, IP addresses or user-agent strings in the
   analytics event ledger.
-- Evidence exports pseudonymize installation, session and account identifiers.
+- Evidence exports and version drill-downs use keyed, one-way pseudonyms for
+  installation, session and account identifiers. Raw identifiers are restricted
+  to the server-side data layer.
 - Consent withdrawal deletes the installation, version history and presence
   ledger for that installation. Traffic events contain no account identity.
 - The current retention behavior is explicit: verified and legacy ledgers,

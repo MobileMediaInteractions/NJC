@@ -34,3 +34,21 @@ test("dense analytics datasets are segmented and paginated instead of stacked", 
   assert.match(source, /function Pager\(/);
   assert.doesNotMatch(source, /<table\b/);
 });
+
+test("content, acquisition and platforms share one persistent resettable range", async () => {
+  const source = await readFile(workbenchPath, "utf8");
+  assert.match(source, /useState<AnalyticsTimeRange>\("30d"\)/);
+  assert.match(source, /Shared analytics time range/);
+  assert.match(source, /setRange\("30d"\)/);
+  assert.match(source, /<Content key=\{range\} traffic=\{traffic\} range=\{range\}/);
+  assert.match(source, /<Acquisition sources=\{traffic\.sources\} devices=\{traffic\.devices\} range=\{range\}/);
+  assert.match(source, /<Platforms audience=\{audience\} range=\{range\}/);
+});
+
+test("version evidence and production reconciliation are permission controlled", async () => {
+  const source = await readFile(workbenchPath, "utf8");
+  assert.match(source, /canInspect=\{canExport\}/);
+  assert.match(source, /version-evidence/);
+  assert.match(source, /Run production reconciliation/);
+  assert.match(source, /studio\/analytics\/audit/);
+});

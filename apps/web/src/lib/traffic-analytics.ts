@@ -40,11 +40,19 @@ export type StoryTrafficMetric = AnalyticsStoryView & {
 export type TrafficSourceMetric = AnalyticsSourceView & {
   label: string;
   share: number;
+  entries7d: number;
+  views7d: number;
+  entries30d: number;
+  views30d: number;
 };
 
 export type TrafficDeviceMetric = AnalyticsDeviceView & {
   label: string;
   share: number;
+  entries7d: number;
+  views7d: number;
+  entries30d: number;
+  views30d: number;
 };
 
 export type TrafficAnalyticsSummary = {
@@ -640,6 +648,10 @@ export async function getTrafficAnalyticsSummary(now = new Date()): Promise<Traf
         source: analyticsDailyViews.trafficSource,
         entries: sql<number>`coalesce(sum(${analyticsDailyViews.entries}), 0)::int`,
         views: sql<number>`coalesce(sum(${analyticsDailyViews.views}), 0)::int`,
+        entries7d: sql<number>`coalesce(sum(${analyticsDailyViews.entries}) filter (where ${analyticsDailyViews.day} >= ${since7d}), 0)::int`,
+        views7d: sql<number>`coalesce(sum(${analyticsDailyViews.views}) filter (where ${analyticsDailyViews.day} >= ${since7d}), 0)::int`,
+        entries30d: sql<number>`coalesce(sum(${analyticsDailyViews.entries}) filter (where ${analyticsDailyViews.day} >= ${since30d}), 0)::int`,
+        views30d: sql<number>`coalesce(sum(${analyticsDailyViews.views}) filter (where ${analyticsDailyViews.day} >= ${since30d}), 0)::int`,
       })
       .from(analyticsDailyViews)
       .where(verifiedRows)
@@ -653,6 +665,10 @@ export async function getTrafficAnalyticsSummary(now = new Date()): Promise<Traf
         platform: analyticsDailyViews.devicePlatform,
         entries: sql<number>`coalesce(sum(${analyticsDailyViews.entries}), 0)::int`,
         views: sql<number>`coalesce(sum(${analyticsDailyViews.views}), 0)::int`,
+        entries7d: sql<number>`coalesce(sum(${analyticsDailyViews.entries}) filter (where ${analyticsDailyViews.day} >= ${since7d}), 0)::int`,
+        views7d: sql<number>`coalesce(sum(${analyticsDailyViews.views}) filter (where ${analyticsDailyViews.day} >= ${since7d}), 0)::int`,
+        entries30d: sql<number>`coalesce(sum(${analyticsDailyViews.entries}) filter (where ${analyticsDailyViews.day} >= ${since30d}), 0)::int`,
+        views30d: sql<number>`coalesce(sum(${analyticsDailyViews.views}) filter (where ${analyticsDailyViews.day} >= ${since30d}), 0)::int`,
       })
       .from(analyticsDailyViews)
       .where(verifiedRows)

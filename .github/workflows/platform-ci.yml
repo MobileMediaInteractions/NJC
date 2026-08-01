@@ -49,6 +49,22 @@ jobs:
 
   applications:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: analytics_test
+          POSTGRES_USER: analytics_test
+          POSTGRES_PASSWORD: analytics_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U analytics_test -d analytics_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      ANALYTICS_TEST_DATABASE_URL: postgres://analytics_test:analytics_test@127.0.0.1:5432/analytics_test
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4

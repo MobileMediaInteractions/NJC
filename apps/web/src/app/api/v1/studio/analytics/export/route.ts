@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { and, asc, gte, lte } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -11,6 +10,7 @@ import {
   audiencePresenceEvents,
 } from "@harborline/backend/schema";
 import { getStudioUser } from "@/lib/auth";
+import { pseudonymizeAnalyticsIdentifier as pseudonymize } from "@/lib/analytics-privacy";
 
 export const dynamic = "force-dynamic";
 
@@ -20,11 +20,6 @@ const querySchema = z.object({
     .default("page-events"),
   days: z.coerce.number().int().min(1).max(366).default(30),
 });
-
-function pseudonymize(value: string | null) {
-  if (!value) return "";
-  return createHash("sha256").update(value).digest("hex").slice(0, 16);
-}
 
 function csvCell(value: unknown) {
   if (value == null) return "";

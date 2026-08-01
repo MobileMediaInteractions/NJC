@@ -13,9 +13,11 @@ import {
   Eye,
   FileChartColumn,
   Gauge,
+  Loader2,
   Monitor,
   Newspaper,
   ShieldCheck,
+  Search,
   Smartphone,
   Tv,
   Users,
@@ -37,6 +39,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type View =
   | "overview"
@@ -46,6 +49,7 @@ type View =
   | "versions"
   | "archives"
   | "audit";
+type AnalyticsTimeRange = "7d" | "30d" | "all";
 
 const views: Array<{ id: View; label: string; icon: typeof Gauge }> = [
   { id: "overview", label: "Overview", icon: Gauge },
@@ -90,6 +94,7 @@ export function AnalyticsWorkbench({
   canExport: boolean;
 }) {
   const [view, setView] = useState<View>("overview");
+  const [range, setRange] = useState<AnalyticsTimeRange>("30d");
   const provisional =
     traffic.dataQuality.status === "provisional" ||
     audience.dataQuality.status === "provisional";
@@ -127,10 +132,8 @@ export function AnalyticsWorkbench({
           </p>
         </header>
 
-        <nav
-          className="grid grid-cols-2 gap-1 rounded-xl border bg-card p-1 sm:grid-cols-4 xl:grid-cols-7"
-          aria-label="Analytics views"
-        >
+        <div className="flex items-center gap-2">
+        <nav className="grid min-w-0 flex-1 grid-cols-2 gap-1 rounded-xl border bg-card p-1 sm:grid-cols-4 xl:grid-cols-7" aria-label="Analytics views">
           {views.map((item) => {
             const Icon = item.icon;
             const active = item.id === view;
@@ -153,17 +156,28 @@ export function AnalyticsWorkbench({
             );
           })}
         </nav>
+        {(["content", "acquisition", "platforms"] as View[]).includes(view) ? (
+          <div className="flex shrink-0 items-center gap-1 rounded-xl border bg-card p-1" aria-label="Shared analytics time range">
+            {(["7d", "30d", "all"] as const).map((item) => (
+              <Button key={item} size="sm" variant={range === item ? "default" : "ghost"} onClick={() => setRange(item)} aria-pressed={range === item}>
+                {item === "all" ? "All" : item}
+              </Button>
+            ))}
+            <Button size="sm" variant="outline" onClick={() => setRange("30d")} disabled={range === "30d"}>Reset</Button>
+          </div>
+        ) : null}
+        </div>
 
         <div className="min-h-0">
           {view === "overview" ? (
             <Overview traffic={traffic} audience={audience} />
           ) : null}
-          {view === "content" ? <Content traffic={traffic} /> : null}
+          {view === "content" ? <Content key={range} traffic={traffic} range={range} /> : null}
           {view === "acquisition" ? (
-            <Acquisition sources={traffic.sources} devices={traffic.devices} />
+            <Acquisition sources={traffic.sources} devices={traffic.devices} range={range} />
           ) : null}
-          {view === "platforms" ? <Platforms audience={audience} /> : null}
-          {view === "versions" ? <Versions rows={audience.versions} /> : null}
+          {view === "platforms" ? <Platforms audience={audience} range={range} /> : null}
+          {view === "versions" ? <Versions rows={audience.versions} canInspect={canExport} /> : null}
           {view === "archives" ? <Archives traffic={traffic} /> : null}
           {view === "audit" ? (
             <Audit traffic={traffic} audience={audience} canExport={canExport} />
@@ -243,28 +257,35 @@ function Overview({
   );
 }
 
-function Content({ traffic }: { traffic: TrafficAnalyticsSummary }) {
+function metricForRange(row: { views: number; views7d: number; views30d: number }, range: AnalyticsTimeRange) {
+  return range === "7d" ? row.views7d : range === "30d" ? row.views30d : row.views;
+}
+
+function Content({ traffic, range }: { traffic: TrafficAnalyticsSummary; range: AnalyticsTimeRange }) {
   const [page, setPage] = useState(0);
   const pageSize = 6;
-  const rows = traffic.stories.slice(page * pageSize, (page + 1) * pageSize);
+  const ordered = useMemo(() => [...traffic.stories].sort((a, b) => metricForRange(b, range) - metricForRange(a, range)), [traffic.stories, range]);
+  const total = ordered.reduce((sum, story) => sum + metricForRange(story, range), 0);
+  const rows = ordered.slice(page * pageSize, (page + 1) * pageSize);
   const pages = Math.max(1, Math.ceil(traffic.stories.length / pageSize));
   return (
     <div className="grid min-h-0 gap-3 xl:h-full xl:grid-cols-[0.72fr_1.28fr]">
       <Panel title="Readership distribution" icon={Gauge}>
-        <StoryWheel stories={traffic.stories} total={traffic.totals.storyViews} />
+        <StoryWheel stories={ordered} total={total} range={range} />
       </Panel>
       <Panel title="Every published story" icon={Newspaper}>
         <div className="grid h-full min-h-0 grid-rows-[1fr_auto]">
           <div className="grid content-start">
             <DataHeader
-              columns={["Story", "All time", "7 days", "30 days", "Share"]}
-              template="minmax(0,1fr) 5.5rem 5.5rem 5.5rem 5rem"
+              columns={["Story", "Views", "Share"]}
+              template="minmax(0,1fr) 6rem 5rem"
             />
             {rows.map((story) => (
               <StoryRow
                 key={story.slug}
                 story={story}
-                total={traffic.totals.storyViews}
+                total={total}
+                range={range}
               />
             ))}
             {!rows.length ? <Empty label="No published stories are available." /> : null}
@@ -279,22 +300,31 @@ function Content({ traffic }: { traffic: TrafficAnalyticsSummary }) {
 function Acquisition({
   sources,
   devices,
+  range,
 }: {
   sources: TrafficSourceMetric[];
   devices: TrafficDeviceMetric[];
+  range: AnalyticsTimeRange;
 }) {
+  const sourceEntries = (row: TrafficSourceMetric) => range === "7d" ? row.entries7d : range === "30d" ? row.entries30d : row.entries;
+  const sourceViews = (row: TrafficSourceMetric) => range === "7d" ? row.views7d : range === "30d" ? row.views30d : row.views;
+  const deviceViews = (row: TrafficDeviceMetric) => range === "7d" ? row.views7d : range === "30d" ? row.views30d : row.views;
+  const deviceEntries = (row: TrafficDeviceMetric) => range === "7d" ? row.entries7d : range === "30d" ? row.entries30d : row.entries;
+  const totalSourceEntries = sources.reduce((sum, row) => sum + sourceEntries(row), 0);
+  const totalDeviceViews = devices.reduce((sum, row) => sum + deviceViews(row), 0);
   return (
     <div className="grid min-h-0 gap-3 lg:h-full lg:grid-cols-2">
       <Panel title="Session first-touch acquisition" icon={Compass}>
         <RankedBars
           rows={sources
-            .filter((row) => row.entries > 0)
+            .filter((row) => sourceEntries(row) > 0)
+            .sort((a, b) => sourceEntries(b) - sourceEntries(a))
             .slice(0, 7)
             .map((row) => ({
               key: row.source,
               label: row.label,
-              value: row.entries,
-              detail: `${row.share.toFixed(1)}% · ${number.format(row.views)} views`,
+              value: sourceEntries(row),
+              detail: `${totalSourceEntries ? ((sourceEntries(row) / totalSourceEntries) * 100).toFixed(1) : "0.0"}% · ${number.format(sourceViews(row))} views`,
             }))}
           empty="No verified session entries yet."
         />
@@ -302,13 +332,14 @@ function Acquisition({
       <Panel title="Web page-view device class" icon={Monitor}>
         <RankedBars
           rows={devices
-            .filter((row) => row.views > 0)
+            .filter((row) => deviceViews(row) > 0)
+            .sort((a, b) => deviceViews(b) - deviceViews(a))
             .slice(0, 7)
             .map((row) => ({
               key: row.platform,
               label: row.label,
-              value: row.views,
-              detail: `${row.share.toFixed(1)}% · ${number.format(row.entries)} entries`,
+              value: deviceViews(row),
+              detail: `${totalDeviceViews ? ((deviceViews(row) / totalDeviceViews) * 100).toFixed(1) : "0.0"}% · ${number.format(deviceEntries(row))} entries`,
             }))}
           empty="No verified device-class traffic yet."
         />
@@ -317,7 +348,7 @@ function Acquisition({
   );
 }
 
-function Platforms({ audience }: { audience: AudienceSummary }) {
+function Platforms({ audience, range }: { audience: AudienceSummary; range: AnalyticsTimeRange }) {
   return (
     <div className="grid min-h-0 gap-3 xl:h-full xl:grid-rows-[6.25rem_minmax(0,1fr)]">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
@@ -346,7 +377,7 @@ function Platforms({ audience }: { audience: AudienceSummary }) {
       <Panel title="Verified installations by platform" icon={Users}>
         <div className="grid h-full grid-cols-2 gap-2 lg:grid-cols-4">
           {audience.platforms.map((item) => (
-            <PlatformCard key={item.platform} item={item} />
+            <PlatformCard key={item.platform} item={item} range={range} />
           ))}
         </div>
       </Panel>
@@ -354,7 +385,7 @@ function Platforms({ audience }: { audience: AudienceSummary }) {
   );
 }
 
-function Versions({ rows }: { rows: AudienceApplicationVersionMetric[] }) {
+function Versions({ rows, canInspect }: { rows: AudienceApplicationVersionMetric[]; canInspect: boolean }) {
   const [page, setPage] = useState(0);
   const pageSize = 7;
   const ordered = useMemo(
@@ -382,12 +413,12 @@ function Versions({ rows }: { rows: AudienceApplicationVersionMetric[] }) {
               "Installs",
               "Active 30d",
               "Last seen",
-              "Quality",
+              "Evidence",
             ]}
             template="minmax(0,1.2fr) 6rem 6rem 6rem 5rem 6rem 7.5rem 6rem"
           />
           {visible.map((row) => (
-            <VersionRow key={`${row.platform}-${row.product}-${row.releaseChannel}-${row.environment}-${row.appVersion}-${row.buildNumber}`} row={row} />
+            <VersionRow key={`${row.platform}-${row.product}-${row.releaseChannel}-${row.environment}-${row.appVersion}-${row.buildNumber}`} row={row} canInspect={canInspect} />
           ))}
           {!visible.length ? (
             <Empty label="Version reporting begins when updated applications check in." />
@@ -459,6 +490,23 @@ function Audit({
   canExport: boolean;
 }) {
   const notes = [...traffic.dataQuality.notes, ...audience.dataQuality.notes];
+  const [running, setRunning] = useState(false);
+  const [auditError, setAuditError] = useState("");
+  const [audit, setAudit] = useState<{ generatedAt: string; reconciliation: { verifiedPageEvents: number; verifiedAggregateViews: number; difference: number; status: "matched" | "mismatch" }; installationGroups: unknown[]; versionGroups: unknown[]; pageEventGroups: unknown[]; presenceEventGroups: unknown[] } | null>(null);
+  async function runAudit() {
+    setRunning(true);
+    setAuditError("");
+    try {
+      const response = await fetch("/api/v1/studio/analytics/audit", { cache: "no-store" });
+      const body = await response.json() as typeof audit & { error?: { message?: string } };
+      if (!response.ok || !body?.reconciliation) throw new Error(body?.error?.message ?? "Production reconciliation could not run.");
+      setAudit(body);
+    } catch (error) {
+      setAuditError(error instanceof Error ? error.message : "Production reconciliation could not run.");
+    } finally {
+      setRunning(false);
+    }
+  }
   return (
     <div className="grid min-h-0 gap-3 xl:h-full xl:grid-cols-[0.9fr_1.1fr]">
       <Panel title="Data-quality control" icon={ShieldCheck}>
@@ -487,6 +535,18 @@ function Audit({
       <Panel title="Permission-controlled evidence" icon={Download}>
         {canExport ? (
           <div className="grid h-full grid-cols-2 content-center gap-3">
+            <button type="button" onClick={runAudit} disabled={running} className="col-span-2 flex min-h-20 items-center justify-center gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4 text-xs font-semibold transition-colors hover:bg-primary/10 disabled:opacity-60">
+              {running ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4 text-primary" />}
+              {running ? "Reconciling production evidence…" : "Run production reconciliation"}
+            </button>
+            {audit ? <div className={cn("col-span-2 grid grid-cols-4 gap-2 rounded-xl border p-3", audit.reconciliation.status === "matched" ? "border-emerald-500/30 bg-emerald-500/5" : "border-destructive/30 bg-destructive/5")}>
+              <CompactFact label="Status" value={audit.reconciliation.status} />
+              <CompactFact label="Events" value={audit.reconciliation.verifiedPageEvents} />
+              <CompactFact label="Aggregates" value={audit.reconciliation.verifiedAggregateViews} />
+              <CompactFact label="Difference" value={audit.reconciliation.difference} />
+              <p className="col-span-4 text-[0.62rem] text-muted-foreground">{audit.installationGroups.length} installation groups · {audit.versionGroups.length} version groups · {audit.pageEventGroups.length} page-event groups · {audit.presenceEventGroups.length} presence groups · {new Date(audit.generatedAt).toLocaleString()}</p>
+            </div> : null}
+            {auditError ? <p className="col-span-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">{auditError}</p> : null}
             <ExportLink dataset="page-events" label="Page-event ledger" />
             <ExportLink dataset="presence-events" label="Presence-event ledger" />
             <ExportLink dataset="installations" label="Installation register" />
@@ -618,14 +678,16 @@ function DailyChart({ rows }: { rows: Array<{ day: string; views: number }> }) {
 function StoryWheel({
   stories,
   total,
+  range,
 }: {
   stories: StoryTrafficMetric[];
   total: number;
+  range: AnalyticsTimeRange;
 }) {
-  const leading = stories.filter((story) => story.views > 0).slice(0, 5);
-  const leadingTotal = leading.reduce((sum, story) => sum + story.views, 0);
+  const leading = stories.filter((story) => metricForRange(story, range) > 0).slice(0, 5);
+  const leadingTotal = leading.reduce((sum, story) => sum + metricForRange(story, range), 0);
   const slices = [
-    ...leading.map((story) => ({ label: story.headline, views: story.views })),
+    ...leading.map((story) => ({ label: story.headline, views: metricForRange(story, range) })),
     ...(total > leadingTotal
       ? [{ label: "All other stories", views: total - leadingTotal }]
       : []),
@@ -732,19 +794,22 @@ function RankedBars({
 
 function PlatformCard({
   item,
+  range,
 }: {
   item: AudienceSummary["platforms"][number];
+  range: AnalyticsTimeRange;
 }) {
   const Icon = platformIcons[item.platform];
+  const active = range === "7d" ? item.active7d : range === "30d" ? item.active30d : item.allTime;
   return (
     <div className="grid min-h-0 content-center rounded-xl border bg-muted/15 p-3">
       <div className="flex items-center gap-2">
         <Icon className="size-4 text-primary" />
         <p className="truncate text-xs font-bold">{item.label}</p>
       </div>
-      <p className="mt-3 text-2xl font-bold">{number.format(item.allTime)}</p>
+      <p className="mt-3 text-2xl font-bold">{number.format(active)}</p>
       <p className="text-[0.62rem] text-muted-foreground">
-        {item.measurement} · {number.format(item.active30d)} active 30d
+        {range === "all" ? `total ${item.measurement}` : `active ${range}`}
       </p>
       <p className="mt-2 text-[0.62rem] text-muted-foreground">
         {number.format(item.knownAccounts)} linked account
@@ -778,15 +843,18 @@ function DataHeader({
 function StoryRow({
   story,
   total,
+  range,
 }: {
   story: StoryTrafficMetric;
   total: number;
+  range: AnalyticsTimeRange;
 }) {
+  const views = metricForRange(story, range);
   return (
     <div
       className="grid h-12 items-center gap-3 border-b px-2 text-xs"
       style={{
-        gridTemplateColumns: "minmax(0,1fr) 5.5rem 5.5rem 5.5rem 5rem",
+        gridTemplateColumns: "minmax(0,1fr) 6rem 5rem",
       }}
     >
       <a
@@ -796,18 +864,50 @@ function StoryRow({
       >
         {story.headline}
       </a>
-      <Cell value={story.views} />
-      <Cell value={story.views7d} />
-      <Cell value={story.views30d} />
+      <Cell value={views} />
       <span className="text-right font-mono">
-        {total ? `${((story.views / total) * 100).toFixed(1)}%` : "0%"}
+        {total ? `${((views / total) * 100).toFixed(1)}%` : "0%"}
       </span>
     </div>
   );
 }
 
-function VersionRow({ row }: { row: AudienceApplicationVersionMetric }) {
+type VersionEvidence = {
+  installation: string;
+  account: { pseudonym: string; displayName: string; role: string } | null;
+  deviceClass: string;
+  osVersion: string;
+  eventCount: number;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  qualityStatus: string;
+};
+
+function VersionRow({ row, canInspect }: { row: AudienceApplicationVersionMetric; canInspect: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [evidence, setEvidence] = useState<VersionEvidence[]>([]);
+  const [evidencePage, setEvidencePage] = useState(0);
+  async function inspect() {
+    setOpen(true);
+    if (evidence.length || loading) return;
+    setLoading(true);
+    setError("");
+    const query = new URLSearchParams({ platform: row.platform, product: row.product, releaseChannel: row.releaseChannel, environment: row.environment, appVersion: row.appVersion, buildNumber: row.buildNumber });
+    try {
+      const response = await fetch(`/api/v1/studio/analytics/version-evidence?${query}`, { cache: "no-store" });
+      const body = await response.json() as { evidence?: VersionEvidence[]; error?: { message?: string } };
+      if (!response.ok || !body.evidence) throw new Error(body.error?.message ?? "Version evidence could not be loaded.");
+      setEvidence(body.evidence);
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Version evidence could not be loaded.");
+    } finally {
+      setLoading(false);
+    }
+  }
   return (
+    <>
     <div
       className="grid h-12 items-center gap-3 border-b px-2 text-xs"
       style={{
@@ -839,13 +939,31 @@ function VersionRow({ row }: { row: AudienceApplicationVersionMetric }) {
           year: "2-digit",
         })}
       </span>
-      <Badge
-        variant={row.qualityStatus === "verified" ? "secondary" : "outline"}
-        className="justify-self-end text-[0.58rem] capitalize"
-      >
-        {row.qualityStatus}
-      </Badge>
+      {canInspect ? <Button size="sm" variant="outline" onClick={inspect}><Search className="size-3" /> Inspect</Button> : <Badge variant={row.qualityStatus === "verified" ? "secondary" : "outline"} className="justify-self-end text-[0.58rem] capitalize">{row.qualityStatus}</Badge>}
     </div>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="max-w-4xl">
+        <DialogHeader>
+          <DialogTitle>{row.platformLabel} {row.appVersion} ({row.buildNumber}) evidence</DialogTitle>
+          <DialogDescription>One-way pseudonyms connect this grouped row to installation and linked-account evidence without exposing raw identifiers.</DialogDescription>
+        </DialogHeader>
+        {loading ? <div className="grid min-h-52 place-items-center"><Loader2 className="size-6 animate-spin" aria-label="Loading evidence" /></div> : error ? <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">{error}</div> : (
+          <div className="grid min-h-[24rem] grid-rows-[1fr_auto] gap-2">
+            <div className="grid content-start gap-2">
+            {evidence.slice(evidencePage * 6, (evidencePage + 1) * 6).map((item) => <div key={item.installation} className="grid grid-cols-[8rem_minmax(0,1fr)_7rem_7rem] items-center gap-3 rounded-lg border p-3 text-xs">
+              <span className="font-mono" title="Pseudonymized installation identifier">{item.installation}</span>
+              <span className="truncate">{item.account ? `${item.account.displayName} · ${item.account.role} · ${item.account.pseudonym}` : "Anonymous installation"}</span>
+              <span className="truncate text-muted-foreground">{item.deviceClass}<br />{item.osVersion}</span>
+              <span className="text-right font-mono">{number.format(item.eventCount)} events</span>
+            </div>)}
+            {!evidence.length ? <Empty label="No installation evidence remains for this version group." /> : null}
+            </div>
+            {evidence.length ? <Pager page={evidencePage} pages={Math.max(1, Math.ceil(evidence.length / 6))} onPage={setEvidencePage} /> : null}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 
