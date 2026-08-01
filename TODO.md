@@ -46,16 +46,13 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 ## Mandatory second product implementation — remaining production validation
 
 > The pseudonym/byline system, approval-gated publishing state machine, durable
-> scheduling queue, typed Studio configuration registry, migrations, portable
-> backup support, and code-level verification are implemented. Completed work
-> has been removed from this TODO. Operational details live in
+> scheduling queue, typed Studio configuration registry, production migrations,
+> portable backup support, and code-level verification are implemented and
+> deployed. Completed work has been removed from this TODO. Operational details live in
 > [Pseudonyms and public bylines](docs/editorial/PSEUDONYMS_AND_BYLINES.md),
 > [Approval and scheduled publication](docs/editorial/APPROVAL_AND_SCHEDULING.md),
 > and the [Studio configuration registry](docs/operations/CONFIGURATION_REGISTRY.md).
 
-- [ ] Confirm Vercel applied database migrations `0030` through `0032`, retain
-  the deployment evidence, and verify that existing scheduled stories were
-  returned to Review without inventing approvals or rewriting public bylines.
 - [ ] Set the GitHub Actions secret `NJC_CRON_SECRET` to the same value as
   Vercel `CRON_SECRET`, manually dispatch the scheduled-publication workflow,
   and confirm the authenticated worker runs successfully. Until this is done,
