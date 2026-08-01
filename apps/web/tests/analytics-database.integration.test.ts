@@ -41,7 +41,10 @@ integration("concurrent retry deduplication increments the aggregate exactly onc
 
 integration("late arrival is attributed to the server receipt day", async () => {
   if (!sql) return;
-  await sql`insert into analytics_integration.page_events (event_id, pathname, day, received_at) values ('late-1', '/', '2026-08-01', '2026-08-01T15:00:00Z')`;
+  await sql.begin(async (tx) => {
+    await tx`insert into analytics_integration.page_events (event_id, pathname, day, received_at) values ('late-1', '/', '2026-08-01', '2026-08-01T15:00:00Z')`;
+    await tx`insert into analytics_integration.daily_views (day, pathname, views) values ('2026-08-01', '/', 1)`;
+  });
   const [row] = await sql`select day::text from analytics_integration.page_events where event_id = 'late-1'`;
   assert.equal(row?.day, "2026-08-01");
 });

@@ -7,6 +7,7 @@ import { getStudioUser } from "@/lib/auth";
 import { pseudonymizeAnalyticsIdentifier } from "@/lib/analytics-privacy";
 
 export const dynamic = "force-dynamic";
+const privateHeaders = { "Cache-Control": "private, no-store, max-age=0" };
 
 const querySchema = z.object({
   platform: z.string().trim().min(1).max(32),
@@ -20,11 +21,11 @@ const querySchema = z.object({
 export async function GET(request: Request) {
   const viewer = await getStudioUser();
   if (!viewer || !["admin", "editor"].includes(viewer.role)) {
-    return NextResponse.json({ error: { code: "forbidden", message: "Version evidence requires an administrator or editor." } }, { status: 403 });
+    return NextResponse.json({ error: { code: "forbidden", message: "Version evidence requires an administrator or editor." } }, { status: 403, headers: privateHeaders });
   }
-  if (!hasDatabase()) return NextResponse.json({ error: { code: "database_unavailable", message: "Analytics evidence is unavailable." } }, { status: 503 });
+  if (!hasDatabase()) return NextResponse.json({ error: { code: "database_unavailable", message: "Analytics evidence is unavailable." } }, { status: 503, headers: privateHeaders });
   const parsed = querySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
-  if (!parsed.success) return NextResponse.json({ error: { code: "invalid_request", message: "Choose a valid application version group." } }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: { code: "invalid_request", message: "Choose a valid application version group." } }, { status: 400, headers: privateHeaders });
   const q = parsed.data;
   const rows = await getDb().select({
     installationId: audienceInstallationVersions.installationId,
@@ -62,5 +63,5 @@ export async function GET(request: Request) {
       lastSeenAt: row.lastSeenAt.toISOString(),
       qualityStatus: row.qualityStatus,
     })),
-  }, { headers: { "Cache-Control": "private, no-store, max-age=0" } });
+  }, { headers: privateHeaders });
 }
