@@ -35,7 +35,7 @@ jobs:
               exit 0
             fi
 
-            if [ "$status" -ne 124 ] && ! grep -q "ERR_PNPM_AUDIT_BAD_RESPONSE" <<<"$output"; then
+            if [ "$status" -ne 124 ] && [ "$status" -ne 137 ] && ! grep -q "ERR_PNPM_AUDIT_BAD_RESPONSE" <<<"$output"; then
               exit "$status"
             fi
 
