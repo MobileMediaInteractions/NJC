@@ -1,8 +1,8 @@
-import { desc } from "drizzle-orm";
+import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { Database, FilePlus2 } from "lucide-react";
 import Link from "next/link";
 import { getDb, hasDatabase } from "@harborline/backend/db";
-import { stories } from "@harborline/backend/schema";
+import { analyticsDailyViews, stories } from "@harborline/backend/schema";
 import { StudioGate } from "@/components/studio/studio-gate";
 import { StudioShell } from "@/components/studio/studio-shell";
 import { StudioStoryTabs, type StudioStoryRow } from "@/components/studio/studio-story-tabs";
@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { canDeleteStory, getStudioUser } from "@/lib/auth";
 import { siteConfig } from "@/lib/site";
 import { canPublishStory } from "@/lib/story-workflow";
+import { publicationDay } from "@/lib/traffic-analytics";
 
 export default async function StudioStoriesPage() {
   const viewer = await getStudioUser();
@@ -21,14 +22,45 @@ export default async function StudioStoriesPage() {
 
   let databaseConnected = hasDatabase();
   let rows: Array<typeof stories.$inferSelect> = [];
+  let viewRows: Array<{ storySlug: string | null; views: number; views7d: number }> = [];
   if (databaseConnected) {
-    try {
-      rows = await getDb().select().from(stories).orderBy(desc(stories.updatedAt)).limit(200);
-    } catch (error) {
-      console.error("Studio stories lookup failed", error);
+    const now = new Date();
+    const sevenDayStart = new Date(now);
+    sevenDayStart.setDate(sevenDayStart.getDate() - 6);
+    const verifiedTraffic = and(
+      eq(analyticsDailyViews.calculationVersion, 2),
+      eq(analyticsDailyViews.qualityStatus, "verified"),
+      eq(analyticsDailyViews.environment, "production"),
+      isNotNull(analyticsDailyViews.storySlug),
+    );
+    const db = getDb();
+    const [storiesResult, viewsResult] = await Promise.allSettled([
+      db.select().from(stories).orderBy(desc(stories.updatedAt)).limit(200),
+      db
+        .select({
+          storySlug: analyticsDailyViews.storySlug,
+          views: sql<number>`coalesce(sum(${analyticsDailyViews.views}), 0)::int`,
+          views7d: sql<number>`coalesce(sum(${analyticsDailyViews.views}) filter (where ${analyticsDailyViews.day} >= ${publicationDay(sevenDayStart)}), 0)::int`,
+        })
+        .from(analyticsDailyViews)
+        .where(verifiedTraffic)
+        .groupBy(analyticsDailyViews.storySlug),
+    ]);
+
+    if (storiesResult.status === "fulfilled") {
+      rows = storiesResult.value;
+    } else {
+      console.error("Studio stories lookup failed", storiesResult.reason);
       databaseConnected = false;
     }
+    if (viewsResult.status === "fulfilled") {
+      viewRows = viewsResult.value;
+    } else {
+      console.error("Studio story view lookup failed", viewsResult.reason);
+    }
   }
+
+  const viewsBySlug = new Map(viewRows.map((row) => [row.storySlug, row]));
 
   const storyRows: StudioStoryRow[] = rows.map((story) => ({
     id: story.id,
@@ -38,6 +70,8 @@ export default async function StudioStoriesPage() {
     ownerName: story.authorSnapshot?.name ?? "Unassigned",
     status: story.status,
     isActive: story.isActive,
+    views: Math.max(0, Number(viewsBySlug.get(story.slug)?.views ?? 0)),
+    views7d: Math.max(0, Number(viewsBySlug.get(story.slug)?.views7d ?? 0)),
     updatedLabel: formatUpdated(story.updatedAt),
     canEdit:
       story.status === "published"

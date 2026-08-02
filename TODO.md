@@ -172,6 +172,14 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 
 ## Newsroom and publishing
 
+- [ ] Verify the streamlined **Stories** workspace against production data on
+  phone, tablet, 1440×900 and 1920×1080 displays: **Active** must include
+  unfinished newsroom work and published stories explicitly marked active,
+  while excluding final published and archived stories; every tab count must
+  remain accurate, lifetime and seven-day view totals must reconcile with
+  Analytics v2, long headlines/bylines must wrap, and there must be no
+  horizontal or nested scrollbar. Normal page-level vertical scrolling is
+  allowed only when the number of stories exceeds the viewport.
 - [ ] Run the protected rich-story-editor acceptance matrix in production with
   separate author and approver accounts: open a completely blank **New story**
   without a runtime error, create and reload a formatted draft,
