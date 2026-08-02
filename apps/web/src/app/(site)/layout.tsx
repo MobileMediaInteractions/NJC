@@ -14,6 +14,7 @@ import {
 import { isNjcPlusPublicEnabled } from "@/lib/feature-flags";
 import { normalizeStudioHref } from "@/lib/site-account";
 import { hasPublicStaffProfiles } from "@/lib/staff-profiles";
+import { PublicPwaShell } from "@/components/pwa/public-pwa-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,7 @@ export default async function PublicSiteLayout({ children }: { children: React.R
   const hasConfiguredSurface = advertising.autoAds || Object.values(advertising.placements).some((placement) => placement.enabled);
   const advertisingLive = !adFree && isGoogleAdsLive(configuration) && hasConfiguredSurface;
   return (
-    <>
+    <PublicPwaShell>
       <GoogleAnalytics
         enabled={isGoogleAnalyticsLive(configuration)}
         measurementId={googleAnalytics.measurementId}
@@ -62,6 +63,6 @@ export default async function PublicSiteLayout({ children }: { children: React.R
         staffPageEnabled={staffPageEnabled}
         easterEggEnabled={configuration.easterEgg.enabled}
       />
-    </>
+    </PublicPwaShell>
   );
 }

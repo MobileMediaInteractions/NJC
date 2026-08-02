@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Newsreader } from "next/font/google";
 import { AppProviders } from "@/components/app-providers";
 import { themeBootstrapScript } from "@/lib/theme";
@@ -26,6 +26,16 @@ const newsreader = Newsreader({
 
 const indexingEnabled = isSearchIndexingEnabled();
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8f5ee" },
+    { media: "(prefers-color-scheme: dark)", color: "#111713" },
+  ],
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   const { publication } = await getSiteConfiguration();
   return {
@@ -36,8 +46,28 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: publication.description,
     applicationName: publication.name,
+    manifest: "/manifest.webmanifest",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "black-translucent",
+      title: publication.shortName,
+    },
     icons: {
-      icon: [{ url: "/favicon", type: "image/png", sizes: "64x64" }],
+      icon: [
+        { url: "/favicon", type: "image/png", sizes: "64x64" },
+        {
+          url: "/assets/brand/v1/app-icon-192.png",
+          type: "image/png",
+          sizes: "192x192",
+        },
+      ],
+      apple: [
+        {
+          url: "/assets/brand/v1/apple-touch-icon.png",
+          type: "image/png",
+          sizes: "180x180",
+        },
+      ],
     },
     creator: publication.name,
     publisher: publication.name,

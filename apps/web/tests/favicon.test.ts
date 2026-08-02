@@ -6,9 +6,14 @@ import { faviconSize } from "../src/lib/favicon";
 
 test("favicon has a stable crawlable URL and Google-sized square dimensions", async () => {
   assert.deepEqual(faviconSize, { width: 64, height: 64 });
-  assert.deepEqual(manifest().icons, [
-    { src: "/favicon", sizes: "64x64", type: "image/png" },
-  ]);
+  assert.ok(
+    manifest().icons?.some(
+      (icon) =>
+        icon.src === "/favicon" &&
+        icon.sizes === "64x64" &&
+        icon.type === "image/png",
+    ),
+  );
 
   const response = GET();
   assert.equal(response.status, 200);

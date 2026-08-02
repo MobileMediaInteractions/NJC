@@ -117,9 +117,12 @@
   }
   html {
     @apply font-sans scroll-smooth;
+    min-height: 100%;
+    overscroll-behavior-y: none;
   }
   body {
     @apply bg-background text-foreground;
+    min-height: 100dvh;
     font-feature-settings:
       "ss01" 1,
       "cv02" 1;
@@ -127,10 +130,61 @@
   a,
   button {
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
   ::selection {
     background: #c49545;
     color: #173e32;
+  }
+}
+
+.mobile-app-dock {
+  position: fixed;
+  z-index: 80;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
+  border-top: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  background: color-mix(in srgb, var(--background) 92%, transparent);
+  box-shadow: 0 -10px 30px rgb(9 26 21 / 8%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+}
+
+.pwa-connection-status {
+  bottom: calc(4.65rem + env(safe-area-inset-bottom));
+}
+
+@media (max-width: 63.999rem) {
+  .public-site-shell {
+    padding-bottom: calc(3.75rem + env(safe-area-inset-bottom));
+  }
+
+  .mobile-native-header {
+    padding-top: env(safe-area-inset-top);
+    background: color-mix(in srgb, var(--card) 94%, transparent);
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--border) 75%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    backdrop-filter: blur(18px) saturate(150%);
+  }
+
+  .public-site-shell :where(input, select, textarea) {
+    font-size: max(1rem, 16px);
+  }
+
+  .public-site-shell [data-slot="button"] {
+    min-height: 2.75rem;
+  }
+}
+
+@media (display-mode: standalone) {
+  .public-site-shell {
+    min-height: 100dvh;
+  }
+
+  .mobile-app-dock {
+    background: color-mix(in srgb, var(--background) 96%, transparent);
   }
 }
 

@@ -2,16 +2,21 @@
 
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Bell,
   CloudSun,
+  Home,
   MapPin,
   Menu,
+  MessageSquareText,
+  Newspaper,
   Search,
   UserRound,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
+import { PwaInstallButton } from "@/components/pwa/public-pwa-shell";
 import { ThemeMenu } from "@/components/theme-menu";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -93,7 +98,8 @@ function SiteHeaderContent({ publication, navigation, features, accountAction, p
   }, [features.weather]);
 
   return (
-    <header className="bg-card text-card-foreground">
+    <>
+      <header className="mobile-native-header sticky top-0 z-40 bg-card text-card-foreground lg:static">
       <a
         href="#main-content"
         className="sr-only z-[100] bg-brand-yellow px-4 py-2 font-bold text-brand-navy focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
@@ -133,12 +139,12 @@ function SiteHeaderContent({ publication, navigation, features, accountAction, p
             {publication.region}
           </span>
         </Link>
-        <Link href="/search" className="grid size-10 place-items-center justify-self-end" aria-label="Search">
+        <Link href="/search" className="grid size-11 place-items-center justify-self-end" aria-label="Search">
           <Search className="size-5" />
         </Link>
       </div>
 
-      <nav className="bg-brand-navy text-white" aria-label="Primary navigation">
+      <nav className="hidden bg-brand-navy text-white lg:block" aria-label="Primary navigation">
         <div className="container-news flex h-11 items-center gap-5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:overflow-visible lg:gap-7">
           <div className="hidden h-full items-center gap-5 lg:flex lg:gap-7">
             {navigation.map((item, index) => (
@@ -176,7 +182,13 @@ function SiteHeaderContent({ publication, navigation, features, accountAction, p
           </Link>
         </div>
       </div> : null}
-    </header>
+
+      </header>
+      <MobileAppDock
+        accountAction={accountAction}
+        weatherEnabled={features.weather}
+      />
+    </>
   );
 }
 
@@ -197,12 +209,12 @@ function MobileNavigation({ publication, navigation, features, accountAction, pl
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Open navigation" className="-ml-2">
+        <Button variant="ghost" size="icon" aria-label="Open navigation" className="-ml-2 size-11">
           <Menu className="size-5" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[88vw] max-w-sm p-0">
-        <SheetHeader className="bg-brand-navy px-6 py-6 text-left">
+      <SheetContent side="left" className="w-[88vw] max-w-sm gap-0 overflow-y-auto p-0 pb-[env(safe-area-inset-bottom)]">
+        <SheetHeader className="bg-brand-navy px-6 pb-6 pt-[max(1.5rem,env(safe-area-inset-top))] text-left">
           <SheetTitle><BrandMark inverse publication={publication} /></SheetTitle>
         </SheetHeader>
         <nav className="flex flex-col px-6 py-5" aria-label="Mobile navigation">
@@ -217,9 +229,82 @@ function MobileNavigation({ publication, navigation, features, accountAction, pl
           {features.weather ? <SheetClose asChild><Link href="/weather" className="flex items-center gap-2 py-2 font-semibold"><CloudSun className="size-4" />Local weather</Link></SheetClose> : null}
           {features.newsletters ? <SheetClose asChild><Link href="/newsletter" className="flex items-center gap-2 py-2 font-semibold"><Bell className="size-4" />Newsletters & alerts</Link></SheetClose> : null}
           <SheetClose asChild><Link href={accountAction.href} className="flex items-center gap-2 py-2 font-semibold"><UserRound className="size-4" />{accountAction.label}</Link></SheetClose>
+          <div className="mt-5"><PwaInstallButton /></div>
           <div className="mt-5 border-t pt-4"><ThemeMenu /></div>
         </nav>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function MobileAppDock({
+  accountAction,
+  weatherEnabled,
+}: {
+  accountAction: SiteAccountAction;
+  weatherEnabled: boolean;
+}) {
+  const pathname = usePathname();
+  const destinations = [
+    { href: "/", label: "Home", icon: Home, active: pathname === "/" },
+    {
+      href: "/latest",
+      label: "Latest",
+      icon: Newspaper,
+      active: pathname === "/latest" || pathname.startsWith("/story/"),
+    },
+    {
+      href: "/search",
+      label: "Search",
+      icon: Search,
+      active: pathname === "/search",
+    },
+    weatherEnabled
+      ? {
+          href: "/weather",
+          label: "Weather",
+          icon: CloudSun,
+          active: pathname === "/weather",
+        }
+      : {
+          href: "/tips",
+          label: "Tip line",
+          icon: MessageSquareText,
+          active: pathname === "/tips",
+        },
+    {
+      href: accountAction.href,
+      label: accountAction.label,
+      icon: UserRound,
+      active:
+        pathname === "/profile" ||
+        pathname.startsWith("/studio") ||
+        pathname.startsWith("/sign-in"),
+    },
+  ];
+
+  return (
+    <nav className="mobile-app-dock lg:hidden" aria-label="Mobile app navigation">
+      <div className="grid grid-cols-5">
+        {destinations.map((destination) => {
+          const Icon = destination.icon;
+          return (
+            <Link
+              key={destination.href}
+              href={destination.href}
+              aria-current={destination.active ? "page" : undefined}
+              className="group flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 px-1 text-[0.62rem] font-bold text-muted-foreground"
+            >
+              <span className="grid h-7 min-w-11 place-items-center rounded-full px-3 transition-colors group-aria-[current=page]:bg-brand-sky group-aria-[current=page]:text-brand-navy dark:group-aria-[current=page]:bg-white/15 dark:group-aria-[current=page]:text-white">
+                <Icon className="size-5" strokeWidth={destination.active ? 2.5 : 2} />
+              </span>
+              <span className="max-w-full truncate group-aria-[current=page]:text-brand-navy dark:group-aria-[current=page]:text-white">
+                {destination.label}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
   );
 }

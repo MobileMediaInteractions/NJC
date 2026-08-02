@@ -123,6 +123,33 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   - Add automated authorization, host-routing and regression tests plus manual tests from real external networks and devices. Record evidence, limitations and any unavoidable metadata exposure.
   - Complete security review, incident-response documentation and a reversible production rollout before removing any older protected entry point.
 
+## Mobile PWA — real-device release validation remaining
+
+> The public site now has a production-only service-worker lifecycle shared
+> safely with web push, bounded public-page and static-asset caches, a branded
+> offline fallback, a complete standalone manifest, install and maskable icons,
+> iOS installation guidance, safe-area handling, mobile-native navigation and
+> active-route feedback. Completed implementation work has been removed from
+> this TODO; operating details live in [the PWA runbook](docs/PWA.md).
+
+- [ ] After the production deployment, install and accept the PWA on current
+  iPhone/Safari and Android/Chrome hardware, plus a notched small phone and a
+  tablet. Verify the Courier icon, launch appearance, standalone mode, manifest
+  shortcuts, sticky header, bottom dock, light/dark/system themes, orientation,
+  virtual keyboard, browser back behavior, account destination and every
+  safe-area inset without clipped or unreachable controls.
+- [ ] Complete a production offline/update rehearsal: visit several stories,
+  remove the connection, confirm visited coverage remains readable and unseen
+  coverage uses the branded fallback, reconnect, publish an update and verify
+  the new service worker takes over cleanly. Confirm push subscriptions and
+  notification routing still work through the shared worker, private/account
+  routes never enter Cache Storage, and clearing site data returns the reader
+  to a clean first-install state.
+- [ ] Run production installability, accessibility and Core Web Vitals checks
+  at representative mobile breakpoints. Resolve any tap-target, focus-order,
+  text-scaling, layout-shift or contrast regression before treating the PWA as
+  store-quality, and record the accepted device/browser matrix in this section.
+
 ## Roku — highest platform priority after the mandatory implementations
 
 - [ ] Accept the ground-up custom Roku redesign on representative real hardware. The implemented SceneGraph interface now uses NJ Courier's editorial direction, custom focus/navigation components, configuration-driven sections, explicit loading/error/empty states and a modal remote-controlled article reader rather than stock Roku templates.

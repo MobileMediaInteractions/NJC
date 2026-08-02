@@ -43,7 +43,7 @@ export function CookieConsent() {
   return (
     <aside
       aria-label="Cookie choices"
-      className="fixed inset-x-3 bottom-3 z-[100] mx-auto max-w-3xl rounded-lg border bg-background p-4 shadow-2xl sm:p-5"
+      className="fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[100] mx-auto max-w-3xl rounded-lg border bg-background p-4 shadow-2xl sm:p-5 lg:bottom-3"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <div className="flex-1">
