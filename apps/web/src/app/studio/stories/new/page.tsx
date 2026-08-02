@@ -19,6 +19,8 @@ export default async function NewStoryPage() {
         publicationTimezone={configuration.publication.timezone}
         bylineOptions={bylineOptions}
         pseudonymsEnabled={configuration.features.pseudonyms}
+        richStoryEditorEnabled={configuration.studio.experience.richStoryEditor}
+        richStoryEditorDefaultMode={configuration.studio.experience.richStoryEditorDefaultMode}
       />
     </StudioShell>
   );

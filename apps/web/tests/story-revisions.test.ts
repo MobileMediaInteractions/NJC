@@ -4,6 +4,7 @@ import {
   buildStoryRevisionDiff,
   diffStoryLines,
 } from "../src/lib/story-revisions";
+import { createPlainStoryRichTextDocument } from "../src/lib/story-rich-text";
 
 test("story revision comparisons include only changed editorial fields", () => {
   const changes = buildStoryRevisionDiff(
@@ -47,4 +48,17 @@ test("line comparison preserves additions and removals around shared copy", () =
     { kind: "added", value: "C" },
     { kind: "same", value: "D" },
   ]);
+});
+
+test("revision comparisons flag formatting-only changes", () => {
+  const before = createPlainStoryRichTextDocument(["Verified copy."]);
+  const after = createPlainStoryRichTextDocument(["Verified copy."]);
+  after.state.root.children![0]!.children![0]!.format = 1;
+
+  const changes = buildStoryRevisionDiff(
+    { body: ["Verified copy."], richBody: before },
+    { body: ["Verified copy."], richBody: after },
+  );
+
+  assert.deepEqual(changes.map((change) => change.field), ["richBody"]);
 });

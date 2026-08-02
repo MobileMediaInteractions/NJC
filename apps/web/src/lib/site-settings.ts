@@ -92,6 +92,8 @@ export const defaultStudioConfiguration = {
     contextualQuickActions: true,
     compactNavigation: true,
     showOperationalStatus: true,
+    richStoryEditor: true,
+    richStoryEditorDefaultMode: "split" as const,
   },
   notifications: {
     deliveryEnabled: true,
@@ -252,7 +254,9 @@ export const siteConfigurationSchema = z.object({
       contextualQuickActions: z.boolean(),
       compactNavigation: z.boolean(),
       showOperationalStatus: z.boolean(),
-    }),
+      richStoryEditor: z.boolean().default(true),
+      richStoryEditorDefaultMode: z.enum(["write", "split", "preview"]).default("split"),
+    }).default(defaultStudioConfiguration.experience),
     notifications: z.object({
       deliveryEnabled: z.boolean(),
       allowSitewideAudience: z.boolean(),

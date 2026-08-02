@@ -57,12 +57,53 @@ export interface Author {
   profileSlug?: string;
 }
 
+/**
+ * Versioned rich-copy envelope used by Studio. `body` remains the portable
+ * paragraph fallback for clients that do not render rich article structures.
+ */
+export interface StoryRichTextNode {
+  type: string;
+  version: number;
+  children?: StoryRichTextNode[];
+  text?: string;
+  format?: number | string;
+  style?: string;
+  detail?: number;
+  mode?: string;
+  direction?: "ltr" | "rtl" | null;
+  indent?: number;
+  tag?: string;
+  listType?: "bullet" | "number" | "check";
+  start?: number;
+  value?: number;
+  checked?: boolean;
+  url?: string;
+  target?: string | null;
+  rel?: string | null;
+  title?: string | null;
+  colSpan?: number;
+  rowSpan?: number;
+  headerState?: number;
+  width?: number;
+  backgroundColor?: string | null;
+  height?: number;
+}
+
+export interface StoryRichTextDocument {
+  schemaVersion: 1;
+  editor: "lexical";
+  state: {
+    root: StoryRichTextNode & { type: "root" };
+  };
+}
+
 export interface Story {
   id: string;
   slug: string;
   headline: string;
   dek: string;
   body: string[];
+  richBody?: StoryRichTextDocument | null;
   whyItMatters?: string;
   category: string;
   categoryLabel: string;

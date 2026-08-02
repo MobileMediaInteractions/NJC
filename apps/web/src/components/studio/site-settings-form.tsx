@@ -470,6 +470,27 @@ export function SiteSettingsForm({
               <Toggle label="Contextual quick actions" description="Shows the most useful creation action for the current workspace and inside the command center." checked={configuration.studio.experience.contextualQuickActions} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("experience", "contextualQuickActions", value)} />
               <Toggle label="Compact navigation" description="Uses the reduced-density workspace rail and keeps secondary destinations visible only for the current workspace." checked={configuration.studio.experience.compactNavigation} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("experience", "compactNavigation", value)} />
               <Toggle label="Operational status" description="Shows readiness and production-state summaries in supported Studio workspaces." checked={configuration.studio.experience.showOperationalStatus} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("experience", "showOperationalStatus", value)} />
+              <Toggle label="Visual story editor" description="Lets story owners switch between a full rich-text editor, a simultaneous reader preview and the portable plain-copy fallback." checked={configuration.studio.experience.richStoryEditor} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("experience", "richStoryEditor", value)} />
+              <div className="rounded-lg border p-4">
+                <p className="text-sm font-medium">Default story workspace</p>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">Editors can change modes per story. This chooses the first view opened for new and existing articles.</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {(["write", "split", "preview"] as const).map((mode) => (
+                    <Button
+                      key={mode}
+                      type="button"
+                      size="sm"
+                      variant={configuration.studio.experience.richStoryEditorDefaultMode === mode ? "secondary" : "outline"}
+                      aria-pressed={configuration.studio.experience.richStoryEditorDefaultMode === mode}
+                      disabled={!canManage || !configuration.studio.experience.richStoryEditor}
+                      onClick={() => updateStudioGroup("experience", "richStoryEditorDefaultMode", mode)}
+                      className="capitalize"
+                    >
+                      {mode}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </CardContent>
           </Card>
 

@@ -7,6 +7,7 @@ import { stories, storyRevisions } from "@harborline/backend/schema";
 import { writeApiAudit } from "@/lib/api-keys";
 import { getStudioUser } from "@/lib/auth";
 import { canPublishStory } from "@/lib/story-workflow";
+import { storyRichTextDocumentSchema } from "@/lib/story-rich-text";
 
 const paramsInput = z.object({
   id: z.uuid(),
@@ -29,6 +30,7 @@ const snapshotInput = z.object({
   headline: z.string(),
   dek: z.string(),
   body: z.array(z.string()),
+  richBody: storyRichTextDocumentSchema.nullable().optional(),
   whyItMatters: z.string().nullable(),
   categorySlug: z.string(),
   categoryLabel: z.string(),
@@ -190,6 +192,7 @@ export async function PATCH(
         headline: proposed.headline,
         dek: proposed.dek,
         body: proposed.body,
+        richBody: proposed.richBody ?? null,
         whyItMatters: proposed.whyItMatters,
         categorySlug: proposed.categorySlug,
         categoryLabel: proposed.categoryLabel,

@@ -35,7 +35,16 @@ export function buildStoryRevisionDiff(
   before: StoryRevisionSnapshot,
   after: StoryRevisionSnapshot,
 ): StoryFieldChange[] {
-  return editableStoryFields.flatMap(([field, label]) => {
+  const richFormattingChange: StoryFieldChange[] =
+    stableJson(before.richBody) === stableJson(after.richBody)
+      ? []
+      : [{
+          field: "richBody",
+          label: "Rich formatting and structure",
+          before: before.richBody ? "Structured formatting present" : "Plain paragraphs only",
+          after: after.richBody ? "Structured formatting present (changed)" : "Plain paragraphs only",
+        }];
+  const fieldChanges: StoryFieldChange[] = editableStoryFields.flatMap(([field, label]) => {
     const previous = formatRevisionValue(before[field] as RevisionValue);
     const next = formatRevisionValue(after[field] as RevisionValue);
     if (previous === next) return [];
@@ -49,6 +58,7 @@ export function buildStoryRevisionDiff(
         : {}),
     }];
   });
+  return [...richFormattingChange, ...fieldChanges];
 }
 
 export function diffStoryLines(before: string, after: string): StoryDiffLine[] {
@@ -105,4 +115,15 @@ function formatRevisionValue(value: RevisionValue) {
   if (Array.isArray(value)) return value.join("\n");
   if (typeof value === "boolean") return value ? "Enabled" : "Disabled";
   return value ?? "";
+}
+
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.entries(value as Record<string, unknown>)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, item]) => `${JSON.stringify(key)}:${stableJson(item)}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value);
 }

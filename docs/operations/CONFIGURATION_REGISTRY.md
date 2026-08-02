@@ -29,3 +29,10 @@ Public configuration responses contain only schema-validated feature data and
 safe operational state. Credentials remain in secret storage. Clients may use
 the configuration version and platform overrides while retaining last-known-
 good behavior when a newer document is temporarily unavailable.
+
+The Studio experience group also controls the versioned visual story composer.
+`richStoryEditor` enables its per-session visual/plain toggle and
+`richStoryEditorDefaultMode` selects `write`, `split`, or `preview` as the
+initial workspace. The rich document contract, fallback behavior and release
+checks are documented in
+[Rich story editor](../editorial/RICH_STORY_EDITOR.md).

@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState, type DragEvent } from "react";
-import { ArrowLeft, CalendarClock, CheckCircle2, CloudUpload, ImageIcon, Loader2, Save, Send, Sparkles, Trash2 } from "lucide-react";
+import dynamic from "next/dynamic";
+import { ArrowLeft, CalendarClock, CheckCircle2, CloudUpload, Columns3, Eye, FilePenLine, ImageIcon, Loader2, Save, Send, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -14,11 +15,19 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { EditableList } from "@/components/studio/editable-list";
+import { StoryRichContent } from "@/components/story-rich-content";
 import { validateStoryImage } from "@/lib/media-upload";
 import { toLocalDateTimeInput } from "@/lib/local-datetime";
 import { firstStoryError, storyInput, type StoryFieldErrors } from "@/lib/story-input";
 import type { StoryBylineOption } from "@/lib/pseudonyms";
+import { createPlainStoryRichTextDocument } from "@/lib/story-rich-text";
 import { generateWhyItMatters, WHY_IT_MATTERS_MAX_CHARACTERS } from "@/lib/why-it-matters";
+import type { StoryRichTextDocument } from "@harborline/contracts";
+
+const RichStoryEditor = dynamic(
+  () => import("@/components/studio/story-rich-editor").then((module) => module.StoryRichEditor),
+  { ssr: false, loading: () => <div className="flex min-h-[38rem] items-center justify-center rounded-xl border"><Loader2 className="size-6 animate-spin text-muted-foreground" /><span className="ml-2 text-sm text-muted-foreground">Loading the visual editor…</span></div> },
+);
 
 const categories = [
   ["local", "Local News"], ["middlesex", "Middlesex County"], ["statehouse", "Statehouse Desk"], ["public-square", "Public Square"], ["opinion", "Garden State Forum"], ["sports", "Jersey Gridiron & Court"], ["jersey-laurels", "Jersey Laurels"], ["investigates", "Courier Watch"], ["weather", "Weather"], ["culture", "Arts & Culture"],
@@ -30,6 +39,7 @@ export interface StoryEditorInitialStory {
   slug: string;
   dek: string;
   body: string[];
+  richBody: StoryRichTextDocument | null;
   whyItMatters: string | null;
   categorySlug: string;
   location: string;
@@ -52,18 +62,29 @@ export function StoryEditor({
   publicationTimezone,
   bylineOptions,
   pseudonymsEnabled,
+  richStoryEditorEnabled,
+  richStoryEditorDefaultMode,
   initialStory,
 }: {
   datelines: string[];
   publicationTimezone: string;
   bylineOptions: StoryBylineOption[];
   pseudonymsEnabled: boolean;
+  richStoryEditorEnabled: boolean;
+  richStoryEditorDefaultMode: "write" | "split" | "preview";
   initialStory?: StoryEditorInitialStory;
 }) {
   const [headline, setHeadline] = useState(initialStory?.headline ?? "");
   const [slug, setSlug] = useState(initialStory?.slug ?? "");
   const [dek, setDek] = useState(initialStory?.dek ?? "");
   const [body, setBody] = useState(initialStory?.body.join("\n\n") ?? "");
+  const [richBody, setRichBody] = useState<StoryRichTextDocument>(() =>
+    initialStory?.richBody ?? createPlainStoryRichTextDocument(initialStory?.body ?? []),
+  );
+  const [visualEditing, setVisualEditing] = useState(richStoryEditorEnabled);
+  const [composerMode, setComposerMode] = useState<"write" | "split" | "preview">(
+    richStoryEditorDefaultMode,
+  );
   const [includeWhyItMatters, setIncludeWhyItMatters] = useState(Boolean(initialStory?.whyItMatters));
   const [category, setCategory] = useState(initialStory?.categorySlug ?? "middlesex");
   const [location, setLocation] = useState(initialStory?.location ?? datelines[0] ?? "New Brunswick");
@@ -120,7 +141,7 @@ export function StoryEditor({
       focusFirstInvalidField(errors);
       return;
     }
-    const input = { headline, slug, dek, body: bodyParagraphs, includeWhyItMatters, categorySlug: category, categoryLabel, location, imageUrl, imageAlt, tags, seoTitle, seoDescription, canonicalUrl, noIndex, bylineMode, status, isBreaking: breaking, scheduledAt: parsedScheduledAt?.toISOString() ?? "", publishedAt: "", publishedAtRiskAcknowledged: false, publishedAtChangeReason: "" };
+    const input = { headline, slug, dek, body: bodyParagraphs, richBody: richStoryEditorEnabled ? richBody : null, includeWhyItMatters, categorySlug: category, categoryLabel, location, imageUrl, imageAlt, tags, seoTitle, seoDescription, canonicalUrl, noIndex, bylineMode, status, isBreaking: breaking, scheduledAt: parsedScheduledAt?.toISOString() ?? "", publishedAt: "", publishedAtRiskAcknowledged: false, publishedAtChangeReason: "" };
     const validation = storyInput.safeParse(input);
     if (!validation.success) {
       const errors = validation.error.flatten().fieldErrors;
@@ -241,7 +262,75 @@ export function StoryEditor({
           <div className="space-y-2"><div className="flex justify-between"><Label htmlFor="headline">Headline <span className="text-destructive">*</span></Label><span className="text-xs text-muted-foreground">{headline.length}/180</span></div><Textarea id="headline" value={headline} onChange={(e) => { const value = e.target.value; setHeadline(value); if (initialStory?.status !== "published") setSlug(value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")); }} placeholder="Write a clear, specific local headline" className="min-h-24 resize-none text-xl font-semibold" maxLength={180} aria-invalid={Boolean(fieldError("headline") || fieldError("slug"))} /><p className="text-xs text-muted-foreground">/{slug || "story-slug"}{initialStory?.status === "published" ? " · URL locked after publication" : ""}</p>{(fieldError("headline") || fieldError("slug")) && <p className="text-xs text-destructive">{fieldError("headline") || fieldError("slug")}</p>}</div>
           <div className="space-y-2"><div className="flex justify-between"><Label htmlFor="dek">Summary <span className="text-destructive">*</span></Label><span className="text-xs text-muted-foreground">{dek.length}/320</span></div><Textarea id="dek" value={dek} onChange={(e) => setDek(e.target.value)} placeholder="One or two sentences explaining what happened and why it matters" maxLength={320} aria-invalid={Boolean(fieldError("dek"))} />{fieldError("dek") && <p className="text-xs text-destructive">{fieldError("dek")}</p>}</div>
           <Separator />
-          <div className="space-y-2"><div className="flex items-center justify-between"><Label htmlFor="body">Story body <span className="text-destructive">*</span></Label><Button variant="ghost" size="sm" className="text-primary"><Sparkles /> Suggest structure</Button></div><Textarea id="body" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Write the story here. Separate paragraphs with a blank line." className="min-h-[34rem] resize-y leading-7" aria-invalid={Boolean(fieldError("body"))} /><p className="text-xs text-muted-foreground">{wordCount} words · about {Math.max(1, Math.ceil(wordCount / 220))} min read</p>{fieldError("body") && <p className="text-xs text-destructive">{fieldError("body")}</p>}</div>
+          <div className="space-y-3">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+              <div>
+                <Label htmlFor="body">Story body <span className="text-destructive">*</span></Label>
+                <p className="mt-1 text-xs text-muted-foreground">Format the article and compare it with the reader presentation in real time.</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {richStoryEditorEnabled ? (
+                  <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
+                    <Label htmlFor="visual-editor" className="text-xs">Visual editor</Label>
+                    <Switch
+                      id="visual-editor"
+                      checked={visualEditing}
+                      onCheckedChange={setVisualEditing}
+                    />
+                  </div>
+                ) : <Badge variant="outline">Visual editor disabled by configuration</Badge>}
+                <ComposerModeButton mode="write" current={composerMode} onSelect={setComposerMode} icon={<FilePenLine />} label="Write" />
+                <ComposerModeButton mode="split" current={composerMode} onSelect={setComposerMode} icon={<Columns3 />} label="Split" />
+                <ComposerModeButton mode="preview" current={composerMode} onSelect={setComposerMode} icon={<Eye />} label="Preview" />
+              </div>
+            </div>
+            <div className={composerMode === "split" ? "grid gap-4 xl:grid-cols-2" : ""}>
+              {composerMode !== "preview" ? (
+                visualEditing && richStoryEditorEnabled ? (
+                  <RichStoryEditor
+                    initialDocument={richBody}
+                    invalid={Boolean(fieldError("body"))}
+                    onChange={({ document, paragraphs }) => {
+                      setRichBody(document);
+                      setBody(paragraphs.join("\n\n"));
+                    }}
+                  />
+                ) : (
+                  <Textarea
+                    id="body"
+                    value={body}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setBody(value);
+                      setRichBody(createPlainStoryRichTextDocument(value.split(/\n\n+/).map((item) => item.trim()).filter(Boolean)));
+                    }}
+                    placeholder="Write the story here. Separate paragraphs with a blank line."
+                    className="min-h-[38rem] resize-y leading-7"
+                    aria-invalid={Boolean(fieldError("body"))}
+                  />
+                )
+              ) : null}
+              {composerMode !== "write" ? (
+                <ArticlePreview
+                  headline={headline}
+                  dek={dek}
+                  categoryLabel={categories.find(([value]) => value === category)?.[1] ?? "Middlesex County"}
+                  location={location}
+                  imageUrl={imageUrl}
+                  imageAlt={imageAlt}
+                  byline={selectedByline?.name ?? "Courier Newsroom"}
+                  document={visualEditing ? richBody : null}
+                  paragraphs={bodyParagraphs}
+                  whyItMatters={generatedWhyItMatters}
+                />
+              ) : null}
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+              <span>{wordCount} words · about {Math.max(1, Math.ceil(wordCount / 220))} min read</span>
+              <span>The reader preview updates as you type. Use Save draft to persist changes to the newsroom.</span>
+            </div>
+            {fieldError("body") && <p className="text-xs text-destructive">{fieldError("body")}</p>}
+          </div>
         </CardContent></Card>
         <div className="space-y-6">
           <Card>
@@ -365,5 +454,95 @@ export function StoryEditor({
         </div>
       </div>
     </div>
+  );
+}
+
+function ComposerModeButton({
+  mode,
+  current,
+  onSelect,
+  icon,
+  label,
+}: {
+  mode: "write" | "split" | "preview";
+  current: "write" | "split" | "preview";
+  onSelect: (mode: "write" | "split" | "preview") => void;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <Button
+      type="button"
+      size="sm"
+      variant={current === mode ? "secondary" : "outline"}
+      aria-pressed={current === mode}
+      onClick={() => onSelect(mode)}
+    >
+      {icon} {label}
+    </Button>
+  );
+}
+
+function ArticlePreview({
+  headline,
+  dek,
+  categoryLabel,
+  location,
+  imageUrl,
+  imageAlt,
+  byline,
+  document,
+  paragraphs,
+  whyItMatters,
+}: {
+  headline: string;
+  dek: string;
+  categoryLabel: string;
+  location: string;
+  imageUrl: string;
+  imageAlt: string;
+  byline: string;
+  document: StoryRichTextDocument | null;
+  paragraphs: string[];
+  whyItMatters: string;
+}) {
+  return (
+    <aside className="min-h-[38rem] overflow-hidden rounded-xl border bg-[#fbfaf6] text-[#142d27] shadow-sm" aria-label="Live reader preview">
+      <div className="flex items-center justify-between border-b border-[#d8d5cc] px-5 py-3">
+        <span className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#39705e]">Live reader preview</span>
+        <span className="text-[0.65rem] font-semibold uppercase tracking-widest text-[#6c7773]">Desktop article</span>
+      </div>
+      <div className="max-h-[58rem] overflow-y-auto overscroll-contain">
+        <header className="px-6 py-7 sm:px-9">
+          <p className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-[#39705e]">{categoryLabel}</p>
+          <h2 className="mt-3 text-3xl font-black leading-[1.02] tracking-[-0.045em]">{headline || "Your headline will appear here"}</h2>
+          <p className="mt-4 text-sm leading-6 text-[#5d6965]">{dek || "The article summary will appear here as you write."}</p>
+          <div className="mt-5 border-t border-[#d8d5cc] pt-4 text-xs">
+            <strong>By {byline}</strong>
+            <span className="mt-1 block text-[#6c7773]">Preview · {location}</span>
+          </div>
+        </header>
+        {imageUrl ? (
+          <div className="relative aspect-video bg-[#e9e7df]">
+            <Image src={imageUrl} alt={imageAlt || "Lead image preview"} fill sizes="640px" className="object-cover" />
+          </div>
+        ) : (
+          <div className="mx-6 flex aspect-video items-center justify-center border border-dashed border-[#c7c4ba] bg-[#f1efe8] text-xs text-[#737c78] sm:mx-9">Lead image preview</div>
+        )}
+        <div className="px-6 py-8 sm:px-9">
+          {whyItMatters ? (
+            <div className="mb-7 border-t-4 border-[#d39a38] bg-[#173e32] p-4 text-white">
+              <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#e0ad50]">Why it matters</p>
+              <p className="mt-2 text-sm leading-6 text-white/75">{whyItMatters}</p>
+            </div>
+          ) : null}
+          <StoryRichContent
+            document={document}
+            fallback={paragraphs.length ? paragraphs : ["Start writing to see the published article take shape."]}
+            className="text-[1rem] leading-8"
+          />
+        </div>
+      </div>
+    </aside>
   );
 }

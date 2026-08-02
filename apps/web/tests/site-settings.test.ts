@@ -147,6 +147,8 @@ test("older stored configuration receives the complete guarded Studio registry",
     [...studioModuleKeys].sort(),
   );
   assert.equal(parsed.studio.experience.commandPalette, true);
+  assert.equal(parsed.studio.experience.richStoryEditor, true);
+  assert.equal(parsed.studio.experience.richStoryEditorDefaultMode, "split");
   assert.equal(parsed.studio.notifications.requireAudiencePreflight, true);
   assert.equal(parsed.studio.automations.manualVerificationRequired, true);
   assert.equal(parsed.studio.editorialWorkflow.activeStoryRevisions, true);

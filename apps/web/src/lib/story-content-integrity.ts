@@ -4,6 +4,7 @@ export type StoryPublicationMaterial = {
   headline: string;
   dek: string;
   body: string[];
+  richBody?: unknown;
   whyItMatters: string | null;
   categorySlug: string;
   categoryLabel: string;

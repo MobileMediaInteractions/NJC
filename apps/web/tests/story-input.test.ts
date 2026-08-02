@@ -5,6 +5,7 @@ import {
   storyInput,
   storyTimestampInput,
 } from "../src/lib/story-input";
+import { createPlainStoryRichTextDocument } from "../src/lib/story-rich-text";
 
 const validStory = {
   headline: "Council adopts a revised township budget",
@@ -32,6 +33,14 @@ test("accepts a complete publish request with optional URLs left blank", () => {
     assert.equal(result.data.includeWhyItMatters, false);
     assert.equal(result.data.bylineMode, "account");
   }
+});
+
+test("accepts validated rich copy and rejects unsupported rich nodes", () => {
+  const document = createPlainStoryRichTextDocument(validStory.body);
+  assert.equal(storyInput.safeParse({ ...validStory, richBody: document }).success, true);
+
+  document.state.root.children = [{ type: "embedded-script", version: 1 }];
+  assert.equal(storyInput.safeParse({ ...validStory, richBody: document }).success, false);
 });
 
 test("accepts an inactive planned publication time while a story is still a draft", () => {

@@ -86,12 +86,15 @@ export default async function EditStoryPage({ params }: { params: Promise<{ id: 
         publicationTimezone={configuration.publication.timezone}
         bylineOptions={bylineOptions}
         pseudonymsEnabled={configuration.features.pseudonyms}
+        richStoryEditorEnabled={configuration.studio.experience.richStoryEditor}
+        richStoryEditorDefaultMode={configuration.studio.experience.richStoryEditorDefaultMode}
         initialStory={{
           id: story.id,
           headline: story.headline,
           slug: story.slug,
           dek: story.dek,
           body: story.body,
+          richBody: story.richBody as import("@harborline/contracts").StoryRichTextDocument | null,
           whyItMatters: story.whyItMatters,
           categorySlug: story.categorySlug,
           location: story.location,

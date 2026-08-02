@@ -172,6 +172,18 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 
 ## Newsroom and publishing
 
+- [ ] Run the protected rich-story-editor acceptance matrix in production with
+  separate author and approver accounts: create and reload a formatted draft,
+  exercise Write/Split/Preview and the per-session visual/plain toggle, submit
+  it, inspect the rich-format comparison, approve it, publish it, and verify the
+  public reader presentation plus the portable plain-copy API fallback. Repeat
+  with the global feature disabled and each configured default mode; this local
+  checkout intentionally cannot bypass its missing Clerk credentials. See
+  [Rich story editor](docs/editorial/RICH_STORY_EDITOR.md).
+- [ ] Add native structured-rich-story renderers to iOS, Android, Apple TV,
+  Android TV and Roku after their presentation contracts are approved. Until
+  then those clients must continue using the generated portable paragraph
+  fallback rather than parsing or displaying untrusted rich-editor JSON.
 - [ ] Redesign Studio’s **Users & roles** directory with role-based tabs for All accounts, Readers, Contributors, Reporters, Producers, Editors and Administrators, with Alpha and Beta filters added when release-channel management is implemented.
   - Find and implement a reliable server-side filtering and counting approach that covers the complete Clerk directory, not only the 25 accounts loaded on the current page.
   - Each tab must show an accurate total, retain search and pagination, and update immediately after an administrator changes a role.

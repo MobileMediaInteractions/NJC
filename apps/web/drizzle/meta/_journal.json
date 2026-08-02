@@ -239,6 +239,13 @@
       "when": 1785629537372,
       "tag": "0033_busy_crusher_hogan",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1785633304466,
+      "tag": "0034_clumsy_deadpool",
+      "breakpoints": true
     }
   ]
 }

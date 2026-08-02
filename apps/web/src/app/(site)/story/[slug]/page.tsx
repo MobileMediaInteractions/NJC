@@ -7,6 +7,7 @@ import { JsonLd } from "@/components/json-ld";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { StoryActions } from "@/components/story-actions";
 import { StoryCard } from "@/components/story-card";
+import { StoryRichContent } from "@/components/story-rich-content";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getAuthorProfileUrlBySlug } from "@/lib/authors";
@@ -147,7 +148,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         <div>
           <p className="mb-6 text-xs font-bold uppercase tracking-wider text-brand-blue">{story.location}</p>
           {story.whyItMatters ? <div className="mb-8 border-t-4 border-brand-yellow bg-brand-navy p-5 text-white lg:hidden"><p className="eyebrow text-brand-yellow">Why it matters</p><p className="mt-3 text-sm leading-6 text-white/72">{story.whyItMatters}</p></div> : null}
-          <div className="space-y-6 text-[1.08rem] leading-[1.85] text-foreground/90">{story.body.map((paragraph, index) => <p key={index} className={index === 0 ? "first-letter:float-left first-letter:mr-2 first-letter:text-6xl first-letter:font-black first-letter:leading-[0.85] first-letter:text-brand-blue" : ""}>{paragraph}</p>)}</div>
+          <StoryRichContent document={story.richBody} fallback={story.body} className="text-[1.08rem] leading-[1.85] text-foreground/90" />
           <div className="my-10"><AdSlot placement="articleInline" label="Advertisement" /></div>
           <div className="border-y py-6"><p className="eyebrow text-brand-blue">Tags</p><div className="mt-3 flex flex-wrap gap-2">{story.tags.map((tag) => <Badge key={tag} variant="secondary" className="rounded-full">{tag}</Badge>)}</div></div>
           {configuration.features.newsletters ? <section className="mt-10 bg-secondary p-6"><p className="eyebrow text-brand-blue">The Middlesex Morning</p><h2 className="mt-2 text-2xl font-black text-brand-navy">Understand your community before your first coffee.</h2><p className="mb-5 mt-2 text-sm text-muted-foreground">The most useful local stories, every weekday morning.</p><NewsletterForm /></section> : null}

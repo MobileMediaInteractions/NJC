@@ -1,10 +1,12 @@
 import { z } from "zod";
+import { storyRichTextDocumentSchema } from "@/lib/story-rich-text";
 
 export const storyInput = z.object({
   headline: z.string().trim().min(8, "Enter a headline with at least 8 characters.").max(180),
   slug: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "The headline must produce a valid story URL."),
   dek: z.string().trim().min(10, "Enter a summary with at least 10 characters.").max(320),
   body: z.array(z.string().trim().min(1)).min(1, "Write at least one story paragraph."),
+  richBody: storyRichTextDocumentSchema.nullable().optional(),
   includeWhyItMatters: z.boolean().default(false),
   categorySlug: z.enum(["local", "middlesex", "statehouse", "public-square", "opinion", "sports", "jersey-laurels", "investigates", "weather", "culture"]),
   categoryLabel: z.string().trim().min(2).max(80),

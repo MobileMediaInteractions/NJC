@@ -27,6 +27,7 @@ export function normalizeStory(row: typeof stories.$inferSelect): Story {
     headline: row.headline,
     dek: row.dek,
     body: row.body,
+    richBody: row.richBody as unknown as Story["richBody"],
     whyItMatters: row.whyItMatters ?? undefined,
     category: row.categorySlug,
     categoryLabel: row.categoryLabel,

@@ -125,6 +125,7 @@ export const stories = pgTable(
     headline: text("headline").notNull(),
     dek: text("dek").notNull().default(""),
     body: jsonb("body").$type<string[]>().notNull().default([]),
+    richBody: jsonb("rich_body"),
     whyItMatters: text("why_it_matters"),
     categorySlug: text("category_slug").notNull().default("local"),
     categoryLabel: text("category_label").notNull().default("Local"),
