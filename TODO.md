@@ -44,11 +44,6 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > [Approval and scheduled publication](docs/editorial/APPROVAL_AND_SCHEDULING.md),
 > and the [Studio configuration registry](docs/operations/CONFIGURATION_REGISTRY.md).
 
-- [ ] Set the GitHub Actions secret `NJC_CRON_SECRET` to the same value as
-  Vercel `CRON_SECRET`, manually dispatch the scheduled-publication workflow,
-  and confirm the authenticated worker runs successfully. Until this is done,
-  the daily Vercel cron and first-reader recovery are fallbacks, not a precise
-  five-minute publication service.
 - [ ] Run a production-like newsroom rehearsal with separate author, approver,
   and publisher accounts: Draft → Review → approval → scheduled → Published;
   then verify material-edit invalidation, cancellation, rescheduling, overdue
