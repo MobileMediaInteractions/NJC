@@ -16,3 +16,13 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
   utf-8-validate: false
+
+# Security-only convergence for vulnerable transitive ranges whose direct
+# dependants have not yet widened their own patch constraints.
+overrides:
+  "brace-expansion@<1.1.17": 1.1.17
+  "brace-expansion@>=4.0.0 <5.0.8": 5.0.8
+  "fast-uri@>=3.0.0 <=3.1.3": 3.1.4
+  "postcss@>=8.0.0 <=8.5.17": 8.5.18
+  "sharp@<0.35.0": 0.35.0
+  "ws@>=8.0.0 <8.21.0": 8.21.1

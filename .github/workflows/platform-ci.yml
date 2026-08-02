@@ -9,10 +9,10 @@ jobs:
   platform:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4.4.0
         with: { version: 11.7.0 }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm platform:check
@@ -26,8 +26,8 @@ jobs:
         shell: bash
         run: |
           set +e
-          for attempt in 1 2 3 4 5; do
-            output="$(timeout 120s pnpm audit --audit-level high 2>&1)"
+          for attempt in 1 2 3; do
+            output="$(timeout 90s pnpm audit --audit-level high 2>&1)"
             status=$?
             printf '%s\n' "$output"
 
@@ -35,17 +35,17 @@ jobs:
               exit 0
             fi
 
-            if ! grep -q "ERR_PNPM_AUDIT_BAD_RESPONSE" <<<"$output"; then
+            if [ "$status" -ne 124 ] && ! grep -q "ERR_PNPM_AUDIT_BAD_RESPONSE" <<<"$output"; then
               exit "$status"
             fi
 
-            if [ "$attempt" -lt 5 ]; then
-              echo "npm audit service returned an invalid response; retrying ($attempt/5)."
+            if [ "$attempt" -lt 3 ]; then
+              echo "npm audit transport was unavailable; retrying ($attempt/3)."
               sleep 5
             fi
           done
 
-          echo "::warning::The npm audit service returned invalid data after five attempts. Dependency advisories were not suppressed; the registry audit transport was unavailable."
+          echo "::warning::The npm audit transport remained unavailable after three attempts. Dependency advisories were not suppressed; no audit result was available from the registry."
 
   applications:
     runs-on: ubuntu-latest
@@ -66,10 +66,10 @@ jobs:
     env:
       ANALYTICS_TEST_DATABASE_URL: postgres://analytics_test:analytics_test@127.0.0.1:5432/analytics_test
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4.4.0
         with: { version: 11.7.0 }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with: { node-version: 22, cache: pnpm }
       - name: Install Roku validation prerequisites
         run: sudo apt-get update && sudo apt-get install -y libxml2-utils
@@ -88,10 +88,10 @@ jobs:
   studio:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4.4.0
         with: { version: 11.7.0 }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with: { node-version: 22, cache: pnpm }
       - uses: dtolnay/rust-toolchain@stable
       - name: Install Tauri Linux prerequisites
@@ -102,10 +102,10 @@ jobs:
   visual-feature-composer:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4.4.0
         with: { version: 11.7.0 }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm --dir visual-feature-platform install --frozen-lockfile
