@@ -73,6 +73,22 @@ test("requires accessible alt text when a lead image is present", () => {
   if (!result.success) assert.match(result.error.flatten().fieldErrors.imageAlt?.[0] ?? "", /Describe/);
 });
 
+test("requires generated placeholders to remain connected to a media asset", () => {
+  assert.equal(storyInput.safeParse({
+    ...validStory,
+    imageUrl: "https://example.com/generated.jpg",
+    imageAlt: "AI-generated editorial illustration for the budget story.",
+    imageKind: "ai_placeholder",
+  }).success, false);
+  assert.equal(storyInput.safeParse({
+    ...validStory,
+    imageUrl: "https://example.com/generated.jpg",
+    imageAlt: "AI-generated editorial illustration for the budget story.",
+    imageAssetId: "4ee0d75f-9d83-47a6-a040-d3d961a96d1c",
+    imageKind: "ai_placeholder",
+  }).success, true);
+});
+
 test("returns actionable errors for incomplete stories", () => {
   const result = storyInput.safeParse({ ...validStory, headline: "Short", dek: "Too short", body: [] });
   assert.equal(result.success, false);

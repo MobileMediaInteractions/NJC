@@ -3,11 +3,13 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb, hasDatabase } from "@harborline/backend/db";
-import { stories, storyRevisions } from "@harborline/backend/schema";
+import { mediaAssetUsages, stories, storyRevisions } from "@harborline/backend/schema";
 import { writeApiAudit } from "@/lib/api-keys";
 import { getStudioUser } from "@/lib/auth";
 import { canPublishStory } from "@/lib/story-workflow";
 import { storyRichTextDocumentSchema } from "@/lib/story-rich-text";
+import { storyPublicationBlockers } from "@/lib/story-content-integrity";
+import { isAiStoryImageGeneration } from "@/lib/ai-story-image";
 
 const paramsInput = z.object({
   id: z.uuid(),
@@ -46,6 +48,9 @@ const snapshotInput = z.object({
   }).nullable(),
   imageUrl: z.string().nullable(),
   imageAlt: z.string().nullable(),
+  imageAssetId: z.uuid().nullable().optional(),
+  imageKind: z.enum(["editorial", "ai_placeholder"]).default("editorial"),
+  imageGeneration: z.unknown().nullable().optional(),
   videoUrl: z.string().nullable(),
   tags: z.array(z.string()),
   seoTitle: z.string().nullable(),
@@ -167,6 +172,17 @@ export async function PATCH(
       409,
     );
   }
+  const publicationBlockers = storyPublicationBlockers({
+    ...snapshot.data,
+    publicBylineSnapshot: snapshot.data.publicBylineSnapshot,
+  });
+  if (publicationBlockers.length) {
+    return responseError(
+      "publication_blocked",
+      `Resolve the publication checks first: ${publicationBlockers.join(", ")}`,
+      409,
+    );
+  }
   const [latestApplied] = await db
     .select({ version: storyRevisions.version })
     .from(storyRevisions)
@@ -201,6 +217,11 @@ export async function PATCH(
           proposed.publicBylineSnapshot as typeof story.publicBylineSnapshot,
         imageUrl: proposed.imageUrl,
         imageAlt: proposed.imageAlt,
+        imageAssetId: proposed.imageAssetId ?? null,
+        imageKind: proposed.imageKind,
+        imageGeneration: isAiStoryImageGeneration(proposed.imageGeneration)
+          ? proposed.imageGeneration
+          : null,
         videoUrl: proposed.videoUrl,
         tags: proposed.tags,
         seoTitle: proposed.seoTitle,
@@ -221,6 +242,20 @@ export async function PATCH(
       ))
       .returning();
     if (!updatedStory) return null;
+
+    await tx.delete(mediaAssetUsages).where(and(
+      eq(mediaAssetUsages.ownerType, "story"),
+      eq(mediaAssetUsages.ownerId, story.id),
+      eq(mediaAssetUsages.field, "lead_image"),
+    ));
+    if (proposed.imageAssetId) {
+      await tx.insert(mediaAssetUsages).values({
+        assetId: proposed.imageAssetId,
+        ownerType: "story",
+        ownerId: story.id,
+        field: "lead_image",
+      });
+    }
 
     const [updatedRevision] = await tx
       .update(storyRevisions)

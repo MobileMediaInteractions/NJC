@@ -11,6 +11,9 @@ export type StoryPublicationMaterial = {
   location: string;
   imageUrl: string | null;
   imageAlt: string | null;
+  imageAssetId?: string | null;
+  imageKind?: string | null;
+  imageGeneration?: unknown;
   videoUrl: string | null;
   seoTitle: string | null;
   seoDescription: string | null;
@@ -44,6 +47,7 @@ export function storyPublicationBlockers(story: StoryPublicationMaterial) {
   if (!story.dek.trim()) blockers.push("dek_missing");
   if (!story.body.some((paragraph) => paragraph.trim())) blockers.push("body_missing");
   if (story.imageUrl && !story.imageAlt?.trim()) blockers.push("lead_media_alt_missing");
+  if (story.imageKind === "ai_placeholder") blockers.push("lead_media_temporary_ai_placeholder");
   if (!story.publicBylineSnapshot) blockers.push("byline_missing");
   return blockers;
 }

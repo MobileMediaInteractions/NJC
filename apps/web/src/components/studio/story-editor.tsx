@@ -2,7 +2,7 @@
 
 import { useRef, useState, type DragEvent } from "react";
 import dynamic from "next/dynamic";
-import { ArrowLeft, CalendarClock, CheckCircle2, CloudUpload, Columns3, Eye, FilePenLine, ImageIcon, Loader2, Save, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, CalendarClock, CheckCircle2, CloudUpload, Columns3, Eye, FilePenLine, ImageIcon, Loader2, Save, Send, Sparkles, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +45,8 @@ export interface StoryEditorInitialStory {
   location: string;
   imageUrl: string | null;
   imageAlt: string | null;
+  imageAssetId: string | null;
+  imageKind: "editorial" | "ai_placeholder";
   tags: string[];
   seoTitle: string | null;
   seoDescription: string | null;
@@ -64,6 +66,8 @@ export function StoryEditor({
   pseudonymsEnabled,
   richStoryEditorEnabled,
   richStoryEditorDefaultMode,
+  aiImagePlaceholdersEnabled,
+  aiImageProviderConfigured,
   initialStory,
 }: {
   datelines: string[];
@@ -72,6 +76,8 @@ export function StoryEditor({
   pseudonymsEnabled: boolean;
   richStoryEditorEnabled: boolean;
   richStoryEditorDefaultMode: "write" | "split" | "preview";
+  aiImagePlaceholdersEnabled: boolean;
+  aiImageProviderConfigured: boolean;
   initialStory?: StoryEditorInitialStory;
 }) {
   const [headline, setHeadline] = useState(initialStory?.headline ?? "");
@@ -105,10 +111,15 @@ export function StoryEditor({
   );
   const [imageUrl, setImageUrl] = useState(initialStory?.imageUrl ?? "");
   const [imageAlt, setImageAlt] = useState(initialStory?.imageAlt ?? "");
-  const [imageName, setImageName] = useState(initialStory?.imageUrl ? "Current lead image" : "");
+  const [imageAssetId, setImageAssetId] = useState<string | null>(initialStory?.imageAssetId ?? null);
+  const [imageKind, setImageKind] = useState<"editorial" | "ai_placeholder">(initialStory?.imageKind ?? "editorial");
+  const [imageName, setImageName] = useState(initialStory?.imageUrl ? initialStory.imageKind === "ai_placeholder" ? "Temporary AI illustration" : "Current lead image" : "");
   const [uploadState, setUploadState] = useState<"idle" | "uploading" | "uploaded" | "error">("idle");
   const [uploadMessage, setUploadMessage] = useState("");
   const [isDraggingImage, setIsDraggingImage] = useState(false);
+  const [generationState, setGenerationState] = useState<"idle" | "generating" | "generated" | "error">("idle");
+  const [visualDirection, setVisualDirection] = useState("");
+  const [generationMessage, setGenerationMessage] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -141,7 +152,7 @@ export function StoryEditor({
       focusFirstInvalidField(errors);
       return;
     }
-    const input = { headline, slug, dek, body: bodyParagraphs, richBody: richStoryEditorEnabled ? richBody : null, includeWhyItMatters, categorySlug: category, categoryLabel, location, imageUrl, imageAlt, tags, seoTitle, seoDescription, canonicalUrl, noIndex, bylineMode, status, isBreaking: breaking, scheduledAt: parsedScheduledAt?.toISOString() ?? "", publishedAt: "", publishedAtRiskAcknowledged: false, publishedAtChangeReason: "" };
+    const input = { headline, slug, dek, body: bodyParagraphs, richBody: richStoryEditorEnabled ? richBody : null, includeWhyItMatters, categorySlug: category, categoryLabel, location, imageUrl, imageAlt, imageAssetId, imageKind, tags, seoTitle, seoDescription, canonicalUrl, noIndex, bylineMode, status, isBreaking: breaking, scheduledAt: parsedScheduledAt?.toISOString() ?? "", publishedAt: "", publishedAtRiskAcknowledged: false, publishedAtChangeReason: "" };
     const validation = storyInput.safeParse(input);
     if (!validation.success) {
       const errors = validation.error.flatten().fieldErrors;
@@ -212,6 +223,8 @@ export function StoryEditor({
       }
 
       setImageUrl(payload.data.url);
+      setImageAssetId(payload.data.id ?? null);
+      setImageKind("editorial");
       setImageAlt("");
       setImageName(file.name);
       setUploadState("uploaded");
@@ -226,6 +239,43 @@ export function StoryEditor({
     }
   }
 
+  async function generatePlaceholder() {
+    const categoryLabel = categories.find(([value]) => value === category)?.[1] ?? "Middlesex County";
+    const context = { headline, dek, body: bodyParagraphs, location, categoryLabel, visualDirection, storyId: initialStory?.id };
+    if (headline.trim().length < 8 || dek.trim().length < 10 || bodyParagraphs.length === 0) {
+      setGenerationState("error");
+      setGenerationMessage("Add a headline, summary and at least one story paragraph first.");
+      return;
+    }
+    setGenerationState("generating");
+    setGenerationMessage("Creating a temporary editorial illustration from the current story…");
+    try {
+      const response = await fetch("/api/v1/studio/media/generate-placeholder", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(context),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !payload?.data?.url || !payload?.data?.id) {
+        setGenerationState("error");
+        setGenerationMessage(payload?.error?.message ?? `The placeholder could not be generated (${response.status}).`);
+        return;
+      }
+      setImageUrl(payload.data.url);
+      setImageAssetId(payload.data.id);
+      setImageKind("ai_placeholder");
+      setImageAlt(payload.data.altText ?? `AI-generated editorial illustration for “${headline}”.`);
+      setImageName(payload.data.filename ?? "Temporary AI illustration");
+      setGenerationState("generated");
+      setGenerationMessage("Temporary illustration generated. Replace it with approved editorial media before publication.");
+      setUploadMessage("");
+      setFieldErrors((current) => ({ ...current, imageUrl: undefined, imageAlt: undefined }));
+    } catch {
+      setGenerationState("error");
+      setGenerationMessage("The image-generation service could not be reached. No placeholder was attached.");
+    }
+  }
+
   function handleImageDrop(event: DragEvent<HTMLButtonElement>) {
     event.preventDefault();
     setIsDraggingImage(false);
@@ -236,9 +286,13 @@ export function StoryEditor({
   function removeImage() {
     setImageUrl("");
     setImageAlt("");
+    setImageAssetId(null);
+    setImageKind("editorial");
     setImageName("");
     setUploadState("idle");
     setUploadMessage("");
+    setGenerationState("idle");
+    setGenerationMessage("");
     setFieldErrors((current) => ({ ...current, imageUrl: undefined, imageAlt: undefined }));
   }
 
@@ -255,7 +309,7 @@ export function StoryEditor({
 
   return (
     <div className="mx-auto max-w-7xl">
-      <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><Button variant="ghost" size="sm" asChild className="mb-2 -ml-3 text-muted-foreground"><Link href="/studio/stories"><ArrowLeft /> All stories</Link></Button><h1 className="text-3xl font-bold tracking-tight">{initialStory?.status === "published" ? "Propose live-story update" : initialStory ? "Edit story" : "Create story"}</h1><p className="mt-1 text-sm text-muted-foreground">{initialStory?.status === "published" ? "The live article stays unchanged until a different publisher approves this comparison." : initialStory ? initialStory.status !== "draft" ? "Any pre-publication change returns this story to Draft so it can be reviewed again." : "Continue writing or submit this saved draft for editorial review." : "Every story starts as a draft. Save it first, then submit it for review."}</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => save("draft")} disabled={state === "saving" || uploadState === "uploading"}>{state === "saving" ? <Loader2 className="animate-spin" /> : <Save />} {initialStory?.status === "published" ? "Submit update for approval" : initialStory && initialStory.status !== "draft" ? "Save changes as draft" : "Save draft"}</Button>{initialStory?.status === "draft" ? <Button onClick={() => save("review")} disabled={state === "saving" || uploadState === "uploading"}>{state === "saving" ? <Loader2 className="animate-spin" /> : <Send />} Send to review</Button> : null}</div></div>
+      <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><Button variant="ghost" size="sm" asChild className="mb-2 -ml-3 text-muted-foreground"><Link href="/studio/stories"><ArrowLeft /> All stories</Link></Button><h1 className="text-3xl font-bold tracking-tight">{initialStory?.status === "published" ? "Propose live-story update" : initialStory ? "Edit story" : "Create story"}</h1><p className="mt-1 text-sm text-muted-foreground">{initialStory?.status === "published" ? "The live article stays unchanged until a different publisher approves this comparison." : initialStory ? initialStory.status !== "draft" ? "Any pre-publication change returns this story to Draft so it can be reviewed again." : "Continue writing or submit this saved draft for editorial review." : "Every story starts as a draft. Save it first, then submit it for review."}</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => save("draft")} disabled={state === "saving" || uploadState === "uploading" || generationState === "generating"}>{state === "saving" ? <Loader2 className="animate-spin" /> : <Save />} {initialStory?.status === "published" ? "Submit update for approval" : initialStory && initialStory.status !== "draft" ? "Save changes as draft" : "Save draft"}</Button>{initialStory?.status === "draft" ? <Button onClick={() => save("review")} disabled={state === "saving" || uploadState === "uploading" || generationState === "generating"}>{state === "saving" ? <Loader2 className="animate-spin" /> : <Send />} Send to review</Button> : null}</div></div>
       {message && <div className={`mb-5 flex items-center gap-2 rounded-md border p-3 text-sm ${state === "error" ? "border-destructive/30 bg-destructive/10 text-destructive" : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"}`}><CheckCircle2 className="size-4" />{message}</div>}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Card><CardHeader><CardTitle>Story</CardTitle><CardDescription>Required fields are checked before the story enters review.</CardDescription></CardHeader><CardContent className="space-y-6">
@@ -318,6 +372,7 @@ export function StoryEditor({
                   location={location}
                   imageUrl={imageUrl}
                   imageAlt={imageAlt}
+                  imageKind={imageKind}
                   byline={selectedByline?.name ?? "Courier Newsroom"}
                   document={visualEditing ? richBody : null}
                   paragraphs={bodyParagraphs}
@@ -445,10 +500,11 @@ export function StoryEditor({
             </CardContent>
           </Card>
           <Card><CardHeader><CardTitle className="text-base">Search appearance</CardTitle><CardDescription>Defaults are generated from the story. Override only when the search result needs clearer wording.</CardDescription></CardHeader><CardContent className="space-y-4"><div className="space-y-2"><div className="flex justify-between"><Label htmlFor="seo-title">SEO title</Label><span className="text-xs text-muted-foreground">{seoTitle.length}/70</span></div><Input id="seo-title" value={seoTitle} onChange={(event) => setSeoTitle(event.target.value)} maxLength={70} placeholder={headline || "Uses headline by default"} /></div><div className="space-y-2"><div className="flex justify-between"><Label htmlFor="seo-description">Search description</Label><span className="text-xs text-muted-foreground">{seoDescription.length}/180</span></div><Textarea id="seo-description" value={seoDescription} onChange={(event) => setSeoDescription(event.target.value)} maxLength={180} placeholder={dek || "Uses summary by default"} /></div><div className="space-y-2"><Label htmlFor="canonical-url">Canonical URL</Label><Input id="canonical-url" type="url" value={canonicalUrl} onChange={(event) => setCanonicalUrl(event.target.value)} placeholder="Leave blank for this story URL" aria-invalid={Boolean(fieldError("canonicalUrl"))} />{fieldError("canonicalUrl") && <p className="text-xs text-destructive">{fieldError("canonicalUrl")}</p>}</div><Separator /><div className="flex items-center justify-between gap-4"><div><Label htmlFor="no-index">Exclude from search</Label><p className="mt-1 text-xs text-muted-foreground">Adds noindex and removes the story from sitemaps.</p></div><Switch id="no-index" checked={noIndex} onCheckedChange={setNoIndex} /></div></CardContent></Card>
-          <Card><CardHeader><CardTitle className="text-base">Lead media</CardTitle><CardDescription>JPEG, PNG or WebP up to 4 MB.</CardDescription></CardHeader><CardContent className="space-y-4">
+          <Card><CardHeader><CardTitle className="text-base">Lead media</CardTitle><CardDescription>Upload approved media, or generate a temporary story-aware illustration for layout and review.</CardDescription></CardHeader><CardContent className="space-y-4">
             <input ref={fileInputRef} id="image-upload" type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadImage(file); }} disabled={uploadState === "uploading"} />
-            {imageUrl ? <div className="space-y-4"><div className="relative aspect-video overflow-hidden rounded-md border bg-muted"><Image src={imageUrl} alt={imageAlt || "Uploaded lead image preview"} fill sizes="320px" className="object-cover" /></div><div className="flex items-center justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-medium">{imageName}</p><p className="text-xs text-muted-foreground">Ready to use</p></div><div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadState === "uploading"}><CloudUpload /> Replace</Button><Button type="button" size="icon-sm" variant="ghost" onClick={removeImage} disabled={uploadState === "uploading"} aria-label="Remove image"><Trash2 /></Button></div></div><div className="space-y-2"><Label htmlFor="image-alt">Image description <span className="text-destructive">*</span></Label><Textarea id="image-alt" value={imageAlt} onChange={(event) => setImageAlt(event.target.value)} maxLength={240} placeholder="Describe what is visible for readers using screen readers" aria-invalid={Boolean(fieldError("imageAlt"))} />{fieldError("imageAlt") ? <p className="text-xs text-destructive">{fieldError("imageAlt")}</p> : <p className="text-xs text-muted-foreground">Describe people, place and relevant action; do not repeat the headline.</p>}</div></div> : <button type="button" onClick={() => fileInputRef.current?.click()} onDragEnter={(event) => { event.preventDefault(); setIsDraggingImage(true); }} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; setIsDraggingImage(true); }} onDragLeave={(event) => { event.preventDefault(); setIsDraggingImage(false); }} onDrop={handleImageDrop} disabled={uploadState === "uploading"} className={`flex min-h-36 w-full flex-col items-center justify-center rounded-md border border-dashed text-center transition-colors disabled:cursor-wait disabled:opacity-70 ${isDraggingImage ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground hover:border-primary hover:text-primary"}`}>{uploadState === "uploading" ? <Loader2 className="size-6 animate-spin" /> : <ImageIcon className="size-6" />}<span className="mt-2 text-sm font-medium">{uploadState === "uploading" ? "Uploading image…" : isDraggingImage ? "Drop image to upload" : "Choose or drop an image"}</span><span className="mt-1 text-xs">Select a file from this device</span></button>}
+            {imageUrl ? <div className="space-y-4"><div className="relative aspect-video overflow-hidden rounded-md border bg-muted"><Image src={imageUrl} alt={imageAlt || "Lead image preview"} fill sizes="320px" className="object-cover" />{imageKind === "ai_placeholder" ? <div className="absolute inset-x-0 bottom-0 bg-amber-950/90 px-3 py-2 text-[0.68rem] font-bold uppercase tracking-wider text-amber-100">Temporary AI illustration · publication blocked</div> : null}</div><div className="flex items-center justify-between gap-3"><div className="min-w-0"><p className="truncate text-sm font-medium">{imageName}</p><p className={imageKind === "ai_placeholder" ? "text-xs font-medium text-amber-500" : "text-xs text-muted-foreground"}>{imageKind === "ai_placeholder" ? "Replace before approval or publication" : "Ready to use"}</p></div><div className="flex flex-wrap justify-end gap-2">{imageKind === "ai_placeholder" && aiImagePlaceholdersEnabled && aiImageProviderConfigured ? <Button type="button" size="sm" variant="outline" onClick={() => void generatePlaceholder()} disabled={generationState === "generating" || uploadState === "uploading"}>{generationState === "generating" ? <Loader2 className="animate-spin" /> : <Sparkles />} Regenerate</Button> : null}<Button type="button" size="sm" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploadState === "uploading" || generationState === "generating"}><CloudUpload /> Replace</Button><Button type="button" size="icon-sm" variant="ghost" onClick={removeImage} disabled={uploadState === "uploading" || generationState === "generating"} aria-label="Remove image"><Trash2 /></Button></div></div><div className="space-y-2"><Label htmlFor="image-alt">Image description <span className="text-destructive">*</span></Label><Textarea id="image-alt" value={imageAlt} onChange={(event) => setImageAlt(event.target.value)} maxLength={240} placeholder="Describe what is visible for readers using screen readers" aria-invalid={Boolean(fieldError("imageAlt"))} />{fieldError("imageAlt") ? <p className="text-xs text-destructive">{fieldError("imageAlt")}</p> : <p className="text-xs text-muted-foreground">Describe people, place and relevant action; do not repeat the headline.</p>}</div></div> : <button type="button" onClick={() => fileInputRef.current?.click()} onDragEnter={(event) => { event.preventDefault(); setIsDraggingImage(true); }} onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; setIsDraggingImage(true); }} onDragLeave={(event) => { event.preventDefault(); setIsDraggingImage(false); }} onDrop={handleImageDrop} disabled={uploadState === "uploading" || generationState === "generating"} className={`flex min-h-36 w-full flex-col items-center justify-center rounded-md border border-dashed text-center transition-colors disabled:cursor-wait disabled:opacity-70 ${isDraggingImage ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground hover:border-primary hover:text-primary"}`}>{uploadState === "uploading" ? <Loader2 className="size-6 animate-spin" /> : <ImageIcon className="size-6" />}<span className="mt-2 text-sm font-medium">{uploadState === "uploading" ? "Uploading image…" : isDraggingImage ? "Drop image to upload" : "Choose or drop an image"}</span><span className="mt-1 text-xs">JPEG, PNG or WebP up to 4 MB</span></button>}
             {uploadMessage ? <p className={`text-xs ${uploadState === "error" ? "text-destructive" : "text-muted-foreground"}`} role="status">{uploadMessage}</p> : null}
+            {aiImagePlaceholdersEnabled ? <div className="space-y-3 rounded-lg border bg-muted/20 p-4"><div className="flex items-start justify-between gap-3"><div><p className="text-sm font-semibold">Temporary AI illustration</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Studio builds the prompt from the headline, summary and article. Add visual direction only when the automatic context needs guidance.</p></div><Sparkles className="mt-0.5 size-4 shrink-0 text-primary" /></div><Textarea value={visualDirection} onChange={(event) => setVisualDirection(event.target.value)} maxLength={400} placeholder="Optional: Focus on the town hall exterior at dusk; no people in the foreground." aria-label="Optional visual direction for the generated placeholder" /><Button type="button" className="w-full" variant="secondary" disabled={generationState === "generating" || uploadState === "uploading" || !aiImageProviderConfigured} onClick={() => void generatePlaceholder()}>{generationState === "generating" ? <Loader2 className="animate-spin" /> : <Sparkles />} {imageKind === "ai_placeholder" ? "Generate another version" : "Generate from story"}</Button>{!aiImageProviderConfigured ? <p className="text-xs font-medium text-amber-500">An administrator must connect the free Workers AI provider before generation is available.</p> : null}{generationMessage ? <p className={`text-xs leading-5 ${generationState === "error" ? "text-destructive" : imageKind === "ai_placeholder" ? "text-amber-500" : "text-muted-foreground"}`} role="status">{generationMessage}</p> : null}<p className="text-[0.7rem] leading-5 text-muted-foreground">Generated imagery is provenance-tracked, rate-limited and blocked from approval, scheduling and publication until an editor uploads real media or removes it.</p></div> : null}
           </CardContent></Card>
           <Card><CardContent className="p-5"><div className="flex items-center justify-between"><span className="text-sm font-medium">Workflow</span><Badge variant="secondary" className="capitalize">{initialStory?.status ?? "draft"}</Badge></div><div className="mt-4 flex flex-wrap items-center gap-2 text-[0.7rem] text-muted-foreground"><span className="size-2 rounded-full bg-primary" /> Draft <span>→</span> Review <span>→</span> <span>Scheduled <em>(optional)</em></span> <span>→</span> Published</div></CardContent></Card>
         </div>
@@ -490,6 +546,7 @@ function ArticlePreview({
   location,
   imageUrl,
   imageAlt,
+  imageKind,
   byline,
   document,
   paragraphs,
@@ -501,6 +558,7 @@ function ArticlePreview({
   location: string;
   imageUrl: string;
   imageAlt: string;
+  imageKind: "editorial" | "ai_placeholder";
   byline: string;
   document: StoryRichTextDocument | null;
   paragraphs: string[];
@@ -525,6 +583,7 @@ function ArticlePreview({
         {imageUrl ? (
           <div className="relative aspect-video bg-[#e9e7df]">
             <Image src={imageUrl} alt={imageAlt || "Lead image preview"} fill sizes="640px" className="object-cover" />
+            {imageKind === "ai_placeholder" ? <div className="absolute inset-x-0 bottom-0 bg-[#142d27]/90 px-4 py-2 text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#f5c66d]">Temporary AI illustration · not publishable</div> : null}
           </div>
         ) : (
           <div className="mx-6 flex aspect-video items-center justify-center border border-dashed border-[#c7c4ba] bg-[#f1efe8] text-xs text-[#737c78] sm:mx-9">Lead image preview</div>

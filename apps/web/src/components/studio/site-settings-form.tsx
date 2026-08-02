@@ -98,7 +98,7 @@ export function SiteSettingsForm({
   updatedAt: string | null;
   initialRevision: number;
   history: ConfigurationHistoryRow[];
-  operationalHealth: { database: boolean; identity: boolean; scheduler: boolean };
+  operationalHealth: { database: boolean; identity: boolean; scheduler: boolean; aiImages: boolean };
 }) {
   const [configuration, setConfiguration] = useState(initialConfiguration);
   const [lastSavedConfiguration, setLastSavedConfiguration] = useState(initialConfiguration);
@@ -471,6 +471,7 @@ export function SiteSettingsForm({
               <Toggle label="Compact navigation" description="Uses the reduced-density workspace rail and keeps secondary destinations visible only for the current workspace." checked={configuration.studio.experience.compactNavigation} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("experience", "compactNavigation", value)} />
               <Toggle label="Operational status" description="Shows readiness and production-state summaries in supported Studio workspaces." checked={configuration.studio.experience.showOperationalStatus} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("experience", "showOperationalStatus", value)} />
               <Toggle label="Visual story editor" description="Lets story owners switch between a full rich-text editor, a simultaneous reader preview and the portable plain-copy fallback." checked={configuration.studio.experience.richStoryEditor} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("experience", "richStoryEditor", value)} />
+              <Toggle label="AI image placeholders" description="Lets editors generate temporary story-aware illustrations through the configured free Workers AI provider. Generated placeholders are labeled and cannot pass publication approval until replaced with editorial media." checked={configuration.studio.experience.aiImagePlaceholders} disabled={!canManage} onCheckedChange={(value) => updateStudioGroup("experience", "aiImagePlaceholders", value)} />
               <div className="rounded-lg border p-4">
                 <p className="text-sm font-medium">Default story workspace</p>
                 <p className="mt-1 text-xs leading-5 text-muted-foreground">Editors can change modes per story. This chooses the first view opened for new and existing articles.</p>

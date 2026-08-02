@@ -164,6 +164,16 @@ export const stories = pgTable(
     contentHash: text("content_hash"),
     imageUrl: text("image_url"),
     imageAlt: text("image_alt"),
+    imageAssetId: uuid("image_asset_id"),
+    imageKind: text("image_kind").notNull().default("editorial"),
+    imageGeneration: jsonb("image_generation").$type<{
+      provider: "cloudflare-workers-ai";
+      model: string;
+      prompt: string;
+      seed: number;
+      storyDigest: string;
+      generatedAt: string;
+    }>(),
     videoUrl: text("video_url"),
     tags: jsonb("tags").$type<string[]>().notNull().default([]),
     seoTitle: text("seo_title"),
@@ -188,6 +198,11 @@ export const stories = pgTable(
   },
   (table) => [
     uniqueIndex("stories_slug_idx").on(table.slug),
+    index("stories_image_asset_idx").on(table.imageAssetId),
+    check(
+      "stories_image_kind_check",
+      sql`${table.imageKind} in ('editorial', 'ai_placeholder')`,
+    ),
     index("stories_status_published_idx").on(table.status, table.publishedAt),
     index("stories_category_idx").on(table.categorySlug, table.publishedAt),
     check("stories_content_version_positive_check", sql`${table.contentVersion} > 0`),

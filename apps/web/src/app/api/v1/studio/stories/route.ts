@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { getDb, hasDatabase } from "@harborline/backend/db";
-import { stories, storyRevisions } from "@harborline/backend/schema";
+import { mediaAssetUsages, stories, storyRevisions } from "@harborline/backend/schema";
 import { writeApiAudit } from "@/lib/api-keys";
 import { getStudioUser } from "@/lib/auth";
 import { storyInput } from "@/lib/story-input";
@@ -11,6 +11,7 @@ import {
   resolvePublicByline,
 } from "@/lib/bylines";
 import { getSiteConfiguration } from "@/lib/site-settings";
+import { InvalidStoryLeadMediaError, resolveStoryLeadMedia } from "@/lib/story-lead-media";
 
 export async function POST(request: Request) {
   const viewer = await getStudioUser();
@@ -66,43 +67,65 @@ export async function POST(request: Request) {
       includeWhyItMatters,
       bylineMode,
       status: _requestedStatus,
+      imageUrl: _imageUrl,
+      imageAlt: _imageAlt,
+      imageAssetId: _imageAssetId,
+      imageKind: _imageKind,
       ...storyValues
     } = parsed.data;
     void _publishedAt;
     void _publishedAtRiskAcknowledged;
     void _publishedAtChangeReason;
     void _requestedStatus;
+    void _imageUrl;
+    void _imageAlt;
+    void _imageAssetId;
+    void _imageKind;
+    const leadMedia = await resolveStoryLeadMedia(parsed.data);
     const publicBylineSnapshot = await resolvePublicByline(
       viewer.databaseId,
       bylineMode,
     );
-    const [story] = await getDb().insert(stories).values({
-      ...storyValues,
-      status: "draft",
-      whyItMatters: includeWhyItMatters
-        ? generateWhyItMatters(parsed.data)
-        : null,
-      imageUrl: parsed.data.imageUrl || null,
-      seoTitle: parsed.data.seoTitle || null,
-      seoDescription: parsed.data.seoDescription || null,
-      canonicalUrl: parsed.data.canonicalUrl || null,
-      scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
-      publishedAt: null,
-      readingMinutes: Math.max(1, Math.ceil(parsed.data.body.join(" ").split(/\s+/).length / 220)),
-      authorId: viewer.databaseId ?? null,
-      authorSnapshot: { id: viewer.id, name: viewer.name, role: viewer.role, initials: viewer.name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase() },
-      publicBylineSnapshot,
-      publicBylinesSnapshot: [
-        { userId: viewer.databaseId, ...publicBylineSnapshot },
-      ],
-    }).returning();
-    await getDb().insert(storyRevisions).values({
-      storyId: story.id,
-      version: 1,
-      snapshot: story,
-      note: scheduledAt
-        ? "Initial newsroom draft saved with a planned publication time"
-        : "Initial newsroom draft saved",
+    const story = await getDb().transaction(async (tx) => {
+      const storyInsert: typeof stories.$inferInsert = {
+        ...storyValues,
+        status: "draft",
+        whyItMatters: includeWhyItMatters
+          ? generateWhyItMatters(parsed.data)
+          : null,
+        ...leadMedia,
+        imageAlt: parsed.data.imageAlt || null,
+        seoTitle: parsed.data.seoTitle || null,
+        seoDescription: parsed.data.seoDescription || null,
+        canonicalUrl: parsed.data.canonicalUrl || null,
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+        publishedAt: null,
+        readingMinutes: Math.max(1, Math.ceil(parsed.data.body.join(" ").split(/\s+/).length / 220)),
+        authorId: viewer.databaseId ?? null,
+        authorSnapshot: { id: viewer.id, name: viewer.name, role: viewer.role, initials: viewer.name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase() },
+        publicBylineSnapshot,
+        publicBylinesSnapshot: [
+          { userId: viewer.databaseId!, ...publicBylineSnapshot },
+        ],
+      };
+      const [created] = await tx.insert(stories).values(storyInsert).returning();
+      await tx.insert(storyRevisions).values({
+        storyId: created.id,
+        version: 1,
+        snapshot: created,
+        note: scheduledAt
+          ? "Initial newsroom draft saved with a planned publication time"
+          : "Initial newsroom draft saved",
+      });
+      if (leadMedia.imageAssetId) {
+        await tx.insert(mediaAssetUsages).values({
+          assetId: leadMedia.imageAssetId,
+          ownerType: "story",
+          ownerId: created.id,
+          field: "lead_image",
+        });
+      }
+      return created;
     });
     await writeApiAudit({
       actorClerkId: viewer.id,
@@ -117,6 +140,12 @@ export async function POST(request: Request) {
     console.info("[studio:stories] saved", { storyId: story.id, status: story.status, authorId: viewer.id });
     return NextResponse.json({ data: story, meta: { apiVersion: "1" } }, { status: 201 });
   } catch (error) {
+    if (error instanceof InvalidStoryLeadMediaError) {
+      return NextResponse.json(
+        { error: { code: "invalid_lead_media", message: error.message } },
+        { status: 409 },
+      );
+    }
     if (error instanceof BylineUnavailableError) {
       return NextResponse.json(
         { error: { code: "byline_unavailable", message: error.message } },

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import {
   stories,
+  mediaAssetUsages,
   storyApprovals,
   storyPublicationJobs,
   storyRevisions,
@@ -28,6 +29,7 @@ import { legacyPublicBylineSnapshot } from "@/lib/pseudonyms";
 import { getSiteConfiguration } from "@/lib/site-settings";
 import { storyContentHash, storyPublicationBlockers } from "@/lib/story-content-integrity";
 import { canApproveStory } from "@/lib/story-scheduling-policy";
+import { InvalidStoryLeadMediaError, resolveStoryLeadMedia } from "@/lib/story-lead-media";
 
 const storyId = z.uuid();
 const transitionInput = z.discriminatedUnion("status", [
@@ -622,13 +624,22 @@ export async function PUT(
     includeWhyItMatters,
     bylineMode,
     status: requestedStatus,
+    imageUrl: _imageUrl,
+    imageAlt: _imageAlt,
+    imageAssetId: _imageAssetId,
+    imageKind: _imageKind,
     ...storyValues
   } = parsedBody.data;
   void _publishedAt;
   void _publishedAtRiskAcknowledged;
   void _publishedAtChangeReason;
+  void _imageUrl;
+  void _imageAlt;
+  void _imageAssetId;
+  void _imageKind;
 
   try {
+    const leadMedia = await resolveStoryLeadMedia(parsedBody.data);
     if (
       bylineMode === "pseudonym" &&
       (!(await getSiteConfiguration()).features.pseudonyms || !(await getSiteConfiguration()).studio.editorialWorkflow.pseudonymEligibleRoles.includes(viewer.role))
@@ -720,7 +731,7 @@ export async function PUT(
         whyItMatters: includeWhyItMatters
           ? generateWhyItMatters(parsedBody.data)
           : null,
-        imageUrl: parsedBody.data.imageUrl || null,
+        ...leadMedia,
         imageAlt: parsedBody.data.imageAlt || null,
         seoTitle: parsedBody.data.seoTitle || null,
         seoDescription: parsedBody.data.seoDescription || null,
@@ -797,7 +808,7 @@ export async function PUT(
         whyItMatters: includeWhyItMatters
           ? generateWhyItMatters(parsedBody.data)
           : null,
-        imageUrl: parsedBody.data.imageUrl || null,
+        ...leadMedia,
         imageAlt: parsedBody.data.imageAlt || null,
         seoTitle: parsedBody.data.seoTitle || null,
         seoDescription: parsedBody.data.seoDescription || null,
@@ -808,6 +819,20 @@ export async function PUT(
         updatedAt: now,
       }).where(and(eq(stories.id, current.id), eq(stories.status, current.status))).returning();
       if (!story) return null;
+
+      await tx.delete(mediaAssetUsages).where(and(
+        eq(mediaAssetUsages.ownerType, "story"),
+        eq(mediaAssetUsages.ownerId, story.id),
+        eq(mediaAssetUsages.field, "lead_image"),
+      ));
+      if (leadMedia.imageAssetId) {
+        await tx.insert(mediaAssetUsages).values({
+          assetId: leadMedia.imageAssetId,
+          ownerType: "story",
+          ownerId: story.id,
+          field: "lead_image",
+        });
+      }
 
       await tx.update(storyApprovals).set({
         invalidatedAt: now,
@@ -866,6 +891,12 @@ export async function PUT(
     revalidatePath(`/studio/stories/${updated.id}/edit`);
     return NextResponse.json({ data: updated, meta: { apiVersion: "1" } });
   } catch (error) {
+    if (error instanceof InvalidStoryLeadMediaError) {
+      return NextResponse.json(
+        { error: { code: "invalid_lead_media", message: error.message } },
+        { status: 409 },
+      );
+    }
     if (error instanceof BylineUnavailableError) {
       return NextResponse.json(
         { error: { code: "byline_unavailable", message: error.message } },

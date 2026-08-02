@@ -88,6 +88,8 @@ export default async function EditStoryPage({ params }: { params: Promise<{ id: 
         pseudonymsEnabled={configuration.features.pseudonyms}
         richStoryEditorEnabled={configuration.studio.experience.richStoryEditor}
         richStoryEditorDefaultMode={configuration.studio.experience.richStoryEditorDefaultMode}
+        aiImagePlaceholdersEnabled={configuration.studio.experience.aiImagePlaceholders}
+        aiImageProviderConfigured={Boolean(process.env.CLOUDFLARE_ACCOUNT_ID && process.env.CLOUDFLARE_WORKERS_AI_TOKEN && process.env.BLOB_READ_WRITE_TOKEN)}
         initialStory={{
           id: story.id,
           headline: story.headline,
@@ -100,6 +102,8 @@ export default async function EditStoryPage({ params }: { params: Promise<{ id: 
           location: story.location,
           imageUrl: story.imageUrl,
           imageAlt: story.imageAlt,
+          imageAssetId: story.imageAssetId,
+          imageKind: story.imageKind as "editorial" | "ai_placeholder",
           tags: story.tags,
           seoTitle: story.seoTitle,
           seoDescription: story.seoDescription,

@@ -36,3 +36,10 @@ The Studio experience group also controls the versioned visual story composer.
 initial workspace. The rich document contract, fallback behavior and release
 checks are documented in
 [Rich story editor](../editorial/RICH_STORY_EDITOR.md).
+
+`aiImagePlaceholders` separately enables temporary story-aware illustration
+generation. Provider credentials remain environment-managed, and the feature
+defaults off even when credentials exist. Generated images are provenance-
+tracked media assets and remain mandatory publication blockers until replaced
+or removed. See
+[AI story-image placeholders](../editorial/AI_IMAGE_PLACEHOLDERS.md).

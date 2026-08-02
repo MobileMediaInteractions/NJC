@@ -13,6 +13,8 @@ export const storyInput = z.object({
   location: z.string().trim().min(2, "Enter a dateline or location.").max(80),
   imageUrl: z.url("Lead image must be a valid URL.").optional().or(z.literal("")),
   imageAlt: z.string().max(240).optional(),
+  imageAssetId: z.uuid().nullable().optional(),
+  imageKind: z.enum(["editorial", "ai_placeholder"]).default("editorial"),
   tags: z.array(z.string().max(40)).max(12).default([]),
   seoTitle: z.string().max(70).optional().or(z.literal("")),
   seoDescription: z.string().max(180).optional().or(z.literal("")),
@@ -28,6 +30,12 @@ export const storyInput = z.object({
 }).superRefine((value, context) => {
   if (value.imageUrl && !value.imageAlt?.trim()) {
     context.addIssue({ code: "custom", path: ["imageAlt"], message: "Describe the lead image for readers using screen readers." });
+  }
+  if (!value.imageUrl && value.imageAssetId) {
+    context.addIssue({ code: "custom", path: ["imageAssetId"], message: "A selected media asset requires its image URL." });
+  }
+  if (value.imageKind === "ai_placeholder" && (!value.imageUrl || !value.imageAssetId)) {
+    context.addIssue({ code: "custom", path: ["imageUrl"], message: "The generated placeholder must remain connected to its media-library record." });
   }
   if (value.publishedAt && value.status !== "published") {
     context.addIssue({

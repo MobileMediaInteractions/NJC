@@ -196,6 +196,7 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   - Add production tests proving that accounts cannot disappear between tabs, role changes cannot be forged by the client and reader accounts remain visible.
 - [ ] Add reviewer notes and a clear reason when a story is returned to draft.
 - [ ] Finish the Studio media library: browse, search, reuse, replace, caption, credit and safely delete unreferenced assets.
+- [ ] Activate and accept the implemented AI story-image placeholder workflow in production: create a least-privilege Cloudflare Workers AI token on the free plan, add `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_WORKERS_AI_TOKEN` to Vercel, enable the versioned Studio switch, approve a written synthetic-imagery policy, and complete every fail-closed generation/replacement/publication check in `docs/editorial/AI_IMAGE_PLACEHOLDERS.md`. Do not remove the publication blocker or enable paid overflow.
 - [ ] Add editorial presentation previews for mobile, Apple TV, Android TV and Roku.
 - [ ] Add end-to-end tests covering create → image upload → review → return → revise → publish → update → delete.
 

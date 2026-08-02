@@ -39,6 +39,14 @@ test("content hashes are stable and material changes invalidate them", () => {
   assert.notEqual(first, storyContentHash({ ...material, headline: "Changed headline" }));
   assert.deepEqual(storyPublicationBlockers(material), []);
   assert.deepEqual(storyPublicationBlockers({ ...material, body: [] }), ["body_missing"]);
+  assert.deepEqual(
+    storyPublicationBlockers({ ...material, imageKind: "ai_placeholder" }),
+    ["lead_media_temporary_ai_placeholder"],
+  );
+  assert.notEqual(
+    storyContentHash(material),
+    storyContentHash({ ...material, imageKind: "ai_placeholder" }),
+  );
 });
 
 test("the publication instant is never considered due early", () => {

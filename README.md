@@ -87,6 +87,10 @@ The [private Distribution runbook](docs/DISTRIBUTION.md) covers authorized
 pre-publication packages, immutable story snapshots, private media delivery,
 the custom viewer/player, domain activation, and production verification.
 
+The [AI story-image placeholder runbook](docs/editorial/AI_IMAGE_PLACEHOLDERS.md)
+covers the optional free-provider setup, generated-media provenance, mandatory
+publication block and newsroom acceptance procedure.
+
 The completed [Bun and Protocol Buffers investigation](docs/investigations/BUN_PROTOBUF_2026-07-28.md)
 contains the repository-specific benchmarks, compatibility audit, decision
 thresholds, and reproducible harness. It does not change the production

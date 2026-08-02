@@ -32,7 +32,7 @@ export function ConfigurationRegistryPanel({
   configuration: SiteConfiguration;
   revision: number;
   history: ConfigurationHistoryRow[];
-  operationalHealth: { database: boolean; identity: boolean; scheduler: boolean };
+  operationalHealth: { database: boolean; identity: boolean; scheduler: boolean; aiImages: boolean };
   canManage: boolean;
 }) {
   const router = useRouter();

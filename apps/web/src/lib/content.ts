@@ -20,6 +20,7 @@ export function normalizeStory(row: typeof stories.$inferSelect): Story {
         publicStoryAuthor(`${row.id}-${index}`, byline),
       )
     : [publicStoryAuthor(row.id, publicByline)];
+  const editorialImage = row.imageKind === "ai_placeholder" ? null : row.imageUrl;
 
   return {
     id: row.id,
@@ -35,8 +36,8 @@ export function normalizeStory(row: typeof stories.$inferSelect): Story {
     publishedAt: (row.publishedAt ?? row.createdAt).toISOString(),
     updatedAt: row.updatedAt.toISOString(),
     readingMinutes: row.readingMinutes,
-    image: row.imageUrl ?? DEFAULT_STORY_IMAGE,
-    imageAlt: row.imageAlt ?? "Middlesex County news",
+    image: editorialImage ?? DEFAULT_STORY_IMAGE,
+    imageAlt: editorialImage ? row.imageAlt ?? "Middlesex County news" : "New Jersey outline illustration",
     author: authors[0]!,
     authors,
     tags: row.tags,

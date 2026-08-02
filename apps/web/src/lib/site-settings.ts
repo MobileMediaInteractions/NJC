@@ -94,6 +94,7 @@ export const defaultStudioConfiguration = {
     showOperationalStatus: true,
     richStoryEditor: true,
     richStoryEditorDefaultMode: "split" as const,
+    aiImagePlaceholders: false,
   },
   notifications: {
     deliveryEnabled: true,
@@ -256,6 +257,7 @@ export const siteConfigurationSchema = z.object({
       showOperationalStatus: z.boolean(),
       richStoryEditor: z.boolean().default(true),
       richStoryEditorDefaultMode: z.enum(["write", "split", "preview"]).default("split"),
+      aiImagePlaceholders: z.boolean().default(false),
     }).default(defaultStudioConfiguration.experience),
     notifications: z.object({
       deliveryEnabled: z.boolean(),
