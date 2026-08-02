@@ -238,16 +238,19 @@ export interface PairingRequest {
   id: string;
   target: PairingTarget;
   deviceSecret: string;
+  claimNonce: string;
   userCode: string;
   verificationUri: string;
   verificationUriComplete: string;
   qrImageUrl: string;
   expiresAt: string;
+  lifetimeSeconds: number;
   pollIntervalSeconds: number;
 }
 
 export type PairingPollResult =
   | { status: "pending"; expiresAt: string }
+  | { status: "processing"; expiresAt: string }
   | { status: "approved"; accessToken: string; account: { name: string; platform: "tvos" | "androidtv" | "roku" }; expiresAt: string }
   | { status: "approved"; ticket: string; expiresAt: string }
   | { status: "expired" | "consumed" | "denied" };

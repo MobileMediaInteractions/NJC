@@ -7,7 +7,17 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function QuickLoginPage() {
+export default async function QuickLoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ return_to?: string }>;
+}) {
+  const params = await searchParams;
+  const returnTo =
+    typeof params.return_to === "string" &&
+    /^\/(?!\/)[A-Za-z0-9/_?&=%.-]*$/.test(params.return_to)
+      ? params.return_to
+      : "/";
   if (!isClerkConfigured())
     return (
       <div className="mx-auto max-w-xl px-6 py-24 text-center">
@@ -20,5 +30,5 @@ export default function QuickLoginPage() {
         </p>
       </div>
     );
-  return <QuickWebSignIn />;
+  return <QuickWebSignIn returnTo={returnTo} />;
 }

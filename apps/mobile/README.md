@@ -31,4 +31,6 @@ The app does not ship fictional news or weather. Previously loaded API responses
 
 The app reports a random installation identifier, platform, version and last-active time for CMS platform totals. Readers can disable this under Account → Privacy and support; disabling removes the corresponding server record when the API is reachable.
 
+The in-app scanner accepts only New Jersey Courier pairing links containing a session, matching code, target and single-use claim nonce. A successful scan claims the server request before approval controls appear, preventing a second account from racing the verifier. Cancel denies the claimed request; approval requires the same signed-in account that claimed it. Codes rotate every 60 seconds before scanning and remain frozen on the originating display during the bounded verification window.
+
 Bundle identifiers default to `com.mobilemediainteractions.thenews` for both platforms. Confirm signing ownership and store records before the first production build.

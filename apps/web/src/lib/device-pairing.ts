@@ -4,6 +4,35 @@ import { getDb, hasDatabase } from "@harborline/backend/db";
 import { apiAuditLogs, deviceSessions } from "@harborline/backend/schema";
 
 const codeAlphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+export const pairingCodeLifetimeSeconds = 60;
+export const pairingProcessingLifetimeSeconds = 120;
+
+export function isValidPairingQrValue(value: string, qrOrigin: string) {
+  try {
+    const parsed = new URL(value);
+    const session = parsed.searchParams.get("session") ?? "";
+    const code = parsed.searchParams.get("code") ?? "";
+    const target = parsed.searchParams.get("target") ?? "";
+    const nonce = parsed.searchParams.get("nonce") ?? "";
+    const validPayload =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        session,
+      ) &&
+      /^[2-9A-HJ-NP-Z]{3}-[2-9A-HJ-NP-Z]{3}$/.test(code) &&
+      /^hln_claim_[A-Za-z0-9_-]{40,}$/.test(nonce);
+    if (!validPayload) return false;
+    if (parsed.protocol === "harborline:")
+      return parsed.host === "pair" && target === "web";
+    return (
+      parsed.protocol === "https:" &&
+      parsed.origin === new URL(qrOrigin).origin &&
+      parsed.pathname === "/login/tv" &&
+      ["tv", "androidtv", "roku"].includes(target)
+    );
+  } catch {
+    return false;
+  }
+}
 
 export function normalizeDevicePayload(
   value: unknown,
@@ -62,12 +91,24 @@ export function createPairingCredentials() {
   for (const byte of bytes)
     userCode += codeAlphabet[byte % codeAlphabet.length];
   const deviceSecret = `hln_pair_${randomBytes(32).toString("base64url")}`;
+  const claimNonce = `hln_claim_${randomBytes(32).toString("base64url")}`;
   return {
     deviceSecret,
     deviceSecretHash: pairingHash(deviceSecret),
+    claimNonce,
+    claimNonceHash: pairingHash(claimNonce),
     userCode: formatUserCode(userCode),
     userCodeHash: pairingHash(userCode),
   };
+}
+
+export function pairingRequestExpired(
+  pairing: { status: string; expiresAt: Date; processingExpiresAt?: Date | null },
+  now = new Date(),
+) {
+  return pairing.status === "processing"
+    ? !pairing.processingExpiresAt || pairing.processingExpiresAt <= now
+    : pairing.expiresAt <= now;
 }
 
 export function createDeviceAccessToken() {

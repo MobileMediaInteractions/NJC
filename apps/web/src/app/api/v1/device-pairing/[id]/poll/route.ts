@@ -8,6 +8,7 @@ import {
   createDeviceAccessToken,
   isDevicePairingConfigured,
   normalizeDevicePayload,
+  pairingRequestExpired,
   safePairingHashEqual,
 } from "@/lib/device-pairing";
 import { getAccountReleaseChannel } from "@/lib/release-channel";
@@ -64,12 +65,20 @@ export async function POST(
       },
       { status: 404 },
     );
-  if (pairing.expiresAt <= new Date()) {
-    if (pairing.status === "pending")
+  if (
+    (pairing.status === "pending" || pairing.status === "processing") &&
+    pairingRequestExpired(pairing)
+  ) {
+    if (pairing.status === "pending" || pairing.status === "processing")
       await db
         .update(devicePairingRequests)
         .set({ status: "expired" })
-        .where(eq(devicePairingRequests.id, id));
+        .where(
+          and(
+            eq(devicePairingRequests.id, id),
+            eq(devicePairingRequests.status, pairing.status),
+          ),
+        );
     return NextResponse.json(
       { data: { status: "expired" }, meta: { apiVersion: "1" } },
       { headers: { "Cache-Control": "no-store" } },
@@ -80,7 +89,10 @@ export async function POST(
       {
         data: {
           status: pairing.status,
-          expiresAt: pairing.expiresAt.toISOString(),
+          expiresAt:
+            pairing.status === "processing" && pairing.processingExpiresAt
+              ? pairing.processingExpiresAt.toISOString()
+              : pairing.expiresAt.toISOString(),
         },
         meta: { apiVersion: "1" },
       },

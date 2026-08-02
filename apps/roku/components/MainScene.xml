@@ -1,86 +1,115 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<component name="MainScene" extends="Scene" initialFocus="homeButton">
+<component name="MainScene" extends="Scene" initialFocus="navList">
   <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
   <children>
-    <Rectangle id="background" width="1920" height="1080" color="0x111713FF" />
+    <Rectangle id="background" width="1920" height="1080" color="0x071C2CFF" />
 
-    <Label id="brand" translation="[72,42]" width="900" height="62" text="THE NEW JERSEY COURIER" color="0xF6F1E7FF" font="font:ExtraLargeBoldSystemFont" />
-    <Label id="tagline" translation="[78,94]" width="760" height="34" text="LOCAL NEWS · MIDDLESEX COUNTY" color="0x9CC5ADFF" font="font:SmallBoldSystemFont" />
-    <Group id="releaseFlair" translation="[970,48]" visible="false">
-      <Rectangle width="160" height="46" color="0xC49545FF" />
-      <Label id="releaseFlairLabel" width="160" height="46" text="BETA" color="0x171917FF" font="font:SmallBoldSystemFont" horizAlign="center" vertAlign="center" />
+    <Group id="masthead">
+      <Rectangle translation="[64,32]" width="4" height="84" color="0xC49545FF" />
+      <Label id="brand" translation="[88,28]" width="880" height="62" text="THE NEW JERSEY COURIER" color="0xF8F4ECFF" font="font:ExtraLargeBoldSystemFont" />
+      <Label id="tagline" translation="[92,84]" width="980" height="32" text="THE AUTHORITATIVE VOICE OF THE GARDEN STATE" color="0x9EB6C3FF" font="font:SmallBoldSystemFont" />
+      <Group id="releaseFlair" translation="[1240,48]" visible="false">
+        <Rectangle width="144" height="42" color="0xC49545FF" />
+        <Label id="releaseFlairLabel" width="144" height="42" text="BETA" color="0x071C2CFF" font="font:SmallBoldSystemFont" horizAlign="center" vertAlign="center" />
+      </Group>
+      <Label id="accountLabel" translation="[1398,52]" width="450" height="34" text="Public access" color="0x9EB6C3FF" font="font:SmallSystemFont" horizAlign="right" />
     </Group>
-    <Label id="accountLabel" translation="[1350,55]" width="490" height="34" text="Public access" color="0x87A9BCFF" font="font:SmallSystemFont" horizAlign="right" />
 
-    <LayoutGroup id="navigation" translation="[70,146]" layoutDirection="horiz" itemSpacings="[18]" vertAlignment="center">
-      <Button id="homeButton" text="Latest" minWidth="210" />
-      <Button id="liveButton" text="Watch live" minWidth="240" />
-      <Button id="weatherButton" text="Weather" minWidth="220" />
-      <Button id="connectButton" text="Connect account" minWidth="300" />
-      <Button id="themeButton" text="Theme: System · Dark" minWidth="330" />
-    </LayoutGroup>
-    <Rectangle id="rule" translation="[72,226]" width="1776" height="2" color="0xC49545FF" />
+    <RowList id="navList" translation="[64,138]" itemSize="[1784,60]" numRows="1" rowItemSize="[[238,56]]" rowItemSpacing="[[14,0]]" rowHeights="[60]" showRowLabel="false" drawFocusFeedback="false" itemComponentName="NavigationItem" focusXOffset="[0]" />
+    <Rectangle id="rule" translation="[64,216]" width="1784" height="2" color="0xC49545FF" />
 
-    <Poster id="heroImage" translation="[72,270]" width="980" height="420" loadDisplayMode="scaleToZoom" />
-    <Label id="heroCategory" translation="[1098,278]" width="650" height="34" text="LATEST" color="0xC49545FF" font="font:SmallBoldSystemFont" />
-    <Label id="heroHeadline" translation="[1098,330]" width="700" height="180" text="Loading the Courier…" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" wrap="true" numLines="3" />
-    <Label id="heroDek" translation="[1098,522]" width="680" height="118" text="Local reporting is on the way." color="0xC5D5DEFF" font="font:MediumSystemFont" wrap="true" numLines="3" />
-    <Label id="heroMeta" translation="[1098,654]" width="680" height="34" color="0x87A9BCFF" font="font:SmallSystemFont" />
+    <Group id="homeCanvas">
+      <Rectangle translation="[64,250]" width="1784" height="440" color="0x0D2A3CFF" />
+      <Poster id="heroImage" translation="[64,250]" width="1000" height="440" loadDisplayMode="scaleToZoom" />
+      <Rectangle translation="[1010,250]" width="838" height="440" color="0x0B2638FF" />
+      <Rectangle translation="[1048,284]" width="76" height="6" color="0xC49545FF" />
+      <Label id="heroCategory" translation="[1048,310]" width="710" height="34" text="LATEST" color="0xD5A24BFF" font="font:SmallBoldSystemFont" />
+      <Label id="heroHeadline" translation="[1048,356]" width="730" height="172" text="Loading the Courier…" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" wrap="true" numLines="3" />
+      <Label id="heroDek" translation="[1048,536]" width="720" height="92" text="Local reporting is on the way." color="0xC4D2DAFF" font="font:MediumSystemFont" wrap="true" numLines="3" />
+      <Label id="heroMeta" translation="[1048,642]" width="720" height="30" color="0x8FA8B6FF" font="font:SmallSystemFont" />
 
-    <Label id="latestLabel" translation="[72,724]" width="900" height="44" text="MORE FROM MIDDLESEX COUNTY" color="0xFFFFFFFF" font="font:LargeBoldSystemFont" />
-    <RowList
-      id="storyList"
-      translation="[72,790]"
-      itemSize="[1776,224]"
-      numRows="1"
-      rowItemSize="[[424,224]]"
-      rowItemSpacing="[[24,0]]"
-      rowHeights="[224]"
-      showRowLabel="false"
-      drawFocusFeedback="false"
-      itemComponentName="StoryCard"
-      focusXOffset="[0]" />
+      <Label id="latestLabel" translation="[64,722]" width="1200" height="44" text="MORE FROM MIDDLESEX COUNTY" color="0xFFFFFFFF" font="font:LargeBoldSystemFont" />
+      <Label translation="[1510,728]" width="338" height="30" text="←  BROWSE WITH REMOTE  →" color="0x7F9AA9FF" font="font:SmallSystemFont" horizAlign="right" />
+      <RowList id="storyList" translation="[64,782]" itemSize="[1784,224]" numRows="1" rowItemSize="[[424,224]]" rowItemSpacing="[[24,0]]" rowHeights="[224]" showRowLabel="false" drawFocusFeedback="false" itemComponentName="StoryCard" focusXOffset="[0]" />
+      <Label id="statusLabel" translation="[64,1032]" width="1784" height="30" text="Starting the Courier…" color="0x91A9B6FF" font="font:SmallSystemFont" />
+    </Group>
 
-    <Label id="statusLabel" translation="[72,1034]" width="1776" height="30" text="Starting the Courier…" color="0x9CC5ADFF" font="font:SmallSystemFont" />
+    <Group id="loadingOverlay" visible="false">
+      <Rectangle translation="[64,250]" width="1784" height="756" color="0x071C2CDD" />
+      <BusySpinner id="contentSpinner" translation="[900,530]" width="120" height="120" spinInterval="2" />
+      <Label id="loadingLabel" translation="[560,670]" width="800" height="52" text="Refreshing local coverage…" color="0xFFFFFFFF" font="font:LargeBoldSystemFont" horizAlign="center" />
+    </Group>
 
     <Group id="detailOverlay" visible="false">
-      <Rectangle width="1920" height="1080" color="0x03131EEF" />
-      <Label translation="[96,70]" width="1728" height="34" text="NJ COURIER · STORY" color="0xC49545FF" font="font:SmallBoldSystemFont" />
-      <Label id="detailHeadline" translation="[96,138]" width="1728" height="190" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" wrap="true" numLines="3" />
-      <Rectangle translation="[96,352]" width="1728" height="2" color="0x295066FF" />
-      <Label id="detailDek" translation="[96,400]" width="1500" height="125" color="0xC5D5DEFF" font="font:LargeSystemFont" wrap="true" numLines="3" />
-      <Label id="detailBody" translation="[96,565]" width="1500" height="300" color="0xFFFFFFFF" font="font:MediumSystemFont" wrap="true" numLines="8" />
-      <Label translation="[96,980]" width="1000" height="40" text="Press Back to return to the latest stories" color="0x87A9BCFF" font="font:SmallSystemFont" />
+      <Rectangle width="1920" height="1080" color="0x071C2CFF" />
+      <Rectangle translation="[64,34]" width="4" height="72" color="0xC49545FF" />
+      <Label translation="[88,30]" width="900" height="58" text="THE NEW JERSEY COURIER" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" />
+      <Label translation="[88,84]" width="900" height="28" text="STORY READER" color="0x9EB6C3FF" font="font:SmallBoldSystemFont" />
+      <Label translation="[1440,54]" width="410" height="34" text="BACK  Return to stories" color="0xC49545FF" font="font:SmallBoldSystemFont" horizAlign="right" />
+      <Rectangle translation="[64,132]" width="1784" height="2" color="0xC49545FF" />
+      <Label id="detailCategory" translation="[148,170]" width="1500" height="34" color="0xD5A24BFF" font="font:SmallBoldSystemFont" />
+      <Label id="detailHeadline" translation="[148,216]" width="1510" height="166" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" wrap="true" numLines="3" />
+      <Label id="detailDek" translation="[148,392]" width="1500" height="100" color="0xC5D5DEFF" font="font:LargeSystemFont" wrap="true" numLines="3" />
+      <Label id="detailMeta" translation="[148,506]" width="1500" height="34" color="0x8FA8B6FF" font="font:SmallBoldSystemFont" />
+      <Group id="detailWhy" translation="[148,562]" visible="false">
+        <Rectangle width="1500" height="138" color="0x173E32FF" />
+        <Rectangle width="8" height="138" color="0xC49545FF" />
+        <Label translation="[34,18]" width="1420" height="28" text="WHY IT MATTERS" color="0xD5A24BFF" font="font:SmallBoldSystemFont" />
+        <Label id="detailWhyBody" translation="[34,54]" width="1414" height="66" color="0xE1E8E4FF" font="font:MediumSystemFont" wrap="true" numLines="2" />
+      </Group>
+      <Label id="detailBody" translation="[148,586]" width="1500" height="356" color="0xF6F4EFFF" font="font:MediumSystemFont" wrap="true" numLines="10" />
+      <Rectangle translation="[1746,586]" width="6" height="356" color="0x274657FF" />
+      <Rectangle id="detailScrollThumb" translation="[1746,586]" width="6" height="356" color="0xC49545FF" />
+      <Label id="detailPage" translation="[148,970]" width="1500" height="32" color="0x8FA8B6FF" font="font:SmallSystemFont" />
+      <Label translation="[148,1016]" width="1500" height="28" text="UP / DOWN to read · REWIND / FAST FORWARD to move a page · BACK to close" color="0x708C9BFF" font="font:SmallSystemFont" />
     </Group>
 
     <Group id="weatherOverlay" visible="false">
-      <Rectangle width="1920" height="1080" color="0x082E47F5" />
-      <Label translation="[96,80]" width="1728" height="48" text="NJ COURIER WEATHER" color="0xC49545FF" font="font:LargeBoldSystemFont" />
-      <Label id="weatherLocation" translation="[96,180]" width="1100" height="70" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" />
-      <Label id="weatherTemperature" translation="[96,286]" width="600" height="180" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" />
-      <Label id="weatherCondition" translation="[700,318]" width="900" height="70" color="0xC5D5DEFF" font="font:LargeSystemFont" />
-      <Label id="weatherDetails" translation="[104,520]" width="1500" height="150" color="0xFFFFFFFF" font="font:MediumSystemFont" wrap="true" numLines="4" />
-      <Label id="weatherAlert" translation="[104,710]" width="1500" height="100" color="0xF5B335FF" font="font:LargeBoldSystemFont" wrap="true" numLines="2" />
-      <Label translation="[96,980]" width="1000" height="40" text="Press Back to return" color="0x87A9BCFF" font="font:SmallSystemFont" />
+      <Rectangle width="1920" height="1080" color="0x071C2CFF" />
+      <Rectangle translation="[64,34]" width="4" height="72" color="0xC49545FF" />
+      <Label translation="[88,38]" width="900" height="54" text="NJ COURIER WEATHER" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" />
+      <Label id="weatherLocation" translation="[96,188]" width="1100" height="70" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" />
+      <Label id="weatherTemperature" translation="[96,304]" width="600" height="180" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" />
+      <Label id="weatherCondition" translation="[700,338]" width="900" height="70" color="0xC5D5DEFF" font="font:LargeSystemFont" />
+      <Label id="weatherDetails" translation="[104,540]" width="1500" height="150" color="0xFFFFFFFF" font="font:MediumSystemFont" wrap="true" numLines="4" />
+      <Label id="weatherAlert" translation="[104,730]" width="1500" height="100" color="0xD5A24BFF" font="font:LargeBoldSystemFont" wrap="true" numLines="2" />
+      <Label translation="[96,1000]" width="1000" height="40" text="BACK  Return to the Courier" color="0x8FA8B6FF" font="font:SmallSystemFont" />
     </Group>
 
     <Group id="pairOverlay" visible="false">
-      <Rectangle width="1920" height="1080" color="0x03131EF7" />
-      <Label translation="[96,66]" width="1728" height="48" text="CONNECT YOUR COURIER ACCOUNT" color="0xC49545FF" font="font:LargeBoldSystemFont" />
-      <Label translation="[96,148]" width="1050" height="120" text="Scan the QR code or visit the address below. Confirm that the sync code matches before approving this Roku." color="0xFFFFFFFF" font="font:LargeSystemFont" wrap="true" numLines="3" />
-      <Poster id="pairQr" translation="[1280,120]" width="420" height="420" loadDisplayMode="scaleToFit" />
-      <Label id="pairUri" translation="[96,334]" width="1080" height="52" color="0xC5D5DEFF" font="font:MediumSystemFont" />
-      <Label translation="[96,430]" width="800" height="34" text="SYNC CODE" color="0x87A9BCFF" font="font:SmallBoldSystemFont" />
-      <Label id="pairCode" translation="[96,482]" width="900" height="120" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" />
-      <Label id="pairStatus" translation="[96,642]" width="1080" height="100" text="Creating a secure request…" color="0xC5D5DEFF" font="font:MediumSystemFont" wrap="true" numLines="2" />
-      <LayoutGroup translation="[96,810]" layoutDirection="horiz" itemSpacings="[24]">
+      <Rectangle width="1920" height="1080" color="0x071C2CFF" />
+      <Rectangle translation="[64,34]" width="4" height="72" color="0xC49545FF" />
+      <Label translation="[88,36]" width="1000" height="54" text="CONNECT YOUR COURIER ACCOUNT" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" />
+      <Label translation="[88,92]" width="1000" height="28" text="SECURE, OPTIONAL DEVICE PAIRING" color="0x9EB6C3FF" font="font:SmallBoldSystemFont" />
+      <Rectangle translation="[64,136]" width="1784" height="2" color="0xC49545FF" />
+      <Label translation="[112,202]" width="940" height="108" text="Scan the QR code or visit the address below. Only continue when the same sync code appears on both screens." color="0xFFFFFFFF" font="font:LargeSystemFont" wrap="true" numLines="3" />
+      <Label id="pairUri" translation="[112,338]" width="1020" height="52" color="0xB8CBD5FF" font="font:MediumSystemFont" />
+      <Label translation="[112,432]" width="600" height="30" text="SYNC CODE" color="0x8FA8B6FF" font="font:SmallBoldSystemFont" />
+      <Label id="pairCode" translation="[112,476]" width="840" height="112" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" />
+      <Label id="pairCountdown" translation="[112,590]" width="840" height="36" text="New code in 60s" color="0xD5A24BFF" font="font:SmallBoldSystemFont" />
+      <Label id="pairStatus" translation="[112,654]" width="1000" height="100" text="Creating a secure request…" color="0xC5D5DEFF" font="font:MediumSystemFont" wrap="true" numLines="3" />
+      <LayoutGroup translation="[112,812]" layoutDirection="horiz" itemSpacings="[24]">
         <Button id="pairRetry" text="Try again" minWidth="240" />
         <Button id="pairClose" text="Close" minWidth="220" />
       </LayoutGroup>
-      <Label translation="[96,965]" width="1500" height="54" text="Account linking is optional. Courier news remains available without signing in." color="0x9CC5ADFF" font="font:SmallSystemFont" />
+      <Rectangle translation="[1240,176]" width="500" height="500" color="0xFFFFFFFF" />
+      <Poster id="pairQr" translation="[1270,206]" width="440" height="440" loadDisplayMode="scaleToFit" />
+      <Rectangle id="pairProcessingShade" translation="[1270,206]" width="440" height="440" color="0xFFFFFFFF" opacity="0" />
+      <BusySpinner id="pairSpinner" translation="[1420,356]" width="140" height="140" visible="false" spinInterval="2" />
+      <Label translation="[112,986]" width="1500" height="44" text="Account linking is optional. Courier news remains available without signing in." color="0x8FA8B6FF" font="font:SmallSystemFont" />
+      <Group id="pairSuccess" visible="false">
+        <Rectangle width="1920" height="1080" color="0x071C2CFF" />
+        <Rectangle translation="[850,300]" width="220" height="220" color="0x173E32FF" />
+        <Label translation="[850,300]" width="220" height="220" text="✓" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" horizAlign="center" vertAlign="center" />
+        <Label translation="[360,566]" width="1200" height="90" text="Authenticated" color="0xFFFFFFFF" font="font:ExtraLargeBoldSystemFont" horizAlign="center" />
+        <Label id="pairSuccessCopy" translation="[360,670]" width="1200" height="54" text="Returning to the Courier in 5…" color="0xAFC1CBFF" font="font:LargeSystemFont" horizAlign="center" />
+      </Group>
     </Group>
 
     <Video id="video" width="1920" height="1080" visible="false" enableUI="true" />
     <Timer id="pairTimer" duration="2" repeat="true" />
+    <Timer id="pairCountdownTimer" duration="1" repeat="true" />
+    <Timer id="pairSuccessTimer" duration="5" repeat="false" />
+    <Timer id="contentRefreshTimer" duration="300" repeat="true" />
   </children>
 </component>

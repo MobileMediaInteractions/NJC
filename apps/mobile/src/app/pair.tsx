@@ -1,7 +1,7 @@
 import { useAuth } from "@clerk/expo";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { Link, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -27,6 +27,7 @@ function parsePairing(value: string) {
     const url = new URL(value);
     const session = url.searchParams.get("session") ?? "";
     const code = formatCode(url.searchParams.get("code") ?? "");
+    const claimNonce = url.searchParams.get("nonce") ?? "";
     const requestedTarget = url.searchParams.get("target");
     const target =
       requestedTarget === "web" ||
@@ -36,10 +37,11 @@ function parsePairing(value: string) {
         : url.pathname.includes("/login/tv")
           ? "tv"
           : "";
-    return session && code && target
+    return session && code && target && claimNonce
       ? {
           session,
           code,
+          claimNonce,
           target: target as "tv" | "androidtv" | "roku" | "web",
         }
       : null;
@@ -55,6 +57,7 @@ export default function PairScreen() {
     session?: string;
     code?: string;
     target?: string;
+    nonce?: string;
   }>();
   const { isSignedIn, getToken } = useAuth();
   const [permission, requestPermission] = useCameraPermissions();
@@ -63,6 +66,9 @@ export default function PairScreen() {
   );
   const [code, setCode] = useState(
     formatCode(typeof params.code === "string" ? params.code : ""),
+  );
+  const [claimNonce, setClaimNonce] = useState(
+    typeof params.nonce === "string" ? params.nonce : "",
   );
   const [target, setTarget] = useState<
     "tv" | "androidtv" | "roku" | "web"
@@ -73,22 +79,80 @@ export default function PairScreen() {
       ? params.target
       : "web",
   );
-  const [scanned, setScanned] = useState(Boolean(session && code));
+  const [scanned, setScanned] = useState(false);
+  const [claiming, setClaiming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  const initialClaimStarted = useRef(false);
+
+  async function claimRequest(
+    nextSession: string,
+    nextCode: string,
+    nextTarget: "tv" | "androidtv" | "roku" | "web",
+    nextNonce: string,
+  ) {
+    setClaiming(true);
+    setNotice("");
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Sign in before approving another device.");
+      await authenticatedRequest(
+        `/api/v1/device-pairing/${encodeURIComponent(nextSession)}/claim`,
+        token,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            code: nextCode,
+            target: nextTarget,
+            claimNonce: nextNonce,
+          }),
+        },
+      );
+      setSession(nextSession);
+      setCode(nextCode);
+      setTarget(nextTarget);
+      setClaimNonce(nextNonce);
+      setScanned(true);
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "This QR sign-in request could not be secured.",
+      );
+    } finally {
+      setClaiming(false);
+    }
+  }
 
   function onScan(data: string) {
+    if (claiming) return;
     const parsed = parsePairing(data);
     if (!parsed) {
       setNotice("That QR code is not an NJ Courier sign-in request.");
       return;
     }
-    setSession(parsed.session);
-    setCode(parsed.code);
-    setTarget(parsed.target);
-    setScanned(true);
-    setNotice("");
+    void claimRequest(
+      parsed.session,
+      parsed.code,
+      parsed.target,
+      parsed.claimNonce,
+    );
   }
+
+  useEffect(() => {
+    if (
+      !isSignedIn ||
+      !session ||
+      !code ||
+      !claimNonce ||
+      initialClaimStarted.current
+    )
+      return;
+    initialClaimStarted.current = true;
+    void claimRequest(session, code, target, claimNonce);
+    // The initial deep link is intentionally claimed once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSignedIn]);
 
   async function approve() {
     setBusy(true);
@@ -99,7 +163,10 @@ export default function PairScreen() {
       await authenticatedRequest(
         `/api/v1/device-pairing/${encodeURIComponent(session)}/approve`,
         token,
-        { method: "POST", body: JSON.stringify({ code, target }) },
+        {
+          method: "POST",
+          body: JSON.stringify({ code, target, claimNonce }),
+        },
       );
       setNotice(
         target === "web"
@@ -113,6 +180,31 @@ export default function PairScreen() {
           : "The device could not be approved.",
       );
     } finally {
+      setBusy(false);
+    }
+  }
+
+  async function denyAndReset() {
+    setBusy(true);
+    try {
+      const token = await getToken();
+      if (token && session && claimNonce)
+        await authenticatedRequest(
+          `/api/v1/device-pairing/${encodeURIComponent(session)}/deny`,
+          token,
+          {
+            method: "POST",
+            body: JSON.stringify({ claimNonce }),
+          },
+        );
+    } catch {
+      // The server timeout still fails closed if an explicit denial cannot land.
+    } finally {
+      setSession("");
+      setCode("");
+      setClaimNonce("");
+      setScanned(false);
+      setNotice("");
       setBusy(false);
     }
   }
@@ -147,9 +239,14 @@ export default function PairScreen() {
           <CameraView
             style={styles.camera}
             barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-            onBarcodeScanned={({ data }) => onScan(data)}
+            onBarcodeScanned={claiming ? undefined : ({ data }) => onScan(data)}
           >
             <View style={styles.frame} />
+            {claiming ? (
+              <View style={styles.scanProcessing}>
+                <Text style={styles.scanProcessingText}>Securing request…</Text>
+              </View>
+            ) : null}
           </CameraView>
         ) : (
           <View style={styles.permission}>
@@ -207,12 +304,8 @@ export default function PairScreen() {
         </Text>
       </Pressable>
       <Pressable
-        onPress={() => {
-          setSession("");
-          setCode("");
-          setScanned(false);
-          setNotice("");
-        }}
+        disabled={busy}
+        onPress={() => void denyAndReset()}
         style={styles.cancel}
       >
         <Text style={styles.cancelText}>Cancel and scan again</Text>
@@ -223,8 +316,9 @@ export default function PairScreen() {
         </Text>
       ) : null}
       <Text style={styles.security}>
-        The QR carries a short-lived request, not your password. Codes expire
-        after 10 minutes and can be used once.
+        The QR carries a short-lived request, not your password. Codes rotate
+        after 60 seconds unless this app has secured the scan, and each request
+        can be used only once.
       </Text>
     </ScrollView>
   );
@@ -249,6 +343,20 @@ const makeStyles = (colors: AppColors) =>
       borderColor: colors.yellow,
       borderRadius: 20,
       backgroundColor: "transparent",
+    },
+    scanProcessing: {
+      position: "absolute",
+      width: 250,
+      height: 250,
+      borderRadius: 20,
+      backgroundColor: "rgba(3, 28, 46, 0.82)",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    scanProcessingText: {
+      color: "#FFFFFF",
+      fontSize: 17,
+      fontWeight: "900",
     },
     permission: {
       flex: 1,

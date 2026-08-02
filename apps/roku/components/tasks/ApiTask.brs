@@ -24,12 +24,17 @@ sub execute()
 end sub
 
 sub loadBootstrap()
-  stories = apiRequest("/api/v1/stories?limit=14", "GET", invalid)
+  storyPath = "/api/v1/stories?limit=30"
+  if m.top.category <> "" then storyPath = storyPath + "&category=" + m.top.category
+  stories = apiRequest(storyPath, "GET", invalid)
   if not stories.ok
     m.top.response = { ok: false, message: stories.message }
     return
   end if
-  m.top.response = { ok: true, stories: unwrap(stories.payload) }
+  configuration = apiRequest("/api/v1/config", "GET", invalid)
+  configValue = invalid
+  if configuration.ok then configValue = unwrap(configuration.payload)
+  m.top.response = { ok: true, stories: unwrap(stories.payload), config: configValue }
 end sub
 
 sub loadLive()

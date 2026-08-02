@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="NavigationItem" extends="Group">
+  <interface>
+    <field id="itemContent" type="node" onChange="showContent" />
+    <field id="focusPercent" type="float" onChange="showFocus" />
+  </interface>
+  <script type="text/brightscript" uri="pkg:/components/NavigationItem.brs" />
+  <children>
+    <Rectangle id="surface" width="238" height="56" color="0x00000000" />
+    <Label id="label" translation="[18,0]" width="202" height="52" color="0xAFC1CBFF" font="font:SmallBoldSystemFont" horizAlign="center" vertAlign="center" />
+    <Rectangle id="underline" translation="[18,52]" width="202" height="4" color="0xC49545FF" opacity="0" />
+  </children>
+</component>

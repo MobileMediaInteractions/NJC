@@ -7,6 +7,7 @@ import {
   createPairingCredentials,
   isDevicePairingConfigured,
   normalizeDevicePayload,
+  pairingCodeLifetimeSeconds,
   pairingHash,
   requesterAddress,
 } from "@/lib/device-pairing";
@@ -76,13 +77,14 @@ export async function POST(request: Request) {
     );
 
   const credentials = createPairingCredentials();
-  const expiresAt = new Date(Date.now() + 10 * 60_000);
+  const expiresAt = new Date(Date.now() + pairingCodeLifetimeSeconds * 1_000);
   const [created] = await db
     .insert(devicePairingRequests)
     .values({
       target: parsed.data.target,
       deviceName: parsed.data.deviceName,
       deviceSecretHash: credentials.deviceSecretHash,
+      claimNonceHash: credentials.claimNonceHash,
       userCodeHash: credentials.userCodeHash,
       requesterIpHash,
       expiresAt,
@@ -94,10 +96,10 @@ export async function POST(request: Request) {
   const verificationUri = ["androidtv", "roku"].includes(parsed.data.target)
     ? `${verificationBase}?target=${parsed.data.target}`
     : verificationBase;
-  const verificationUriComplete = `${verificationBase}?session=${created.id}&code=${encodeURIComponent(credentials.userCode)}&target=${parsed.data.target}`;
+  const verificationUriComplete = `${verificationBase}?session=${created.id}&code=${encodeURIComponent(credentials.userCode)}&target=${parsed.data.target}&nonce=${encodeURIComponent(credentials.claimNonce)}`;
   const qrValue =
     parsed.data.target === "web"
-      ? `harborline://pair?session=${created.id}&code=${encodeURIComponent(credentials.userCode)}&target=web`
+      ? `harborline://pair?session=${created.id}&code=${encodeURIComponent(credentials.userCode)}&target=web&nonce=${encodeURIComponent(credentials.claimNonce)}`
       : verificationUriComplete;
   return NextResponse.json(
     {
@@ -105,11 +107,13 @@ export async function POST(request: Request) {
         id: created.id,
         target: parsed.data.target,
         deviceSecret: credentials.deviceSecret,
+        claimNonce: credentials.claimNonce,
         userCode: credentials.userCode,
         verificationUri,
         verificationUriComplete,
         qrImageUrl: `${origin}/api/v1/device-pairing/qr?value=${encodeURIComponent(qrValue)}`,
         expiresAt: expiresAt.toISOString(),
+        lifetimeSeconds: pairingCodeLifetimeSeconds,
         pollIntervalSeconds: 2,
       },
       meta: { apiVersion: "1" },

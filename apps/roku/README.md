@@ -4,12 +4,16 @@ New Jersey Courier’s Roku client is a native SceneGraph application written in
 
 ## What works
 
-- Remote-first latest-story rail and lead-story reading view
+- A ground-up custom masthead, focus system and editorial front page driven by Studio's supported navigation and feature configuration
+- Section-aware story loading, lead-story presentation and a remote-first story rail
+- Modal article reading with complete paragraph pagination, Up/Down and Rewind/Fast Forward controls, a position indicator and focus restoration on Back
 - Live HLS playback through Roku’s native `Video` node
 - Weather conditions and alerts
 - System, light and dark appearance preferences stored in the Roku registry
 - Public access without an account
-- Optional QR/manual sync-code linking with a revocable 90-day device token
+- Optional secure QR/manual sync-code linking with 60-second rotation, a frozen processing state, conflict protection, five-second success confirmation and a revocable 90-day device token
+- Persistent account and beta-entitlement validation, with the Connect entry removed after successful linking
+- Validated last-known-good Studio configuration plus bounded story/config refresh and explicit loading, empty, offline and retry states
 - Anonymous Roku installation presence with no reading history or advertising identifier
 - Launch channel icon and splash artwork for FHD, HD and SD televisions
 - A separately labeled beta artwork set bundled for entitled accounts inside the same app
@@ -54,4 +58,4 @@ The second command uploads the existing ZIP to the device’s Developer Applicat
 
 Current Roku certification guidance requires non-TVE apps that require authentication to support an on-device authentication path. New Jersey Courier’s news, weather and live coverage do not require an account; QR/code linking is an optional personalization convenience. Before a Roku Channel Store submission, confirm the current authentication rules with Roku and add an approved on-device OAuth/AAL flow if Roku treats optional linking as an authenticated experience. Do not make remote-only linking a gate to public news.
 
-The launch package still needs final Channel Store screenshots, privacy disclosures, content ratings, streaming-rights confirmation and device-matrix certification.
+The launch package still needs final Channel Store screenshots, privacy disclosures, content ratings, streaming-rights confirmation and device-matrix certification. The custom interface, remote reader and pairing lifecycle must also be accepted on representative low-powered and current physical Roku devices; static validation and BrightScript compilation do not replace that hardware pass.

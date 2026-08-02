@@ -3,7 +3,7 @@
 import { useAuth, useUser } from "@clerk/nextjs";
 import { CheckCircle2, KeyRound, ShieldAlert, Tv } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -20,18 +20,24 @@ function formatUserCode(value: string) {
 export function TvPairingApproval({
   initialSession,
   initialCode,
+  initialClaimNonce,
   initialTarget,
 }: {
   initialSession: string;
   initialCode: string;
+  initialClaimNonce: string;
   initialTarget: "tv" | "androidtv" | "roku";
 }) {
   const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
   const [code, setCode] = useState(formatUserCode(initialCode));
   const [busy, setBusy] = useState(false);
+  const [claimed, setClaimed] = useState(false);
+  const [claiming, setClaiming] = useState(false);
   const [approved, setApproved] = useState(false);
+  const [denied, setDenied] = useState(false);
   const [notice, setNotice] = useState("");
+  const claimStarted = useRef(false);
   const deviceLabel =
     initialTarget === "roku"
       ? "Roku"
@@ -40,29 +46,119 @@ export function TvPairingApproval({
         : "Apple TV";
   const signInUrl = useMemo(
     () =>
-      `/sign-in?redirect_url=${encodeURIComponent(`/login/tv?${new URLSearchParams({ ...(initialSession ? { session: initialSession } : {}), ...(code ? { code } : {}), target: initialTarget })}`)}`,
-    [code, initialSession, initialTarget],
+      `/sign-in?redirect_url=${encodeURIComponent(`/login/tv?${new URLSearchParams({ ...(initialSession ? { session: initialSession } : {}), ...(code ? { code } : {}), ...(initialClaimNonce ? { nonce: initialClaimNonce } : {}), target: initialTarget })}`)}`,
+    [code, initialClaimNonce, initialSession, initialTarget],
   );
+
+  useEffect(() => {
+    if (
+      !isLoaded ||
+      !isSignedIn ||
+      !initialSession ||
+      !initialClaimNonce ||
+      !code ||
+      claimStarted.current
+    )
+      return;
+    claimStarted.current = true;
+    setClaiming(true);
+    void fetch(
+      `/api/v1/device-pairing/${encodeURIComponent(initialSession)}/claim`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code,
+          target: initialTarget,
+          claimNonce: initialClaimNonce,
+        }),
+      },
+    )
+      .then(async (response) => {
+        const payload = await response.json();
+        if (!response.ok)
+          throw new Error(
+            payload.error?.message ?? "This QR sign-in request is unavailable.",
+          );
+        setClaimed(true);
+        setNotice("");
+      })
+      .catch((error: unknown) => {
+        setNotice(
+          error instanceof Error
+            ? error.message
+            : "This QR sign-in request is unavailable.",
+        );
+      })
+      .finally(() => setClaiming(false));
+  }, [code, initialClaimNonce, initialSession, initialTarget, isLoaded, isSignedIn]);
 
   async function approve() {
     setBusy(true);
     setNotice("");
-    const path = initialSession
-      ? `/api/v1/device-pairing/${encodeURIComponent(initialSession)}/approve`
-      : "/api/v1/device-pairing/approve";
-    const response = await fetch(path, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, target: initialTarget }),
-    });
-    const payload = await response.json();
-    if (response.ok) setApproved(true);
-    else
+    try {
+      const path = initialSession
+        ? `/api/v1/device-pairing/${encodeURIComponent(initialSession)}/approve`
+        : "/api/v1/device-pairing/approve";
+      const response = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code,
+          target: initialTarget,
+          ...(initialClaimNonce ? { claimNonce: initialClaimNonce } : {}),
+        }),
+      });
+      const payload = await response.json();
+      if (response.ok) setApproved(true);
+      else
+        setNotice(
+          payload.error?.message ?? `This ${deviceLabel} could not be approved.`,
+        );
+    } catch {
       setNotice(
-        payload.error?.message ?? `This ${deviceLabel} could not be approved.`,
+        `This ${deviceLabel} could not be approved. Check your connection and try again.`,
       );
-    setBusy(false);
+    } finally {
+      setBusy(false);
+    }
   }
+
+  async function deny() {
+    if (!initialSession || !initialClaimNonce) return;
+    setBusy(true);
+    setNotice("");
+    try {
+      const response = await fetch(
+        `/api/v1/device-pairing/${encodeURIComponent(initialSession)}/deny`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ claimNonce: initialClaimNonce }),
+        },
+      );
+      const payload = await response.json();
+      if (response.ok) setDenied(true);
+      else setNotice(payload.error?.message ?? "The request could not be denied.");
+    } catch {
+      setNotice("The request could not be denied. It will expire safely.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (denied)
+    return (
+      <section className="mx-auto grid max-w-2xl place-items-center px-6 pb-20 pt-16 text-center">
+        <div className="grid size-20 place-items-center rounded-full bg-amber-400/15 text-amber-300">
+          <ShieldAlert className="size-10" />
+        </div>
+        <h1 className="mt-7 text-4xl font-black tracking-tight">Connection denied</h1>
+        <p className="mt-4 max-w-lg text-lg leading-8 text-white/70">
+          This single-use request can no longer connect a device. You may close this page.
+        </p>
+      </section>
+    );
 
   if (approved)
     return (
@@ -133,11 +229,30 @@ export function TvPairingApproval({
           <>
             <Button
               className="mt-6 h-12 w-full bg-brand-blue text-base font-black"
-              disabled={busy || code.length !== 7}
+              disabled={
+                busy ||
+                claiming ||
+                code.length !== 7 ||
+                Boolean(initialSession && initialClaimNonce && !claimed)
+              }
               onClick={() => void approve()}
             >
-              {busy ? "Verifying…" : `The codes match — connect ${deviceLabel}`}
+              {claiming
+                ? "Securing scanned request…"
+                : busy
+                  ? "Verifying…"
+                  : `The codes match — connect ${deviceLabel}`}
             </Button>
+            {claimed ? (
+              <Button
+                variant="outline"
+                className="mt-3 h-11 w-full"
+                disabled={busy}
+                onClick={() => void deny()}
+              >
+                These codes do not match — deny
+              </Button>
+            ) : null}
             <p className="mt-4 text-center text-xs text-slate-500">
               Approving as {user?.primaryEmailAddress?.emailAddress}
             </p>

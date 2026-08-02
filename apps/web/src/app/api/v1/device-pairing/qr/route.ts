@@ -1,13 +1,23 @@
 import QRCode from "qrcode";
 import { NextResponse } from "next/server";
+import { isValidPairingQrValue } from "@/lib/device-pairing";
 
 export const runtime = "nodejs";
 
 export async function GET(request: Request) {
   const value = new URL(request.url).searchParams.get("value") ?? "";
-  if (!value || value.length > 500)
+  if (
+    !value ||
+    value.length > 500 ||
+    !isValidPairingQrValue(value, new URL(request.url).origin)
+  )
     return NextResponse.json(
-      { error: { code: "invalid_request", message: "A QR value is required" } },
+      {
+        error: {
+          code: "invalid_request",
+          message: "A valid New Jersey Courier pairing value is required",
+        },
+      },
       { status: 400 },
     );
   const png = await QRCode.toBuffer(value, {

@@ -40,6 +40,8 @@ test("newsroom and account routes continue through Clerk middleware", () => {
   assert.equal(isClerkRouted("/api/v1/employee/bootstrap"), true);
   assert.equal(isClerkRouted("/api/v1/push/subscriptions"), true);
   assert.equal(isClerkRouted("/api/v1/analytics/page-view"), true);
+  assert.equal(isClerkRouted("/api/v1/device-pairing/pairing-id/claim"), true);
+  assert.equal(isClerkRouted("/api/v1/device-pairing/pairing-id/deny"), true);
   assert.equal(isClerkRouted("/api/v1/device-pairing/pairing-id/approve"), true);
 });
 

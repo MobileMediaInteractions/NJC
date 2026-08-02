@@ -19,7 +19,7 @@ function toRecordRows(rows: unknown[]) { return rows.map((row) => ({ ...(row as 
 function sanitize(name: string, rows: Record<string, unknown>[]) {
   if (name === "api_keys") return rows.map((row) => ({ ...row, keyHash: "DISABLED_AFTER_RESTORE", revokedAt: row.revokedAt ?? new Date().toISOString() }));
   if (name === "data_requests") return rows.map((row) => ({ ...row, verificationTokenHash: null }));
-  if (name === "device_pairing_requests") return rows.map((row) => ({ ...row, deviceSecretHash: "REMOVED", userCodeHash: "REMOVED", requesterIpHash: "REMOVED", status: "expired" }));
+  if (name === "device_pairing_requests") return rows.map((row) => ({ ...row, deviceSecretHash: "REMOVED", claimNonceHash: "REMOVED", userCodeHash: "REMOVED", requesterIpHash: "REMOVED", status: "expired" }));
   if (name === "device_sessions") return rows.map((row) => ({ ...row, tokenHash: "REMOVED", revokedAt: row.revokedAt ?? new Date().toISOString() }));
   if (name === "push_devices" || name === "employee_push_devices") return rows.map((row) => ({ ...row, token: "REMOVED", isActive: false }));
   if (name === "web_push_subscriptions") return rows.map((row) => ({

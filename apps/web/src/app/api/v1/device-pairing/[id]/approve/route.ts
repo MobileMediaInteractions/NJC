@@ -8,6 +8,7 @@ import {
   isDevicePairingConfigured,
   normalizeUserCode,
   pairingApprovalAllowed,
+  pairingRequestExpired,
   recordPairingApprovalAttempt,
   safePairingHashEqual,
 } from "@/lib/device-pairing";
@@ -15,6 +16,7 @@ import {
 const inputSchema = z.object({
   code: z.string().min(6).max(12),
   target: z.enum(["tv", "androidtv", "roku", "web"]),
+  claimNonce: z.string().min(48).max(120),
 });
 
 export async function POST(
@@ -81,7 +83,10 @@ export async function POST(
       },
       { status: 404 },
     );
-  if (pairing.expiresAt <= new Date() || pairing.status !== "pending")
+  if (
+    pairingRequestExpired(pairing) ||
+    pairing.status !== "processing"
+  )
     return NextResponse.json(
       {
         error: {
@@ -90,6 +95,19 @@ export async function POST(
         },
       },
       { status: 409 },
+    );
+  if (
+    pairing.claimedByClerkId !== identity.clerkId ||
+    !safePairingHashEqual(parsed.data.claimNonce, pairing.claimNonceHash)
+  )
+    return NextResponse.json(
+      {
+        error: {
+          code: "pairing_claim_mismatch",
+          message: "This scanned request belongs to another approval session",
+        },
+      },
+      { status: 409, headers: { "Cache-Control": "no-store" } },
     );
   if (pairing.approvalAttempts >= 5)
     return NextResponse.json(
@@ -114,7 +132,7 @@ export async function POST(
       .where(
         and(
           eq(devicePairingRequests.id, id),
-          eq(devicePairingRequests.status, "pending"),
+          eq(devicePairingRequests.status, pairing.status),
         ),
       );
     return NextResponse.json(
@@ -139,7 +157,7 @@ export async function POST(
     .where(
       and(
         eq(devicePairingRequests.id, id),
-        eq(devicePairingRequests.status, "pending"),
+        eq(devicePairingRequests.status, pairing.status),
       ),
     )
     .returning({ id: devicePairingRequests.id });

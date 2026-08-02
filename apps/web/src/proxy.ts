@@ -39,6 +39,8 @@ export const config = {
     "/api/v1/audience/presence",
     "/api/v1/analytics/page-view",
     "/api/v1/device-pairing/approve",
+    "/api/v1/device-pairing/:id/claim",
+    "/api/v1/device-pairing/:id/deny",
     "/api/v1/device-pairing/:id/approve",
   ],
 };

@@ -8,6 +8,7 @@
     <field id="releaseChannel" type="string" />
     <field id="osVersion" type="string" />
     <field id="installationId" type="string" />
+    <field id="category" type="string" />
     <field id="sessionId" type="string" />
     <field id="deviceSecret" type="string" />
     <field id="accessToken" type="string" />

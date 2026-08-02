@@ -82,10 +82,10 @@ if (!source.includes("transfer.AsyncGetToString()") || !source.includes("event.G
 if (!source.includes("Wait(10000, port)") || !source.includes("transfer.AsyncCancel()")) {
   throw new Error("Roku requests must have a bounded timeout and cancellation path.");
 }
-if (!source.includes("focusedNavigationIndex()") || !source.includes("focusNavigation(navIndex")) {
-  throw new Error("Roku D-pad navigation must explicitly route focus across the top controls.");
+if (!source.includes("onNavigationSelected") || !source.includes("m.navList.setFocus(true)")) {
+  throw new Error("Roku navigation must use the custom configuration-driven focus rail.");
 }
-if (!source.includes("updateAccountNavigation(true)") || !source.includes("m.connectButton.visible = not connected")) {
+if (!source.includes('if m.accessToken = "" then addNavigationItem(row, "Connect account"')) {
   throw new Error("Roku must remove the account connection control after sign-in.");
 }
 if (!source.includes("applyReleaseChannel(result.releaseChannel)") || !source.includes('applyReleaseChannel("production")')) {
@@ -97,6 +97,15 @@ if (!source.includes("hasPrereleaseAccess()") || !source.includes('m.releaseFlai
 if (!source.includes("absoluteMediaUrl(story.image)") || !source.includes('m.apiBase + uri')) {
   throw new Error("Roku story artwork must resolve site-relative media against the configured API origin.");
 }
+if (!source.includes('apiRequest("/api/v1/config"') || !source.includes("validConfiguration") || !source.includes('registry.Write("rokuConfig"')) {
+  throw new Error("Roku must consume and retain a validated last-known-good Studio configuration.");
+}
+if (!source.includes("buildArticlePages") || !source.includes('key = "fastforward"') || !source.includes("m.detailOverlay.visible")) {
+  throw new Error("Roku article reading must capture remote input and expose paged vertical reading.");
+}
+if (!source.includes('result.status = "processing"') || !source.includes("m.pairCountdownTimer") || !source.includes("m.pairSuccessTimer")) {
+  throw new Error("Roku pairing must implement rotation, frozen processing and timed success states.");
+}
 for (const key of ["deviceName", "deviceSecret", "installationId", "appVersion"]) {
   if (!source.includes(`body["${key}"]`)) {
     throw new Error(`Roku JSON payloads must preserve the ${key} wire key.`);
@@ -106,8 +115,11 @@ const mainSceneXml = readFileSync(resolve(root, "components/MainScene.xml"), "ut
 if (!mainSceneXml.includes('id="releaseFlair"') || !mainSceneXml.includes('visible="false"')) {
   throw new Error("Roku release flair must remain hidden until an entitled account is validated.");
 }
-if (!mainSceneXml.includes('drawFocusFeedback="false"') || !mainSceneXml.includes('itemSize="[1776,224]"')) {
+if (!mainSceneXml.includes('drawFocusFeedback="false"') || !mainSceneXml.includes('itemSize="[1784,224]"')) {
   throw new Error("The Roku story rail must use its custom, bounded focus renderer.");
+}
+if (!mainSceneXml.includes('id="detailScrollThumb"') || !mainSceneXml.includes('id="pairProcessingShade"') || !mainSceneXml.includes('id="pairSuccess"')) {
+  throw new Error("Roku reader and pairing presentation states are incomplete.");
 }
 if (mainSceneXml.includes('id="heroScrim"')) {
   throw new Error("The unused hero image scrim must not obscure story artwork.");

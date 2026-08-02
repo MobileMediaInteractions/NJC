@@ -26,3 +26,5 @@ The prebuild configures the Leanback launcher, declares that touch input is not 
 For EAS, replace `extra.eas.projectId` and run the `android-tv-development`, `android-tv-preview` or `android-tv-production` profile. The production profile outputs an Android App Bundle for Google Play.
 
 Apple TV reports the `tvos` platform and uses pairing target `tv`; Android TV reports `androidtv` and uses the matching `androidtv` pairing target. Both resolve to revocable television device sessions.
+
+The pairing display rotates its QR and sync code every 60 seconds until a signed-in mobile or web verifier claims it. A legitimate scan freezes and obscures the QR while the server verifies the nonce and claiming account. Approval shows a five-second success screen before restoring the prior television destination; denial, expiry and connection failures return a safe retry state.

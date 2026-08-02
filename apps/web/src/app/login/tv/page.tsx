@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default async function TvLoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ session?: string; code?: string; target?: string }>;
+    searchParams: Promise<{ session?: string; code?: string; target?: string; nonce?: string }>;
 }) {
   const params = await searchParams;
   if (!isClerkConfigured())
@@ -29,6 +29,7 @@ export default async function TvLoginPage({
     <TvPairingApproval
       initialSession={params.session ?? ""}
       initialCode={params.code ?? ""}
+      initialClaimNonce={params.nonce ?? ""}
       initialTarget={
         params.target === "roku" || params.target === "androidtv"
           ? params.target

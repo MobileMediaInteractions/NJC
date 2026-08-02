@@ -78,6 +78,7 @@ function createAudienceEventId() {
 }
 
 type Account = { name: string; platform: string; expiresAt?: string };
+type PairingPhase = "waiting" | "processing" | "success";
 type ThemeContextValue = {
   colors: TvColors;
   styles: ReturnType<typeof createStyles>;
@@ -198,6 +199,10 @@ function TvApp() {
   const [account, setAccount] = useState<Account | null>(null);
   const [guestMode, setGuestMode] = useState(false);
   const [pairing, setPairing] = useState<PairingRequest | null>(null);
+  const [pairingPhase, setPairingPhase] = useState<PairingPhase>("waiting");
+  const [pairingSeconds, setPairingSeconds] = useState(60);
+  const [successSeconds, setSuccessSeconds] = useState(5);
+  const [pendingAccount, setPendingAccount] = useState<Account | null>(null);
   const [stories, setStories] = useState<Story[]>([]);
   const [live, setLive] = useState<LiveSnapshot | null>(null);
   const [notice, setNotice] = useState("");
@@ -206,16 +211,23 @@ function TvApp() {
   const beginPairing = useCallback(async () => {
     setNotice("");
     setPairing(null);
+    setPairingPhase("waiting");
+    setSuccessSeconds(5);
     setLoading(true);
     try {
-      setPairing(
-        await api<PairingRequest>("/api/v1/device-pairing", {
-          method: "POST",
-          body: JSON.stringify({
-            target: tvPairingTarget,
-            deviceName: tvDeviceName,
-          }),
+      const request = await api<PairingRequest>("/api/v1/device-pairing", {
+        method: "POST",
+        body: JSON.stringify({
+          target: tvPairingTarget,
+          deviceName: tvDeviceName,
         }),
+      });
+      setPairing(request);
+      setPairingSeconds(
+        Math.max(
+          0,
+          Math.ceil((new Date(request.expiresAt).getTime() - Date.now()) / 1_000),
+        ),
       );
     } catch (error) {
       setNotice(
@@ -263,7 +275,21 @@ function TvApp() {
     return () => clearTimeout(timer);
   }, [account, beginPairing, guestMode, loading, notice, pairing]);
   useEffect(() => {
-    if (!pairing || account) return;
+    if (!pairing || pairingPhase === "success") return;
+    const update = () => {
+      const seconds = Math.max(
+        0,
+        Math.ceil((new Date(pairing.expiresAt).getTime() - Date.now()) / 1_000),
+      );
+      setPairingSeconds(seconds);
+      if (seconds === 0 && pairingPhase === "waiting") void beginPairing();
+    };
+    update();
+    const timer = setInterval(update, 1_000);
+    return () => clearInterval(timer);
+  }, [beginPairing, pairing, pairingPhase]);
+  useEffect(() => {
+    if (!pairing || account || pairingPhase === "success") return;
     let active = true;
     const poll = async () => {
       try {
@@ -275,12 +301,21 @@ function TvApp() {
           },
         );
         if (!active) return;
+        if (result.status === "processing") {
+          setPairingPhase("processing");
+          setPairing((current) =>
+            current ? { ...current, expiresAt: result.expiresAt } : current,
+          );
+          return;
+        }
         if (result.status === "approved" && "accessToken" in result) {
           await SecureStore.setItemAsync(tokenKey, result.accessToken);
-          setAccount({ ...result.account, expiresAt: result.expiresAt });
+          setPendingAccount({ ...result.account, expiresAt: result.expiresAt });
+          setPairingPhase("success");
           await reportPresence(result.accessToken);
-          setPairing(null);
-        } else if (["expired", "consumed", "denied"].includes(result.status)) {
+        } else if (result.status === "expired") {
+          void beginPairing();
+        } else if (["consumed", "denied"].includes(result.status)) {
           setPairing(null);
           setNotice(
             "This code is no longer active. Select Try again for a new code.",
@@ -304,7 +339,24 @@ function TvApp() {
       active = false;
       clearInterval(timer);
     };
-  }, [account, pairing]);
+  }, [account, beginPairing, pairing, pairingPhase]);
+  useEffect(() => {
+    if (pairingPhase !== "success" || !pendingAccount) return;
+    const interval = setInterval(
+      () => setSuccessSeconds((current) => Math.max(0, current - 1)),
+      1_000,
+    );
+    const finish = setTimeout(() => {
+      setAccount(pendingAccount);
+      setPendingAccount(null);
+      setPairing(null);
+      setPairingPhase("waiting");
+    }, 5_000);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(finish);
+    };
+  }, [pairingPhase, pendingAccount]);
 
   async function signOut() {
     const token = await SecureStore.getItemAsync(tokenKey);
@@ -324,6 +376,9 @@ function TvApp() {
     return (
       <PairingScreen
         pairing={pairing}
+        phase={pairingPhase}
+        secondsRemaining={pairingSeconds}
+        successSeconds={successSeconds}
         loading={loading}
         notice={notice}
         retry={beginPairing}
@@ -349,18 +404,36 @@ function TvApp() {
 
 function PairingScreen({
   pairing,
+  phase,
+  secondsRemaining,
+  successSeconds,
   loading,
   notice,
   retry,
   continueWithoutAccount,
 }: {
   pairing: PairingRequest | null;
+  phase: PairingPhase;
+  secondsRemaining: number;
+  successSeconds: number;
   loading: boolean;
   notice: string;
   retry: () => Promise<void>;
   continueWithoutAccount: () => void;
 }) {
   const { colors, styles } = useTvTheme();
+  if (phase === "success")
+    return (
+      <View style={styles.successPage}>
+        <View style={styles.successMark}>
+          <Text style={styles.successCheck}>✓</Text>
+        </View>
+        <Text style={styles.successTitle}>Authenticated</Text>
+        <Text style={styles.successCopy}>
+          Returning to the Courier in {successSeconds}…
+        </Text>
+      </View>
+    );
   return (
     <View style={styles.pairingPage}>
       <View style={styles.topBar}>
@@ -393,18 +466,34 @@ function PairingScreen({
         <View style={styles.qrCard}>
           {pairing ? (
             <>
-              <Image
-                source={{ uri: pairing.qrImageUrl }}
-                style={styles.qr}
-                alt={`QR code to connect this ${tvDeviceName}`}
-                accessibilityLabel={`QR code to connect this ${tvDeviceName}`}
-              />
+              <View style={styles.qrFrame}>
+                <Image
+                  source={{ uri: pairing.qrImageUrl }}
+                  style={[styles.qr, phase === "processing" && styles.qrProcessing]}
+                  alt={`QR code to connect this ${tvDeviceName}`}
+                  accessibilityLabel={`QR code to connect this ${tvDeviceName}`}
+                />
+                {phase === "processing" ? (
+                  <View style={styles.qrProcessingOverlay}>
+                    <ActivityIndicator size="large" color={colors.blue} />
+                  </View>
+                ) : null}
+              </View>
               <Text style={styles.codeLabel}>SYNC CODE</Text>
               <Text style={styles.code}>{pairing.userCode}</Text>
               <View style={styles.waiting}>
                 <ActivityIndicator color={colors.blue} />
-                <Text style={styles.waitingText}>Waiting for approval</Text>
+                <Text style={styles.waitingText}>
+                  {phase === "processing"
+                    ? "Secure scan received — processing"
+                    : "Waiting for approval"}
+                </Text>
               </View>
+              <Text style={styles.countdown}>
+                {phase === "processing"
+                  ? "Code rotation is frozen while you verify."
+                  : `New code in ${secondsRemaining}s`}
+              </Text>
             </>
           ) : (
             <View style={styles.cardCenter}>
@@ -697,6 +786,30 @@ function ThemeControls() {
 
 const createStyles = (colors: TvColors) =>
   StyleSheet.create({
+    successPage: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.navy,
+    },
+    successMark: {
+      width: 116,
+      height: 116,
+      borderRadius: 58,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#2F665433",
+      borderWidth: 3,
+      borderColor: colors.blue,
+    },
+    successCheck: { color: colors.white, fontSize: 66, fontWeight: "900" },
+    successTitle: {
+      color: colors.white,
+      fontSize: 58,
+      fontWeight: "900",
+      marginTop: 28,
+    },
+    successCopy: { color: colors.muted, fontSize: 23, marginTop: 14 },
     pairingPage: {
       flex: 1,
       backgroundColor: colors.navy,
@@ -767,7 +880,19 @@ const createStyles = (colors: TvColors) =>
       alignItems: "center",
       justifyContent: "center",
     },
+    qrFrame: { width: 300, height: 300 },
     qr: { width: 300, height: 300 },
+    qrProcessing: { opacity: 0.25 },
+    qrProcessingOverlay: {
+      position: "absolute",
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "#FFFFFF99",
+    },
     codeLabel: {
       color: "#6C7B85",
       fontSize: 12,
@@ -789,6 +914,13 @@ const createStyles = (colors: TvColors) =>
       marginTop: 18,
     },
     waitingText: { color: colors.blue, fontSize: 15, fontWeight: "800" },
+    countdown: {
+      color: "#6C7B85",
+      fontSize: 13,
+      fontWeight: "700",
+      marginTop: 10,
+      textAlign: "center",
+    },
     cardCenter: { alignItems: "center", gap: 20 },
     error: { color: colors.red, fontSize: 17, textAlign: "center" },
     button: {

@@ -91,7 +91,9 @@ export default function PrivacyPage() {
         </h2>
         <p className="mt-3">
           Retention is limited to operational, editorial, security and legal
-          needs. Unapproved pairing requests expire after ten minutes. Television
+          needs. Unscanned pairing requests rotate after 60 seconds. A legitimate
+          scan freezes the displayed code only for a short, server-controlled
+          verification window. Television
           sessions expire after 90 days unless renewed and can be revoked by
           signing out. Revoked API-key records and security audit logs may be
           retained to investigate abuse. Audience installation, version-history
