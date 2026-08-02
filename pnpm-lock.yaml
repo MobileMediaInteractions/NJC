@@ -308,6 +308,9 @@ importers:
       '@harborline/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@lexical/code':
+        specifier: 0.38.2
+        version: 0.38.2
       '@lexical/history':
         specifier: 0.38.2
         version: 0.38.2

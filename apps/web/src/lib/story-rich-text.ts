@@ -24,6 +24,7 @@ const allowedNodeTypes = new Set([
   "table",
   "tablerow",
   "tablecell",
+  "code",
 ]);
 
 export const storyRichTextDocumentSchema = z.custom<StoryRichTextDocument>(
@@ -90,12 +91,13 @@ export function validateStoryRichTextDocument(value: unknown): {
 export function createPlainStoryRichTextDocument(
   paragraphs: string[],
 ): StoryRichTextDocument {
+  const initialParagraphs = paragraphs.length > 0 ? paragraphs : [""];
   return {
     schemaVersion: STORY_RICH_TEXT_SCHEMA_VERSION,
     editor: "lexical",
     state: {
       root: {
-        children: paragraphs.map((paragraph) => ({
+        children: initialParagraphs.map((paragraph) => ({
           children: paragraph
             ? [{ detail: 0, format: 0, mode: "normal", style: "", text: paragraph, type: "text", version: 1 }]
             : [],
@@ -130,7 +132,7 @@ export function richTextToPlainParagraphs(
     return (node.children ?? []).map(collectText).join("");
   };
   const visitBlocks = (node: StoryRichTextNode) => {
-    if (["paragraph", "heading", "quote", "listitem", "tablecell"].includes(node.type)) {
+    if (["paragraph", "heading", "quote", "listitem", "tablecell", "code"].includes(node.type)) {
       const text = collectText(node).replace(/[ \t]+\n/g, "\n").trim();
       if (text) paragraphs.push(text);
       return;

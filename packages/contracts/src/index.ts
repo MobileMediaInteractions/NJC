@@ -87,6 +87,8 @@ export interface StoryRichTextNode {
   width?: number;
   backgroundColor?: string | null;
   height?: number;
+  language?: string | null;
+  highlightType?: string | null;
 }
 
 export interface StoryRichTextDocument {

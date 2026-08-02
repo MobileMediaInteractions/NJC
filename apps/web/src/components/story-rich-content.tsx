@@ -82,6 +82,8 @@ function renderBlock(node: StoryRichTextNode, key: string, dropCap: boolean): Re
       const Tag = (node.headerState ?? 0) > 0 ? "th" : "td";
       return <Tag key={key} colSpan={node.colSpan ?? 1} rowSpan={node.rowSpan ?? 1}>{children}</Tag>;
     }
+    case "code":
+      return <pre key={key} data-language={node.language || undefined}><code>{children}</code></pre>;
     default:
       return renderInline(node, key);
   }
@@ -120,7 +122,7 @@ function renderInline(node: StoryRichTextNode, key: string): ReactNode {
 
 function renderChildren(node: StoryRichTextNode, key: string) {
   return (node.children ?? []).map((child, index) =>
-    ["paragraph", "heading", "quote", "list", "listitem", "table", "tablerow", "tablecell"].includes(child.type)
+    ["paragraph", "heading", "quote", "list", "listitem", "table", "tablerow", "tablecell", "code"].includes(child.type)
       ? renderBlock(child, `${key}-${index}`, false)
       : renderInline(child, `${key}-${index}`),
   );

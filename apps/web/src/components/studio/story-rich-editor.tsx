@@ -42,6 +42,7 @@ import {
   REMOVE_LIST_COMMAND,
 } from "@lexical/list";
 import { AutoLinkNode, LinkNode, TOGGLE_LINK_COMMAND } from "@lexical/link";
+import { CodeNode } from "@lexical/code";
 import { TRANSFORMERS } from "@lexical/markdown";
 import { $setBlocksType } from "@lexical/selection";
 import { mergeRegister } from "@lexical/utils";
@@ -105,6 +106,7 @@ export function StoryRichEditor({
         ListItemNode,
         LinkNode,
         AutoLinkNode,
+        CodeNode,
         TableNode,
         TableRowNode,
         TableCellNode,
@@ -116,6 +118,7 @@ export function StoryRichEditor({
         paragraph: "story-editor-paragraph",
         heading: { h2: "story-editor-h2", h3: "story-editor-h3" },
         quote: "story-editor-quote",
+        code: "story-editor-code-block",
         link: "story-editor-link",
         list: {
           nested: { listitem: "story-editor-nested-listitem" },

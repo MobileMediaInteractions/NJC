@@ -173,7 +173,8 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 ## Newsroom and publishing
 
 - [ ] Run the protected rich-story-editor acceptance matrix in production with
-  separate author and approver accounts: create and reload a formatted draft,
+  separate author and approver accounts: open a completely blank **New story**
+  without a runtime error, create and reload a formatted draft,
   exercise Write/Split/Preview and the per-session visual/plain toggle, submit
   it, inspect the rich-format comparison, approve it, publish it, and verify the
   public reader presentation plus the portable plain-copy API fallback. Repeat
