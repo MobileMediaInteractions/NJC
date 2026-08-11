@@ -142,10 +142,11 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > implemented. It remains separate from `njc-web` by design. See
 > [the Status runbook](docs/operations/STATUS_SERVICE.md).
 
-- [x] Create/connect the independent `njc-status` Vercel project and attach
-  `status.thejerseycourier.com`. The project uses `apps/status`, the same Git
-  repository and production branch `main` without sharing the `njc-web`
-  failure domain.
+- [x] Create, Git-connect and production-deploy the independent `njc-status`
+  Vercel project, verify its provider-protected `/api/health` and `/api/status`
+  responses, and attach `status.thejerseycourier.com`. The project uses
+  `apps/status`, the same repository and production branch `main` without
+  sharing the `njc-web` failure domain.
 - [ ] At IONOS, add the exact Vercel-recommended CNAME `status` →
   `41e5f6338ab579af.vercel-dns-017.com.`, wait for TLS, and prove the page and
   `/api/health` remain available during a controlled `njc-web` outage or
