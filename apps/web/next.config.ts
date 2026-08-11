@@ -25,6 +25,17 @@ const apiOrigin = `https://${apiHostname}`;
 const plusOrigin = `https://${plusHostname}`;
 const distributionOrigin = `https://${distributionHostname}`;
 const pressOrigin = `https://${pressHostname}`;
+const futureRedirectHostnames = [
+  "links.thejerseycourier.com",
+  "support.thejerseycourier.com",
+  "careers.thejerseycourier.com",
+  "events.thejerseycourier.com",
+  "live.thejerseycourier.com",
+  "weather.thejerseycourier.com",
+  "newsletters.thejerseycourier.com",
+  "ads.thejerseycourier.com",
+  "account.thejerseycourier.com",
+] as const;
 const studioSections = [
   "20-under-20",
   "analytics",
@@ -166,6 +177,12 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      ...futureRedirectHostnames.map((hostname) => ({
+        source: "/:path*",
+        has: onHost(hostname),
+        destination: `${canonicalSiteOrigin}/:path*`,
+        permanent: true,
+      })),
       {
         source: "/analytics",
         has: onHost(canonicalSiteHostname),

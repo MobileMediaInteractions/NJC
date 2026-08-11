@@ -104,6 +104,32 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   approved IDs, versions, hashes and restrictions—never a private path or
   unapproved file.
 
+## Domain operations — production activation remaining
+
+> The repository now has one typed hostname registry and a locked Studio
+> **Settings → Domain control** surface. Generic provisioning is limited to
+> pre-approved web hostnames, the exact production Studio host, an active
+> administrator on an explicit server-side operator allowlist, a signed
+> five-minute preview, an exact hostname confirmation, a substantial reason,
+> durable audit storage and a fixed Vercel project. It cannot delete domains,
+> edit arbitrary DNS, expose provider credentials, provision the CDN/status
+> projects, or publish the `int` security boundary. See
+> [the domain-control runbook](docs/operations/DOMAIN_CONTROL.md).
+
+- [ ] After the current domain batch is attached and its authoritative CNAMEs
+  are verified, configure the production control with a dedicated
+  least-privilege Vercel token, optional IONOS Cloud DNS token/zone, an
+  independently generated challenge secret and the exact Clerk IDs of the
+  approved infrastructure operators. Keep `DOMAIN_CONTROL_ENABLED=false`
+  until provider scope, audit retention, token rotation and recovery have been
+  reviewed; then perform one monitored idempotent activation and one denied
+  non-operator rehearsal before enabling ordinary use.
+- [ ] Keep the registry current whenever a hostname changes purpose, project,
+  activation state or owner. Reserved hosts must redirect to the canonical
+  publication until their first-party surface is approved. `status` must use
+  an independent failure-domain service, and `int` must remain DNS-dark until
+  every connection-level perimeter requirement below is complete.
+
 ## Mandatory third product implementation — external perimeter, enrollment and staged migration remaining
 
 > The repository-wide inventory, 1,148-file ownership/sensitivity register,
