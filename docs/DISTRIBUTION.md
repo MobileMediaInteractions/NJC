@@ -40,9 +40,10 @@ active recipient. Distribution availability never triggers public publishing.
 
 ## Domain and configuration
 
-Attach `distribution.thejerseycourier.com` to the existing `njc-web` Vercel
-project. Do not attach it to the static CDN. Add the hostname to Clerk’s
-production custom/satellite-domain configuration.
+`distribution.thejerseycourier.com` is attached to the existing `njc-web`
+Vercel project. Its authoritative CNAME, HTTPS verification, and Clerk
+production custom/satellite-domain configuration remain required. Do not
+attach it to the static CDN.
 
 ```dotenv
 NEXT_PUBLIC_DISTRIBUTION_HOST=distribution.thejerseycourier.com

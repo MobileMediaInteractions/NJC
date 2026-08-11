@@ -21,7 +21,8 @@ takeover, certificate and phishing risk.
 
 Future labels reserved by the registry are `status`, `links`, `support`,
 `careers`, `events`, `live`, `weather`, `newsletters`, `ads`, and `account`.
-They are dormant unless deliberately provisioned. Future web labels redirect to
+The web labels are attached to `njc-web` but remain DNS-dormant until their
+authoritative records are deliberately activated. Future web labels redirect to
 the canonical publication until a reviewed product surface replaces that
 redirect. `status` is excluded from generic provisioning because a status page
 must remain independent of the primary application. `int` is excluded because

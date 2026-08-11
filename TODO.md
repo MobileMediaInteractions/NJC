@@ -76,9 +76,8 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   restored Press request token and package token is revoked. Migration `0036`,
   separate production/preview token peppers, private Vercel Blob, and durable
   KV rate limiting are configured in production.
-- [ ] Create the required third-party DNS record for the already-attached
-  `press.thejerseycourier.com` Vercel domain. IONOS is currently signed out and
-  public DNS remains NXDOMAIN; add only
+- [ ] Create the required authoritative DNS record for the already-attached
+  `press.thejerseycourier.com` Vercel domain. Public DNS remains NXDOMAIN; add only
   `CNAME press 637644a6ea56a9c4.vercel-dns-017.com.`, wait for SSL, set
   `PRESS_SUBDOMAIN_ENABLED=true`, redeploy, and run the host,
   canonical, no-index API, legacy `/press`, secure-download, raw Vercel alias,
@@ -115,6 +114,10 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > edit arbitrary DNS, expose provider credentials, provision the CDN/status
 > projects, or publish the `int` security boundary. See
 > [the domain-control runbook](docs/operations/DOMAIN_CONTROL.md).
+
+> Vercel project attachment is complete for `press`, `distribution`, `links`,
+> `support`, `careers`, `events`, `live`, `weather`, `newsletters`, `ads`, and
+> `account`. Their authoritative IONOS CNAMEs and HTTPS checks remain pending.
 
 - [ ] After the current domain batch is attached and its authoritative CNAMEs
   are verified, configure the production control with a dedicated
