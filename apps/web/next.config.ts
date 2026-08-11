@@ -63,7 +63,7 @@ function onHost(value: string) {
 }
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@harborline/backend", "@harborline/contracts"],
+  transpilePackages: ["@harborline/backend", "@harborline/contracts", "@njcourier/domain-registry"],
   images: {
     remotePatterns: [
       {

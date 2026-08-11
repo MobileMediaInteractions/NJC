@@ -17,15 +17,16 @@ takeover, certificate and phishing risk.
 | `cdn.thejerseycourier.com` | NJC CDN | Immutable public assets |
 | `press.thejerseycourier.com` | NJC web | Press & Media portal |
 | `distribution.thejerseycourier.com` | NJC web | Authorized distribution portal |
+| `status.thejerseycourier.com` | NJC Status | Independent public availability and incident surface |
 | `int.thejerseycourier.com` | Separate internal app | No DNS until Access + mTLS is proven |
 
-Future labels reserved by the registry are `status`, `links`, `support`,
-`careers`, `events`, `live`, `weather`, `newsletters`, `ads`, and `account`.
+Future labels reserved by the registry are `links`, `support`, `careers`,
+`events`, `live`, `weather`, `newsletters`, `ads`, and `account`.
 The web labels are attached to `njc-web` but remain DNS-dormant until their
 authoritative records are deliberately activated. Future web labels redirect to
 the canonical publication until a reviewed product surface replaces that
-redirect. `status` is excluded from generic provisioning because a status page
-must remain independent of the primary application. `int` is excluded because
+redirect. `status` remains excluded from generic provisioning because its
+dedicated project must remain independent of the primary application. `int` is excluded because
 DNS publication before the connection-level perimeter would violate the
 internal-boundary design.
 

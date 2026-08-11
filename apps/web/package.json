@@ -38,6 +38,7 @@
     "@lexical/table": "0.38.2",
     "@lexical/utils": "0.38.2",
     "@neondatabase/serverless": "^1.1.0",
+    "@njcourier/domain-registry": "workspace:*",
     "@platform/runtime": "workspace:*",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",

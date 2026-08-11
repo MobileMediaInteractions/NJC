@@ -12,6 +12,7 @@ deployment and one separately deployable static asset origin.
 | `plus.thejerseycourier.com` | `njc-web` | Host-aware NJC+ product routes; unavailable public surfaces redirect to the canonical publication while Studio preview and invited-beta access remain entitlement-gated |
 | `distribution.thejerseycourier.com` | `njc-web` | Private, no-index advance-release library. Every package, preview, stream, and download is authorized server-side against a verified Clerk account and an active database grant. |
 | `press.thejerseycourier.com` | `njc-web` | Public Press & Media portal. Conversational intake is public and rate-limited; policy decisions, private packages, downloads, and Studio review remain server-authorized and audited. |
+| `status.thejerseycourier.com` | separate project rooted at `apps/status` | Independent public availability dashboard, live contract-aware checks, JSON health endpoints and optional 90-day aggregate history. It must never be served by `njc-web`. |
 | `int.thejerseycourier.com` | separate project rooted at `apps/internal` — **not deployed** | Reserved internal boundary. It must remain without public DNS or a production deployment until the documented Cloudflare Access + mTLS perimeter, explicit eligibility grant, and denial matrix pass. |
 
 DNS labels cannot contain `+`, so the public hostname for NJC+ is `plus`.
@@ -93,3 +94,6 @@ After deployment:
 6. Confirm the Press host root renders the dedicated portal, `/press` on the
    main domain still serves the legacy generator, request APIs are no-index,
    and a package download fails without its current request-bound header token.
+7. Confirm the Status host remains available while `njc-web` is unavailable,
+   reports every managed hostname using its own expected response contract, and
+   labels missing history as unknown rather than uptime.

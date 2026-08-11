@@ -133,6 +133,34 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   an independent failure-domain service, and `int` must remain DNS-dark until
   every connection-level perimeter requirement below is complete.
 
+## Independent Status service — external activation and operations remaining
+
+> The dedicated `apps/status` service, complete managed-hostname catalog,
+> contract-aware live checks, self-health and machine-readable APIs,
+> responsive light/dark/system interface, issue summary, honest 90-day tick
+> lines, optional aggregate Redis history, security headers and tests are
+> implemented. It remains separate from `njc-web` by design. See
+> [the Status runbook](docs/operations/STATUS_SERVICE.md).
+
+- [x] Create/connect the independent `njc-status` Vercel project and attach
+  `status.thejerseycourier.com`. The project uses `apps/status`, the same Git
+  repository and production branch `main` without sharing the `njc-web`
+  failure domain.
+- [ ] At IONOS, add the exact Vercel-recommended CNAME `status` →
+  `41e5f6338ab579af.vercel-dns-017.com.`, wait for TLS, and prove the page and
+  `/api/health` remain available during a controlled `njc-web` outage or
+  blocked-origin rehearsal.
+- [ ] Provision a separate free-compatible Upstash Redis for retained status
+  history, configure only `STATUS_REDIS_REST_URL` and
+  `STATUS_REDIS_REST_TOKEN`, then activate an independent collector at the
+  reviewed interval. Confirm every green/degraded/red/gray tick comes from a
+  retained sample and that the five-minute global bucket prevents duplicates.
+- [ ] Add an audited incident and maintenance authoring workflow, component
+  selection, public incident updates, resolution timestamps and optional
+  subscriber notifications before claiming those capabilities. Do not place
+  incident control in the public app or make it depend exclusively on the
+  service currently experiencing an outage.
+
 ## Mandatory third product implementation — external perimeter, enrollment and staged migration remaining
 
 > The repository-wide inventory, 1,148-file ownership/sensitivity register,
