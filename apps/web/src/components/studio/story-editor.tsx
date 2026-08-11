@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type DragEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import dynamic from "next/dynamic";
 import { ArrowLeft, CalendarClock, CheckCircle2, CloudUpload, Columns3, Eye, FilePenLine, ImageIcon, Loader2, Save, Send, Sparkles, Trash2 } from "lucide-react";
 import Image from "next/image";
@@ -33,6 +33,36 @@ const categories = [
   ["local", "Local News"], ["middlesex", "Middlesex County"], ["statehouse", "Statehouse Desk"], ["public-square", "Public Square"], ["opinion", "Garden State Forum"], ["sports", "Jersey Gridiron & Court"], ["jersey-laurels", "Jersey Laurels"], ["investigates", "Courier Watch"], ["weather", "Weather"], ["culture", "Arts & Culture"],
 ];
 
+type StoryEditorDraftState = {
+  headline: string;
+  slug: string;
+  dek: string;
+  body: string;
+  richBody: StoryRichTextDocument;
+  includeWhyItMatters: boolean;
+  category: string;
+  location: string;
+  tags: string[];
+  seoTitle: string;
+  seoDescription: string;
+  canonicalUrl: string;
+  noIndex: boolean;
+  breaking: boolean;
+  schedulePlanned: boolean;
+  scheduledAt: string;
+  bylineMode: "account" | "pseudonym";
+  imageUrl: string;
+  imageAlt: string;
+  imageAssetId: string | null;
+  imageKind: "editorial" | "ai_placeholder";
+};
+
+type StoryEditorRecovery = {
+  baseline: string;
+  savedAt: string;
+  draft: StoryEditorDraftState;
+};
+
 export interface StoryEditorInitialStory {
   id: string;
   headline: string;
@@ -57,6 +87,7 @@ export interface StoryEditorInitialStory {
   status: "draft" | "review" | "scheduled" | "published";
   scheduledAt: string | null;
   isActive: boolean;
+  updatedAt: string;
 }
 
 export function StoryEditor({
@@ -124,6 +155,8 @@ export function StoryEditor({
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [message, setMessage] = useState("");
   const [fieldErrors, setFieldErrors] = useState<StoryFieldErrors>({});
+  const [recovery, setRecovery] = useState<StoryEditorRecovery | null>(null);
+  const [localSaveTime, setLocalSaveTime] = useState<string | null>(null);
   const datelineOptions = location && !datelines.includes(location) ? [location, ...datelines] : datelines;
   const bodyParagraphs = body.split(/\n\n+/).map((item) => item.trim()).filter(Boolean);
   const generatedWhyItMatters = includeWhyItMatters
@@ -134,6 +167,62 @@ export function StoryEditor({
   const pseudonymByline = bylineOptions.find((option) => option.mode === "pseudonym");
   const selectedByline =
     bylineOptions.find((option) => option.mode === bylineMode) ?? accountByline;
+  const recoveryKey = `njc:story-recovery:${initialStory?.id ?? "new"}`;
+  const baseline = initialStory?.updatedAt ?? "new";
+  const draftState = useMemo<StoryEditorDraftState>(() => ({
+    headline, slug, dek, body, richBody, includeWhyItMatters, category,
+    location, tags, seoTitle, seoDescription, canonicalUrl, noIndex, breaking,
+    schedulePlanned, scheduledAt, bylineMode, imageUrl, imageAlt, imageAssetId,
+    imageKind,
+  }), [
+    headline, slug, dek, body, richBody, includeWhyItMatters, category,
+    location, tags, seoTitle, seoDescription, canonicalUrl, noIndex, breaking,
+    schedulePlanned, scheduledAt, bylineMode, imageUrl, imageAlt, imageAssetId,
+    imageKind,
+  ]);
+  const serializedDraft = useMemo(() => JSON.stringify(draftState), [draftState]);
+  const [initialDraft] = useState(() => serializedDraft);
+  const isDirty = serializedDraft !== initialDraft;
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty]);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(recoveryKey);
+      if (!stored) return;
+      const parsed: unknown = JSON.parse(stored);
+      if (
+        isStoryEditorRecovery(parsed) &&
+        parsed.baseline === baseline &&
+        parsed.draft &&
+        JSON.stringify(parsed.draft) !== initialDraft
+      ) {
+        window.setTimeout(() => setRecovery(parsed), 0);
+      }
+    } catch {
+      window.localStorage.removeItem(recoveryKey);
+    }
+  }, [baseline, initialDraft, recoveryKey]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const timeout = window.setTimeout(() => {
+      const savedAt = new Date().toISOString();
+      window.localStorage.setItem(
+        recoveryKey,
+        JSON.stringify({ baseline, savedAt, draft: draftState } satisfies StoryEditorRecovery),
+      );
+      setLocalSaveTime(savedAt);
+    }, 1_200);
+    return () => window.clearTimeout(timeout);
+  }, [baseline, draftState, isDirty, recoveryKey]);
 
   async function save(status: "draft" | "review") {
     const categoryLabel = categories.find(([value]) => value === category)?.[1] ?? "Middlesex County";
@@ -169,9 +258,12 @@ export function StoryEditor({
       const payload = await response.json().catch(() => null);
       if (response.ok && payload?.data?.slug) {
         setState("saved");
+        window.localStorage.removeItem(recoveryKey);
         const liveRevision = initialStory?.status === "published";
         setMessage(
-          liveRevision
+          payload?.meta?.unchanged
+            ? "No editorial changes were found, so no revision was created."
+            : liveRevision
             ? "Update submitted for independent approval."
             : status === "review"
               ? "Story submitted for review."
@@ -307,9 +399,27 @@ export function StoryEditor({
     return fieldErrors[name]?.[0];
   }
 
+  function restoreRecovery() {
+    if (!recovery) return;
+    const draft = recovery.draft;
+    setHeadline(draft.headline); setSlug(draft.slug); setDek(draft.dek);
+    setBody(draft.body); setRichBody(draft.richBody);
+    setIncludeWhyItMatters(draft.includeWhyItMatters);
+    setCategory(draft.category); setLocation(draft.location); setTags(draft.tags);
+    setSeoTitle(draft.seoTitle); setSeoDescription(draft.seoDescription);
+    setCanonicalUrl(draft.canonicalUrl); setNoIndex(draft.noIndex);
+    setBreaking(draft.breaking); setSchedulePlanned(draft.schedulePlanned);
+    setScheduledAt(draft.scheduledAt); setBylineMode(draft.bylineMode);
+    setImageUrl(draft.imageUrl); setImageAlt(draft.imageAlt);
+    setImageAssetId(draft.imageAssetId); setImageKind(draft.imageKind);
+    setRecovery(null);
+    setMessage("Unsaved browser recovery restored. Review it, then save a meaningful revision.");
+  }
+
   return (
     <div className="mx-auto max-w-7xl">
-      <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><Button variant="ghost" size="sm" asChild className="mb-2 -ml-3 text-muted-foreground"><Link href="/studio/stories"><ArrowLeft /> All stories</Link></Button><h1 className="text-3xl font-bold tracking-tight">{initialStory?.status === "published" ? "Propose live-story update" : initialStory ? "Edit story" : "Create story"}</h1><p className="mt-1 text-sm text-muted-foreground">{initialStory?.status === "published" ? "The live article stays unchanged until a different publisher approves this comparison." : initialStory ? initialStory.status !== "draft" ? "Any pre-publication change returns this story to Draft so it can be reviewed again." : "Continue writing or submit this saved draft for editorial review." : "Every story starts as a draft. Save it first, then submit it for review."}</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => save("draft")} disabled={state === "saving" || uploadState === "uploading" || generationState === "generating"}>{state === "saving" ? <Loader2 className="animate-spin" /> : <Save />} {initialStory?.status === "published" ? "Submit update for approval" : initialStory && initialStory.status !== "draft" ? "Save changes as draft" : "Save draft"}</Button>{initialStory?.status === "draft" ? <Button onClick={() => save("review")} disabled={state === "saving" || uploadState === "uploading" || generationState === "generating"}>{state === "saving" ? <Loader2 className="animate-spin" /> : <Send />} Send to review</Button> : null}</div></div>
+      <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><Button variant="ghost" size="sm" asChild className="mb-2 -ml-3 text-muted-foreground"><Link href="/studio/stories"><ArrowLeft /> All stories</Link></Button><div className="flex flex-wrap items-center gap-3"><h1 className="text-3xl font-bold tracking-tight">{initialStory?.status === "published" ? "Propose live-story update" : initialStory ? "Edit story" : "Create story"}</h1><Badge variant={isDirty ? "secondary" : "outline"}>{isDirty ? "Unsaved changes" : "Saved"}</Badge></div><p className="mt-1 text-sm text-muted-foreground">{initialStory?.status === "published" ? "The live article stays unchanged until a different publisher approves this comparison." : initialStory ? initialStory.status !== "draft" ? "Any pre-publication change returns this story to Draft so it can be reviewed again." : "Continue writing or submit this saved draft for editorial review." : "Every story starts as a draft. Save it first, then submit it for review."}</p>{localSaveTime && isDirty ? <p className="mt-1 text-xs text-muted-foreground">Browser recovery saved {new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" }).format(new Date(localSaveTime))}. It is temporary and is not a newsroom revision.</p> : null}</div><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => save("draft")} disabled={state === "saving" || uploadState === "uploading" || generationState === "generating"}>{state === "saving" ? <Loader2 className="animate-spin" /> : <Save />} {initialStory?.status === "published" ? "Review and submit update" : initialStory && initialStory.status !== "draft" ? "Save changes as draft" : "Save draft"}</Button>{initialStory?.status === "draft" ? <Button onClick={() => save("review")} disabled={state === "saving" || uploadState === "uploading" || generationState === "generating"}>{state === "saving" ? <Loader2 className="animate-spin" /> : <Send />} Send to review</Button> : null}</div></div>
+      {recovery ? <div className="mb-5 flex flex-col justify-between gap-3 rounded-lg border border-amber-500/40 bg-amber-500/5 p-4 sm:flex-row sm:items-center"><div><p className="font-semibold">Unsaved browser recovery found</p><p className="mt-1 text-xs text-muted-foreground">Saved {new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(recovery.savedAt))}. Restoring does not create a permanent revision until you save.</p></div><div className="flex gap-2"><Button type="button" size="sm" onClick={restoreRecovery}>Restore</Button><Button type="button" size="sm" variant="ghost" onClick={() => { window.localStorage.removeItem(recoveryKey); setRecovery(null); }}>Discard</Button></div></div> : null}
       {message && <div className={`mb-5 flex items-center gap-2 rounded-md border p-3 text-sm ${state === "error" ? "border-destructive/30 bg-destructive/10 text-destructive" : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"}`}><CheckCircle2 className="size-4" />{message}</div>}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Card><CardHeader><CardTitle>Story</CardTitle><CardDescription>Required fields are checked before the story enters review.</CardDescription></CardHeader><CardContent className="space-y-6">
@@ -324,13 +434,9 @@ export function StoryEditor({
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {richStoryEditorEnabled ? (
-                  <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
-                    <Label htmlFor="visual-editor" className="text-xs">Visual editor</Label>
-                    <Switch
-                      id="visual-editor"
-                      checked={visualEditing}
-                      onCheckedChange={setVisualEditing}
-                    />
+                  <div className="flex rounded-lg border p-1" role="tablist" aria-label="Story editing mode">
+                    <Button type="button" size="sm" variant={visualEditing ? "secondary" : "ghost"} role="tab" aria-selected={visualEditing} onClick={() => setVisualEditing(true)}>Visual</Button>
+                    <Button type="button" size="sm" variant={!visualEditing ? "secondary" : "ghost"} role="tab" aria-selected={!visualEditing} onClick={() => setVisualEditing(false)}>Text</Button>
                   </div>
                 ) : <Badge variant="outline">Visual editor disabled by configuration</Badge>}
                 <ComposerModeButton mode="write" current={composerMode} onSelect={setComposerMode} icon={<FilePenLine />} label="Write" />
@@ -350,18 +456,23 @@ export function StoryEditor({
                     }}
                   />
                 ) : (
-                  <Textarea
-                    id="body"
-                    value={body}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      setBody(value);
-                      setRichBody(createPlainStoryRichTextDocument(value.split(/\n\n+/).map((item) => item.trim()).filter(Boolean)));
-                    }}
-                    placeholder="Write the story here. Separate paragraphs with a blank line."
-                    className="min-h-[38rem] resize-y leading-7"
-                    aria-invalid={Boolean(fieldError("body"))}
-                  />
+                  <div className="space-y-2">
+                    <p className="rounded-lg border border-blue-500/25 bg-blue-500/5 px-3 py-2 text-xs leading-5 text-muted-foreground">
+                      Text mode edits the portable paragraph source used by apps and older stories. Switching modes alone preserves rich formatting; typing here intentionally rebuilds the article as plain paragraphs.
+                    </p>
+                    <Textarea
+                      id="body"
+                      value={body}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setBody(value);
+                        setRichBody(createPlainStoryRichTextDocument(value.split(/\n\n+/).map((item) => item.trim()).filter(Boolean)));
+                      }}
+                      placeholder="Write the story here. Separate paragraphs with a blank line."
+                      className="min-h-[38rem] resize-y leading-7"
+                      aria-invalid={Boolean(fieldError("body"))}
+                    />
+                  </div>
                 )
               ) : null}
               {composerMode !== "write" ? (
@@ -374,7 +485,7 @@ export function StoryEditor({
                   imageAlt={imageAlt}
                   imageKind={imageKind}
                   byline={selectedByline?.name ?? "Courier Newsroom"}
-                  document={visualEditing ? richBody : null}
+                  document={richBody}
                   paragraphs={bodyParagraphs}
                   whyItMatters={generatedWhyItMatters}
                 />
@@ -536,6 +647,38 @@ function ComposerModeButton({
     >
       {icon} {label}
     </Button>
+  );
+}
+
+function isStoryEditorRecovery(value: unknown): value is StoryEditorRecovery {
+  if (!value || typeof value !== "object") return false;
+  const recovery = value as Partial<StoryEditorRecovery>;
+  const draft = recovery.draft as Partial<StoryEditorDraftState> | undefined;
+  return Boolean(
+    typeof recovery.baseline === "string" &&
+    typeof recovery.savedAt === "string" &&
+    draft &&
+    typeof draft.headline === "string" &&
+    typeof draft.slug === "string" &&
+    typeof draft.dek === "string" &&
+    typeof draft.body === "string" &&
+    draft.richBody &&
+    typeof draft.includeWhyItMatters === "boolean" &&
+    typeof draft.category === "string" &&
+    typeof draft.location === "string" &&
+    Array.isArray(draft.tags) &&
+    typeof draft.seoTitle === "string" &&
+    typeof draft.seoDescription === "string" &&
+    typeof draft.canonicalUrl === "string" &&
+    typeof draft.noIndex === "boolean" &&
+    typeof draft.breaking === "boolean" &&
+    typeof draft.schedulePlanned === "boolean" &&
+    typeof draft.scheduledAt === "string" &&
+    (draft.bylineMode === "account" || draft.bylineMode === "pseudonym") &&
+    typeof draft.imageUrl === "string" &&
+    typeof draft.imageAlt === "string" &&
+    (draft.imageAssetId === null || typeof draft.imageAssetId === "string") &&
+    (draft.imageKind === "editorial" || draft.imageKind === "ai_placeholder")
   );
 }
 

@@ -25,6 +25,7 @@ const allowedNodeTypes = new Set([
   "tablerow",
   "tablecell",
   "code",
+  "horizontalrule",
 ]);
 
 export const storyRichTextDocumentSchema = z.custom<StoryRichTextDocument>(

@@ -1,9 +1,15 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getDb, hasDatabase } from "@harborline/backend/db";
-import { mediaAssetUsages, stories, storyRevisions } from "@harborline/backend/schema";
+import {
+  mediaAssetUsages,
+  stories,
+  storyApprovals,
+  storyPublicationJobs,
+  storyRevisions,
+} from "@harborline/backend/schema";
 import { writeApiAudit } from "@/lib/api-keys";
 import { getStudioUser } from "@/lib/auth";
 import { canPublishStory } from "@/lib/story-workflow";
@@ -25,6 +31,11 @@ const reviewInput = z.discriminatedUnion("action", [
     action: z.literal("reject"),
     confirmation: z.literal("REJECT UPDATE"),
     note: z.string().trim().max(500).optional().default(""),
+  }),
+  z.object({
+    action: z.literal("restore"),
+    confirmation: z.literal("RESTORE REVISION"),
+    note: z.string().trim().min(10).max(500),
   }),
 ]);
 const snapshotInput = z.object({
@@ -109,6 +120,15 @@ export async function PATCH(
   ]);
   if (!story || !revision) {
     return responseError("not_found", "Story revision not found", 404);
+  }
+  if (parsedBody.data.action === "restore") {
+    return restoreRevision({
+      request,
+      story,
+      revision,
+      viewer,
+      note: parsedBody.data.note,
+    });
   }
   if (revision.reviewStatus !== "pending") {
     return responseError(
@@ -294,6 +314,248 @@ export async function PATCH(
   });
   revalidateStoryPaths(approved.story);
   return NextResponse.json({ data: approved, meta: { apiVersion: "1" } });
+}
+
+async function restoreRevision({
+  request,
+  story,
+  revision,
+  viewer,
+  note,
+}: {
+  request: Request;
+  story: typeof stories.$inferSelect;
+  revision: typeof storyRevisions.$inferSelect;
+  viewer: NonNullable<Awaited<ReturnType<typeof getStudioUser>>>;
+  note: string;
+}) {
+  const snapshot = snapshotInput.safeParse(revision.snapshot);
+  if (!snapshot.success) {
+    return responseError(
+      "invalid_revision",
+      "This historical snapshot cannot be restored because it no longer passes current content integrity checks.",
+      409,
+    );
+  }
+  const [pending] = await getDb()
+    .select({ id: storyRevisions.id })
+    .from(storyRevisions)
+    .where(and(
+      eq(storyRevisions.storyId, story.id),
+      eq(storyRevisions.reviewStatus, "pending"),
+    ))
+    .limit(1);
+  if (pending) {
+    return responseError(
+      "revision_pending",
+      "Resolve the pending live-story update before restoring another revision.",
+      409,
+    );
+  }
+  if (story.status === "published" && !story.isActive) {
+    return responseError(
+      "story_locked",
+      "This published story is final. Reopen active editing through the approved editorial workflow before restoring copy.",
+      409,
+    );
+  }
+
+  const restored = snapshot.data;
+  const [slugConflict] = await getDb()
+    .select({ id: stories.id })
+    .from(stories)
+    .where(and(eq(stories.slug, restored.slug), ne(stories.id, story.id)))
+    .limit(1);
+  if (slugConflict && story.status !== "published") {
+    return responseError(
+      "slug_conflict",
+      "The historical story URL is now used by another article. Change that URL before restoring this revision.",
+      409,
+    );
+  }
+
+  const db = getDb();
+  const now = new Date();
+  const [latest] = await db
+    .select({ version: storyRevisions.version })
+    .from(storyRevisions)
+    .where(eq(storyRevisions.storyId, story.id))
+    .orderBy(desc(storyRevisions.version))
+    .limit(1);
+  const nextVersion = (latest?.version ?? 0) + 1;
+
+  if (story.status === "published") {
+    const [latestApplied] = await db
+      .select({ version: storyRevisions.version })
+      .from(storyRevisions)
+      .where(and(
+        eq(storyRevisions.storyId, story.id),
+        eq(storyRevisions.reviewStatus, "applied"),
+      ))
+      .orderBy(desc(storyRevisions.version))
+      .limit(1);
+    const proposedSnapshot = {
+      ...story,
+      ...restored,
+      slug: story.slug,
+      publicBylineSnapshot: story.publicBylineSnapshot,
+      status: "published",
+      publishedAt: story.publishedAt,
+      scheduledAt: null,
+      isActive: true,
+      editingClosedAt: null,
+      updatedAt: now,
+    };
+    const blockers = storyPublicationBlockers(proposedSnapshot);
+    if (blockers.length) {
+      return responseError(
+        "publication_blocked",
+        `The historical revision cannot return to publication until these checks are resolved: ${blockers.join(", ")}`,
+        409,
+      );
+    }
+    const [created] = await db.insert(storyRevisions).values({
+      storyId: story.id,
+      editorId: viewer.databaseId ?? null,
+      version: nextVersion,
+      baseVersion: latestApplied?.version ?? 0,
+      snapshot: proposedSnapshot,
+      note: `Restore revision ${revision.version}: ${note}`,
+      reviewStatus: "pending",
+    }).returning();
+    await writeApiAudit({
+      actorClerkId: viewer.id,
+      event: "story.revision_restore_submitted",
+      request,
+      metadata: {
+        storyId: story.id,
+        sourceRevisionId: revision.id,
+        sourceVersion: revision.version,
+        revisionId: created?.id,
+        version: created?.version,
+      },
+    });
+    revalidatePath(`/studio/stories/${story.id}`);
+    return NextResponse.json({
+      data: created,
+      meta: { apiVersion: "1", requiresReview: true },
+    });
+  }
+
+  const result = await db.transaction(async (tx) => {
+    const [updatedStory] = await tx.update(stories).set({
+      slug: restored.slug,
+      headline: restored.headline,
+      dek: restored.dek,
+      body: restored.body,
+      richBody: restored.richBody ?? null,
+      whyItMatters: restored.whyItMatters,
+      categorySlug: restored.categorySlug,
+      categoryLabel: restored.categoryLabel,
+      location: restored.location,
+      publicBylineSnapshot:
+        restored.publicBylineSnapshot as typeof story.publicBylineSnapshot,
+      publicBylinesSnapshot:
+        story.authorId && restored.publicBylineSnapshot
+          ? [{
+              userId: story.authorId,
+              ...restored.publicBylineSnapshot,
+            }] as typeof story.publicBylinesSnapshot
+          : [],
+      imageUrl: restored.imageUrl,
+      imageAlt: restored.imageAlt,
+      imageAssetId: restored.imageAssetId ?? null,
+      imageKind: restored.imageKind,
+      imageGeneration: isAiStoryImageGeneration(restored.imageGeneration)
+        ? restored.imageGeneration
+        : null,
+      videoUrl: restored.videoUrl,
+      tags: restored.tags,
+      seoTitle: restored.seoTitle,
+      seoDescription: restored.seoDescription,
+      canonicalUrl: restored.canonicalUrl,
+      noIndex: restored.noIndex,
+      readingMinutes: restored.readingMinutes,
+      isBreaking: restored.isBreaking,
+      isLive: restored.isLive,
+      isExclusive: restored.isExclusive,
+      isDeveloping: restored.isDeveloping,
+      status: "draft",
+      scheduledAt: null,
+      publishedAt: null,
+      contentVersion: story.contentVersion + 1,
+      contentHash: null,
+      updatedAt: now,
+    }).where(eq(stories.id, story.id)).returning();
+    if (!updatedStory) return null;
+
+    await tx.update(storyApprovals).set({
+      invalidatedAt: now,
+      invalidatedByClerkId: viewer.id,
+      invalidationReason: `Revision ${revision.version} restored`,
+    }).where(and(
+      eq(storyApprovals.storyId, story.id),
+      isNull(storyApprovals.invalidatedAt),
+    ));
+    await tx.update(storyPublicationJobs).set({
+      status: "cancelled",
+      cancelledAt: now,
+      updatedByClerkId: viewer.id,
+      lastErrorCode: "revision_restored",
+      lastErrorMessage: "The active schedule was cancelled by a revision restoration.",
+      updatedAt: now,
+    }).where(and(
+      eq(storyPublicationJobs.storyId, story.id),
+      inArray(storyPublicationJobs.status, ["queued", "blocked", "failed"]),
+    ));
+    await tx.delete(mediaAssetUsages).where(and(
+      eq(mediaAssetUsages.ownerType, "story"),
+      eq(mediaAssetUsages.ownerId, story.id),
+      eq(mediaAssetUsages.field, "lead_image"),
+    ));
+    if (restored.imageAssetId) {
+      await tx.insert(mediaAssetUsages).values({
+        assetId: restored.imageAssetId,
+        ownerType: "story",
+        ownerId: story.id,
+        field: "lead_image",
+      });
+    }
+    const [createdRevision] = await tx.insert(storyRevisions).values({
+      storyId: story.id,
+      editorId: viewer.databaseId ?? null,
+      version: nextVersion,
+      baseVersion: latest?.version ?? null,
+      snapshot: updatedStory,
+      note: `Restored from revision ${revision.version}: ${note}`,
+      reviewStatus: "applied",
+    }).returning();
+    return { story: updatedStory, revision: createdRevision };
+  });
+  if (!result) {
+    return responseError(
+      "conflict",
+      "The story changed while the revision was being restored. Reload and try again.",
+      409,
+    );
+  }
+  await writeApiAudit({
+    actorClerkId: viewer.id,
+    event: "story.revision_restored",
+    request,
+    metadata: {
+      storyId: story.id,
+      sourceRevisionId: revision.id,
+      sourceVersion: revision.version,
+      revisionId: result.revision?.id,
+      version: result.revision?.version,
+    },
+  });
+  revalidateStoryPaths(result.story);
+  return NextResponse.json({
+    data: result,
+    meta: { apiVersion: "1", requiresReview: false },
+  });
 }
 
 function revalidateStoryPaths(story: typeof stories.$inferSelect) {

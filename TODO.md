@@ -225,11 +225,16 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 - [ ] Run the protected rich-story-editor acceptance matrix in production with
   separate author and approver accounts: open a completely blank **New story**
   without a runtime error, create and reload a formatted draft,
-  exercise Write/Split/Preview and the per-session visual/plain toggle, submit
-  it, inspect the rich-format comparison, approve it, publish it, and verify the
-  public reader presentation plus the portable plain-copy API fallback. Repeat
-  with the global feature disabled and each configured default mode; this local
-  checkout intentionally cannot bypass its missing Clerk credentials. See
+  exercise Visual/Text plus Write/Split/Preview, recover an intentionally
+  unsaved browser draft, and confirm an unchanged save creates no revision.
+  Compare consecutive and non-consecutive revisions in unified and side-by-side
+  layouts, use **Changes since published**, inspect word-level, metadata and
+  lead-media changes, restore an older draft as a new revision, and restore an
+  active published version through independent approval. Then publish and
+  verify the public reader presentation plus the portable plain-copy API
+  fallback. Repeat with the global feature disabled and each configured default
+  mode; this local checkout intentionally cannot bypass its missing Clerk
+  credentials. See
   [Rich story editor](docs/editorial/RICH_STORY_EDITOR.md).
 - [ ] Add native structured-rich-story renderers to iOS, Android, Apple TV,
   Android TV and Roku after their presentation contracts are approved. Until

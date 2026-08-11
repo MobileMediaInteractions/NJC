@@ -30,6 +30,7 @@ import { getSiteConfiguration } from "@/lib/site-settings";
 import { storyContentHash, storyPublicationBlockers } from "@/lib/story-content-integrity";
 import { canApproveStory } from "@/lib/story-scheduling-policy";
 import { InvalidStoryLeadMediaError, resolveStoryLeadMedia } from "@/lib/story-lead-media";
+import { hasMeaningfulStoryRevisionChange } from "@/lib/story-revisions";
 
 const storyId = z.uuid();
 const transitionInput = z.discriminatedUnion("status", [
@@ -723,19 +724,34 @@ export async function PUT(
         { status: 403 },
       );
     }
+    const proposedEditorialSnapshot = {
+      ...current,
+      ...storyValues,
+      status: isPublishedUpdate ? "published" : effectiveStatus,
+      publicBylineSnapshot: nextPublicByline,
+      whyItMatters: includeWhyItMatters
+        ? generateWhyItMatters(parsedBody.data)
+        : null,
+      ...leadMedia,
+      imageAlt: parsedBody.data.imageAlt || null,
+      seoTitle: parsedBody.data.seoTitle || null,
+      seoDescription: parsedBody.data.seoDescription || null,
+      canonicalUrl: parsedBody.data.canonicalUrl || null,
+      scheduledAt: isPublishedUpdate
+        ? null
+        : scheduledAt
+          ? new Date(scheduledAt)
+          : null,
+    };
+    if (!hasMeaningfulStoryRevisionChange(current, proposedEditorialSnapshot)) {
+      return NextResponse.json({
+        data: current,
+        meta: { apiVersion: "1", unchanged: true },
+      });
+    }
     if (isPublishedUpdate) {
       const proposedSnapshot = {
-        ...current,
-        ...storyValues,
-        publicBylineSnapshot: nextPublicByline,
-        whyItMatters: includeWhyItMatters
-          ? generateWhyItMatters(parsedBody.data)
-          : null,
-        ...leadMedia,
-        imageAlt: parsedBody.data.imageAlt || null,
-        seoTitle: parsedBody.data.seoTitle || null,
-        seoDescription: parsedBody.data.seoDescription || null,
-        canonicalUrl: parsedBody.data.canonicalUrl || null,
+        ...proposedEditorialSnapshot,
         scheduledAt: null,
         publishedAt: current.publishedAt,
         status: "published",

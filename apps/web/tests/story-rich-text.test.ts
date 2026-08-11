@@ -79,6 +79,7 @@ test("public rendering supports rich structure without injecting raw HTML", () =
       language: "text",
       children: [{ type: "text", version: 1, text: "meeting starts at 7", format: 0 }],
     },
+    { type: "horizontalrule", version: 1 },
   ];
 
   const html = renderToStaticMarkup(createElement(StoryRichContent, {
@@ -89,6 +90,7 @@ test("public rendering supports rich structure without injecting raw HTML", () =
   assert.match(html, /rel="noopener noreferrer"/);
   assert.match(html, /&lt;script&gt;never&lt;\/script&gt;/);
   assert.match(html, /<pre data-language="text"><code>meeting starts at 7<\/code><\/pre>/);
+  assert.match(html, /<hr\/>/);
   assert.doesNotMatch(html, /<script>/);
   assert.equal(richTextToPlainParagraphs(document).at(-1), "meeting starts at 7");
 });

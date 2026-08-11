@@ -84,6 +84,8 @@ function renderBlock(node: StoryRichTextNode, key: string, dropCap: boolean): Re
     }
     case "code":
       return <pre key={key} data-language={node.language || undefined}><code>{children}</code></pre>;
+    case "horizontalrule":
+      return <hr key={key} />;
     default:
       return renderInline(node, key);
   }
@@ -122,7 +124,7 @@ function renderInline(node: StoryRichTextNode, key: string): ReactNode {
 
 function renderChildren(node: StoryRichTextNode, key: string) {
   return (node.children ?? []).map((child, index) =>
-    ["paragraph", "heading", "quote", "list", "listitem", "table", "tablerow", "tablecell", "code"].includes(child.type)
+    ["paragraph", "heading", "quote", "list", "listitem", "table", "tablerow", "tablecell", "code", "horizontalrule"].includes(child.type)
       ? renderBlock(child, `${key}-${index}`, false)
       : renderInline(child, `${key}-${index}`),
   );

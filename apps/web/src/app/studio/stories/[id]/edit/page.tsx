@@ -114,6 +114,7 @@ export default async function EditStoryPage({ params }: { params: Promise<{ id: 
           status: editorStatus,
           scheduledAt: story.scheduledAt?.toISOString() ?? null,
           isActive: story.isActive,
+          updatedAt: story.updatedAt.toISOString(),
         }}
       />
     </StudioShell>

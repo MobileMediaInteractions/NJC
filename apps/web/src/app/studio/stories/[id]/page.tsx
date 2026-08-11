@@ -42,6 +42,34 @@ export default async function StudioStoryReviewPage({ params }: { params: Promis
   }
   if (!story) notFound();
   const canPublish = canPublishStory(viewer.role);
+  const [viewerAuthorship] = viewer.databaseId
+    ? await getDb()
+        .select({ userId: storyAuthors.userId })
+        .from(storyAuthors)
+        .where(and(
+          eq(storyAuthors.storyId, story.id),
+          eq(storyAuthors.userId, viewer.databaseId),
+        ))
+        .limit(1)
+    : [];
+  if (
+    !canPublish &&
+    story.authorId !== viewer.databaseId &&
+    !viewerAuthorship
+  ) {
+    return (
+      <StudioShell viewer={viewer}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Story access required</CardTitle>
+            <CardDescription>
+              Only assigned authors and publishers can inspect this story or its revision history.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </StudioShell>
+    );
+  }
   const configuration = await getSiteConfiguration();
   const [[approval], [publicationJob], authorRows, activeStaff] = await Promise.all([
     getDb().select().from(storyApprovals).where(and(eq(storyApprovals.storyId, story.id), isNull(storyApprovals.invalidatedAt))).limit(1),

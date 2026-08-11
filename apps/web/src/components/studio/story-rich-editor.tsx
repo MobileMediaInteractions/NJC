@@ -31,6 +31,11 @@ import { TabIndentationPlugin } from "@lexical/react/LexicalTabIndentationPlugin
 import { TablePlugin } from "@lexical/react/LexicalTablePlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { HorizontalRulePlugin } from "@lexical/react/LexicalHorizontalRulePlugin";
+import {
+  HorizontalRuleNode,
+  INSERT_HORIZONTAL_RULE_COMMAND,
+} from "@lexical/react/LexicalHorizontalRuleNode";
 import { $createHeadingNode, $createQuoteNode, $isHeadingNode, $isQuoteNode, HeadingNode, QuoteNode } from "@lexical/rich-text";
 import {
   $isListNode,
@@ -67,6 +72,7 @@ import {
   Link2,
   List,
   ListOrdered,
+  Minus,
   Pilcrow,
   Quote,
   Redo2,
@@ -110,6 +116,7 @@ export function StoryRichEditor({
         TableNode,
         TableRowNode,
         TableCellNode,
+        HorizontalRuleNode,
       ],
       onError(error: Error) {
         throw error;
@@ -169,6 +176,7 @@ export function StoryRichEditor({
           <ListPlugin />
           <LinkPlugin validateUrl={isSafeStoryLink} />
           <TablePlugin hasCellMerge hasCellBackgroundColor={false} hasTabHandler />
+          <HorizontalRulePlugin />
           <TabIndentationPlugin />
           <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
           <OnChangePlugin
@@ -299,6 +307,7 @@ function ToolbarPlugin() {
       <ToolButton label="Checklist" active={blockType === "check"} onClick={() => setBlock("check")} icon={<CheckSquare />} />
       <ToolButton label={hasLink ? "Remove link" : "Add link"} active={hasLink} onClick={toggleLink} icon={hasLink ? <Unlink /> : <Link2 />} />
       <ToolButton label="Insert 3 by 3 table" onClick={() => editor.dispatchCommand(INSERT_TABLE_COMMAND, { columns: "3", rows: "3", includeHeaders: true })} icon={<Table2 />} />
+      <ToolButton label="Insert horizontal separator" onClick={() => editor.dispatchCommand(INSERT_HORIZONTAL_RULE_COMMAND, undefined)} icon={<Minus />} />
       <ToolbarDivider />
       <AlignButton editor={editor} alignment="left" active={alignment === "left" || alignment === "start"} label="Align left" icon={<AlignLeft />} />
       <AlignButton editor={editor} alignment="center" active={alignment === "center"} label="Align center" icon={<AlignCenter />} />

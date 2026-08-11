@@ -458,6 +458,13 @@ html.dark .bg-white.text-brand-navy {
   overflow-x: auto;
 }
 
+.story-editor-surface hr,
+.story-rich-content hr {
+  margin-block: 2.25rem;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+}
+
 .story-align-center { text-align: center; }
 .story-align-right { text-align: right; }
 .story-align-justify { text-align: justify; }
