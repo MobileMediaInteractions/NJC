@@ -902,9 +902,34 @@ export const pressKitRequests = pgTable(
     intendedUse: text("intended_use").notNull(),
     requestDetails: text("request_details").notNull(),
     assetGroups: jsonb("asset_groups").$type<string[]>().notNull().default([]),
+    requesterRole: text("requester_role"),
+    requesterWebsite: text("requester_website"),
+    organizationWebsite: text("organization_website"),
+    country: text("country"),
+    projectName: text("project_name"),
+    whereUsed: text("where_used"),
+    expectedReleaseAt: timestamp("expected_release_at", { withTimezone: true }),
+    usageClassification: text("usage_classification").notNull().default("unclassified"),
+    requestedAssetIds: jsonb("requested_asset_ids").$type<string[]>().notNull().default([]),
+    unmatchedMaterials: jsonb("unmatched_materials").$type<string[]>().notNull().default([]),
+    structuredRequest: jsonb("structured_request").$type<Record<string, unknown>>().notNull().default({}),
+    aiInterpretation: jsonb("ai_interpretation").$type<Record<string, unknown>>(),
+    policyVersion: text("policy_version"),
+    decisionReasons: jsonb("decision_reasons").$type<string[]>().notNull().default([]),
+    restrictions: jsonb("restrictions").$type<string[]>().notNull().default([]),
+    licenseType: text("license_type"),
+    accessTokenHash: text("access_token_hash"),
+    ownerClerkId: text("owner_clerk_id"),
+    reviewedByClerkId: text("reviewed_by_clerk_id"),
+    reviewerNote: text("reviewer_note"),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    duplicateKey: text("duplicate_key"),
     status: text("status").notNull().default("generated"),
     archiveBytes: integer("archive_bytes"),
     generatedAt: timestamp("generated_at", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -912,6 +937,142 @@ export const pressKitRequests = pgTable(
   (table) => [
     index("press_kit_requests_status_idx").on(table.status, table.createdAt),
     index("press_kit_requests_email_idx").on(table.email, table.createdAt),
+    index("press_kit_requests_owner_idx").on(table.ownerClerkId, table.createdAt),
+    index("press_kit_requests_duplicate_idx").on(table.duplicateKey, table.createdAt),
+    check(
+      "press_kit_requests_status_check",
+      sql`${table.status} in ('generated', 'draft', 'intake', 'needs_information', 'evaluating', 'approved', 'partially_approved', 'manual_review', 'denied', 'package_generating', 'ready', 'downloaded', 'expired', 'revoked')`,
+    ),
+  ],
+);
+
+export const pressAssets = pgTable(
+  "press_assets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    category: text("category").notNull(),
+    sourceKind: text("source_kind").notNull().default("bundled_public"),
+    sourcePath: text("source_path"),
+    mediaAssetId: uuid("media_asset_id").references(() => mediaAssets.id, {
+      onDelete: "restrict",
+    }),
+    mimeType: text("mime_type").notNull(),
+    version: text("version").notNull().default("1"),
+    checksumSha256: text("checksum_sha256"),
+    visibility: text("visibility").notNull().default("public"),
+    approvedUsageTypes: jsonb("approved_usage_types").$type<string[]>().notNull().default([]),
+    restrictions: jsonb("restrictions").$type<string[]>().notNull().default([]),
+    attribution: text("attribution"),
+    active: boolean("active").notNull().default(true),
+    deprecatedAt: timestamp("deprecated_at", { withTimezone: true }),
+    replacementAssetId: uuid("replacement_asset_id"),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    createdByClerkId: text("created_by_clerk_id").notNull().default("system"),
+    updatedByClerkId: text("updated_by_clerk_id").notNull().default("system"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("press_assets_slug_idx").on(table.slug),
+    index("press_assets_catalog_idx").on(table.active, table.category, table.title),
+    index("press_assets_media_idx").on(table.mediaAssetId),
+    check("press_assets_source_check", sql`${table.sourceKind} in ('bundled_public', 'generated_document', 'media_asset')`),
+    check("press_assets_visibility_check", sql`${table.visibility} in ('public', 'restricted', 'private')`),
+    check(
+      "press_assets_source_reference_check",
+      sql`(${table.sourceKind} in ('bundled_public', 'generated_document') and ${table.sourcePath} is not null and ${table.mediaAssetId} is null) or (${table.sourceKind} = 'media_asset' and ${table.sourcePath} is null and ${table.mediaAssetId} is not null)`,
+    ),
+  ],
+);
+
+export const pressKitRequestAssets = pgTable(
+  "press_kit_request_assets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    requestId: uuid("request_id").notNull().references(() => pressKitRequests.id, { onDelete: "cascade" }),
+    assetId: uuid("asset_id").notNull().references(() => pressAssets.id, { onDelete: "restrict" }),
+    decision: text("decision").notNull().default("requested"),
+    reason: text("reason"),
+    decidedByClerkId: text("decided_by_clerk_id"),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("press_kit_request_assets_unique_idx").on(table.requestId, table.assetId),
+    index("press_kit_request_assets_decision_idx").on(table.requestId, table.decision),
+    check("press_kit_request_assets_decision_check", sql`${table.decision} in ('requested', 'approved', 'rejected')`),
+  ],
+);
+
+export const pressKitMessages = pgTable(
+  "press_kit_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    requestId: uuid("request_id").notNull().references(() => pressKitRequests.id, { onDelete: "cascade" }),
+    role: text("role").notNull(),
+    content: text("content").notNull(),
+    structuredOutput: jsonb("structured_output").$type<Record<string, unknown>>(),
+    model: text("model"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("press_kit_messages_request_idx").on(table.requestId, table.createdAt),
+    check("press_kit_messages_role_check", sql`${table.role} in ('requester', 'assistant', 'system')`),
+  ],
+);
+
+export const pressKitPackages = pgTable(
+  "press_kit_packages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    requestId: uuid("request_id").notNull().references(() => pressKitRequests.id, { onDelete: "restrict" }),
+    licenseId: uuid("license_id").notNull().defaultRandom(),
+    licenseVersion: text("license_version").notNull(),
+    status: text("status").notNull().default("generating"),
+    pathname: text("pathname"),
+    filename: text("filename"),
+    size: integer("size"),
+    checksumSha256: text("checksum_sha256"),
+    manifest: jsonb("manifest").$type<Record<string, unknown>>().notNull().default({}),
+    downloadTokenHash: text("download_token_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    downloadCount: integer("download_count").notNull().default(0),
+    lastDownloadedAt: timestamp("last_downloaded_at", { withTimezone: true }),
+    failureCode: text("failure_code"),
+    createdByClerkId: text("created_by_clerk_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("press_kit_packages_request_idx").on(table.requestId),
+    uniqueIndex("press_kit_packages_license_idx").on(table.licenseId),
+    index("press_kit_packages_expiry_idx").on(table.status, table.expiresAt),
+    check("press_kit_packages_status_check", sql`${table.status} in ('generating', 'ready', 'failed', 'expired', 'revoked')`),
+    check("press_kit_packages_size_check", sql`${table.size} is null or ${table.size} > 0`),
+  ],
+);
+
+export const pressKitAuditLogs = pgTable(
+  "press_kit_audit_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    requestId: uuid("request_id").references(() => pressKitRequests.id, { onDelete: "set null" }),
+    actorType: text("actor_type").notNull(),
+    actorId: text("actor_id"),
+    action: text("action").notNull(),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    ipHash: text("ip_hash"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("press_kit_audit_request_idx").on(table.requestId, table.createdAt),
+    index("press_kit_audit_action_idx").on(table.action, table.createdAt),
+    check("press_kit_audit_actor_check", sql`${table.actorType} in ('requester', 'staff', 'system', 'ai')`),
   ],
 );
 

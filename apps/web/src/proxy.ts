@@ -16,7 +16,7 @@ export const config = {
           type: "header",
           key: "host",
           value:
-            "(?:studio|api|plus|distribution)\\.thejerseycourier\\.com(?::\\d+)?",
+            "(?:studio|api|plus|distribution|press)\\.thejerseycourier\\.com(?::\\d+)?",
         },
       ],
     },

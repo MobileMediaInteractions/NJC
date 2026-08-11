@@ -132,6 +132,17 @@ test("production subdomains have explicit host-aware routes", async () => {
       condition.value === "www.thejerseycourier.com"
     )
   ));
+  assert.ok(rewrites.beforeFiles?.some((route) =>
+    route.source === "/" &&
+    route.destination === "/press-portal" &&
+    route.has?.some((condition) => condition.type === "host" && condition.value === "press.thejerseycourier.com")
+  ));
+  assert.ok(redirects.some((route) =>
+    route.source === "/press-portal" &&
+    route.destination === "https://press.thejerseycourier.com" &&
+    route.permanent === true &&
+    route.has?.some((condition) => condition.type === "host" && condition.value === "www.thejerseycourier.com")
+  ));
 });
 
 test("every clean Studio navigation section has a host rewrite", async () => {

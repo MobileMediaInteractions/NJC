@@ -11,6 +11,7 @@ deployment and one separately deployable static asset origin.
 | `cdn.thejerseycourier.com` | dedicated CDN project rooted at `apps/cdn` | Immutable public brand and editorial assets; never private newsroom material |
 | `plus.thejerseycourier.com` | `njc-web` | Host-aware NJC+ product routes; unavailable public surfaces redirect to the canonical publication while Studio preview and invited-beta access remain entitlement-gated |
 | `distribution.thejerseycourier.com` | `njc-web` | Private, no-index advance-release library. Every package, preview, stream, and download is authorized server-side against a verified Clerk account and an active database grant. |
+| `press.thejerseycourier.com` | `njc-web` | Public Press & Media portal. Conversational intake is public and rate-limited; policy decisions, private packages, downloads, and Studio review remain server-authorized and audited. |
 
 DNS labels cannot contain `+`, so the public hostname for NJC+ is `plus`.
 The host rewrites to the separate `/plus` product shell without exposing or
@@ -28,6 +29,8 @@ NEXT_PUBLIC_API_HOST=api.thejerseycourier.com
 NEXT_PUBLIC_PLUS_HOST=plus.thejerseycourier.com
 NEXT_PUBLIC_DISTRIBUTION_HOST=distribution.thejerseycourier.com
 NEXT_PUBLIC_DISTRIBUTION_URL=https://distribution.thejerseycourier.com
+NEXT_PUBLIC_PRESS_HOST=press.thejerseycourier.com
+NEXT_PUBLIC_PRESS_URL=https://press.thejerseycourier.com
 DISTRIBUTION_ENABLED=false
 NEXT_PUBLIC_ASSET_ORIGIN=https://cdn.thejerseycourier.com
 ```
@@ -79,3 +82,6 @@ After deployment:
    content routes render the NJC+ product shell.
 5. Keep Studio, API and CDN out of the public sitemap. Only canonical public
    article and section URLs belong in Google Search.
+6. Confirm the Press host root renders the dedicated portal, `/press` on the
+   main domain still serves the legacy generator, request APIs are no-index,
+   and a package download fails without its current request-bound header token.

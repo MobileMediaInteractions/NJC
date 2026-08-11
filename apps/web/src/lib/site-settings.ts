@@ -171,6 +171,7 @@ export const siteConfigurationSchema = z.object({
     donations: z.boolean(),
     pseudonyms: z.boolean().default(true),
     distribution: z.boolean().default(true),
+    pressPortal: z.boolean().default(true),
   }),
   editorial: z.object({
     datelines: z
@@ -355,6 +356,7 @@ export const defaultSiteConfiguration: SiteConfiguration = {
     donations: siteConfig.monetization.donationsEnabled,
     pseudonyms: true,
     distribution: true,
+    pressPortal: true,
   },
   editorial: {
     datelines: [...defaultDatelines],

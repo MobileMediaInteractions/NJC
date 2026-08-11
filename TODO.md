@@ -59,6 +59,46 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   API, and Studio NJ Dev clients, including enabled, disabled, stale, and
   unavailable states on real devices where applicable.
 
+## Press & Media portal — external activation and legal validation remaining
+
+> The dedicated `press.thejerseycourier.com` application surface, legacy
+> `/press` transition, structured AI intake with deterministic fallback,
+> versioned policy engine, allowlisted asset catalog, human review, audited
+> lifecycle, request-specific PDF/manifest, private token-bound ZIP delivery,
+> Studio controls, transactional-email adapter, migration, portable backup and
+> security tests are implemented. See
+> [the Press & Media runbook](docs/PRESS_KIT_PORTAL.md).
+
+- [ ] Apply `apps/web/drizzle/0036_spooky_absorbing_man.sql` to every deployed
+  database before exposing the new portal. Configure a unique 32+ byte
+  `PRESS_KIT_TOKEN_PEPPER`, private Vercel Blob, and durable Upstash/Vercel KV
+  limits; then confirm portable backup and restore revoke every restored request
+  and package token.
+- [ ] Attach `press.thejerseycourier.com` to the existing `njc-web` Vercel
+  project, create the requested DNS record, wait for SSL, and run the host,
+  canonical, no-index API, legacy `/press`, secure-download, raw Vercel alias,
+  preview-deployment and cross-request authorization matrix.
+- [ ] Decide whether to enable the existing Cloudflare Workers AI credentials
+  for intake extraction. If enabled, use a least-privilege token and the
+  configured free model, validate provider retention/data-use terms, and prove
+  malformed JSON, outage, timeout and prompt-injection cases fall back or route
+  to staff without releasing an asset.
+- [ ] Configure a verified, monitored sender and press contact if transactional
+  email is wanted. Test receipt, more-information, manual-review, approval,
+  partial approval, denial, ready, expiration and revocation delivery; missing
+  or failed email must never change the authorization result.
+- [ ] Have qualified counsel approve the operating entity, monitored contacts,
+  final privacy retention periods, license/authorization copy, jurisdiction,
+  attribution rules, revocation effect and every automatic/manual use mapping.
+  Until that approval exists, retain the generated legal-review warning and do
+  not expand the versioned repository-derived media rights.
+- [ ] Complete a production rehearsal for the documented journalist, reviewer,
+  missing-organization, unclear-use, prohibited, partial, nonexistent-asset,
+  injection, duplicate, expired, guessed-package, staff-override and revocation
+  cases. Inspect each PDF and ZIP and prove its manifest contains exactly the
+  approved IDs, versions, hashes and restrictions—never a private path or
+  unapproved file.
+
 ## Mandatory third product implementation — repository-wide internal boundary and `int` subdomain
 
 > **Execution-order requirement:** Complete this entire section after the mandatory product implementation and before every platform or product item below it. The internal boundary must be designed from an exhaustive repository review, not by placing the current Studio UI behind another hostname.

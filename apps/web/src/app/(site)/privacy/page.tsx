@@ -43,10 +43,13 @@ export default function PrivacyPage() {
           information for abuse prevention. Apple TV, Android TV and Roku sessions retain account,
           device, expiry and last-active metadata; raw device tokens are not
           stored.{" "}
-          Media press-kit requests include the requester’s name, organization,
-          work email, intended use, requested materials, selected asset groups,
-          generation status and archive size so the newsroom can fulfill and
-          audit the request.
+          Media press-kit requests may include the requester’s professional
+          name, organization, role, work email, supplied websites, country or
+          jurisdiction, project, intended use, publication destination and
+          timing, requested materials, intake conversation, policy decision,
+          review history, generated license and package/download events. The
+          system stores hashed—not raw—request and download credentials and a
+          keyed hash of the requester network address for abuse prevention.
         </p>
       </section>
       <section>
@@ -72,8 +75,12 @@ export default function PrivacyPage() {
         </h2>
         <p className="mt-3">
           The planned service uses Vercel for hosting and media, Neon for
-          Postgres and Clerk for identity. Upstash handles developer rate
-          limits. Expo, Apple and Google may process mobile build or
+          Postgres and Clerk for identity. Upstash handles developer and Press
+          Kit rate limits. When configured, Cloudflare Workers AI processes a
+          minimized Press Kit intake prompt to extract professional request
+          details; it does not receive storage credentials or authorization
+          authority. When configured, Resend delivers transactional Press Kit
+          status emails. Expo, Apple and Google may process mobile build or
           notification data. Third-party analytics, advertising and payment
           providers are disabled until separately configured and disclosed.
           Website notifications use the browser’s standards-based push service;
@@ -103,7 +110,11 @@ export default function PrivacyPage() {
           addressed through a privacy request. Evidence exports pseudonymize
           installation, session and account identifiers. Backups are encrypted
           and access-controlled; raw
-          secrets are excluded. Final retention periods, incident contacts and
+          secrets and Press Kit access-token hashes are excluded or revoked on
+          portable restore. Press Kit packages expire after a short access
+          window; request and decision records are retained only for
+          operational, security and authorization audit needs. Final retention
+          periods, incident contacts and
           breach-response duties must be approved before production.
         </p>
       </section>

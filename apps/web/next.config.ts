@@ -16,11 +16,14 @@ const plusHostname =
 const distributionHostname =
   process.env.NEXT_PUBLIC_DISTRIBUTION_HOST ??
   "distribution.thejerseycourier.com";
+const pressHostname =
+  process.env.NEXT_PUBLIC_PRESS_HOST ?? "press.thejerseycourier.com";
 const canonicalSiteHostname = new URL(canonicalSiteOrigin).hostname;
 const studioOrigin = `https://${studioHostname}`;
 const apiOrigin = `https://${apiHostname}`;
 const plusOrigin = `https://${plusHostname}`;
 const distributionOrigin = `https://${distributionHostname}`;
+const pressOrigin = `https://${pressHostname}`;
 const studioSections = [
   "20-under-20",
   "analytics",
@@ -79,6 +82,8 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/v1/studio/exports": ["./drizzle/**/*"],
     "/api/v1/press-kit": ["./public/assets/**/*"],
+    "/api/v1/press-portal/requests/[id]/submit": ["./public/assets/**/*"],
+    "/api/v1/studio/press-kit/requests/[id]": ["./public/assets/**/*"],
   },
   async headers() {
     return [
@@ -124,6 +129,14 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         has: onHost(apiHostname),
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
+        source: "/api/:path*",
+        has: onHost(pressHostname),
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+          { key: "Referrer-Policy", value: "no-referrer" },
+        ],
       },
       {
         source: "/distribution/:path*",
@@ -213,6 +226,18 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/press-portal",
+        has: onHost(canonicalSiteHostname),
+        destination: pressOrigin,
+        permanent: true,
+      },
+      {
+        source: "/press",
+        has: onHost(pressHostname),
+        destination: pressOrigin,
+        permanent: true,
+      },
+      {
         source: "/distribution",
         has: onHost(canonicalSiteHostname),
         destination: distributionOrigin,
@@ -281,6 +306,11 @@ const nextConfig: NextConfig = {
           source: "/",
           has: onHost(distributionHostname),
           destination: "/distribution",
+        },
+        {
+          source: "/",
+          has: onHost(pressHostname),
+          destination: "/press-portal",
         },
         ...["package", "file", "item"].flatMap((section) => [
           {

@@ -32,6 +32,7 @@ const featureNames: Record<keyof SiteConfiguration["features"], [string, string]
   donations: ["Donations", "Reader-support contribution entry points."],
   pseudonyms: ["Pseudonymous bylines", "Verified pseudonymous author identities with internal accountability."],
   distribution: ["Secure distribution", "Permissioned pre-publication package delivery."],
+  pressPortal: ["Press & Media portal", "Policy-aware request intake, review, authorization, and secure press-package delivery."],
 };
 
 const moduleNames: Record<(typeof studioModuleKeys)[number], string> = {
@@ -42,7 +43,7 @@ const runtimeFeatures: FeatureRegistryEntry[] = Object.entries(featureNames).map
   key: `reader.${key}`,
   name,
   description,
-  owner: key === "pseudonyms" ? "Editorial standards" : "Audience product",
+  owner: key === "pseudonyms" ? "Editorial standards" : key === "pressPortal" ? "Media relations" : "Audience product",
   category: "Reader features",
   platforms: ["web", "ios", "android", "apple-tv", "android-tv", "roku", "developer-api", "studio"],
   classification: "toggleable",

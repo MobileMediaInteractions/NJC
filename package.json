@@ -49,7 +49,8 @@
     "backup:restore": "pnpm --dir apps/web backup:restore",
     "analytics:audit": "pnpm --dir apps/web analytics:audit",
     "push:generate-vapid": "pnpm --dir apps/web push:generate-vapid",
-    "domain:verify": "node apps/web/scripts/verify-domain-readiness.mjs"
+    "domain:verify": "node apps/web/scripts/verify-domain-readiness.mjs",
+    "domain:verify:press": "node apps/web/scripts/verify-press-domain.mjs"
   },
   "devDependencies": {
     "turbo": "^2.8.10"

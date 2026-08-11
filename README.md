@@ -111,6 +111,10 @@ See [portable backup and restore](docs/PORTABLE_BACKUP.md).
 
 ## Media press kits
 
+The legacy generator remains at `/press`. The request-specific, policy-aware
+Press & Media system is served from `press.thejerseycourier.com` by the same web
+deployment and is documented in [`docs/PRESS_KIT_PORTAL.md`](docs/PRESS_KIT_PORTAL.md).
+
 The public `/press` workflow generates a tailored ZIP from the approved brand library, publication background and editorial illustration. Each package includes the requester’s brief, usage terms and a checksum manifest. Production requests are rate-limited with Upstash, logged for authorized Studio users and included in portable database exports. See [press-kit generation and operations](docs/PRESS_KIT.md).
 
 ## Search visibility
