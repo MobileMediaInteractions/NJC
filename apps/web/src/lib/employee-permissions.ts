@@ -9,7 +9,9 @@ export type CapabilityGrant = {
 };
 
 export const roleCapabilities: Record<StaffRole, readonly EmployeeCapability[]> = {
-  admin: employeeCapabilities,
+  // Internal-host eligibility is never inherited from a newsroom role. Even
+  // administrators need an explicit, expiring grant and perimeter enrollment.
+  admin: employeeCapabilities.filter((capability) => capability !== "internal:access"),
   editor: [
     "employee:access",
     "chat:read",

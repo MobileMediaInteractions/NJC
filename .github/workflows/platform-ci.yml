@@ -79,6 +79,8 @@ jobs:
       - run: pnpm --dir apps/web build
       - run: pnpm playground:check
       - run: pnpm employee:check
+      - run: pnpm internal:check
+      - run: pnpm internal:audit
       - run: pnpm mobile:check
       - run: pnpm tv:check
       - run: pnpm roku:check

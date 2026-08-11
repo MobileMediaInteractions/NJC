@@ -59,22 +59,27 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   API, and Studio NJ Dev clients, including enabled, disabled, stale, and
   unavailable states on real devices where applicable.
 
-## Press & Media portal — external activation and legal validation remaining
+## Press & Media portal — external DNS, operations and counsel approval remaining
 
 > The dedicated `press.thejerseycourier.com` application surface, legacy
 > `/press` transition, structured AI intake with deterministic fallback,
 > versioned policy engine, allowlisted asset catalog, human review, audited
 > lifecycle, request-specific PDF/manifest, private token-bound ZIP delivery,
 > Studio controls, transactional-email adapter, migration, portable backup and
-> security tests are implemented. See
-> [the Press & Media runbook](docs/PRESS_KIT_PORTAL.md).
+> security tests are implemented. Studio now has an exact-version legal
+> readiness gate; it deliberately remains provisional until qualified reviewers
+> supply every required decision. See
+> [the Press & Media runbook](docs/PRESS_KIT_PORTAL.md) and
+> [external activation/legal validation](docs/PRESS_LEGAL_VALIDATION.md).
 
 - [ ] Run a production portable backup/restore rehearsal and confirm every
   restored Press request token and package token is revoked. Migration `0036`,
   separate production/preview token peppers, private Vercel Blob, and durable
   KV rate limiting are configured in production.
 - [ ] Create the required third-party DNS record for the already-attached
-  `press.thejerseycourier.com` Vercel domain, wait for SSL, set
+  `press.thejerseycourier.com` Vercel domain. IONOS is currently signed out and
+  public DNS remains NXDOMAIN; add only
+  `CNAME press 637644a6ea56a9c4.vercel-dns-017.com.`, wait for SSL, set
   `PRESS_SUBDOMAIN_ENABLED=true`, redeploy, and run the host,
   canonical, no-index API, legacy `/press`, secure-download, raw Vercel alias,
   preview-deployment and cross-request authorization matrix.
@@ -99,46 +104,48 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   approved IDs, versions, hashes and restrictions—never a private path or
   unapproved file.
 
-## Mandatory third product implementation — repository-wide internal boundary and `int` subdomain
+## Mandatory third product implementation — external perimeter, enrollment and staged migration remaining
 
-> **Execution-order requirement:** Complete this entire section after the mandatory product implementation and before every platform or product item below it. The internal boundary must be designed from an exhaustive repository review, not by placing the current Studio UI behind another hostname.
+> The repository-wide inventory, 1,148-file ownership/sensitivity register,
+> 250-route and 103-table classification, scope decision, provider comparison,
+> free-compatible Access+mTLS design, separate disabled Next.js application,
+> exact-host/origin-proof/Access-JWT/Clerk/active-user/explicit-grant checks,
+> self-service exclusion, security headers and CI enforcement are complete.
+> `int.thejerseycourier.com` intentionally has no DNS record or deployment yet:
+> publishing it before its connection-level perimeter exists would violate the
+> requirement. See [the boundary design](docs/security/INTERNAL_BOUNDARY.md),
+> [human register](docs/security/INTERNAL_BOUNDARY_REGISTER.md) and
+> [machine register](docs/security/INTERNAL_BOUNDARY_ROUTES.json).
 
-- [ ] Perform and document a file-by-file, route-by-route and deployment-by-deployment security classification of the complete repository before creating the internal service.
-  - Inspect every application and client: the public Next.js site and Studio, reader mobile app, employee/admin mobile app, Apple TV/Android TV app, Roku channel, CDN project and platform playground.
-  - Inspect every shared package, backend service, schema, migration, API client and contract.
-  - Inspect the licensed feature/animation platform, Visual Feature Composer, Studio NJ Dev desktop/Tauri application, Rust and native integrations, scripts, generated artifacts, examples and test fixtures.
-  - Inspect every page, route handler, API endpoint, host rewrite, redirect, middleware/proxy matcher, authentication callback, deep link, Universal Link/App Link, WebSocket or polling path, push-notification path, cron, webhook and file-upload/download flow.
-  - Inspect every database table, relationship, index, private or public Blob object, backup/export, analytics record, audit log, employee capability grant, NJC+ entitlement, platform license, API key, device-pairing record and other stored secret or identifier.
-  - Inspect environment variables, Vercel configuration, GitHub Actions and other CI/CD files, build/signing/release configuration, DNS assumptions, preview deployments, direct Vercel aliases and local-development bypasses.
-  - Inspect all TODO/FIXME markers, feature flags, disabled routes, placeholders, demos, playgrounds, test-only data, incomplete migrations, stale generated files and recent changes for accidentally exposed or unfinished privileged behavior.
-  - Record each surface in an internal-boundary register with its owner, purpose, deployment target, callers, data sensitivity, authentication method, authorization requirement, public/internal/service-only/build-time/deprecated classification and final disposition.
-  - Treat the repository itself as the source of truth. Do not assume the most complete web implementation exists on every platform, and do not move, duplicate or remove a working surface until its clients and dependencies are known.
-- [ ] Use that classification to define the exact scope of `int.<configured-primary-domain>` (for the current domain, the intended form is `int.thejerseycourier.com`).
-  - Evaluate Studio administration, employee chat and directory, access requests and reviews, role/capability management, internal notifications, operational tools, audit logs, analytics, exports/backups, site configuration, NJC+ administration, platform licensing administration and development/playground tooling individually.
-  - Move or expose only confirmed internal workflows. Keep public editorial pages, public reader APIs, public assets and genuinely public account features outside the internal boundary.
-  - Decide explicitly whether editorial Studio remains on `studio.<domain>`, moves behind `int.<domain>`, or becomes a separately permissioned area within the internal service. Do not create two conflicting sources of truth.
-  - Prefer a separately deployable internal application or service boundary when that prevents privileged pages, dependencies and implementation details from entering the public web bundle. Reuse safe shared contracts and server libraries rather than copying logic.
-  - Keep the hostname, canonical domain and allowed internal origins configuration-driven so a later domain or hosting migration does not require rewriting clients.
-  - Do not place the internal host in public navigation, sitemaps, feeds, metadata, public documentation, marketing pages, email templates, analytics referrers or discoverable client bundles.
-- [ ] Choose and prove an access architecture that satisfies the required **connection-level denial** behavior before building the internal UI.
-  - Unauthorized visitors must not receive an application-generated 404, 403, redirect, sign-in page or branded denial page from `int.<domain>`; the connection must fail before the internal application is reached and must not confirm that an NJ Courier internal service exists.
-  - A normal public DNS record plus application login cannot provide that behavior: DNS and TLS occur before Clerk or the application knows the user. Do not misrepresent a hidden route, generic 404 or client-side role check as an invisible domain.
-  - Compare and prototype an identity-aware private-access gateway, managed Zero Trust access, VPN/private network with split-horizon DNS, mutual TLS/client certificates and any hosting-provider-native private deployment control available at implementation time.
-  - If a literal browser-level “cannot connect/domain not found” result is required, use private or split-horizon DNS plus an enrolled network/device path; a publicly resolved hostname or public certificate may reveal the host even when its application is protected.
-  - If authorized users must connect from arbitrary outside networks without a VPN, document the tradeoff: an identity-aware edge can deny access before the app, but its challenge or denial may still reveal that an access service exists.
-  - Select the design only after testing it from an authorized external device, an authenticated but unauthorized account, a signed-out browser, an unenrolled device and an unrelated public network.
-  - Keep the private-access provider replaceable and record any free-tier limits, pricing risk, account ownership, recovery procedure and hosting constraints before adoption.
-- [ ] Define enrollment, eligibility and revocation for the small set of people permitted to connect.
-  - Use the existing Clerk identity, active-user state and employee capability-grant model where appropriate, adding only the fine-grained internal capabilities actually required by audited workflows.
-  - Require an explicit internal-host eligibility grant in addition to any broad staff role; a Studio role, NJC+ entitlement, trial, invited-beta grant or possession of the URL must never imply internal-host access.
+- [ ] Activate and prove the selected connection-level perimeter before creating
+  DNS or deploying the internal Vercel project.
+  - Create the publication-owned Cloudflare Zero Trust Free organization,
+    identity provider, whole-host Access application, private CA and required
+    mTLS rule. Issue unique expiring client certificates only to enrolled
+    devices; never commit or share the CA private key.
+  - Configure Cloudflare to replace the private origin-proof header, create the
+    separate Vercel project with Standard Protection for aliases/previews, set
+    exact issuer/AUD/origin secrets, and enable the app only after every
+    prerequisite is present.
+  - Choose public DNS for outside-network convenience or WARP/private DNS if
+    the hostname itself must remain undiscoverable. Record the accepted
+    certificate-transparency, free-tier log-retention and outage limitations.
+- [ ] Build the administrator-controlled enrollment, eligibility and revocation
+  workflow for the small set of people permitted to connect.
   - Support approved outside access through a controlled account/device enrollment flow with start, expiration, revocation, reviewer, reason and audit history.
+  - Keep `internal:access` out of broad role defaults and generic employee
+    self-service. Grant it only after the matching device certificate has been
+    enrolled and reviewed.
   - Re-check eligibility at the perimeter and server on every session and privileged request. Revoked, expired, disabled or role-changed accounts must lose access promptly.
   - Provide least-privilege sections and action-level capabilities so internal-host access does not automatically grant role management, exports, licensing, private chat or other sensitive tools.
   - Define secure recovery and tightly audited break-glass access without a shared password, permanent bypass, secret URL or client-editable claim.
-- [ ] Enforce defense in depth even though unauthorized traffic should be stopped before the application.
+- [ ] Extend the implemented defense-in-depth shell to each migrated workflow.
   - Validate authentication, active account state, capability, resource access and action permission on the server for every internal page, API, attachment, export, live subscription, notification and deep-link destination.
   - Never trust a role, target ID, host, origin, forwarded header, account search result or destination supplied by a client.
-  - Add strict accepted-host validation and ensure internal routes and APIs cannot be reached through the canonical publication, `studio`, `api`, `plus`, CDN, raw `*.vercel.app` deployment URL, a preview URL, an alternate rewrite or a forged `Host`/forwarded-host header.
+  - Preserve the exact-host, private-origin-proof and signed Access-JWT checks;
+    ensure no migrated route/API can be reached through the canonical publication,
+    `studio`, `api`, `plus`, CDN, raw `*.vercel.app` deployment URL, a preview
+    URL, alternate rewrite or forged host/forwarded-host header.
   - Protect or disable preview and branch deployments that would otherwise expose the internal application outside the private-access perimeter.
   - Prevent insecure direct-object references, guessed channel membership, unauthorized private attachments, export enumeration and cross-role data leakage.
   - Keep private media and exports in authorization-checked storage; do not serve them from the public CDN or publish durable unauthenticated Blob URLs.

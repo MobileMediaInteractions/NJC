@@ -27,6 +27,10 @@ was invented. The operating entity, monitored legal/press contact, complete
 retention schedule, and counsel-approved final license language are still
 missing product inputs. Generated PDFs visibly identify that limitation.
 
+Studio reports the exact-version legal readiness gate documented in
+[`PRESS_LEGAL_VALIDATION.md`](PRESS_LEGAL_VALIDATION.md). Deployment and DNS
+activation do not satisfy that gate.
+
 ## Lifecycle
 
 `draft / intake / needs_information -> evaluating -> approved /

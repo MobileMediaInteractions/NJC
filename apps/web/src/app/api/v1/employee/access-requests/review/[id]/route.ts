@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { isEmployeeSelfServiceCapability } from "@harborline/contracts";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import {
   employeeAccessRequests,
@@ -29,6 +30,17 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   const db = getDb();
   const [current] = await db.select().from(employeeAccessRequests).where(eq(employeeAccessRequests.id, id)).limit(1);
   if (!current) return NextResponse.json({ error: { code: "not_found", message: "Request not found" } }, { status: 404 });
+  if (!isEmployeeSelfServiceCapability(current.capability)) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "device_enrollment_required",
+          message: "Internal-host access cannot be approved through the employee self-service queue",
+        },
+      },
+      { status: 409 },
+    );
+  }
   if (!canTransitionAccessRequest(current.status, parsed.data.status, current.requesterClerkId === viewer.id))
     return NextResponse.json({ error: { code: "invalid_transition", message: "This request cannot be reviewed by this account" } }, { status: 409 });
 

@@ -304,6 +304,7 @@ export type PairingPollResult =
  */
 export const employeeCapabilities = [
   "employee:access",
+  "internal:access",
   "chat:read",
   "chat:write",
   "chat:manage",
@@ -319,6 +320,14 @@ export const employeeCapabilities = [
 ] as const;
 
 export type EmployeeCapability = (typeof employeeCapabilities)[number];
+
+export const internalHostCapability = "internal:access" satisfies EmployeeCapability;
+
+export function isEmployeeSelfServiceCapability(
+  capability: string,
+): capability is EmployeeCapability {
+  return employeeCapabilities.includes(capability as EmployeeCapability) && capability !== internalHostCapability;
+}
 
 export const employeeAccessRequestStatuses = [
   "pending",

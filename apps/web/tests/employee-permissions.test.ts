@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { isEmployeeSelfServiceCapability } from "@harborline/contracts";
 import { canTransitionAccessRequest, resolveEmployeeCapabilities } from "../src/lib/employee-permissions";
 import { sanitizeEmployeeMessage } from "../src/lib/employee-chat";
 
@@ -17,6 +18,20 @@ test("finance access is explicit and defaults only to administrators", () => {
     ]).includes("tools:finance"),
     true,
   );
+});
+test("internal-host eligibility is never inherited from a role", () => {
+  assert.equal(resolveEmployeeCapabilities("admin", []).includes("internal:access"), false);
+  assert.equal(resolveEmployeeCapabilities("editor", []).includes("internal:access"), false);
+  assert.equal(
+    resolveEmployeeCapabilities("admin", [
+      { capability: "internal:access", effect: "allow" },
+    ]).includes("internal:access"),
+    true,
+  );
+});
+test("internal-host eligibility is excluded from employee self-service", () => {
+  assert.equal(isEmployeeSelfServiceCapability("internal:access"), false);
+  assert.equal(isEmployeeSelfServiceCapability("chat:read"), true);
 });
 test("revocation of employee access removes every privileged capability", () => {
   const capabilities = resolveEmployeeCapabilities("admin", [{ capability: "employee:access", effect: "deny" }]);

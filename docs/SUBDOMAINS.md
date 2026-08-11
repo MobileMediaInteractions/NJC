@@ -12,6 +12,7 @@ deployment and one separately deployable static asset origin.
 | `plus.thejerseycourier.com` | `njc-web` | Host-aware NJC+ product routes; unavailable public surfaces redirect to the canonical publication while Studio preview and invited-beta access remain entitlement-gated |
 | `distribution.thejerseycourier.com` | `njc-web` | Private, no-index advance-release library. Every package, preview, stream, and download is authorized server-side against a verified Clerk account and an active database grant. |
 | `press.thejerseycourier.com` | `njc-web` | Public Press & Media portal. Conversational intake is public and rate-limited; policy decisions, private packages, downloads, and Studio review remain server-authorized and audited. |
+| `int.thejerseycourier.com` | separate project rooted at `apps/internal` — **not deployed** | Reserved internal boundary. It must remain without public DNS or a production deployment until the documented Cloudflare Access + mTLS perimeter, explicit eligibility grant, and denial matrix pass. |
 
 DNS labels cannot contain `+`, so the public hostname for NJC+ is `plus`.
 The host rewrites to the separate `/plus` product shell without exposing or
@@ -46,6 +47,13 @@ the authoritative account and grant records, but its binaries remain in
 private Blob storage and are delivered only through authenticated streaming
 routes. Never attach `distribution` to the static CDN project, Search Console,
 the sitemap, or a public media URL.
+
+The internal host is not another rewrite on `njc-web`. Its deployable shell and
+complete repository classification live in
+[`docs/security/INTERNAL_BOUNDARY.md`](security/INTERNAL_BOUNDARY.md). Do not
+create its DNS record, attach its domain, or deploy its Vercel project until the
+external mTLS perimeter is configured first. A Clerk gate, 404, `noindex`, or
+ordinary WAF denial does not satisfy the connection-level denial requirement.
 
 ## CDN project
 

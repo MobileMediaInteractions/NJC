@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getStudioUser } from "@/lib/auth";
 import { getPressAssetCatalog } from "@/lib/press-kit-server";
+import { getPressLegalReadiness } from "@/lib/press-legal-readiness";
 
 const activeStatuses = ["draft", "intake", "needs_information", "evaluating", "approved", "partially_approved", "manual_review", "package_generating"];
 const completedStatuses = ["ready", "downloaded", "generated"];
@@ -29,10 +30,12 @@ export default async function PressRequestsPage() {
       ])
     : [[], []];
   const manual = rows.filter((row) => row.status === "manual_review");
+  const legal = getPressLegalReadiness();
 
   return <StudioShell viewer={viewer}><div>
     <div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-sm font-medium text-primary">Media relations</p><h1 className="mt-1 text-3xl font-bold tracking-tight">Press &amp; Media requests</h1><p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">Review policy-sensitive requests, issue request-specific authorization, inspect packages, and control the allowlisted press catalog.</p></div><Badge variant={hasDatabase() ? "secondary" : "outline"}>{hasDatabase() ? "Audited workflow live" : "Database not connected"}</Badge></div>
     <div className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Metric title="Open requests" value={rows.filter((row) => activeStatuses.includes(row.status)).length} detail="Intake through package generation" icon={<Inbox />} /><Metric title="Manual review" value={manual.length} detail="Needs a human decision" icon={<ShieldAlert />} /><Metric title="Ready packages" value={rows.filter((row) => completedStatuses.includes(row.status)).length} detail="Includes legacy instant kits" icon={<PackageCheck />} /><Metric title="Catalog assets" value={catalog.filter((asset) => asset.active).length} detail={`${catalog.filter((asset) => !asset.active).length} inactive`} icon={<Archive />} /></div>
+    <Card className={`mt-7 ${legal.legallyValidated ? "border-emerald-500/30" : "border-amber-500/45"}`}><CardHeader><div className="flex flex-wrap items-center justify-between gap-3"><div><CardTitle>Legal validation gate</CardTitle><CardDescription>External activation and legal approval are separate. This gate never infers counsel approval from a deployment.</CardDescription></div><Badge variant={legal.legallyValidated ? "secondary" : "outline"}>{legal.legallyValidated ? "Validated" : "Provisional language required"}</Badge></div></CardHeader><CardContent className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{legal.checks.map((check) => <div key={check.id} className="flex items-center justify-between gap-3 rounded-md border px-3 py-2 text-sm"><span>{check.label}</span><Badge variant={check.ready ? "secondary" : "outline"}>{check.ready ? "Recorded" : "Missing"}</Badge></div>)}</CardContent></Card>
     <Tabs defaultValue={manual.length ? "manual" : "active"} className="mt-7"><TabsList className="h-auto flex-wrap"><TabsTrigger value="manual">Manual review <Badge variant="secondary" className="ml-2">{manual.length}</Badge></TabsTrigger><TabsTrigger value="active">Active <Badge variant="secondary" className="ml-2">{rows.filter((row) => activeStatuses.includes(row.status)).length}</Badge></TabsTrigger><TabsTrigger value="completed">Completed <Badge variant="secondary" className="ml-2">{rows.filter((row) => completedStatuses.includes(row.status)).length}</Badge></TabsTrigger><TabsTrigger value="closed">Closed <Badge variant="secondary" className="ml-2">{rows.filter((row) => closedStatuses.includes(row.status)).length}</Badge></TabsTrigger><TabsTrigger value="assets">Asset catalog</TabsTrigger></TabsList>
       <TabsContent value="manual" className="mt-4"><RequestList rows={manual} /></TabsContent>
       <TabsContent value="active" className="mt-4"><RequestList rows={rows.filter((row) => activeStatuses.includes(row.status))} /></TabsContent>

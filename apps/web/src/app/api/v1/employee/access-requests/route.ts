@@ -1,7 +1,10 @@
 import { and, desc, eq, gte } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { employeeCapabilities } from "@harborline/contracts";
+import {
+  employeeCapabilities,
+  isEmployeeSelfServiceCapability,
+} from "@harborline/contracts";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import { employeeAccessRequests } from "@harborline/backend/schema";
 import { getStudioUser } from "@/lib/auth";
@@ -29,6 +32,17 @@ export async function POST(request: Request) {
   if (!hasDatabase()) return NextResponse.json({ error: { code: "service_not_configured", message: "Access requests require Postgres" } }, { status: 503 });
   const parsed = input.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: { code: "invalid_request", message: "Choose a supported capability" } }, { status: 400 });
+  if (!isEmployeeSelfServiceCapability(parsed.data.capability)) {
+    return NextResponse.json(
+      {
+        error: {
+          code: "device_enrollment_required",
+          message: "Internal-host access requires a separate administrator-approved device enrollment",
+        },
+      },
+      { status: 409 },
+    );
+  }
   if (resolveEmployeeCapabilities(user.role, []).includes(parsed.data.capability))
     return NextResponse.json({ error: { code: "already_allowed", message: "Your account already has this capability" } }, { status: 409 });
   const since = new Date(Date.now() - 24 * 60 * 60_000);
