@@ -69,13 +69,12 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > security tests are implemented. See
 > [the Press & Media runbook](docs/PRESS_KIT_PORTAL.md).
 
-- [ ] Apply `apps/web/drizzle/0036_spooky_absorbing_man.sql` to every deployed
-  database before exposing the new portal. Configure a unique 32+ byte
-  `PRESS_KIT_TOKEN_PEPPER`, private Vercel Blob, and durable Upstash/Vercel KV
-  limits; then confirm portable backup and restore revoke every restored request
-  and package token.
-- [ ] Attach `press.thejerseycourier.com` to the existing `njc-web` Vercel
-  project, create the requested DNS record, wait for SSL, set
+- [ ] Run a production portable backup/restore rehearsal and confirm every
+  restored Press request token and package token is revoked. Migration `0036`,
+  separate production/preview token peppers, private Vercel Blob, and durable
+  KV rate limiting are configured in production.
+- [ ] Create the required third-party DNS record for the already-attached
+  `press.thejerseycourier.com` Vercel domain, wait for SSL, set
   `PRESS_SUBDOMAIN_ENABLED=true`, redeploy, and run the host,
   canonical, no-index API, legacy `/press`, secure-download, raw Vercel alias,
   preview-deployment and cross-request authorization matrix.
