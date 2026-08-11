@@ -137,12 +137,12 @@ test("production subdomains have explicit host-aware routes", async () => {
     route.destination === "/press-portal" &&
     route.has?.some((condition) => condition.type === "host" && condition.value === "press.thejerseycourier.com")
   ));
-  assert.ok(redirects.some((route) =>
+  assert.equal(redirects.some((route) =>
     route.source === "/press-portal" &&
     route.destination === "https://press.thejerseycourier.com" &&
     route.permanent === true &&
     route.has?.some((condition) => condition.type === "host" && condition.value === "www.thejerseycourier.com")
-  ));
+  ), false, "the main-domain fallback must remain available until DNS is explicitly activated");
 });
 
 test("every clean Studio navigation section has a host rewrite", async () => {

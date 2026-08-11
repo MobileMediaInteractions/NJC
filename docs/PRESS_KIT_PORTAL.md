@@ -73,6 +73,7 @@ Apply migration `0036_spooky_absorbing_man.sql`, then configure:
 ```dotenv
 NEXT_PUBLIC_PRESS_HOST=press.thejerseycourier.com
 NEXT_PUBLIC_PRESS_URL=https://press.thejerseycourier.com
+PRESS_SUBDOMAIN_ENABLED=false
 PRESS_KIT_TOKEN_PEPPER=<32-or-more-random-bytes>
 PRIVATE_BLOB_READ_WRITE_TOKEN=<private Vercel Blob token>
 KV_REST_API_URL=<Upstash/Vercel KV URL>
@@ -81,6 +82,11 @@ CLOUDFLARE_ACCOUNT_ID=<existing account>
 CLOUDFLARE_WORKERS_AI_TOKEN=<least-privilege Workers AI token>
 CLOUDFLARE_AI_TEXT_MODEL=@cf/meta/llama-3.1-8b-instruct-fast
 ```
+
+Keep `PRESS_SUBDOMAIN_ENABLED=false` while DNS or SSL is incomplete. During
+that transition, the production request experience remains available at
+`https://www.thejerseycourier.com/press-portal`. Set it to `true` and redeploy
+only after the dedicated readiness check passes.
 
 The AI adapter is optional and fails over to deterministic intake rather than
 opening an unrestricted chat endpoint. Transactional email is also optional:

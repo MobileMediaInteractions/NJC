@@ -18,6 +18,7 @@ const distributionHostname =
   "distribution.thejerseycourier.com";
 const pressHostname =
   process.env.NEXT_PUBLIC_PRESS_HOST ?? "press.thejerseycourier.com";
+const pressSubdomainEnabled = process.env.PRESS_SUBDOMAIN_ENABLED === "true";
 const canonicalSiteHostname = new URL(canonicalSiteOrigin).hostname;
 const studioOrigin = `https://${studioHostname}`;
 const apiOrigin = `https://${apiHostname}`;
@@ -225,12 +226,14 @@ const nextConfig: NextConfig = {
         destination: apiOrigin,
         permanent: true,
       },
-      {
-        source: "/press-portal",
-        has: onHost(canonicalSiteHostname),
-        destination: pressOrigin,
-        permanent: true,
-      },
+      ...(pressSubdomainEnabled
+        ? [{
+            source: "/press-portal",
+            has: onHost(canonicalSiteHostname),
+            destination: pressOrigin,
+            permanent: true,
+          }]
+        : []),
       {
         source: "/press",
         has: onHost(pressHostname),

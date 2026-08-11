@@ -75,7 +75,8 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   limits; then confirm portable backup and restore revoke every restored request
   and package token.
 - [ ] Attach `press.thejerseycourier.com` to the existing `njc-web` Vercel
-  project, create the requested DNS record, wait for SSL, and run the host,
+  project, create the requested DNS record, wait for SSL, set
+  `PRESS_SUBDOMAIN_ENABLED=true`, redeploy, and run the host,
   canonical, no-index API, legacy `/press`, secure-download, raw Vercel alias,
   preview-deployment and cross-request authorization matrix.
 - [ ] Decide whether to enable the existing Cloudflare Workers AI credentials

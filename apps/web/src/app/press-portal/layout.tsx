@@ -4,14 +4,17 @@ import Link from "next/link";
 import { brandAssets } from "@/lib/assets";
 
 const pressOrigin = process.env.NEXT_PUBLIC_PRESS_URL?.replace(/\/$/, "") ?? "https://press.thejerseycourier.com";
+const canonicalPressUrl = process.env.PRESS_SUBDOMAIN_ENABLED === "true"
+  ? pressOrigin
+  : "https://www.thejerseycourier.com/press-portal";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(pressOrigin),
+  metadataBase: new URL(canonicalPressUrl),
   title: { default: "Press & Media | The New Jersey Courier", template: "%s | NJ Courier Press & Media" },
   description: "Request authorized New Jersey Courier press materials through a policy-aware media portal.",
-  alternates: { canonical: pressOrigin },
+  alternates: { canonical: canonicalPressUrl },
   robots: { index: true, follow: true },
-  openGraph: { title: "The New Jersey Courier Press & Media", description: "Official press materials, request-specific authorization, and secure delivery.", url: pressOrigin, type: "website" },
+  openGraph: { title: "The New Jersey Courier Press & Media", description: "Official press materials, request-specific authorization, and secure delivery.", url: canonicalPressUrl, type: "website" },
 };
 
 export default function PressPortalLayout({ children }: { children: React.ReactNode }) {
