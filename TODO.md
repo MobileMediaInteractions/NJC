@@ -76,12 +76,13 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   restored Press request token and package token is revoked. Migration `0036`,
   separate production/preview token peppers, private Vercel Blob, and durable
   KV rate limiting are configured in production.
-- [ ] Create the required authoritative DNS record for the already-attached
-  `press.thejerseycourier.com` Vercel domain. Public DNS remains NXDOMAIN; add only
-  `CNAME press 637644a6ea56a9c4.vercel-dns-017.com.`, wait for SSL, set
-  `PRESS_SUBDOMAIN_ENABLED=true`, redeploy, and run the host,
-  canonical, no-index API, legacy `/press`, secure-download, raw Vercel alias,
-  preview-deployment and cross-request authorization matrix.
+- [x] Activate `press.thejerseycourier.com` with the authoritative IONOS CNAME
+  `637644a6ea56a9c4.vercel-dns-017.com.`, a Vercel-managed TLS certificate and
+  the existing production Press host routing. Public DNS, HTTPS and the
+  dedicated portal were verified on August 11, 2026. Keep the canonical,
+  no-index API, legacy `/press`, secure-download, raw Vercel alias,
+  preview-deployment and cross-request authorization matrix in every release
+  rehearsal.
 - [ ] Decide whether to enable the existing Cloudflare Workers AI credentials
   for intake extraction. If enabled, use a least-privilege token and the
   configured free model, validate provider retention/data-use terms, and prove
@@ -115,9 +116,11 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > projects, or publish the `int` security boundary. See
 > [the domain-control runbook](docs/operations/DOMAIN_CONTROL.md).
 
-> Vercel project attachment is complete for `press`, `distribution`, `links`,
-> `support`, `careers`, `events`, `live`, `weather`, `newsletters`, `ads`, and
-> `account`. Their authoritative IONOS CNAMEs and HTTPS checks remain pending.
+> Vercel attachment, authoritative IONOS CNAMEs, managed TLS and public HTTPS
+> verification are complete for `press`, `distribution`, `links`, `support`,
+> `careers`, `events`, `live`, `weather`, `newsletters`, `ads`, and `account`.
+> Reserved web hosts intentionally redirect to the canonical publication until
+> a reviewed first-party surface replaces the redirect. `int` remains DNS-dark.
 
 - [ ] After the current domain batch is attached and its authoritative CNAMEs
   are verified, configure the production control with a dedicated
@@ -147,10 +150,11 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   responses, and attach `status.thejerseycourier.com`. The project uses
   `apps/status`, the same repository and production branch `main` without
   sharing the `njc-web` failure domain.
-- [ ] At IONOS, add the exact Vercel-recommended CNAME `status` →
-  `41e5f6338ab579af.vercel-dns-017.com.`, wait for TLS, and prove the page and
-  `/api/health` remain available during a controlled `njc-web` outage or
-  blocked-origin rehearsal.
+- [x] At IONOS, add the exact Vercel-recommended CNAME `status` →
+  `41e5f6338ab579af.vercel-dns-017.com.`, issue independent managed TLS and
+  verify the public page and `/api/health`. The DNS, certificate and live
+  endpoint checks passed on August 11, 2026. A controlled `njc-web` outage or
+  blocked-origin rehearsal remains part of disaster-recovery validation.
 - [ ] Provision a separate free-compatible Upstash Redis for retained status
   history, configure only `STATUS_REDIS_REST_URL` and
   `STATUS_REDIS_REST_TOKEN`, then activate an independent collector at the

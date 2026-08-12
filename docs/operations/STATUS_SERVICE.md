@@ -45,9 +45,10 @@ do not report a 90-day percentage until retained samples exist.
    `apps/status`, connected to this repository's `main` branch and has a
    successful production deployment. Its provider-protected `/api/health` and
    `/api/status` routes returned HTTP 200 during activation verification.
-2. `status.thejerseycourier.com` is attached to `njc-status`. At IONOS, add
-   exactly `CNAME status 41e5f6338ab579af.vercel-dns-017.com.`; do not reuse
-   the `njc-web` or `njc-cdn` target.
+2. `status.thejerseycourier.com` is attached to `njc-status`. IONOS serves the
+   exact `CNAME status 41e5f6338ab579af.vercel-dns-017.com.`, and Vercel-managed
+   TLS plus the public page and `/api/health` were verified on August 11, 2026.
+   Do not reuse the `njc-web` or `njc-cdn` target.
 3. Provision a separate Redis database and add only the two status credentials.
 4. Verify `/`, `/api/status`, `/api/health`, robots, sitemap, HTTPS, canonical
    metadata, light/dark/system themes, responsive layout and every service row.

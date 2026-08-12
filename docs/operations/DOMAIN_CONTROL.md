@@ -20,15 +20,26 @@ takeover, certificate and phishing risk.
 | `status.thejerseycourier.com` | NJC Status | Independent public availability and incident surface |
 | `int.thejerseycourier.com` | Separate internal app | No DNS until Access + mTLS is proven |
 
-Future labels reserved by the registry are `links`, `support`, `careers`,
-`events`, `live`, `weather`, `newsletters`, `ads`, and `account`.
-The web labels are attached to `njc-web` but remain DNS-dormant until their
-authoritative records are deliberately activated. Future web labels redirect to
-the canonical publication until a reviewed product surface replaces that
-redirect. `status` remains excluded from generic provisioning because its
-dedicated project must remain independent of the primary application. `int` is excluded because
-DNS publication before the connection-level perimeter would violate the
-internal-boundary design.
+The reserved web labels `links`, `support`, `careers`, `events`, `live`,
+`weather`, `newsletters`, `ads`, and `account` are attached to `njc-web`, have
+authoritative IONOS CNAMEs and managed HTTPS, and redirect to the canonical
+publication until a reviewed product surface replaces that redirect. `press`
+and `distribution` use their dedicated first-party routes on the same project.
+`status` remains excluded from generic provisioning because its dedicated
+project must remain independent of the primary application. `int` is excluded
+and has no DNS record because publication before the connection-level perimeter
+would violate the internal-boundary design.
+
+The August 11, 2026 activation used these provider targets:
+
+- `press`, `distribution`, `links`, `support`, `careers`, `events`, `live`,
+  `weather`, `newsletters`, `ads`, and `account` →
+  `637644a6ea56a9c4.vercel-dns-017.com.`
+- `status` → `41e5f6338ab579af.vercel-dns-017.com.`
+
+Public DNS, Vercel ownership and TLS were verified after activation. These
+records do not authorize the internal hostname or expand the Studio operator
+allowlist.
 
 ## Studio control center
 
