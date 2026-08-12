@@ -228,6 +228,52 @@ export const storyAuthors = pgTable(
   ],
 );
 
+export const linkInBioEntries = pgTable(
+  "link_in_bio_entries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull(),
+    storyId: uuid("story_id")
+      .notNull()
+      .references(() => stories.id, { onDelete: "cascade" }),
+    displayTitle: text("display_title"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    isVisible: boolean("is_visible").notNull().default(true),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    clickCount: integer("click_count").notNull().default(0),
+    lastClickedAt: timestamp("last_clicked_at", { withTimezone: true }),
+    createdByClerkId: text("created_by_clerk_id").notNull(),
+    updatedByClerkId: text("updated_by_clerk_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("link_in_bio_entries_slug_idx").on(table.slug),
+    uniqueIndex("link_in_bio_entries_story_idx").on(table.storyId),
+    index("link_in_bio_entries_public_idx").on(
+      table.isVisible,
+      table.sortOrder,
+    ),
+    check(
+      "link_in_bio_entries_slug_check",
+      sql`${table.slug} ~ '^[a-z0-9]+(?:-[a-z0-9]+)*$'`,
+    ),
+    check(
+      "link_in_bio_entries_click_count_check",
+      sql`${table.clickCount} >= 0`,
+    ),
+    check(
+      "link_in_bio_entries_window_check",
+      sql`${table.endsAt} is null or ${table.startsAt} is null or ${table.endsAt} > ${table.startsAt}`,
+    ),
+  ],
+);
+
 export const pseudonymModerationEvents = pgTable(
   "pseudonym_moderation_events",
   {

@@ -260,6 +260,13 @@
       "when": 1786424886654,
       "tag": "0036_spooky_absorbing_man",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1786504130271,
+      "tag": "0037_hesitant_steel_serpent",
+      "breakpoints": true
     }
   ]
 }

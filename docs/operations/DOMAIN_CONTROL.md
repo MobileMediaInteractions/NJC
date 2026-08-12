@@ -17,14 +17,15 @@ takeover, certificate and phishing risk.
 | `cdn.thejerseycourier.com` | NJC CDN | Immutable public assets |
 | `press.thejerseycourier.com` | NJC web | Press & Media portal |
 | `distribution.thejerseycourier.com` | NJC web | Authorized distribution portal |
+| `links.thejerseycourier.com` | NJC web | Curated Link in Bio and article redirects |
 | `status.thejerseycourier.com` | NJC Status | Independent public availability and incident surface |
 | `int.thejerseycourier.com` | Separate internal app | No DNS until Access + mTLS is proven |
 
-The reserved web labels `links`, `support`, `careers`, `events`, `live`,
+The reserved web labels `support`, `careers`, `events`, `live`,
 `weather`, `newsletters`, `ads`, and `account` are attached to `njc-web`, have
 authoritative IONOS CNAMEs and managed HTTPS, and redirect to the canonical
-publication until a reviewed product surface replaces that redirect. `press`
-and `distribution` use their dedicated first-party routes on the same project.
+publication until a reviewed product surface replaces that redirect. `press`,
+`distribution`, and `links` use dedicated first-party routes on the same project.
 `status` remains excluded from generic provisioning because its dedicated
 project must remain independent of the primary application. `int` is excluded
 and has no DNS record because publication before the connection-level perimeter

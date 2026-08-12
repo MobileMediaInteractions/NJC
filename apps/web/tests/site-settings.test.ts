@@ -127,17 +127,19 @@ test("older stored configuration receives the enabled Night Courier easter egg",
   assert.ok(parsed.easterEgg.message.length >= 20);
 });
 
-test("older stored configuration enables pseudonyms, Distribution, and the Press portal by default", () => {
+test("older stored configuration enables pseudonyms, Distribution, Press, and Link in Bio by default", () => {
   const configuration = configurationCopy();
   const features = configuration.features as Partial<typeof configuration.features>;
   delete features.pseudonyms;
   delete features.distribution;
   delete features.pressPortal;
+  delete features.linkInBio;
 
   const parsed = siteConfigurationSchema.parse(configuration);
   assert.equal(parsed.features.pseudonyms, true);
   assert.equal(parsed.features.distribution, true);
   assert.equal(parsed.features.pressPortal, true);
+  assert.equal(parsed.features.linkInBio, true);
 });
 
 test("older stored configuration receives the complete guarded Studio registry", () => {

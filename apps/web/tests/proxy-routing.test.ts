@@ -23,6 +23,11 @@ test("public news and social crawler routes bypass Clerk middleware", () => {
   assert.equal(isClerkRouted("/api/v1/stories"), false);
   assert.equal(isClerkRouted("/api/v1/device-pairing"), false);
   assert.equal(isClerkRouted("/api/v1/device-pairing/pairing-id/poll"), false);
+  assert.equal(isClerkRouted("/", "links.thejerseycourier.com"), false);
+  assert.equal(
+    isClerkRouted("/council-adopts-budget", "links.thejerseycourier.com"),
+    false,
+  );
 });
 
 test("newsroom and account routes continue through Clerk middleware", () => {

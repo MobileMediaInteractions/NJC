@@ -119,8 +119,11 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > Vercel attachment, authoritative IONOS CNAMEs, managed TLS and public HTTPS
 > verification are complete for `press`, `distribution`, `links`, `support`,
 > `careers`, `events`, `live`, `weather`, `newsletters`, `ads`, and `account`.
-> Reserved web hosts intentionally redirect to the canonical publication until
-> a reviewed first-party surface replaces the redirect. `int` remains DNS-dark.
+> `links` now serves the first-party, Studio-curated Link in Bio surface with
+> published-story-only redirects, social attribution, availability windows,
+> click counts and audited controls. The remaining reserved web hosts redirect
+> to the canonical publication until a reviewed first-party surface replaces
+> each redirect. `int` remains DNS-dark.
 
 - [ ] After the current domain batch is attached and its authoritative CNAMEs
   are verified, configure the production control with a dedicated

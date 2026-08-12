@@ -10,7 +10,7 @@ export const managedDomainCatalog = [
   { label: "distribution", title: "Distribution", purpose: "Authorized pre-publication file delivery", project: "web", activation: "required" },
   { label: "status", title: "Service status", purpose: "Independent availability and incident reporting", project: "status", activation: "required" },
   { label: "int", title: "Internal boundary", purpose: "Connection-gated internal operations", project: "internal", activation: "security-gated" },
-  { label: "links", title: "Smart links", purpose: "Future app and campaign deep links", project: "web", activation: "reserved" },
+  { label: "links", title: "Link in Bio", purpose: "Curated social article landing page and audited article redirects", project: "web", activation: "active" },
   { label: "support", title: "Reader support", purpose: "Future help and support center", project: "web", activation: "reserved" },
   { label: "careers", title: "Careers", purpose: "Future newsroom opportunities", project: "web", activation: "reserved" },
   { label: "events", title: "Events", purpose: "Future awards and community events", project: "web", activation: "reserved" },

@@ -143,6 +143,19 @@ test("production subdomains have explicit host-aware routes", async () => {
     route.permanent === true &&
     route.has?.some((condition) => condition.type === "host" && condition.value === "www.thejerseycourier.com")
   ), false, "the main-domain fallback must remain available until DNS is explicitly activated");
+  assert.ok(rewrites.beforeFiles?.some((route) =>
+    route.source === "/" &&
+    route.destination === "/link-in-bio" &&
+    route.has?.some((condition) => condition.type === "host" && condition.value === "links.thejerseycourier.com")
+  ));
+  assert.ok(rewrites.beforeFiles?.some((route) =>
+    route.source === "/:slug" &&
+    route.destination === "/link-in-bio/:slug" &&
+    route.has?.some((condition) => condition.type === "host" && condition.value === "links.thejerseycourier.com")
+  ));
+  assert.equal(redirects.some((route) =>
+    route.has?.some((condition) => condition.type === "host" && condition.value === "links.thejerseycourier.com")
+  ), false, "the live Link in Bio hostname must not use the reserved-host redirect");
 });
 
 test("every clean Studio navigation section has a host rewrite", async () => {

@@ -34,6 +34,7 @@ export const studioModuleKeys = [
   "chat",
   "team",
   "notifications",
+  "linkInBio",
   "njcPlusOverview",
   "njcPlusContent",
   "njcPlusHomepage",
@@ -67,6 +68,7 @@ export const defaultStudioModules: Record<StudioModuleKey, boolean> = {
   chat: true,
   team: true,
   notifications: true,
+  linkInBio: true,
   njcPlusOverview: true,
   njcPlusContent: true,
   njcPlusHomepage: true,
@@ -172,6 +174,7 @@ export const siteConfigurationSchema = z.object({
     pseudonyms: z.boolean().default(true),
     distribution: z.boolean().default(true),
     pressPortal: z.boolean().default(true),
+    linkInBio: z.boolean().default(true),
   }),
   editorial: z.object({
     datelines: z
@@ -234,6 +237,7 @@ export const siteConfigurationSchema = z.object({
       chat: z.boolean(),
       team: z.boolean(),
       notifications: z.boolean(),
+      linkInBio: z.boolean().default(true),
       njcPlusOverview: z.boolean(),
       njcPlusContent: z.boolean(),
       njcPlusHomepage: z.boolean(),
@@ -357,6 +361,7 @@ export const defaultSiteConfiguration: SiteConfiguration = {
     pseudonyms: true,
     distribution: true,
     pressPortal: true,
+    linkInBio: true,
   },
   editorial: {
     datelines: [...defaultDatelines],

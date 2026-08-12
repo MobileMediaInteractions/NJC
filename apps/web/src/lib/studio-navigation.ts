@@ -188,6 +188,13 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         roles: publishingRoles,
         module: "notifications",
       },
+      {
+        id: "link-in-bio",
+        label: "Link in Bio",
+        href: "/studio/links",
+        roles: publishingRoles,
+        module: "linkInBio",
+      },
     ],
   },
   {

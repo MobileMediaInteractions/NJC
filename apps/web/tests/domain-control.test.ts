@@ -20,10 +20,10 @@ test("domain catalog uses unique labels and exact Courier hostnames", () => {
 });
 
 test("internal, CDN, active and external hosts cannot use generic provisioning", () => {
-  for (const label of ["www", "studio", "api", "plus", "cdn", "int", "status"] as const) {
+  for (const label of ["www", "studio", "api", "plus", "cdn", "links", "int", "status"] as const) {
     assert.equal(isProvisioningBlocked(label), true, label);
   }
-  for (const label of ["press", "distribution", "links", "support"] as const) {
+  for (const label of ["press", "distribution", "support"] as const) {
     assert.equal(isProvisioningBlocked(label), false, label);
   }
 });

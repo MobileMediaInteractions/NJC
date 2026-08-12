@@ -75,7 +75,7 @@ export const monitorCatalog: readonly MonitorDefinition[] = [
     expectedBehavior: "Returns the production publication or canonical redirect",
     mode: "http",
   },
-  http("links", "Reserved entry points", { expectedStatuses: redirected, expectedBehavior: "Redirects safely to the canonical publication until launch" }),
+  http("links", "Products & Media", { expectedBehavior: "Returns the curated Link in Bio article page" }),
   http("support", "Reserved entry points", { expectedStatuses: redirected, expectedBehavior: "Redirects safely to the canonical publication until launch" }),
   http("careers", "Reserved entry points", { expectedStatuses: redirected, expectedBehavior: "Redirects safely to the canonical publication until launch" }),
   http("events", "Reserved entry points", { expectedStatuses: redirected, expectedBehavior: "Redirects safely to the canonical publication until launch" }),

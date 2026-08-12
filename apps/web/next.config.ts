@@ -18,6 +18,8 @@ const distributionHostname =
   "distribution.thejerseycourier.com";
 const pressHostname =
   process.env.NEXT_PUBLIC_PRESS_HOST ?? "press.thejerseycourier.com";
+const linksHostname =
+  process.env.NEXT_PUBLIC_LINKS_HOST ?? "links.thejerseycourier.com";
 const pressSubdomainEnabled = process.env.PRESS_SUBDOMAIN_ENABLED === "true";
 const canonicalSiteHostname = new URL(canonicalSiteOrigin).hostname;
 const studioOrigin = `https://${studioHostname}`;
@@ -26,7 +28,6 @@ const plusOrigin = `https://${plusHostname}`;
 const distributionOrigin = `https://${distributionHostname}`;
 const pressOrigin = `https://${pressHostname}`;
 const futureRedirectHostnames = [
-  "links.thejerseycourier.com",
   "support.thejerseycourier.com",
   "careers.thejerseycourier.com",
   "events.thejerseycourier.com",
@@ -45,6 +46,7 @@ const studioSections = [
   "exports",
   "finance",
   "legal",
+  "links",
   "media",
   "njc-plus",
   "notifications",
@@ -141,6 +143,15 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         has: onHost(apiHostname),
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
+        source: "/:path*",
+        has: onHost(linksHostname),
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, follow, noarchive" },
+          { key: "Referrer-Policy", value: "origin-when-cross-origin" },
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
       },
       {
         source: "/api/:path*",
@@ -331,6 +342,16 @@ const nextConfig: NextConfig = {
           source: "/",
           has: onHost(pressHostname),
           destination: "/press-portal",
+        },
+        {
+          source: "/",
+          has: onHost(linksHostname),
+          destination: "/link-in-bio",
+        },
+        {
+          source: "/:slug",
+          has: onHost(linksHostname),
+          destination: "/link-in-bio/:slug",
         },
         ...["package", "file", "item"].flatMap((section) => [
           {
