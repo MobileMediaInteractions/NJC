@@ -153,6 +153,16 @@ test("production subdomains have explicit host-aware routes", async () => {
     route.destination === "/link-in-bio/:slug" &&
     route.has?.some((condition) => condition.type === "host" && condition.value === "links.thejerseycourier.com")
   ));
+  const linkStoryRewriteIndex = rewrites.beforeFiles?.findIndex((route) =>
+    route.source === "/:slug" && route.destination === "/link-in-bio/:slug"
+  ) ?? -1;
+  const linkRootRewriteIndex = rewrites.beforeFiles?.findIndex((route) =>
+    route.source === "/" && route.destination === "/link-in-bio"
+  ) ?? -1;
+  assert.ok(
+    linkStoryRewriteIndex >= 0 && linkStoryRewriteIndex < linkRootRewriteIndex,
+    "the story rewrite must run before the root rewrite so Next does not rewrite the internal root a second time",
+  );
   assert.equal(redirects.some((route) =>
     route.has?.some((condition) => condition.type === "host" && condition.value === "links.thejerseycourier.com")
   ), false, "the live Link in Bio hostname must not use the reserved-host redirect");

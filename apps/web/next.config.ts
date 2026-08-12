@@ -344,14 +344,14 @@ const nextConfig: NextConfig = {
           destination: "/press-portal",
         },
         {
-          source: "/",
-          has: onHost(linksHostname),
-          destination: "/link-in-bio",
-        },
-        {
           source: "/:slug",
           has: onHost(linksHostname),
           destination: "/link-in-bio/:slug",
+        },
+        {
+          source: "/",
+          has: onHost(linksHostname),
+          destination: "/link-in-bio",
         },
         ...["package", "file", "item"].flatMap((section) => [
           {
