@@ -4,6 +4,8 @@ The public website is an installable Progressive Web App. It deliberately
 shares one service worker with Courier web push so there is only one worker for
 the root scope.
 
+![The Courier mobile PWA home experience](screenshots/product/homepage-mobile.jpg)
+
 ## Reader experience
 
 - Android and compatible Chromium browsers expose **Install NJ Courier** in the

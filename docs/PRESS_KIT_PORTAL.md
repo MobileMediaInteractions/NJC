@@ -5,6 +5,13 @@ host rewrite in the existing `njc-web` deployment, not a second application or
 asset copy. The legacy public route at `www.thejerseycourier.com/press` remains
 operational during migration and links to the new system for custom requests.
 
+![The dedicated Press and Media request portal](screenshots/product/press-portal.jpg)
+
+The original main-domain workflow remains visually and operationally distinct
+during the transition:
+
+![The original Courier Press Kit](screenshots/product/press-kit-legacy.jpg)
+
 ## Trust boundary
 
 The intake model can extract requester details, ask follow-up questions, and

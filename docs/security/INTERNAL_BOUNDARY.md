@@ -11,6 +11,11 @@ active database account, and an explicit, unexpired `internal:access` grant.
 It also requires a private Cloudflare-to-origin header value so a valid Access
 JWT cannot simply be replayed to a raw Vercel deployment alias.
 
+The public Studio host demonstrates the outer newsroom access boundary without
+exposing any authenticated operational data:
+
+![The Studio access boundary](../screenshots/product/studio-access-gate.jpg)
+
 `internal:access` is deliberately absent from every role default, including
 administrator. A Studio role, employee-app eligibility, NJC+ entitlement,
 invited-beta grant, possession of the hostname, or a forged proxy header is not

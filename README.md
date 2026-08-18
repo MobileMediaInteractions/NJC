@@ -6,7 +6,7 @@ The New Jersey Courier is a county-first digital newspaper platform launching in
 
 > This repository is a launch preview. Seed articles, people, polls and results are fictional demonstrations until the newsroom publishes verified reporting.
 
-![The New Jersey Courier desktop homepage](docs/screenshots/home-desktop.png)
+![The New Jersey Courier desktop homepage](docs/screenshots/product/homepage-desktop.jpg)
 
 ## Editorial products
 
@@ -17,6 +17,8 @@ The New Jersey Courier is a county-first digital newspaper platform launching in
 - **Jersey Gridiron & Court** — high-school sports and moderated Player of the Week ballots
 - **Jersey Laurels** — annual, reader-nominated community recognition
 - **Courier Watch** — public records, service journalism and accountability reporting
+
+![The Courier's 20 Under 20 program](docs/screenshots/product/20-under-20.jpg)
 
 ## Platform surfaces
 
@@ -54,7 +56,7 @@ available for local development and portability. Asset paths do not change.
 
 See the [brand guide](docs/brand/BRAND_GUIDE.md), [asset catalog](docs/brand/ASSET_CATALOG.md), and [CDN deployment guide](docs/CDN.md).
 
-![Courier responsive homepage](docs/screenshots/home-mobile.png)
+![Courier responsive homepage](docs/screenshots/product/homepage-mobile.jpg)
 
 ## Local preview
 
@@ -87,6 +89,8 @@ The [private Distribution runbook](docs/DISTRIBUTION.md) covers authorized
 pre-publication packages, immutable story snapshots, private media delivery,
 the custom viewer/player, domain activation, and production verification.
 
+![NJC Distribution's private access boundary](docs/screenshots/product/distribution-portal.jpg)
+
 The [AI story-image placeholder runbook](docs/editorial/AI_IMAGE_PLACEHOLDERS.md)
 covers the optional free-provider setup, generated-media provenance, mandatory
 publication block and newsroom acceptance procedure.
@@ -117,6 +121,8 @@ deployment and is documented in [`docs/PRESS_KIT_PORTAL.md`](docs/PRESS_KIT_PORT
 
 The public `/press` workflow generates a tailored ZIP from the approved brand library, publication background and editorial illustration. Each package includes the requester’s brief, usage terms and a checksum manifest. Production requests are rate-limited with Upstash, logged for authorized Studio users and included in portable database exports. See [press-kit generation and operations](docs/PRESS_KIT.md).
 
+![The dedicated Courier Press and Media portal](docs/screenshots/product/press-portal.jpg)
+
 ## Search visibility
 
 The web app includes canonical metadata, `NewsArticle` and publisher structured data, general and Google News sitemaps, RSS, social previews, search-engine verification hooks and CMS-level SEO controls. Indexing remains disabled by default for local and preview deployments. The current Vercel production alias was verified in Google Search Console and explicitly enabled for indexing on July 22, 2026; follow the [SEO launch and measurement guide](docs/SEO.md) for the crawler-cache status, publishing cautions and future custom-domain migration.
@@ -126,6 +132,9 @@ The web app includes canonical metadata, `NewsArticle` and publisher structured 
 Studio administrators can manage publication identity, navigation, reader feature switches and Google AdSense from **Studio → Settings**. Advertising is disabled by default and Preview mode never loads Google code or creates impressions. Live delivery requires an AdSense publisher ID, a confirmed Google-certified consent setup and valid ad-unit IDs for each enabled manual placement. See the [advertising operations guide](docs/ADVERTISING.md) before activation.
 
 The [profit and monetization plan](docs/PROFIT_AND_MONETIZATION.md) sets out the legitimate business model, launch rate-card hypotheses, revenue formulas, editorial firewall, compliance foundation, and 90-day commercialization sequence.
+
+The complete, privacy-reviewed visual catalog is maintained in
+[`docs/screenshots`](docs/screenshots/README.md).
 
 ## Verification
 

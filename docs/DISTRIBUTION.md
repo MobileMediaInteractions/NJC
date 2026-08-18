@@ -6,6 +6,8 @@ runs from the existing `njc-web` deployment at
 recipient authorization policy, private storage namespace, and audit trail.
 It never publishes material to the public Courier, NJC+, API, or CDN.
 
+![NJC Distribution's public access boundary](screenshots/product/distribution-portal.jpg)
+
 ## Architecture and access
 
 - Clerk supplies account identity. Recipient access requires a signed-in

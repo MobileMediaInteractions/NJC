@@ -5,6 +5,8 @@
 must not be an alias of `njc-web`: the publication cannot host the page that is
 supposed to explain a publication outage.
 
+![The independent Courier system-status dashboard](../screenshots/product/status-dashboard.jpg)
+
 ## Coverage
 
 The public dashboard and `/api/status` inspect the apex domain, every managed

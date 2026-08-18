@@ -5,6 +5,8 @@ The Courier's social landing page is served at
 certificate are reused; this feature replaces the hostname's former canonical
 publication redirect.
 
+![The Courier Link in Bio landing page](screenshots/product/link-in-bio.jpg)
+
 ## Editorial workflow
 
 Authorized administrators, editors, and producers manage the page in Studio at

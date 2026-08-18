@@ -4,6 +4,8 @@ New Jersey Courier has a shared Expo SDK 57 television application in `apps/tv`.
 
 The native Roku client in `apps/roku` uses the same pairing protocol with the distinct `roku` target and receives a device session labeled `roku`. Both television clients remain fully usable for public news without an account.
 
+![The manual television pairing entry](screenshots/product/tv-pairing.jpg)
+
 ## Apple TV build
 
 Requirements are macOS, Xcode 16 or newer, and a tvOS 17 or newer SDK/simulator.
