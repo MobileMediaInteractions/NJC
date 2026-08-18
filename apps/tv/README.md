@@ -2,6 +2,12 @@
 
 Shared Apple TV and Android TV/Google TV client built with Expo SDK 57 and `react-native-tvos`. It uses one TypeScript interface and a first-party, one-time device pairing flow rather than putting reader credentials on the television.
 
+![Android TV launcher banner](android/app/src/main/res/drawable-xxxhdpi/tv_banner.png)
+
+This repository image documents the shared launcher identity. Final screenshots
+of focus, playback, pairing and article reading belong to the real Apple TV and
+Android TV release-device matrix rather than a browser approximation.
+
 ## Run for tvOS
 
 1. Set `EXPO_PUBLIC_TV_API_URL` to the reachable New Jersey Courier web origin, initially `https://your-project.vercel.app`.

@@ -6,6 +6,11 @@ data. Protected screens are shown only at their public access boundary so the
 repository does not publish reader, staff, financial, analytics, invitation,
 or unreleased-content information.
 
+The expanded [dark-mode route library](dark/README.md) covers every public web
+page, safe access boundary, mobile shell and developer workbench that can be
+truthfully captured without publishing private data. Its route-level index is
+maintained in [`apps/web/PAGES.md`](../../apps/web/PAGES.md).
+
 ## Publication
 
 ![The New Jersey Courier desktop homepage](product/homepage-desktop.jpg)

@@ -6,6 +6,8 @@ It is a working architectural vertical slice, not a claim that the complete nine
 
 ![Visual Feature Composer in Platform Studio](../docs/screenshots/visual-feature-composer.png)
 
+![Standalone Visual Feature Playground in dark mode](../docs/screenshots/dark/visual-feature-playground.jpg)
+
 ## Packages that contain implementation
 
 ```text

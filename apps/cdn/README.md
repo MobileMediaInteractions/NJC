@@ -5,6 +5,8 @@ the dedicated `https://cdn.thejerseycourier.com` origin. The web prebuild still
 mirrors the same files into `/assets`, preserving a same-origin fallback for
 local development and provider portability.
 
+![Courier application icon](public/assets/brand/v1/app-icon-512.png)
+
 Paths are immutable once published. Add a new version directory instead of replacing a production asset:
 
 ```text

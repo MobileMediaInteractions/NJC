@@ -12,6 +12,8 @@ The executable milestone is:
 
 Start with `pnpm platform:demo`, `pnpm platform:check`, `pnpm platform:benchmark`, and `pnpm --dir apps/platform-playground dev`.
 
+![Platform compiler and runtime playground](../docs/screenshots/dark/platform-playground.jpg)
+
 ## Repository map
 
 - `src/core`: manifests, semver checks, lifecycle, capability broker, event bus, portable SHA-256.

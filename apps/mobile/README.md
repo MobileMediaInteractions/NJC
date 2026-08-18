@@ -2,6 +2,12 @@
 
 One Expo SDK 57, React Native and TypeScript codebase for the New Jersey Courier iOS and Android apps. It uses Expo Router, the shared `@harborline/contracts` package, Clerk session tokens, Expo Notifications, Expo Video and SQLite-backed offline storage.
 
+![Mobile reader home surface](../../docs/screenshots/dark/mobile-reader.jpg)
+
+This browser-rendered capture documents the shared responsive shell. Store
+screenshots must still be recaptured from signed release builds on physical or
+simulated iOS and Android devices before submission.
+
 ## Configure
 
 Copy the mobile values from the root `.env.example` into the local environment:

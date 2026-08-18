@@ -134,7 +134,10 @@ Studio administrators can manage publication identity, navigation, reader featur
 The [profit and monetization plan](docs/PROFIT_AND_MONETIZATION.md) sets out the legitimate business model, launch rate-card hypotheses, revenue formulas, editorial firewall, compliance foundation, and 90-day commercialization sequence.
 
 The complete, privacy-reviewed visual catalog is maintained in
-[`docs/screenshots`](docs/screenshots/README.md).
+[`docs/screenshots`](docs/screenshots/README.md). The monorepo application map
+is in [`apps/README.md`](apps/README.md), the shared-package map is in
+[`packages/README.md`](packages/README.md), and the exhaustive dark-mode web
+route inventory is in [`apps/web/PAGES.md`](apps/web/PAGES.md).
 
 ## Verification
 

@@ -2,6 +2,12 @@
 
 New Jersey Courier’s Roku client is a native SceneGraph application written in BrightScript. It reads the same Vercel-hosted `/api/v1` stories, weather, live HLS and device-pairing endpoints as the other clients while reporting Roku installations separately in Studio analytics.
 
+![Roku production splash artwork](images/normal/splash-screen_FHD.png)
+
+The image above is the committed production splash, not a claim of completed
+Channel Store screenshots. Remote focus, article pagination and playback must
+still be photographed on the physical-device certification matrix.
+
 ## What works
 
 - A ground-up custom masthead, focus system and editorial front page driven by Studio's supported navigation and feature configuration
