@@ -267,6 +267,13 @@
       "when": 1786504130271,
       "tag": "0037_hesitant_steel_serpent",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1787040785540,
+      "tag": "0038_noisy_omega_sentinel",
+      "breakpoints": true
     }
   ]
 }

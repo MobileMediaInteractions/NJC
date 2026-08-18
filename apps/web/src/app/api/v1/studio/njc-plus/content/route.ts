@@ -5,6 +5,7 @@ import { z } from "zod";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import {
   mediaAssetUsages,
+  mediaAssets,
   premiumContent,
   premiumContentRevisions,
 } from "@harborline/backend/schema";
@@ -44,6 +45,10 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: { code: "invalid_request", message: "Check the NJC+ content fields", details: parsed.error.flatten() } }, { status: 400 });
   if (["approved", "scheduled", "published"].includes(parsed.data.status) && !canPublishStory(viewer.role)) {
     return NextResponse.json({ error: { code: "forbidden", message: "A publishing role is required for that status" } }, { status: 403 });
+  }
+  if (parsed.data.status === "published" && parsed.data.mediaAssetId) {
+    const [asset] = await getDb().select({ visibility: mediaAssets.visibility }).from(mediaAssets).where(eq(mediaAssets.id, parsed.data.mediaAssetId)).limit(1);
+    if (asset && asset.visibility !== "public") return NextResponse.json({ error: { code: "private_media", message: "Private Preview Club media must be replaced with a public release asset before publishing" } }, { status: 409 });
   }
   try {
     const record = await getDb().transaction(async (tx) => {

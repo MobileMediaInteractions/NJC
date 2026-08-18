@@ -1747,6 +1747,8 @@ export const premiumContent = pgTable(
     isLive: boolean("is_live").notNull().default(false),
     isBreaking: boolean("is_breaking").notNull().default(false),
     isFeatured: boolean("is_featured").notNull().default(false),
+    isOriginal: boolean("is_original").notNull().default(false),
+    globalIntroEnabled: boolean("global_intro_enabled").notNull().default(true),
     seoTitle: text("seo_title"),
     seoDescription: text("seo_description"),
     socialImageUrl: text("social_image_url"),
@@ -1764,6 +1766,141 @@ export const premiumContent = pgTable(
     index("premium_content_status_published_idx").on(table.status, table.publishedAt),
     index("premium_content_kind_published_idx").on(table.kind, table.publishedAt),
     index("premium_content_parent_idx").on(table.parentId, table.seasonNumber, table.episodeNumber),
+  ],
+);
+
+/** Source-timeline markers. These timestamps never include an inherited platform intro. */
+export const premiumTimelineSegments = pgTable(
+  "premium_timeline_segments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    contentId: uuid("content_id").notNull().references(() => premiumContent.id, { onDelete: "cascade" }),
+    segmentType: text("segment_type").notNull(),
+    startMs: integer("start_ms").notNull(),
+    endMs: integer("end_ms").notNull(),
+    internalName: text("internal_name"),
+    viewerLabel: text("viewer_label"),
+    skippable: boolean("skippable").notNull().default(false),
+    sortOrder: integer("sort_order").notNull().default(0),
+    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    createdByClerkId: text("created_by_clerk_id").notNull(),
+    updatedByClerkId: text("updated_by_clerk_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("premium_timeline_content_order_idx").on(table.contentId, table.startMs, table.sortOrder),
+    check("premium_timeline_type_check", sql`${table.segmentType} in ('intro', 'recap', 'credits', 'custom')`),
+    check("premium_timeline_range_check", sql`${table.startMs} >= 0 and ${table.endMs} > ${table.startMs}`),
+    check("premium_timeline_label_check", sql`${table.segmentType} <> 'custom' or ${table.internalName} is not null`),
+  ],
+);
+
+/** Historical platform idents. One row may be active; titles inherit it at playback time. */
+export const premiumPlatformIntros = pgTable(
+  "premium_platform_intros",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    mediaAssetId: uuid("media_asset_id").notNull().references(() => mediaAssets.id, { onDelete: "restrict" }),
+    durationMs: integer("duration_ms").notNull(),
+    blackGapMs: integer("black_gap_ms").notNull().default(2500),
+    status: text("status").notNull().default("inactive"),
+    createdByClerkId: text("created_by_clerk_id").notNull(),
+    activatedByClerkId: text("activated_by_clerk_id"),
+    activatedAt: timestamp("activated_at", { withTimezone: true }),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("premium_platform_intros_status_idx").on(table.status, table.updatedAt),
+    uniqueIndex("premium_platform_intros_one_active_idx").on(table.status).where(sql`${table.status} = 'active'`),
+    check("premium_platform_intros_status_check", sql`${table.status} in ('inactive', 'active', 'archived')`),
+    check("premium_platform_intros_duration_check", sql`${table.durationMs} > 0 and ${table.blackGapMs} between 0 and 10000`),
+  ],
+);
+
+export const premiumPreviewConfigurations = pgTable(
+  "premium_preview_configurations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    contentId: uuid("content_id").notNull().references(() => premiumContent.id, { onDelete: "cascade" }),
+    enabled: boolean("enabled").notNull().default(false),
+    disclaimer: text("disclaimer").notNull().default("This is private preview material and may include unfinished picture, sound, music, visual effects, credits or placeholders. It may not represent the final release."),
+    opensAt: timestamp("opens_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    createdByClerkId: text("created_by_clerk_id").notNull(),
+    updatedByClerkId: text("updated_by_clerk_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("premium_preview_configuration_content_idx").on(table.contentId),
+    index("premium_preview_configuration_window_idx").on(table.enabled, table.opensAt, table.expiresAt),
+    check("premium_preview_configuration_window_check", sql`${table.expiresAt} is null or ${table.opensAt} is null or ${table.expiresAt} > ${table.opensAt}`),
+  ],
+);
+
+export const premiumPreviewInvitations = pgTable(
+  "premium_preview_invitations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    previewId: uuid("preview_id").notNull().references(() => premiumPreviewConfigurations.id, { onDelete: "cascade" }),
+    userClerkId: text("user_clerk_id").notNull(),
+    status: text("status").notNull().default("invited"),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    firstViewedAt: timestamp("first_viewed_at", { withTimezone: true }),
+    lastViewedAt: timestamp("last_viewed_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    invitedByClerkId: text("invited_by_clerk_id").notNull(),
+    revokedByClerkId: text("revoked_by_clerk_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("premium_preview_invitation_user_idx").on(table.previewId, table.userClerkId),
+    index("premium_preview_invitation_access_idx").on(table.userClerkId, table.status, table.expiresAt),
+    check("premium_preview_invitation_status_check", sql`${table.status} in ('invited', 'viewing', 'viewed', 'feedback_submitted', 'revoked')`),
+    check("premium_preview_invitation_window_check", sql`${table.expiresAt} is null or ${table.expiresAt} > ${table.startsAt}`),
+  ],
+);
+
+export const premiumPreviewQuestions = pgTable(
+  "premium_preview_questions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    previewId: uuid("preview_id").notNull().references(() => premiumPreviewConfigurations.id, { onDelete: "cascade" }),
+    prompt: text("prompt").notNull(),
+    questionType: text("question_type").notNull(),
+    required: boolean("required").notNull().default(false),
+    options: jsonb("options").$type<string[]>().notNull().default([]),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("premium_preview_questions_order_idx").on(table.previewId, table.sortOrder),
+    check("premium_preview_questions_type_check", sql`${table.questionType} in ('rating', 'multiple_choice', 'yes_no', 'free_response')`),
+  ],
+);
+
+export const premiumPreviewResponses = pgTable(
+  "premium_preview_responses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    invitationId: uuid("invitation_id").notNull().references(() => premiumPreviewInvitations.id, { onDelete: "cascade" }),
+    overallRating: integer("overall_rating"),
+    writtenFeedback: text("written_feedback").notNull().default(""),
+    answers: jsonb("answers").$type<Array<{ questionId: string; value: string | number | boolean }>>().notNull().default([]),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("premium_preview_response_invitation_idx").on(table.invitationId),
+    check("premium_preview_response_rating_check", sql`${table.overallRating} is null or ${table.overallRating} between 1 and 5`),
   ],
 );
 

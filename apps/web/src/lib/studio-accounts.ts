@@ -157,3 +157,15 @@ export async function getStudioAccount(clerkId: string): Promise<StudioAccountPr
     } : null,
   };
 }
+
+export async function getStudioAccountSummaries(clerkIds: string[]): Promise<StudioAccountSummary[]> {
+  const ids = [...new Set(clerkIds)].slice(0, 500);
+  if (!ids.length) return [];
+  const client = await clerkClient();
+  const pages = await Promise.all(Array.from({ length: Math.ceil(ids.length / 100) }, (_, index) =>
+    client.users.getUserList({ userId: ids.slice(index * 100, index * 100 + 100), limit: 100 }),
+  ));
+  const found = pages.flatMap((page) => page.data);
+  const profiles = await databaseProfiles(found.map((user) => user.id));
+  return found.map((user) => summaryFor(user, profiles.get(user.id)));
+}

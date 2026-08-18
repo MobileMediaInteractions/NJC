@@ -43,6 +43,7 @@ export async function getNjcPlusEditorOptions(
       blobUrl: mediaAssets.blobUrl,
       altText: mediaAssets.altText,
       durationMs: mediaAssets.durationMs,
+      visibility: mediaAssets.visibility,
     }).from(mediaAssets).where(isNull(mediaAssets.deletedAt)).orderBy(desc(mediaAssets.updatedAt)).limit(500),
   ]);
 
@@ -61,10 +62,11 @@ export async function getNjcPlusEditorOptions(
     label: item.filename,
     description: item.mimeType,
     metadata: {
-      url: item.blobUrl,
+      url: item.visibility === "private" || item.visibility === "internal" ? `/api/v1/studio/media/${item.id}/content` : item.blobUrl,
       mimeType: item.mimeType,
       altText: item.altText,
       durationMs: item.durationMs,
+      visibility: item.visibility,
     },
   }));
 

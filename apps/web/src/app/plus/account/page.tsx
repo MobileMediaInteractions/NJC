@@ -7,13 +7,16 @@ import { NjcPlusHeader } from "@/components/njc-plus/brand";
 import { getAccountIdentity } from "@/lib/auth";
 import { resolveNjcPlusSurface } from "@/lib/njc-plus";
 import { redirectUnavailableNjcPlus } from "@/lib/njc-plus-routing";
+import { listAccountPreviews } from "@/lib/njc-plus-preview";
+import Link from "next/link";
+import { isNjcPlusFeatureEnabled } from "@/lib/feature-flags";
 
 export default async function NjcPlusAccountPage() {
   if (!(await resolveNjcPlusSurface()).available) redirectUnavailableNjcPlus();
   const user = await getAccountIdentity();
   if (!user) redirect("/sign-in?redirect_url=/plus/account");
-  const subscriptions = hasDatabase()
-    ? await getDb()
+  const [subscriptions, previews] = hasDatabase()
+    ? await Promise.all([getDb()
         .select({
           id: premiumSubscriptions.id,
           status: premiumSubscriptions.status,
@@ -36,8 +39,8 @@ export default async function NjcPlusAccountPage() {
             eq(premiumSubscriptions.provider, "stripe"),
           ),
         )
-        .orderBy(desc(premiumSubscriptions.updatedAt))
-    : [];
+        .orderBy(desc(premiumSubscriptions.updatedAt)), isNjcPlusFeatureEnabled("njc_plus_preview_club").then((enabled) => enabled ? listAccountPreviews(user.clerkId) : [])])
+    : [[], []] as const;
   const active = subscriptions.find((subscription) =>
     ["active", "trialing", "past_due"].includes(subscription.status),
   );
@@ -81,6 +84,7 @@ export default async function NjcPlusAccountPage() {
             ) : null}
           </article>
         </section>
+        {previews.length ? <section id="preview-club" className="plus-shell plus-account-previews"><p>Private early access</p><h2>Preview Club</h2><div>{previews.map(({ content, invitation, preview }) => <Link key={invitation.id} href={`/plus/${content.slug}`}><strong>{content.title}</strong><span>{invitation.status.replaceAll("_", " ")}{invitation.expiresAt ? ` · Expires ${invitation.expiresAt.toLocaleDateString()}` : preview.expiresAt ? ` · Expires ${preview.expiresAt.toLocaleDateString()}` : ""}</span></Link>)}</div></section> : null}
       </main>
     </>
   );

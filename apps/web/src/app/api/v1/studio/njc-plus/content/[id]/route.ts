@@ -5,6 +5,7 @@ import { z } from "zod";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import {
   mediaAssetUsages,
+  mediaAssets,
   premiumContent,
   premiumContentRevisions,
 } from "@harborline/backend/schema";
@@ -36,6 +37,10 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   if (!id.success || !parsed.success) return NextResponse.json({ error: { code: "invalid_request", message: "Check the NJC+ content fields", details: parsed.success ? undefined : parsed.error.flatten() } }, { status: 400 });
   if (["approved", "scheduled", "published"].includes(parsed.data.status) && !canPublishStory(viewer.role)) {
     return NextResponse.json({ error: { code: "forbidden", message: "A publishing role is required for that status" } }, { status: 403 });
+  }
+  if (parsed.data.status === "published" && parsed.data.mediaAssetId) {
+    const [asset] = await getDb().select({ visibility: mediaAssets.visibility }).from(mediaAssets).where(eq(mediaAssets.id, parsed.data.mediaAssetId)).limit(1);
+    if (asset && asset.visibility !== "public") return NextResponse.json({ error: { code: "private_media", message: "Private Preview Club media must be replaced with a public release asset before publishing" } }, { status: 409 });
   }
   const [current] = await getDb().select().from(premiumContent).where(eq(premiumContent.id, id.data)).limit(1);
   if (!current) return NextResponse.json({ error: { code: "not_found", message: "NJC+ content not found" } }, { status: 404 });

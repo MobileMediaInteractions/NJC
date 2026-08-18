@@ -4,6 +4,7 @@ import {
   Coins,
   FileVideo2,
   Flag,
+  Clapperboard,
   Home,
   KeyRound,
   Layers3,
@@ -14,6 +15,7 @@ import {
 export const njcPlusStudioSections = [
   { href: "/studio/njc-plus", label: "Overview", icon: Activity },
   { href: "/studio/njc-plus/content", label: "Content", icon: FileVideo2 },
+  { href: "/studio/njc-plus/intros", label: "Platform intros", icon: Clapperboard },
   { href: "/studio/njc-plus/homepage", label: "Homepage", icon: Home },
   { href: "/studio/njc-plus/commerce", label: "Tiers & offers", icon: Layers3 },
   { href: "/studio/njc-plus/access", label: "Access", icon: KeyRound },

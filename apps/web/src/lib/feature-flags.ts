@@ -17,6 +17,7 @@ export const njcPlusChildFlags = [
   "njc_plus_checkout",
   "njc_plus_comments",
   "njc_plus_membership_branding",
+  "njc_plus_preview_club",
 ] as const;
 
 export type NjcPlusChildFlag = (typeof njcPlusChildFlags)[number];
@@ -55,6 +56,7 @@ const descriptions: Record<NjcPlusFlag, string> = {
   njc_plus_checkout: "Public checkout and subscription creation.",
   njc_plus_comments: "Public NJC+ discussion surfaces.",
   njc_plus_membership_branding: "Sitewide premium member treatment.",
+  njc_plus_preview_club: "Private invitation-only access to unfinished productions and feedback.",
 };
 
 export const allNjcPlusFlags = [

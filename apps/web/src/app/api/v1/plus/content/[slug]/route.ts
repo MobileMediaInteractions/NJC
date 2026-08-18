@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPremiumContentBySlug, requiredFeatureForContent, resolveNjcPlusSurface, resolvePremiumAccess } from "@/lib/njc-plus";
+import { getPlaybackPresentation } from "@/lib/njc-plus-preview";
 
 export async function GET(_request: Request, context: { params: Promise<{ slug: string }> }) {
   const { slug } = await context.params;
@@ -24,5 +25,6 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
     access,
   };
   if (!access.allowed) return NextResponse.json({ data: shared, meta: { apiVersion: "1", locked: true } }, { status: 200 });
-  return NextResponse.json({ data: { ...shared, body: content.body, mediaUrl: content.mediaUrl, mediaMimeType: content.mediaMimeType, captionsUrl: content.captionsUrl, transcript: content.transcript, authors: content.authors, speakers: content.speakers, tags: content.tags, relatedIds: content.relatedIds }, meta: { apiVersion: "1", locked: false } });
+  const presentation = await getPlaybackPresentation(content);
+  return NextResponse.json({ data: { ...shared, body: content.body, mediaUrl: content.mediaUrl, mediaMimeType: content.mediaMimeType, captionsUrl: content.captionsUrl, transcript: content.transcript, authors: content.authors, speakers: content.speakers, tags: content.tags, relatedIds: content.relatedIds, timelineSegments: presentation.contentSegments, platformIntro: presentation.platformIntro }, meta: { apiVersion: "1", locked: false, sourceTimeline: true } });
 }

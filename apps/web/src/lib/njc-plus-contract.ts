@@ -16,6 +16,54 @@ export const premiumPaywallPolicies = [
   "access_credits", "money_or_credits", "rental", "promotion",
 ] as const;
 
+export const premiumTimelineSegmentTypes = ["intro", "recap", "credits", "custom"] as const;
+
+export const premiumTimelineSegmentInput = z.object({
+  id: z.uuid().optional(),
+  segmentType: z.enum(premiumTimelineSegmentTypes),
+  startMs: z.number().int().min(0).max(604_800_000),
+  endMs: z.number().int().min(1).max(604_800_000),
+  internalName: z.string().trim().max(120).nullable().optional(),
+  viewerLabel: z.string().trim().max(50).nullable().optional(),
+  skippable: z.boolean().default(false),
+  sortOrder: z.number().int().min(0).max(10_000).default(0),
+}).superRefine((value, context) => {
+  if (value.endMs <= value.startMs) {
+    context.addIssue({ code: "custom", path: ["endMs"], message: "Segment end must be after its start" });
+  }
+  if (value.segmentType === "custom" && !value.internalName) {
+    context.addIssue({ code: "custom", path: ["internalName"], message: "Custom segments require an internal name" });
+  }
+  if (value.skippable && value.segmentType === "custom" && !value.viewerLabel) {
+    context.addIssue({ code: "custom", path: ["viewerLabel"], message: "Skippable custom segments require a viewer label" });
+  }
+});
+
+export const premiumPreviewQuestionInput = z.object({
+  id: z.uuid().optional(),
+  prompt: z.string().trim().min(3).max(500),
+  questionType: z.enum(["rating", "multiple_choice", "yes_no", "free_response"]),
+  required: z.boolean().default(false),
+  options: z.array(z.string().trim().min(1).max(160)).max(20).default([]),
+  sortOrder: z.number().int().min(0).max(1_000).default(0),
+}).superRefine((value, context) => {
+  if (value.questionType === "multiple_choice" && value.options.length < 2) {
+    context.addIssue({ code: "custom", path: ["options"], message: "Multiple choice questions require at least two choices" });
+  }
+});
+
+export const premiumPreviewConfigurationInput = z.object({
+  enabled: z.boolean(),
+  disclaimer: z.string().trim().min(40).max(2_000),
+  opensAt: z.iso.datetime().nullable().optional(),
+  expiresAt: z.iso.datetime().nullable().optional(),
+  questions: z.array(premiumPreviewQuestionInput).max(50).default([]),
+}).superRefine((value, context) => {
+  if (value.opensAt && value.expiresAt && new Date(value.expiresAt) <= new Date(value.opensAt)) {
+    context.addIssue({ code: "custom", path: ["expiresAt"], message: "Preview expiration must be after its opening" });
+  }
+});
+
 export const premiumContentInput = z.object({
   kind: z.enum(premiumContentKinds),
   status: z.enum(premiumContentStatuses).default("draft"),
@@ -49,6 +97,8 @@ export const premiumContentInput = z.object({
   isLive: z.boolean().default(false),
   isBreaking: z.boolean().default(false),
   isFeatured: z.boolean().default(false),
+  isOriginal: z.boolean().default(false),
+  globalIntroEnabled: z.boolean().default(true),
   seoTitle: z.string().trim().max(180).nullable().optional(),
   seoDescription: z.string().trim().max(320).nullable().optional(),
   socialImageUrl: z.url().or(z.literal("")).nullable().optional(),
@@ -71,6 +121,8 @@ export const premiumContentInput = z.object({
 
 export type PremiumContentInput = z.infer<typeof premiumContentInput>;
 export type PremiumContentRecord = typeof premiumContent.$inferSelect;
+export type PremiumTimelineSegmentInput = z.infer<typeof premiumTimelineSegmentInput>;
+export type PremiumPreviewConfigurationInput = z.infer<typeof premiumPreviewConfigurationInput>;
 
 const visualKinds = new Set(["video", "show", "episode", "clip", "series", "miniseries", "investigation", "documentary", "live", "breaking"]);
 const audioKinds = new Set(["audio", "podcast", "podcast_episode"]);

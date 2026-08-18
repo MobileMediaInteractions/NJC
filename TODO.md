@@ -59,6 +59,37 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   API, and Studio NJ Dev clients, including enabled, disabled, stale, and
   unavailable states on real devices where applicable.
 
+## NJC+ Preview Club and playback composition — production validation remaining
+
+> The shared millisecond source-timeline schema, visual Studio editor, player
+> skip lifecycle, global original-content intro inheritance/opt-out, 2.5-second
+> transition, private Preview Club invitations, expiration/revocation,
+> viewing state, structured feedback, private Blob upload/proxy, release flag,
+> migration and unit tests are implemented. Operating details and explicit
+> media limitations live in
+> [NJC+ timeline, platform intro and Preview Club](docs/NJC_PLUS_PREVIEW_TIMELINE.md).
+
+- [ ] Apply migration `0038` in production, confirm the separate private Blob
+  store is configured, enable `njc_plus_preview_club` only after a security
+  review, and rehearse invite, future start, expiration, revocation, guessed
+  URL, range request, feedback update and private-to-public release transition
+  with two real Clerk accounts. Confirm disabled or unauthorized requests fail
+  as not found and never reveal a Blob pathname or URL.
+- [ ] Validate the visual timeline and composed web player with real encoded
+  assets in Chrome, Safari, Firefox, iOS Safari and Android Chrome: multiple
+  markers, overlapping warnings, backward seeks, refresh/resume, fullscreen,
+  captions, intro failure, missing intro, gap timing and a changed global intro
+  duration. Record measured transition behavior before public release.
+- [ ] Select and integrate a transcoding/streaming provider before claiming
+  seamless adaptive-streaming composition. Generate compatible HLS/DASH
+  renditions and composed manifests while retaining source-relative markers;
+  verify captions, alternate audio, quality switching and next-episode behavior.
+  The current one-element Blob source switch is intentionally non-destructive
+  but is not represented as manifest-level gapless stitching.
+- [ ] Implement and verify the versioned presentation payload in the iOS,
+  Android, Apple TV, Android TV and Roku players. Until each real-device suite
+  passes, those clients must not claim timeline/global-intro/Preview Club parity.
+
 ## Press & Media portal — external DNS, operations and counsel approval remaining
 
 > The dedicated `press.thejerseycourier.com` application surface, legacy
