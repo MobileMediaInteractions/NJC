@@ -222,8 +222,8 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 
 ## Mandatory third product implementation — external perimeter, enrollment and staged migration remaining
 
-> The repository-wide inventory, 1,148-file ownership/sensitivity register,
-> 250-route and 103-table classification, scope decision, provider comparison,
+> The repository-wide inventory, 1,304-file ownership/sensitivity register,
+> 269-route and 110-table classification, scope decision, provider comparison,
 > free-compatible Access+mTLS design, separate disabled Next.js application,
 > exact-host/origin-proof/Access-JWT/Clerk/active-user/explicit-grant checks,
 > self-service exclusion, security headers and CI enforcement are complete.

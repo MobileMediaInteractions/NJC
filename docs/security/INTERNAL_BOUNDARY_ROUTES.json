@@ -2,12 +2,12 @@
   "format": "njc-internal-boundary-register-v2",
   "source": "git tracked and pending repository files",
   "counts": {
-    "trackedFiles": 1297,
-    "routeSurfaces": 267,
+    "trackedFiles": 1304,
+    "routeSurfaces": 269,
     "databaseTables": 110,
     "workspaces": 21,
     "todoMarkerFiles": 4,
-    "testFixtureFiles": 94,
+    "testFixtureFiles": 95,
     "generatedFiles": 2
   },
   "workspaces": [
@@ -1706,6 +1706,15 @@
       "disposition": "retain-public"
     },
     {
+      "path": "/courier-cut",
+      "kind": "page",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/courier-cut/page.tsx",
+      "classification": "public-page",
+      "auth": "none unless page performs its own account check",
+      "disposition": "retain-public"
+    },
+    {
       "path": "/data-requests",
       "kind": "page",
       "workspace": "apps/web",
@@ -1926,6 +1935,15 @@
       "kind": "page",
       "workspace": "apps/web",
       "file": "apps/web/src/app/plus/account/page.tsx",
+      "classification": "account-external",
+      "auth": "Clerk account plus NJC+ entitlement where required",
+      "disposition": "retain-public-product"
+    },
+    {
+      "path": "/plus/courier-cut",
+      "kind": "page",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/plus/courier-cut/page.tsx",
       "classification": "account-external",
       "auth": "Clerk account plus NJC+ entitlement where required",
       "disposition": "retain-public-product"
@@ -7727,6 +7745,24 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/courier-cut/layout.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/courier-cut/page.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/dev/platform/page.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -7944,6 +7980,15 @@
     },
     {
       "file": "apps/web/src/app/plus/account/page.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/plus/courier-cut/page.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -8754,6 +8799,15 @@
     },
     {
       "file": "apps/web/src/components/njc-plus/comments.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/njc-plus/courier-cut-library.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -9743,6 +9797,24 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/lib/courier-cut-contract.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/lib/courier-cut.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/lib/courier-easter-egg.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -10716,6 +10788,15 @@
     },
     {
       "file": "apps/web/tests/blob-storage.test.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": true,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/tests/courier-cut.test.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
