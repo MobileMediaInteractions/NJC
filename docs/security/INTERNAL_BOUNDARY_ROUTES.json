@@ -2,12 +2,12 @@
   "format": "njc-internal-boundary-register-v2",
   "source": "git tracked and pending repository files",
   "counts": {
-    "trackedFiles": 1148,
-    "routeSurfaces": 250,
-    "databaseTables": 103,
-    "workspaces": 19,
-    "todoMarkerFiles": 3,
-    "testFixtureFiles": 90,
+    "trackedFiles": 1213,
+    "routeSurfaces": 267,
+    "databaseTables": 110,
+    "workspaces": 21,
+    "todoMarkerFiles": 4,
+    "testFixtureFiles": 94,
     "generatedFiles": 2
   },
   "workspaces": [
@@ -48,6 +48,12 @@
       "deployment": "store/device package"
     },
     {
+      "directory": "apps/status",
+      "package": "@njcourier/status",
+      "classification": "shared-build-time",
+      "deployment": "not-deployed"
+    },
+    {
       "directory": "apps/tv",
       "package": "@harborline/tv",
       "classification": "public-client",
@@ -74,6 +80,12 @@
     {
       "directory": "packages/contracts",
       "package": "@harborline/contracts",
+      "classification": "shared-build-time",
+      "deployment": "not-deployed"
+    },
+    {
+      "directory": "packages/domain-registry",
+      "package": "@njcourier/domain-registry",
       "classification": "shared-build-time",
       "deployment": "not-deployed"
     },
@@ -938,6 +950,33 @@
       "disposition": "retain-public-product"
     },
     {
+      "path": "/api/v1/plus/previews",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/plus/previews/route.ts",
+      "classification": "account-external",
+      "auth": "Clerk account plus NJC+ entitlement where required",
+      "disposition": "retain-public-product"
+    },
+    {
+      "path": "/api/v1/plus/previews/[slug]/feedback",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/plus/previews/[slug]/feedback/route.ts",
+      "classification": "account-external",
+      "auth": "Clerk account plus NJC+ entitlement where required",
+      "disposition": "retain-public-product"
+    },
+    {
+      "path": "/api/v1/plus/previews/[slug]/media",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/plus/previews/[slug]/media/route.ts",
+      "classification": "account-external",
+      "auth": "Clerk account plus NJC+ entitlement where required",
+      "disposition": "retain-public-product"
+    },
+    {
       "path": "/api/v1/plus/progress",
       "kind": "route",
       "workspace": "apps/web",
@@ -1181,6 +1220,15 @@
       "disposition": "migrate-after-parity"
     },
     {
+      "path": "/api/v1/studio/domains",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/domains/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
       "path": "/api/v1/studio/exports",
       "kind": "route",
       "workspace": "apps/web",
@@ -1253,10 +1301,37 @@
       "disposition": "migrate-after-parity"
     },
     {
+      "path": "/api/v1/studio/link-in-bio",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/link-in-bio/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/api/v1/studio/link-in-bio/[id]",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/link-in-bio/[id]/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
       "path": "/api/v1/studio/media",
       "kind": "route",
       "workspace": "apps/web",
       "file": "apps/web/src/app/api/v1/studio/media/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/api/v1/studio/media/[id]/content",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/media/[id]/content/route.ts",
       "classification": "internal",
       "auth": "Clerk staff identity plus role/action policy",
       "disposition": "migrate-after-parity"
@@ -1275,6 +1350,15 @@
       "kind": "route",
       "workspace": "apps/web",
       "file": "apps/web/src/app/api/v1/studio/media/generate-placeholder/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/api/v1/studio/media/private-client-upload",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/media/private-client-upload/route.ts",
       "classification": "internal",
       "auth": "Clerk staff identity plus role/action policy",
       "disposition": "migrate-after-parity"
@@ -1325,6 +1409,24 @@
       "disposition": "migrate-after-parity"
     },
     {
+      "path": "/api/v1/studio/njc-plus/content/[id]/preview",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/njc-plus/content/[id]/preview/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/api/v1/studio/njc-plus/content/[id]/timeline",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/njc-plus/content/[id]/timeline/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
       "path": "/api/v1/studio/njc-plus/flags",
       "kind": "route",
       "workspace": "apps/web",
@@ -1338,6 +1440,15 @@
       "kind": "route",
       "workspace": "apps/web",
       "file": "apps/web/src/app/api/v1/studio/njc-plus/homepage/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/api/v1/studio/njc-plus/intros",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/njc-plus/intros/route.ts",
       "classification": "internal",
       "auth": "Clerk staff identity plus role/action policy",
       "disposition": "migrate-after-parity"
@@ -1721,6 +1832,24 @@
       "disposition": "retain-public"
     },
     {
+      "path": "/link-in-bio",
+      "kind": "page",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/link-in-bio/page.tsx",
+      "classification": "public-page",
+      "auth": "none unless page performs its own account check",
+      "disposition": "retain-public"
+    },
+    {
+      "path": "/link-in-bio/[slug]",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/link-in-bio/[slug]/route.ts",
+      "classification": "public-feed-or-metadata",
+      "auth": "none unless page performs its own account check",
+      "disposition": "retain-public"
+    },
+    {
       "path": "/live",
       "kind": "page",
       "workspace": "apps/web",
@@ -2081,6 +2210,15 @@
       "disposition": "migrate-after-parity"
     },
     {
+      "path": "/studio/links",
+      "kind": "page",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/studio/links/page.tsx",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
       "path": "/studio/media",
       "kind": "page",
       "workspace": "apps/web",
@@ -2198,6 +2336,24 @@
       "disposition": "migrate-after-parity"
     },
     {
+      "path": "/studio/njc-plus/intros",
+      "kind": "page",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/studio/njc-plus/intros/page.tsx",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/studio/njc-plus/previews",
+      "kind": "page",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/studio/njc-plus/previews/page.tsx",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
       "path": "/studio/notifications",
       "kind": "page",
       "workspace": "apps/web",
@@ -2265,6 +2421,15 @@
       "kind": "page",
       "workspace": "apps/web",
       "file": "apps/web/src/app/studio/settings/page.tsx",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/studio/settings/domains",
+      "kind": "page",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/studio/settings/domains/page.tsx",
       "classification": "internal",
       "auth": "Clerk staff identity plus role/action policy",
       "disposition": "migrate-after-parity"
@@ -2681,6 +2846,13 @@
       "disposition": "shared-authorized-data"
     },
     {
+      "export": "linkInBioEntries",
+      "table": "link_in_bio_entries",
+      "file": "packages/backend/src/db/schema.ts",
+      "classification": "operational-private",
+      "disposition": "shared-authorized-data"
+    },
+    {
       "export": "liveEvents",
       "table": "live_events",
       "file": "packages/backend/src/db/schema.ts",
@@ -2940,8 +3112,43 @@
       "disposition": "shared-authorized-data"
     },
     {
+      "export": "premiumPlatformIntros",
+      "table": "premium_platform_intros",
+      "file": "packages/backend/src/db/schema.ts",
+      "classification": "operational-private",
+      "disposition": "shared-authorized-data"
+    },
+    {
       "export": "premiumPlaybackProgress",
       "table": "premium_playback_progress",
+      "file": "packages/backend/src/db/schema.ts",
+      "classification": "operational-private",
+      "disposition": "shared-authorized-data"
+    },
+    {
+      "export": "premiumPreviewConfigurations",
+      "table": "premium_preview_configurations",
+      "file": "packages/backend/src/db/schema.ts",
+      "classification": "operational-private",
+      "disposition": "shared-authorized-data"
+    },
+    {
+      "export": "premiumPreviewInvitations",
+      "table": "premium_preview_invitations",
+      "file": "packages/backend/src/db/schema.ts",
+      "classification": "operational-private",
+      "disposition": "shared-authorized-data"
+    },
+    {
+      "export": "premiumPreviewQuestions",
+      "table": "premium_preview_questions",
+      "file": "packages/backend/src/db/schema.ts",
+      "classification": "operational-private",
+      "disposition": "shared-authorized-data"
+    },
+    {
+      "export": "premiumPreviewResponses",
+      "table": "premium_preview_responses",
       "file": "packages/backend/src/db/schema.ts",
       "classification": "operational-private",
       "disposition": "shared-authorized-data"
@@ -2956,6 +3163,13 @@
     {
       "export": "premiumTiers",
       "table": "premium_tiers",
+      "file": "packages/backend/src/db/schema.ts",
+      "classification": "operational-private",
+      "disposition": "shared-authorized-data"
+    },
+    {
+      "export": "premiumTimelineSegments",
+      "table": "premium_timeline_segments",
       "file": "packages/backend/src/db/schema.ts",
       "classification": "operational-private",
       "disposition": "shared-authorized-data"
@@ -3922,6 +4136,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/mobile/eas.json",
+      "owner": "reader-platforms",
+      "classification": "public-or-account-client",
+      "disposition": "retain-outside-internal-host",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/mobile/eslint.config.js",
       "owner": "reader-platforms",
       "classification": "public-or-account-client",
@@ -4615,6 +4838,195 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/status/.env.example",
+      "owner": "platform-operations",
+      "classification": "configuration-sensitive",
+      "disposition": "retain-without-secret-values",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/.gitignore",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/eslint.config.mjs",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/next.config.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/package.json",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/public/brand-mark.svg",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/src/app/api/health/route.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/src/app/api/status/collect/route.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/src/app/api/status/route.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/src/app/layout.tsx",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/src/app/page.tsx",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/src/app/robots.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/src/app/sitemap.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/src/app/styles.css",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/src/components/status-dashboard.tsx",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/src/lib/monitor-catalog.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/src/lib/status-monitor.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/src/lib/status-storage.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/src/lib/status-types.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/tests/status.test.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": true,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/tsconfig.json",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/tv/app.json",
       "owner": "reader-platforms",
       "classification": "public-or-account-client",
@@ -5047,6 +5459,24 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/drizzle/0037_hesitant_steel_serpent.sql",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/drizzle/0038_noisy_omega_sentinel.sql",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/drizzle/meta/_journal.json",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -5381,6 +5811,24 @@
     },
     {
       "file": "apps/web/drizzle/meta/0036_snapshot.json",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/drizzle/meta/0037_snapshot.json",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/drizzle/meta/0038_snapshot.json",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -6505,6 +6953,33 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/api/v1/plus/previews/[slug]/feedback/route.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/plus/previews/[slug]/media/route.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/plus/previews/route.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/api/v1/plus/progress/route.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -6748,6 +7223,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/api/v1/studio/domains/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/api/v1/studio/exports/[id]/download/route.ts",
       "owner": "newsroom-operations",
       "classification": "internal-browser-workflow",
@@ -6820,6 +7304,33 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/api/v1/studio/link-in-bio/[id]/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/studio/link-in-bio/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/studio/media/[id]/content/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/api/v1/studio/media/client-upload/route.ts",
       "owner": "newsroom-operations",
       "classification": "internal-browser-workflow",
@@ -6830,6 +7341,15 @@
     },
     {
       "file": "apps/web/src/app/api/v1/studio/media/generate-placeholder/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/studio/media/private-client-upload/route.ts",
       "owner": "newsroom-operations",
       "classification": "internal-browser-workflow",
       "disposition": "migrate-after-parity",
@@ -6874,7 +7394,25 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/api/v1/studio/njc-plus/content/[id]/preview/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/api/v1/studio/njc-plus/content/[id]/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/studio/njc-plus/content/[id]/timeline/route.ts",
       "owner": "newsroom-operations",
       "classification": "internal-browser-workflow",
       "disposition": "migrate-after-parity",
@@ -6902,6 +7440,15 @@
     },
     {
       "file": "apps/web/src/app/api/v1/studio/njc-plus/homepage/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/studio/njc-plus/intros/route.ts",
       "owner": "newsroom-operations",
       "classification": "internal-browser-workflow",
       "disposition": "migrate-after-parity",
@@ -7252,6 +7799,24 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/link-in-bio/[slug]/route.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/link-in-bio/page.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/login/layout.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -7594,6 +8159,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/studio/links/page.tsx",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/studio/media/page.tsx",
       "owner": "newsroom-operations",
       "classification": "internal-browser-workflow",
@@ -7702,6 +8276,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/studio/njc-plus/intros/page.tsx",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/studio/njc-plus/layout.tsx",
       "owner": "newsroom-operations",
       "classification": "internal-browser-workflow",
@@ -7712,6 +8295,15 @@
     },
     {
       "file": "apps/web/src/app/studio/njc-plus/page.tsx",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/studio/njc-plus/previews/page.tsx",
       "owner": "newsroom-operations",
       "classification": "internal-browser-workflow",
       "disposition": "migrate-after-parity",
@@ -7784,6 +8376,15 @@
     },
     {
       "file": "apps/web/src/app/studio/profile/page.tsx",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/studio/settings/domains/page.tsx",
       "owner": "newsroom-operations",
       "classification": "internal-browser-workflow",
       "disposition": "migrate-after-parity",
@@ -8116,6 +8717,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/components/njc-plus/preview-feedback.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/components/njc-plus/section-page.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -8260,6 +8870,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/components/studio/domain-control-center.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/components/studio/editable-list.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -8315,6 +8934,15 @@
     },
     {
       "file": "apps/web/src/components/studio/legal-center-manager.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/studio/link-in-bio-manager.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -8405,6 +9033,33 @@
     },
     {
       "file": "apps/web/src/components/studio/njc-plus-nav.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/studio/njc-plus-platform-intros.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/studio/njc-plus-preview-manager.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/studio/njc-plus-timeline-editor.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -9088,6 +9743,33 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/lib/domain-control-contract.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/lib/domain-control.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/lib/domain-registry.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/lib/employee-auth.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -9205,6 +9887,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/lib/link-in-bio.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/lib/live.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -9295,6 +9986,24 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/lib/njc-plus-preview-policy.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/lib/njc-plus-preview.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/lib/njc-plus-routing.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -9305,6 +10014,15 @@
     },
     {
       "file": "apps/web/src/lib/njc-plus-studio-options.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/lib/njc-plus-timeline.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -9979,6 +10697,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/tests/domain-control.test.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": true,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/tests/employee-chat-attachments.test.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -10033,6 +10760,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/tests/link-in-bio.test.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": true,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/tests/media-upload.test.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -10070,6 +10806,15 @@
     },
     {
       "file": "apps/web/tests/njc-plus-routing.test.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": true,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/tests/njc-plus-timeline.test.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -10582,6 +11327,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "docs/LINK_IN_BIO.md",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "docs/MOBILE_API.md",
       "owner": "project-operations",
       "classification": "documentation",
@@ -10589,6 +11343,15 @@
       "testFixture": false,
       "generated": false,
       "hasTodoMarker": false
+    },
+    {
+      "file": "docs/NJC_PLUS_PREVIEW_TIMELINE.md",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": true
     },
     {
       "file": "docs/NJC_PLUS.md",
@@ -10601,6 +11364,24 @@
     },
     {
       "file": "docs/operations/CONFIGURATION_REGISTRY.md",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/operations/DOMAIN_CONTROL.md",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/operations/STATUS_SERVICE.md",
       "owner": "project-operations",
       "classification": "documentation",
       "disposition": "retain-no-secrets",
@@ -10919,6 +11700,24 @@
       "owner": "platform-contracts",
       "classification": "client-safe-shared",
       "disposition": "retain-without-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/domain-registry/package.json",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/domain-registry/src/index.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
       "testFixture": false,
       "generated": false,
       "hasTodoMarker": false
