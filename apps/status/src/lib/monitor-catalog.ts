@@ -61,6 +61,7 @@ export const monitorCatalog: readonly MonitorDefinition[] = [
   http("studio", "Newsroom & APIs", { expectedStatuses: gated, expectedBehavior: "Returns Studio or its authentication gate" }),
   http("api", "Newsroom & APIs", { expectedStatuses: gated, expectedBehavior: "Returns the protected API surface or its authentication gate" }),
   http("plus", "Products & Media", { expectedStatuses: [...gated, 404], expectedBehavior: "Returns NJC+ or its intentional availability gate" }),
+  http("cut", "Products & Media", { expectedStatuses: [...gated, 404], expectedBehavior: "Returns The Courier Cut invite portal or its intentional release gate" }),
   http("press", "Products & Media", { expectedStatuses: [...gated, 404], expectedBehavior: "Returns the Press & Media portal or its controlled launch gate" }),
   http("distribution", "Products & Media", { expectedStatuses: [...gated, 404], expectedBehavior: "Returns Distribution or a privacy-preserving access gate" }),
   http("cdn", "Delivery infrastructure", { path: "/assets/manifest.json", expectedBehavior: "Returns the immutable asset manifest" }),

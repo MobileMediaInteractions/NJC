@@ -16,7 +16,7 @@ export const config = {
           type: "header",
           key: "host",
           value:
-            "(?:studio|api|plus|distribution|press)\\.thejerseycourier\\.com(?::\\d+)?",
+            "(?:studio|api|plus|cut|distribution|press)\\.thejerseycourier\\.com(?::\\d+)?",
         },
       ],
     },
@@ -24,6 +24,7 @@ export const config = {
     "/developers",
     "/profile/:path*",
     "/plus/:path*",
+    "/courier-cut/:path*",
     "/distribution/:path*",
     "/sign-in/:path*",
     "/sign-up/:path*",

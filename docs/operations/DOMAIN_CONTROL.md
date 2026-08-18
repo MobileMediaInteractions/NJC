@@ -14,6 +14,7 @@ takeover, certificate and phishing risk.
 | `studio.thejerseycourier.com` | NJC web | Authenticated newsroom Studio |
 | `api.thejerseycourier.com` | NJC web | Developer portal and API |
 | `plus.thejerseycourier.com` | NJC web | NJC+ |
+| `cut.thejerseycourier.com` | NJC web | Invitation-only Courier Cut portal; content remains available in NJC+ |
 | `cdn.thejerseycourier.com` | NJC CDN | Immutable public assets |
 | `press.thejerseycourier.com` | NJC web | Press & Media portal |
 | `distribution.thejerseycourier.com` | NJC web | Authorized distribution portal |
@@ -25,7 +26,7 @@ The reserved web labels `support`, `careers`, `events`, `live`,
 `weather`, `newsletters`, `ads`, and `account` are attached to `njc-web`, have
 authoritative IONOS CNAMEs and managed HTTPS, and redirect to the canonical
 publication until a reviewed product surface replaces that redirect. `press`,
-`distribution`, and `links` use dedicated first-party routes on the same project.
+`distribution`, `links`, and `cut` use dedicated first-party routes on the same project.
 `status` remains excluded from generic provisioning because its dedicated
 project must remain independent of the primary application. `int` is excluded
 and has no DNS record because publication before the connection-level perimeter
@@ -38,7 +39,10 @@ The August 11, 2026 activation used these provider targets:
   `637644a6ea56a9c4.vercel-dns-017.com.`
 - `status` → `41e5f6338ab579af.vercel-dns-017.com.`
 
-Public DNS, Vercel ownership and TLS were verified after activation. These
+Public DNS, Vercel ownership and TLS were verified after activation. The later
+`cut` hostname is repository-approved but still requires the same Vercel,
+authoritative CNAME, TLS and host-routing verification before it is considered
+active. These
 records do not authorize the internal hostname or expand the Studio operator
 allowlist.
 

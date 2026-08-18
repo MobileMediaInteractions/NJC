@@ -84,7 +84,7 @@ export default async function NjcPlusAccountPage() {
             ) : null}
           </article>
         </section>
-        {previews.length ? <section id="courier-cut" className="plus-shell plus-account-previews"><p>Private early access</p><h2>The Courier Cut</h2><div>{previews.map(({ content, invitation, preview }) => <Link key={invitation.id} href={`/plus/${content.slug}`}><strong>{content.title}</strong><span>{invitation.status.replaceAll("_", " ")}{invitation.expiresAt ? ` · Expires ${invitation.expiresAt.toLocaleDateString()}` : preview.expiresAt ? ` · Expires ${preview.expiresAt.toLocaleDateString()}` : ""}</span></Link>)}</div></section> : null}
+        {previews.length ? <section id="courier-cut" className="plus-shell plus-account-previews"><p>Private early access</p><h2>The Courier Cut</h2><div>{previews.map(({ content, invitation, preview }) => <Link key={invitation.id} href={`/plus/${content.slug}`}><strong>{content.title}</strong><span>{invitation.status.replaceAll("_", " ")}{invitation.expiresAt ? ` · Expires ${invitation.expiresAt.toLocaleDateString()}` : preview.expiresAt ? ` · Expires ${preview.expiresAt.toLocaleDateString()}` : ""}</span></Link>)}</div><Link href="/plus/courier-cut">Open the Courier Cut screening room</Link></section> : null}
       </main>
     </>
   );

@@ -56,7 +56,7 @@ const descriptions: Record<NjcPlusFlag, string> = {
   njc_plus_checkout: "Public checkout and subscription creation.",
   njc_plus_comments: "Public NJC+ discussion surfaces.",
   njc_plus_membership_branding: "Sitewide premium member treatment.",
-  njc_plus_preview_club: "Private invitation-only access to unfinished productions and feedback.",
+  njc_plus_preview_club: "The Courier Cut: title-specific invitations, private viewing, feedback and controlled NJC+/subdomain distribution.",
 };
 
 export const allNjcPlusFlags = [

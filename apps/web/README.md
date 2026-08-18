@@ -1,7 +1,7 @@
 # NJ Courier web application
 
 This Next.js application is the shared Vercel deployment behind the public
-publication, Newsroom Studio, NJC+, Press & Media, Distribution, Link in Bio,
+publication, Newsroom Studio, NJC+, The Courier Cut, Press & Media, Distribution, Link in Bio,
 reader authentication, television pairing and versioned APIs. Host-aware
 routing selects the correct first-party surface without duplicating backend or
 asset infrastructure.
@@ -14,6 +14,9 @@ asset infrastructure.
   service journalism and legal pages.
 - `studio` contains permission-aware editorial and operational tools.
 - `plus` contains the gated NJC+ reader experience.
+- `courier-cut` is the non-indexed, invitation-only host surface. Studio can
+  keep authorized playback in NJC+ or add the dedicated host, but cannot select
+  a Courier-Cut-only mode.
 - `press-portal` and `distribution` provide purpose-built external workflows.
 - `login`, `sign-in`, `sign-up` and `profile` provide reader identity flows.
 - `api` contains reader, newsroom, employee, platform and webhook contracts.

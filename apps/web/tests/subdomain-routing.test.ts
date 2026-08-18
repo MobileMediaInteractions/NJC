@@ -68,6 +68,22 @@ test("production subdomains have explicit host-aware routes", async () => {
       condition.value === "plus.thejerseycourier.com"
     )
   ));
+  assert.ok(rewrites.beforeFiles?.some((route) =>
+    route.source === "/" &&
+    route.destination === "/courier-cut" &&
+    route.has?.some((condition) =>
+      condition.type === "host" &&
+      condition.value === "cut.thejerseycourier.com"
+    )
+  ));
+  assert.ok(rewrites.beforeFiles?.some((route) =>
+    route.source === "/:slug" &&
+    route.destination === "/plus/:slug?courier_cut=1" &&
+    route.has?.some((condition) =>
+      condition.type === "host" &&
+      condition.value === "cut.thejerseycourier.com"
+    )
+  ));
   const plusSlugRewriteIndex = rewrites.beforeFiles?.findIndex((route) =>
     route.source === "/:slug" &&
     route.destination === "/plus/:slug"

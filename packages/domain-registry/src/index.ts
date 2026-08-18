@@ -5,6 +5,7 @@ export const managedDomainCatalog = [
   { label: "studio", title: "Newsroom Studio", purpose: "Authenticated editorial operations", project: "web", activation: "active" },
   { label: "api", title: "Developer API", purpose: "Developer portal and versioned APIs", project: "web", activation: "active" },
   { label: "plus", title: "NJC+", purpose: "Premium content platform", project: "web", activation: "active" },
+  { label: "cut", title: "The Courier Cut", purpose: "Invitation-only NJC+ early-access portal", project: "web", activation: "required" },
   { label: "cdn", title: "Asset CDN", purpose: "Immutable public brand and media assets", project: "cdn", activation: "active" },
   { label: "press", title: "Press & Media", purpose: "Press-kit intake and authorized delivery", project: "web", activation: "required" },
   { label: "distribution", title: "Distribution", purpose: "Authorized pre-publication file delivery", project: "web", activation: "required" },

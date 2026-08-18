@@ -9,3 +9,6 @@ policy does not drift between applications.
 
 The registry describes approved intent; it does not itself edit DNS, attach a
 Vercel domain or bypass the confirmation and operator controls in Studio.
+The Courier Cut is registered as `cut.thejerseycourier.com`; its host activation
+and its title-serving mode are separate controls, and the latter can never
+remove invited content from NJC+.

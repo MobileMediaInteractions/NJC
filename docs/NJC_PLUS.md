@@ -21,6 +21,7 @@ fallback are both `false`. Child flags are:
 - `njc_plus_checkout`
 - `njc_plus_comments`
 - `njc_plus_membership_branding`
+- `njc_plus_preview_club`
 
 A child is publicly effective only when it and the parent are enabled. While the
 parent is off, public pages and APIs return 404, NJC+ stays out of public
@@ -92,6 +93,8 @@ The top-level **NJC+** Studio area provides:
 - manual access extension, shortening, pause, resume and revocation;
 - isolated Invited Beta Tester grants with per-feature, content, branding, and
   time-window controls;
+- The Courier Cut invitation queue plus a constrained content-distribution
+  choice: NJC+ only, or NJC+ and the dedicated invite host;
 - the Access Credit ledger and configurable redemption-rule editor;
 - comments approval, reporting and moderation history;
 - first-party NJC+ traffic and playback analytics;
@@ -169,6 +172,11 @@ Production activation order:
 `plus.thejerseycourier.com` uses host-aware rewrites to the separate product
 shell. It does not redirect into the newspaper experience; while the parent
 flag is off, it fails closed with the same not-found response as `/plus`.
+
+`cut.thejerseycourier.com` is the non-indexed Courier Cut invitation portal.
+It defaults to handing invited viewers into NJC+. Studio may add authorized
+playback on that host, but cannot remove the same cut from NJC+ or create a
+host-only release. Every cut remains bound to its title-specific invitation.
 
 Production uses the repository-declared Node.js 22 runtime. A newer local Node
 release may print an engine warning even when validation succeeds.

@@ -37,6 +37,7 @@ test("newsroom and account routes continue through Clerk middleware", () => {
   assert.equal(isClerkRouted("/profile"), true);
   assert.equal(isClerkRouted("/plus"), true);
   assert.equal(isClerkRouted("/plus/watch"), true);
+  assert.equal(isClerkRouted("/courier-cut"), true);
   assert.equal(isClerkRouted("/api/v1/plus/catalog"), true);
   assert.equal(isClerkRouted("/distribution"), true);
   assert.equal(isClerkRouted("/distribution/package/private-release"), true);
@@ -59,6 +60,11 @@ test("clean service-subdomain routes initialize Clerk before host rewrites", () 
   assert.equal(isClerkRouted("/", "api.thejerseycourier.com"), true);
   assert.equal(isClerkRouted("/", "plus.thejerseycourier.com"), true);
   assert.equal(isClerkRouted("/watch", "plus.thejerseycourier.com"), true);
+  assert.equal(isClerkRouted("/", "cut.thejerseycourier.com"), true);
+  assert.equal(
+    isClerkRouted("/private-screening", "cut.thejerseycourier.com"),
+    true,
+  );
   assert.equal(
     isClerkRouted("/", "distribution.thejerseycourier.com"),
     true,

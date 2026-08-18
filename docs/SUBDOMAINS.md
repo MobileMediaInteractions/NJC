@@ -10,6 +10,7 @@ deployment and one separately deployable static asset origin.
 | `api.thejerseycourier.com` | `njc-web` | Clean `/v1/*` and `/developer/*` aliases rewrite to the existing versioned API routes |
 | `cdn.thejerseycourier.com` | dedicated CDN project rooted at `apps/cdn` | Immutable public brand and editorial assets; never private newsroom material |
 | `plus.thejerseycourier.com` | `njc-web` | Host-aware NJC+ product routes; unavailable public surfaces redirect to the canonical publication while Studio preview and invited-beta access remain entitlement-gated |
+| `cut.thejerseycourier.com` | `njc-web` | Non-indexed Courier Cut invitation portal. Studio may additionally serve invited cuts here, but the same cuts must remain available in NJC+. |
 | `distribution.thejerseycourier.com` | `njc-web` | Private, no-index advance-release library. Every package, preview, stream, and download is authorized server-side against a verified Clerk account and an active database grant. |
 | `press.thejerseycourier.com` | `njc-web` | Public Press & Media portal. Conversational intake is public and rate-limited; policy decisions, private packages, downloads, and Studio review remain server-authorized and audited. |
 | `status.thejerseycourier.com` | separate project rooted at `apps/status` | Independent public availability dashboard, live contract-aware checks, JSON health endpoints and optional 90-day aggregate history. It must never be served by `njc-web`. |
@@ -18,6 +19,11 @@ deployment and one separately deployable static asset origin.
 DNS labels cannot contain `+`, so the public hostname for NJC+ is `plus`.
 The host rewrites to the separate `/plus` product shell without exposing or
 weakening the `njc_plus_beta` release boundary.
+
+The Courier Cut host is a second authorized surface, not a separate content or
+identity system. Its release flag defaults to **NJC+ only**. Studio may select
+**NJC+ and The Courier Cut**, but there is no host-only state, and every title
+still requires an active account-specific invitation.
 
 ## Web project environment
 
@@ -29,6 +35,7 @@ NEXT_PUBLIC_STUDIO_URL=https://studio.thejerseycourier.com
 NEXT_PUBLIC_STUDIO_HOST=studio.thejerseycourier.com
 NEXT_PUBLIC_API_HOST=api.thejerseycourier.com
 NEXT_PUBLIC_PLUS_HOST=plus.thejerseycourier.com
+NEXT_PUBLIC_COURIER_CUT_HOST=cut.thejerseycourier.com
 NEXT_PUBLIC_DISTRIBUTION_HOST=distribution.thejerseycourier.com
 NEXT_PUBLIC_DISTRIBUTION_URL=https://distribution.thejerseycourier.com
 NEXT_PUBLIC_PRESS_HOST=press.thejerseycourier.com
@@ -89,11 +96,14 @@ After deployment:
 4. While `njc_plus_beta` is off, confirm the NJC+ host returns the fail-closed
    not-found response. After launch approval, confirm its root, section and
    content routes render the NJC+ product shell.
-5. Keep Studio, API and CDN out of the public sitemap. Only canonical public
+5. Confirm the Courier Cut host is non-indexed and shows only sign-in,
+   no-invitation, or invited-title states. Test both Studio distribution modes
+   and prove a direct or guessed slug never bypasses its title invitation.
+6. Keep Studio, API and CDN out of the public sitemap. Only canonical public
    article and section URLs belong in Google Search.
-6. Confirm the Press host root renders the dedicated portal, `/press` on the
+7. Confirm the Press host root renders the dedicated portal, `/press` on the
    main domain still serves the legacy generator, request APIs are no-index,
    and a package download fails without its current request-bound header token.
-7. Confirm the Status host remains available while `njc-web` is unavailable,
+8. Confirm the Status host remains available while `njc-web` is unavailable,
    reports every managed hostname using its own expected response contract, and
    labels missing history as unknown rather than uptime.

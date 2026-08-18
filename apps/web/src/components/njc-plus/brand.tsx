@@ -6,12 +6,20 @@ import { getActiveBetaTesterGrant } from "@/lib/njc-plus-beta";
 import { njcPlusAssets } from "@/lib/njc-plus-assets";
 import { getSiteOrigin } from "@/lib/origin";
 import { getAccountIdentity } from "@/lib/auth";
+import { listAccountPreviews } from "@/lib/njc-plus-preview";
+import { njcPlusOrigin } from "@/lib/courier-cut";
 
 export function NjcPlusLogo({ compact = false }: { compact?: boolean }) {
   return <Image src={compact ? njcPlusAssets.icon : njcPlusAssets.primaryDark} width={compact ? 44 : 176} height={compact ? 44 : 50} alt="NJC+" priority className={compact ? "size-11" : "h-10 w-auto sm:h-12"} />;
 }
 
-export async function NjcPlusHeader({ studioPreview = false }: { studioPreview?: boolean }) {
+export async function NjcPlusHeader({
+  studioPreview = false,
+  surface = "njc-plus",
+}: {
+  studioPreview?: boolean;
+  surface?: "njc-plus" | "courier-cut";
+}) {
   const [storedFlags, betaGrant, account] = await Promise.all([
     getNjcPlusFlags(),
     studioPreview ? Promise.resolve(null) : getActiveBetaTesterGrant(),
@@ -20,21 +28,33 @@ export async function NjcPlusHeader({ studioPreview = false }: { studioPreview?:
   const flags = new Map(storedFlags.map((flag) => [flag.key, flag.effective]));
   const visible = (key: string) =>
     studioPreview || flags.get(key as never) === true || betaGrant?.featureKeys.includes(key) === true;
+  const courierCutInvitations = account && visible("njc_plus_preview_club")
+    ? await listAccountPreviews(account.clerkId)
+    : [];
+  const hasCourierCutAccess = studioPreview || courierCutInvitations.length > 0;
   const siteOrigin = getSiteOrigin();
+  const homeHref = surface === "courier-cut"
+    ? "/"
+    : studioPreview ? "/plus?preview=studio" : "/plus";
+  const accountHref = surface === "courier-cut"
+    ? `${njcPlusOrigin}/account`
+    : "/plus/account";
   return (
     <>
       {studioPreview ? <div className="plus-preview-bar">Studio preview · NJC+ is not public</div> : null}
       <header className="plus-header">
         <div className="plus-shell plus-header-inner">
-          <Link href={studioPreview ? "/plus?preview=studio" : "/plus"} aria-label="NJC+ home"><NjcPlusLogo /></Link>
+          <Link href={homeHref} aria-label={surface === "courier-cut" ? "The Courier Cut home" : "NJC+ home"}><NjcPlusLogo /></Link>
           <nav aria-label="NJC+ primary">
-            {visible("njc_plus_video") ? <Link href={studioPreview ? "/plus/watch?preview=studio" : "/plus/watch"}><Tv /> Watch</Link> : null}
-            {visible("njc_plus_audio") || visible("njc_plus_podcasts") ? <Link href={studioPreview ? "/plus/listen?preview=studio" : "/plus/listen"}><Headphones /> Listen</Link> : null}
-            {visible("njc_plus_live") ? <Link href={studioPreview ? "/plus/live?preview=studio" : "/plus/live"}><Radio /> Live</Link> : null}
-            {visible("njc_plus_search") ? <Link href={studioPreview ? "/plus/search?preview=studio" : "/plus/search"}><Search /> Search</Link> : null}
-            {account && visible("njc_plus_preview_club") ? <Link href="/plus/account#courier-cut"><Eye /> Courier Cut</Link> : null}
+            {surface === "courier-cut" ? <Link href={njcPlusOrigin}><Tv /> NJC+</Link> : <>
+              {visible("njc_plus_video") ? <Link href={studioPreview ? "/plus/watch?preview=studio" : "/plus/watch"}><Tv /> Watch</Link> : null}
+              {visible("njc_plus_audio") || visible("njc_plus_podcasts") ? <Link href={studioPreview ? "/plus/listen?preview=studio" : "/plus/listen"}><Headphones /> Listen</Link> : null}
+              {visible("njc_plus_live") ? <Link href={studioPreview ? "/plus/live?preview=studio" : "/plus/live"}><Radio /> Live</Link> : null}
+              {visible("njc_plus_search") ? <Link href={studioPreview ? "/plus/search?preview=studio" : "/plus/search"}><Search /> Search</Link> : null}
+              {hasCourierCutAccess ? <Link href="/plus/courier-cut"><Eye /> Courier Cut</Link> : null}
+            </>}
           </nav>
-          <Link href={account ? "/plus/account" : `${siteOrigin}/sign-in?redirect_url=/plus/account`} className="plus-account"><CircleUserRound /><span>{account ? "Account" : "Sign in"}</span></Link>
+          <Link href={account ? accountHref : `${siteOrigin}/sign-in?redirect_url=${encodeURIComponent(accountHref)}`} className="plus-account"><CircleUserRound /><span>{account ? "Account" : "Sign in"}</span></Link>
         </div>
       </header>
     </>

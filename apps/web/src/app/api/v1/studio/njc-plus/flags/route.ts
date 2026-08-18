@@ -12,6 +12,7 @@ import {
   njcPlusParentFlag,
 } from "@/lib/feature-flags";
 import { writePremiumAudit } from "@/lib/njc-plus";
+import { withCourierCutDistributionMode, resolveCourierCutDistributionMode } from "@/lib/courier-cut-contract";
 
 const input = z.object({
   flags: z.array(z.object({
@@ -44,8 +45,12 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: { code: "invalid_flag", message: "Unknown NJC+ feature flag" } }, { status: 400 });
   }
 
+  const flags = parsed.data.flags.map((flag) => flag.key === "njc_plus_preview_club"
+    ? { ...flag, configuration: withCourierCutDistributionMode(flag.configuration, resolveCourierCutDistributionMode(flag.configuration)) }
+    : flag);
+
   await getDb().transaction(async (tx) => {
-    for (const flag of parsed.data.flags) {
+    for (const flag of flags) {
       await tx.insert(featureFlags).values({
         key: flag.key,
         parentKey: (njcPlusChildFlags as readonly string[]).includes(flag.key) ? njcPlusParentFlag : null,
@@ -71,10 +76,12 @@ export async function PUT(request: Request) {
     action: "feature_flags.updated",
     targetType: "product",
     targetId: "njc_plus",
-    metadata: { flags: parsed.data.flags.map(({ key, enabled }) => ({ key, enabled })) },
+    metadata: { flags: flags.map(({ key, enabled, configuration }) => ({ key, enabled, configuration })) },
   });
   revalidatePath("/", "layout");
   revalidatePath("/plus", "layout");
+  revalidatePath("/plus/courier-cut");
+  revalidatePath("/courier-cut", "layout");
   revalidatePath("/studio/njc-plus");
   return NextResponse.json({ data: await getNjcPlusFlags(), meta: { apiVersion: "1" } });
 }

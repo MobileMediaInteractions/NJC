@@ -13,6 +13,8 @@ const apiHostname =
   process.env.NEXT_PUBLIC_API_HOST ?? "api.thejerseycourier.com";
 const plusHostname =
   process.env.NEXT_PUBLIC_PLUS_HOST ?? "plus.thejerseycourier.com";
+const courierCutHostname =
+  process.env.NEXT_PUBLIC_COURIER_CUT_HOST ?? "cut.thejerseycourier.com";
 const distributionHostname =
   process.env.NEXT_PUBLIC_DISTRIBUTION_HOST ??
   "distribution.thejerseycourier.com";
@@ -143,6 +145,15 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         has: onHost(apiHostname),
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
+        source: "/:path*",
+        has: onHost(courierCutHostname),
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive, nosnippet" },
+          { key: "Referrer-Policy", value: "same-origin" },
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
       },
       {
         source: "/:path*",
@@ -379,6 +390,16 @@ const nextConfig: NextConfig = {
           source: "/join/:path*",
           has: onHost(plusHostname),
           destination: "/plus/join/:path*",
+        },
+        {
+          source: "/:slug",
+          has: onHost(courierCutHostname),
+          destination: "/plus/:slug?courier_cut=1",
+        },
+        {
+          source: "/",
+          has: onHost(courierCutHostname),
+          destination: "/courier-cut",
         },
         {
           source: "/v1/:path*",

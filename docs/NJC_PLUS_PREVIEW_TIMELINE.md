@@ -20,8 +20,21 @@ Source markers never include inherited media. `composePlaybackTimeline()` calcul
 5. Use the visual source timeline to scrub, add markers, zoom long programs, drag each range handle, set exact millisecond boundaries, preview a bounded range, discard unsaved edits or save the source timeline.
 6. Enable The Courier Cut only after attaching a private media asset. Configure the availability window, viewer warning and optional questions, then search the Clerk directory and invite specific accounts.
 7. Use **NJC+ → Courier Cut** for the aggregate queue. The individual production remains the authoritative management surface and shows named invitees, watch state, response counts, average rating and each submitted answer.
+8. Open **NJC+ → Feature flags → The Courier Cut** and choose one of the two supported content distributions:
+   - **NJC+ only** (default): `cut.thejerseycourier.com` is an invitation portal, while authorized viewing continues at the NJC+ host.
+   - **NJC+ and The Courier Cut**: the same title-specific invitation works on both the NJC+ screening-room tab and the dedicated host.
+
+There is intentionally no **Courier Cut only** configuration. Enabling content
+on the dedicated host can only add a second authorized surface; it cannot remove
+the cut from NJC+ or create access for a user who was not invited.
 
 The release flag `njc_plus_preview_club` must be enabled in **NJC+ → Feature flags** before invited viewers can enter. This flag does not grant anyone access; every viewer must also have an active content-specific invitation.
+
+An invited account receives a dedicated **Courier Cut** tab in NJC+. Accounts
+without an active invitation do not see that tab. The dedicated host is always
+non-indexed and presents either sign-in, no-active-invitation, or the account's
+allowlisted cuts. Every detail request repeats the server-side invitation,
+window, revocation and release-flag checks.
 
 ## Player behavior
 
@@ -52,4 +65,8 @@ When a transcoding provider is selected, generate a composed HLS/DASH presentati
 
 ## Production validation
 
-Run migration `0038`, configure `PRIVATE_BLOB_READ_WRITE_TOKEN`, enable `njc_plus_preview_club`, and perform the real-account, browser, fullscreen, seek, range-request, expiration and revocation matrix in `TODO.md`. Validate that private media was uploaded into the private store before inviting anyone.
+Run migration `0038`, configure `PRIVATE_BLOB_READ_WRITE_TOKEN`, activate and
+verify `cut.thejerseycourier.com`, enable `njc_plus_preview_club`, and perform
+the real-account, browser, fullscreen, seek, range-request, expiration,
+revocation and dual-surface matrix in `TODO.md`. Validate that private media was
+uploaded into the private store before inviting anyone.

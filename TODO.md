@@ -3,7 +3,7 @@
 This file tracks known follow-up work. Items here are requirements, not claims that the feature is already implemented.
 
 > Documentation baseline (August 18, 2026): every pnpm application, package,
-> tool and investigation workspace now has an owning README; all 97 human-facing
+> tool and investigation workspace now has an owning README; all 99 human-facing
 > `apps/web` page files are mapped in `apps/web/PAGES.md`; and 49 dark-mode or
 > safe-boundary captures are indexed under `docs/screenshots/dark`. Protected
 > interiors remain represented by their signed-out boundary, and real-device
@@ -73,7 +73,10 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > skip lifecycle, global original-content intro inheritance/opt-out, 2.5-second
 > transition, private Courier Cut invitations, expiration/revocation,
 > viewing state, structured feedback, private Blob upload/proxy, release flag,
-> migration and unit tests are implemented. Operating details and explicit
+> invitation-aware NJC+ tab, dedicated non-indexed invite portal, enforced
+> NJC+-only or NJC+-plus-subdomain distribution modes, host routing, migration
+> and unit tests are implemented. A Courier-Cut-only state is deliberately
+> impossible. Operating details and explicit
 > media limitations live in
 > [NJC+ timeline, platform intro and The Courier Cut](docs/NJC_PLUS_PREVIEW_TIMELINE.md).
 
@@ -83,6 +86,15 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   URL, range request, feedback update and private-to-public release transition
   with two real Clerk accounts. Confirm disabled or unauthorized requests fail
   as not found and never reveal a Blob pathname or URL.
+- [ ] Attach `cut.thejerseycourier.com` to the fixed `njc-web` Vercel project,
+  add the exact provider-issued CNAME at IONOS, wait for managed TLS, and verify
+  the non-indexed invite portal. Add the exact production host and return URL
+  to Clerk's permitted origins/redirects without using a wildcard. With two
+  real invited accounts, test the
+  default **NJC+ only** mode and **NJC+ and The Courier Cut** mode, including
+  direct/guessed slugs, sign-out, invitation expiration/revocation and switching
+  back to NJC+ only. Confirm no Studio or API control can produce host-only
+  content.
 - [ ] Validate the visual timeline and composed web player with real encoded
   assets in Chrome, Safari, Firefox, iOS Safari and Android Chrome: multiple
   markers, overlapping warnings, backward seeks, refresh/resume, fullscreen,

@@ -14,6 +14,7 @@ import { njcPlusBetaDisclosure } from "@/lib/njc-plus-beta-contract";
 import { njcPlusAssets } from "@/lib/njc-plus-assets";
 import { redirectUnavailableNjcPlus } from "@/lib/njc-plus-routing";
 import { getAccessiblePreviewContentBySlug, getPlaybackPresentation, getPreviewViewerDetails } from "@/lib/njc-plus-preview";
+import { isCourierCutHostRequest, isCourierCutSubdomainContentEnabled } from "@/lib/courier-cut";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   if (!(await isNjcPlusPublicEnabled())) return { robots: { index: false, follow: false } };
@@ -27,10 +28,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default async function PremiumDetail({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ preview?: string }> }) {
-  const [{ slug }, { preview }] = await Promise.all([params, searchParams]);
+export default async function PremiumDetail({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ preview?: string; courier_cut?: string }> }) {
+  const [{ slug }, { preview, courier_cut: courierCut }] = await Promise.all([params, searchParams]);
+  const courierCutSurface = courierCut === "1";
+  if (courierCutSurface && (!(await isCourierCutHostRequest()) || !(await isCourierCutSubdomainContentEnabled()))) notFound();
   const studioPreview = preview === "studio";
-  const regularItem = await getPremiumContentBySlug(slug, studioPreview);
+  // The dedicated host is a screening room, not a second premium catalog.
+  // Even when its content surface is enabled, only an active title-specific
+  // Courier Cut invitation may resolve a title there.
+  const regularItem = courierCutSurface
+    ? null
+    : await getPremiumContentBySlug(slug, studioPreview);
   const invitedPreview = !regularItem && !studioPreview && await isNjcPlusFeatureEnabled("njc_plus_preview_club") ? await getAccessiblePreviewContentBySlug(slug) : null;
   const item = regularItem ?? invitedPreview?.content ?? null;
   if (!item) notFound();
@@ -53,9 +61,9 @@ export default async function PremiumDetail({ params, searchParams }: { params: 
   const playbackSource = invitedPreview ? `/api/v1/plus/previews/${encodeURIComponent(slug)}/media` : item.mediaUrl;
 
   return <>
-    <NjcPlusHeader studioPreview={surface.studioPreview} />
+    <NjcPlusHeader studioPreview={surface.studioPreview} surface={courierCutSurface ? "courier-cut" : "njc-plus"} />
     <main className="plus-detail">
-      <div className="plus-shell"><Link href={surface.studioPreview ? "/plus?preview=studio" : "/plus"} className="plus-back"><ArrowLeft /> Back to NJC+</Link></div>
+      <div className="plus-shell"><Link href={courierCutSurface ? "/" : surface.studioPreview ? "/plus?preview=studio" : "/plus"} className="plus-back"><ArrowLeft /> {courierCutSurface ? "Back to The Courier Cut" : "Back to NJC+"}</Link></div>
       {format !== "article" && playbackSource && access.allowed ? <div className="plus-shell"><NjcPlusMediaPlayer contentId={item.id} kind={format} src={playbackSource} poster={item.imageUrl} captionsUrl={item.captionsUrl} title={item.title} initialPositionMs={progress?.positionMs ?? 0} timelineSegments={presentation.contentSegments} platformIntro={presentation.platformIntro} previewDisclaimer={previewDetails?.configuration.disclaimer ?? null} /></div> : <div className="plus-detail-image">{item.imageUrl ? <Image src={item.imageUrl} alt={item.imageAlt || ""} fill priority sizes="100vw" /> : <Image src={njcPlusAssets.signalField} alt="" fill priority sizes="100vw" />}</div>}
       <article className="plus-shell plus-story">
         <header><p>{item.isLive ? "Live" : premiumKindLabel(item.kind)} · {item.eyebrow}</p><h1>{item.title}</h1><span>{item.summary}</span><div>{item.publishedAt ? <small><CalendarDays /> {new Intl.DateTimeFormat("en-US", { dateStyle: "long" }).format(item.publishedAt)}</small> : null}{item.durationMs ? <small><Clock3 /> {Math.ceil(item.durationMs / 60_000)} min</small> : null}</div></header>

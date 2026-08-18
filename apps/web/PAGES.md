@@ -83,6 +83,7 @@ No screenshot contains an active pairing code, token or authenticated account.
 | `api.*` and `/developers` | Developer account/key entry; signed-out requests route to auth | ![Developer auth](../../docs/screenshots/dark/api-developer-entry.jpg) |
 | `studio.*` and `/studio/**` | Permission-aware newsroom operations | ![Studio access boundary](../../docs/screenshots/dark/studio-access.jpg) |
 | `plus.*` and `/plus/**` | NJC+ page family; the disabled release gate currently redirects to the publication | ![NJC+ release gate destination](../../docs/screenshots/dark/plus-release-gate.jpg) |
+| `cut.*`, `/courier-cut`, and authorized cut detail rewrites | Invitation-only Courier Cut portal; the release boundary uses the NJC+ gate and account-specific invitation checks | ![NJC+ release gate destination](../../docs/screenshots/dark/plus-release-gate.jpg) |
 | `/employee-link/v1/[...path]` | Main-app handoff into the employee app | Uses the employee-app access boundary in `apps/employee/README.md` |
 
 Studio detail pages, Distribution items/packages, Press request histories and
@@ -168,6 +169,8 @@ launched premium page.
 | `/plus/join` | Membership selection and checkout handoff |
 | `/plus/join/success` | Verified checkout return |
 | `/plus/account` | Membership and billing controls |
+| `/plus/courier-cut` | Invitation-aware Courier Cut screening-room tab |
+| `/courier-cut` | Dedicated-host invite portal; viewing remains in NJC+ by default |
 
 ## Remaining web page patterns
 
