@@ -2,6 +2,14 @@
 
 This file tracks known follow-up work. Items here are requirements, not claims that the feature is already implemented.
 
+> Documentation baseline (August 18, 2026): every pnpm application, package,
+> tool and investigation workspace now has an owning README; all 97 human-facing
+> `apps/web` page files are mapped in `apps/web/PAGES.md`; and 49 dark-mode or
+> safe-boundary captures are indexed under `docs/screenshots/dark`. Protected
+> interiors remain represented by their signed-out boundary, and real-device
+> store/certification captures remain part of the existing mobile, TV and Roku
+> validation work below rather than being simulated with private or fake data.
+
 ## Mandatory first implementation — remaining analytics v2 production validation
 
 > The ground-up code/documentation rebuild, production migration, protected
