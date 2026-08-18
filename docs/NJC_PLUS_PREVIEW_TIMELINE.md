@@ -1,4 +1,4 @@
-# NJC+ timeline, platform intro and Preview Club
+# NJC+ timeline, platform intro and The Courier Cut
 
 ## Implemented architecture
 
@@ -18,8 +18,8 @@ Source markers never include inherited media. `composePlaybackTimeline()` calcul
 3. Open **NJC+ → Platform intros**, register a public video asset, enter its measured duration and select **Activate**. Activating a new ident makes the previous ident inactive atomically.
 4. Open an NJC+ video production. Mark it as an **NJC+ original production** and leave **Play global platform intro** enabled, or opt out for that title.
 5. Use the visual source timeline to scrub, add markers, zoom long programs, drag each range handle, set exact millisecond boundaries, preview a bounded range, discard unsaved edits or save the source timeline.
-6. Enable Preview Club only after attaching a private media asset. Configure the availability window, viewer warning and optional questions, then search the Clerk directory and invite specific accounts.
-7. Use **NJC+ → Preview Club** for the aggregate queue. The individual production remains the authoritative management surface and shows named invitees, watch state, response counts, average rating and each submitted answer.
+6. Enable The Courier Cut only after attaching a private media asset. Configure the availability window, viewer warning and optional questions, then search the Clerk directory and invite specific accounts.
+7. Use **NJC+ → Courier Cut** for the aggregate queue. The individual production remains the authoritative management surface and shows named invitees, watch state, response counts, average rating and each submitted answer.
 
 The release flag `njc_plus_preview_club` must be enabled in **NJC+ → Feature flags** before invited viewers can enter. This flag does not grant anyone access; every viewer must also have an active content-specific invitation.
 

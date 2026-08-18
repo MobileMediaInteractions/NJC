@@ -40,7 +40,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   }
   if (parsed.data.status === "published" && parsed.data.mediaAssetId) {
     const [asset] = await getDb().select({ visibility: mediaAssets.visibility }).from(mediaAssets).where(eq(mediaAssets.id, parsed.data.mediaAssetId)).limit(1);
-    if (asset && asset.visibility !== "public") return NextResponse.json({ error: { code: "private_media", message: "Private Preview Club media must be replaced with a public release asset before publishing" } }, { status: 409 });
+    if (asset && asset.visibility !== "public") return NextResponse.json({ error: { code: "private_media", message: "Private Courier Cut media must be replaced with a public release asset before publishing" } }, { status: 409 });
   }
   const [current] = await getDb().select().from(premiumContent).where(eq(premiumContent.id, id.data)).limit(1);
   if (!current) return NextResponse.json({ error: { code: "not_found", message: "NJC+ content not found" } }, { status: 404 });

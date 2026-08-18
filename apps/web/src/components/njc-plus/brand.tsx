@@ -32,7 +32,7 @@ export async function NjcPlusHeader({ studioPreview = false }: { studioPreview?:
             {visible("njc_plus_audio") || visible("njc_plus_podcasts") ? <Link href={studioPreview ? "/plus/listen?preview=studio" : "/plus/listen"}><Headphones /> Listen</Link> : null}
             {visible("njc_plus_live") ? <Link href={studioPreview ? "/plus/live?preview=studio" : "/plus/live"}><Radio /> Live</Link> : null}
             {visible("njc_plus_search") ? <Link href={studioPreview ? "/plus/search?preview=studio" : "/plus/search"}><Search /> Search</Link> : null}
-            {account && visible("njc_plus_preview_club") ? <Link href="/plus/account#preview-club"><Eye /> Previews</Link> : null}
+            {account && visible("njc_plus_preview_club") ? <Link href="/plus/account#courier-cut"><Eye /> Courier Cut</Link> : null}
           </nav>
           <Link href={account ? "/plus/account" : `${siteOrigin}/sign-in?redirect_url=/plus/account`} className="plus-account"><CircleUserRound /><span>{account ? "Account" : "Sign in"}</span></Link>
         </div>

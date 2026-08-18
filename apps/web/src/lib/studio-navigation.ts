@@ -205,7 +205,7 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
       { id: "njc-plus-overview", label: "Overview", href: "/studio/njc-plus", roles: allRoles, module: "njcPlusOverview" },
       { id: "njc-plus-content", label: "Content", href: "/studio/njc-plus/content", roles: allRoles, module: "njcPlusContent" },
       { id: "njc-plus-intros", label: "Platform intros", href: "/studio/njc-plus/intros", roles: publishingRoles, module: "njcPlusContent" },
-      { id: "njc-plus-previews", label: "Preview Club", href: "/studio/njc-plus/previews", roles: publishingRoles, module: "njcPlusContent" },
+      { id: "njc-plus-previews", label: "Courier Cut", href: "/studio/njc-plus/previews", roles: publishingRoles, module: "njcPlusContent" },
       { id: "njc-plus-homepage", label: "Homepage", href: "/studio/njc-plus/homepage", roles: allRoles, module: "njcPlusHomepage" },
       { id: "njc-plus-commerce", label: "Tiers & offers", href: "/studio/njc-plus/commerce", roles: allRoles, module: "njcPlusCommerce" },
       { id: "njc-plus-access", label: "Access", href: "/studio/njc-plus/access", roles: allRoles, module: "njcPlusAccess" },

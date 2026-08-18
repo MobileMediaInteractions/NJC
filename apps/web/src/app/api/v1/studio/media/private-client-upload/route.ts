@@ -35,7 +35,7 @@ export async function POST(request: Request) {
           size: metadata.size,
           extension: details.filename.split(".").at(-1)?.toLowerCase(),
           sha256: details.sha256,
-          source: "preview-club-private",
+          source: "courier-cut-private",
           visibility: "private",
           uploadedById: details.databaseId,
           uploadedBySnapshot: { clerkId: details.clerkId, name: details.name },

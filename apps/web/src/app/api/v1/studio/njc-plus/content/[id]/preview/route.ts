@@ -37,7 +37,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const contentId = idSchema.safeParse((await context.params).id);
   const parsed = actionSchema.safeParse(await request.json().catch(() => null));
   if (!viewer || !["admin", "editor", "producer"].includes(viewer.role)) return NextResponse.json({ error: { code: "forbidden", message: "Producer, editor or administrator access is required" } }, { status: 403 });
-  if (!contentId.success || !parsed.success) return NextResponse.json({ error: { code: "invalid_request", message: "Check the Preview Club settings", details: parsed.success ? undefined : parsed.error.flatten() } }, { status: 400 });
+  if (!contentId.success || !parsed.success) return NextResponse.json({ error: { code: "invalid_request", message: "Check the Courier Cut settings", details: parsed.success ? undefined : parsed.error.flatten() } }, { status: 400 });
   if (!hasDatabase()) return NextResponse.json({ error: { code: "service_not_configured", message: "Postgres is required" } }, { status: 503 });
   const [content] = await getDb().select({ id: premiumContent.id }).from(premiumContent).where(eq(premiumContent.id, contentId.data)).limit(1);
   if (!content) return NextResponse.json({ error: { code: "not_found", message: "Production not found" } }, { status: 404 });
@@ -45,7 +45,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (value.action === "configure") {
     if (value.configuration.enabled) {
       const [media] = await getDb().select({ visibility: mediaAssets.visibility }).from(premiumContent).leftJoin(mediaAssets, eq(mediaAssets.id, premiumContent.mediaAssetId)).where(eq(premiumContent.id, content.id)).limit(1);
-      if (!media || !media.visibility || !["private", "internal"].includes(media.visibility)) return NextResponse.json({ error: { code: "private_media_required", message: "Enable Preview Club only after attaching media uploaded through Upload private preview" } }, { status: 409 });
+      if (!media || !media.visibility || !["private", "internal"].includes(media.visibility)) return NextResponse.json({ error: { code: "private_media_required", message: "Enable The Courier Cut only after attaching media uploaded through Upload private preview" } }, { status: 409 });
     }
     const now = new Date();
     await getDb().transaction(async (tx) => {
@@ -84,7 +84,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     await writePremiumAudit({ request, actorClerkId: viewer.id, action: "preview.configured", targetType: "premium_content", targetId: content.id, metadata: { enabled: value.configuration.enabled, questionCount: value.configuration.questions.length } });
   } else {
     const [configuration] = await getDb().select().from(premiumPreviewConfigurations).where(eq(premiumPreviewConfigurations.contentId, content.id)).limit(1);
-    if (!configuration) return NextResponse.json({ error: { code: "preview_not_configured", message: "Save Preview Club settings before managing invitations" } }, { status: 409 });
+    if (!configuration) return NextResponse.json({ error: { code: "preview_not_configured", message: "Save Courier Cut settings before managing invitations" } }, { status: 409 });
     if (value.action === "invite") {
       const account = await getStudioAccount(value.userClerkId).catch(() => null);
       if (!account) return NextResponse.json({ error: { code: "account_not_found", message: "Choose an existing Courier account" } }, { status: 404 });

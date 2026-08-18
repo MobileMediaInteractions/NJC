@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   }
   if (parsed.data.status === "published" && parsed.data.mediaAssetId) {
     const [asset] = await getDb().select({ visibility: mediaAssets.visibility }).from(mediaAssets).where(eq(mediaAssets.id, parsed.data.mediaAssetId)).limit(1);
-    if (asset && asset.visibility !== "public") return NextResponse.json({ error: { code: "private_media", message: "Private Preview Club media must be replaced with a public release asset before publishing" } }, { status: 409 });
+    if (asset && asset.visibility !== "public") return NextResponse.json({ error: { code: "private_media", message: "Private Courier Cut media must be replaced with a public release asset before publishing" } }, { status: 409 });
   }
   try {
     const record = await getDb().transaction(async (tx) => {
