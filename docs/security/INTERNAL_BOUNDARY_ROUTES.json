@@ -2,7 +2,7 @@
   "format": "njc-internal-boundary-register-v2",
   "source": "git tracked and pending repository files",
   "counts": {
-    "trackedFiles": 1227,
+    "trackedFiles": 1297,
     "routeSurfaces": 267,
     "databaseTables": 110,
     "workspaces": 21,
@@ -3596,6 +3596,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/employee/README.md",
+      "owner": "employee-platform",
+      "classification": "privileged-client",
+      "disposition": "retain-separate-client",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/employee/src/app/_layout.tsx",
       "owner": "employee-platform",
       "classification": "privileged-client",
@@ -3885,6 +3894,15 @@
     },
     {
       "file": "apps/internal/package.json",
+      "owner": "internal-operations",
+      "classification": "internal",
+      "disposition": "separate-disabled-deployment",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/internal/README.md",
       "owner": "internal-operations",
       "classification": "internal",
       "disposition": "separate-disabled-deployment",
@@ -4478,6 +4496,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/platform-playground/README.md",
+      "owner": "platform-development",
+      "classification": "development-only",
+      "disposition": "do-not-deploy",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/platform-playground/src/app/api/compile/route.ts",
       "owner": "platform-development",
       "classification": "development-only",
@@ -4545,6 +4572,15 @@
       "owner": "platform-development",
       "classification": "development-only",
       "disposition": "do-not-deploy",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/README.md",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
       "testFixture": false,
       "generated": false,
       "hasTodoMarker": false
@@ -4875,6 +4911,15 @@
     },
     {
       "file": "apps/status/public/brand-mark.svg",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/status/README.md",
       "owner": "repository-maintainers",
       "classification": "repository-build-control",
       "disposition": "retain-reviewed",
@@ -5855,6 +5900,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/PAGES.md",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/postcss.config.mjs",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -5886,6 +5940,15 @@
       "owner": "publication-web",
       "classification": "public-static",
       "disposition": "retain-public",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/README.md",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
       "testFixture": false,
       "generated": false,
       "hasTodoMarker": false
@@ -11462,6 +11525,456 @@
       "hasTodoMarker": false
     },
     {
+      "file": "docs/screenshots/dark/api-developer-entry.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/distribution-portal.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/employee-app.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/link-in-bio.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/mobile-reader.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/platform-playground.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/plus-release-gate.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/press-portal.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/README.md",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/status-dashboard.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/studio-access.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/visual-feature-playground.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-20-under-20.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-about.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-accessibility.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-advertise.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-api-terms.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-author.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-category-jersey-laurels.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-category-middlesex.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-category-opinion.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-category-public-square.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-category-sports.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-category-statehouse.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-community-guidelines.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-cookies.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-data-requests.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-developer-agreement.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-dmca.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-home.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-latest.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-legal.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-live.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-login-quick.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-login-tv.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-newsletter.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-offline.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-press-kit.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-privacy.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-profile-auth.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-search.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-sign-in.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-sign-up.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-staff-empty.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-standards.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-story.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-terms.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-tips.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-watch.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-weather.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "docs/screenshots/home-desktop.png",
       "owner": "project-operations",
       "classification": "documentation",
@@ -11723,6 +12236,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "investigations/bun-protobuf/README.md",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "investigations/bun-protobuf/realtime-benchmark.mjs",
       "owner": "repository-maintainers",
       "classification": "repository-build-control",
@@ -11741,6 +12263,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "investigations/README.md",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "package.json",
       "owner": "repository-maintainers",
       "classification": "repository-build-control",
@@ -11751,6 +12282,15 @@
     },
     {
       "file": "packages/api-client/package.json",
+      "owner": "platform-contracts",
+      "classification": "client-safe-shared",
+      "disposition": "retain-without-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/api-client/README.md",
       "owner": "platform-contracts",
       "classification": "client-safe-shared",
       "disposition": "retain-without-secrets",
@@ -11778,6 +12318,15 @@
     },
     {
       "file": "packages/backend/package.json",
+      "owner": "backend-platform",
+      "classification": "server-only",
+      "disposition": "share-with-least-privilege-data-role",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/backend/README.md",
       "owner": "backend-platform",
       "classification": "server-only",
       "disposition": "share-with-least-privilege-data-role",
@@ -11822,6 +12371,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "packages/contracts/README.md",
+      "owner": "platform-contracts",
+      "classification": "client-safe-shared",
+      "disposition": "retain-without-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "packages/contracts/src/index.ts",
       "owner": "platform-contracts",
       "classification": "client-safe-shared",
@@ -11840,7 +12398,25 @@
       "hasTodoMarker": false
     },
     {
+      "file": "packages/domain-registry/README.md",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "packages/domain-registry/src/index.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/README.md",
       "owner": "repository-maintainers",
       "classification": "repository-build-control",
       "disposition": "retain-reviewed",
@@ -12783,6 +13359,15 @@
       "testFixture": false,
       "generated": false,
       "hasTodoMarker": true
+    },
+    {
+      "file": "tools/README.md",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
     },
     {
       "file": "tools/studio/.gitignore",
@@ -14045,6 +14630,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "visual-feature-platform/apps/feature-playground/README.md",
+      "owner": "feature-platform",
+      "classification": "build-time-or-licensed-runtime",
+      "disposition": "do-not-deploy-by-default",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "visual-feature-platform/apps/feature-playground/src/App.tsx",
       "owner": "feature-platform",
       "classification": "build-time-or-licensed-runtime",
@@ -14225,6 +14819,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "visual-feature-platform/packages/feature-compiler/README.md",
+      "owner": "feature-platform",
+      "classification": "build-time-or-licensed-runtime",
+      "disposition": "do-not-deploy-by-default",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "visual-feature-platform/packages/feature-compiler/src/index.ts",
       "owner": "feature-platform",
       "classification": "build-time-or-licensed-runtime",
@@ -14243,6 +14846,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "visual-feature-platform/packages/feature-language/README.md",
+      "owner": "feature-platform",
+      "classification": "build-time-or-licensed-runtime",
+      "disposition": "do-not-deploy-by-default",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "visual-feature-platform/packages/feature-language/src/index.ts",
       "owner": "feature-platform",
       "classification": "build-time-or-licensed-runtime",
@@ -14253,6 +14865,15 @@
     },
     {
       "file": "visual-feature-platform/packages/feature-model/package.json",
+      "owner": "feature-platform",
+      "classification": "build-time-or-licensed-runtime",
+      "disposition": "do-not-deploy-by-default",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "visual-feature-platform/packages/feature-model/README.md",
       "owner": "feature-platform",
       "classification": "build-time-or-licensed-runtime",
       "disposition": "do-not-deploy-by-default",
@@ -14280,6 +14901,15 @@
     },
     {
       "file": "visual-feature-platform/packages/feature-runtime/package.json",
+      "owner": "feature-platform",
+      "classification": "build-time-or-licensed-runtime",
+      "disposition": "do-not-deploy-by-default",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "visual-feature-platform/packages/feature-runtime/README.md",
       "owner": "feature-platform",
       "classification": "build-time-or-licensed-runtime",
       "disposition": "do-not-deploy-by-default",
