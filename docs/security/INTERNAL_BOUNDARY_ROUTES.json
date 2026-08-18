@@ -2,7 +2,7 @@
   "format": "njc-internal-boundary-register-v2",
   "source": "git tracked and pending repository files",
   "counts": {
-    "trackedFiles": 1212,
+    "trackedFiles": 1227,
     "routeSurfaces": 267,
     "databaseTables": 110,
     "workspaces": 21,
@@ -11472,6 +11472,141 @@
     },
     {
       "file": "docs/screenshots/home-mobile.png",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/product/20-under-20.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/product/distribution-portal.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/product/homepage-desktop.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/product/homepage-mobile.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/product/latest-news.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/product/legal-center.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/product/link-in-bio.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/product/press-kit-legacy.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/product/press-portal.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/product/status-dashboard.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/product/story-desktop.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/product/studio-access-gate.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/product/tip-line.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/product/tv-pairing.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/README.md",
       "owner": "project-operations",
       "classification": "documentation",
       "disposition": "retain-no-secrets",
