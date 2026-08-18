@@ -2,7 +2,7 @@
   "format": "njc-internal-boundary-register-v2",
   "source": "git tracked and pending repository files",
   "counts": {
-    "trackedFiles": 1213,
+    "trackedFiles": 1212,
     "routeSurfaces": 267,
     "databaseTables": 110,
     "workspaces": 21,
@@ -4128,15 +4128,6 @@
     },
     {
       "file": "apps/mobile/assets/images/splash-icon.png",
-      "owner": "reader-platforms",
-      "classification": "public-or-account-client",
-      "disposition": "retain-outside-internal-host",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
-      "file": "apps/mobile/eas.json",
       "owner": "reader-platforms",
       "classification": "public-or-account-client",
       "disposition": "retain-outside-internal-host",
