@@ -4,6 +4,13 @@
 
 Migration `0038_noisy_omega_sentinel.sql` adds one shared source-timeline model and the records required for global intros and private preview review.
 
+The React playback surface, timeline composition helpers and controlled admin
+editor now live in the installable `@harborline/media-player` workspace. NJC+
+supplies a thin persistence/branding adapter; the package contains no Courier
+API route, Clerk assumption, storage path or entitlement rule. Build and
+tarball instructions for reuse by another owned site are documented in
+[`packages/media-player/README.md`](../packages/media-player/README.md).
+
 - `premium_timeline_segments` stores millisecond ranges against the underlying program. It supports `intro`, `recap`, `credits` and `custom`; custom labels and future metadata do not require a schema rewrite.
 - `premium_platform_intros` retains historical ident assets while a partial unique index permits only one active row. The active intro is resolved at playback time.
 - `premium_content.is_original` classifies first-party productions. `global_intro_enabled` is the per-title opt-out and defaults on.
@@ -45,6 +52,11 @@ The web player remains one visible media element and one control surface. For an
 3. source program.
 
 **Skip Intro** during the platform ident enters the source program immediately and omits the black gap. Program markers are translated into the composed presentation while seeks and persisted progress remain source-relative. Intro, recap and custom skip controls reappear after a manual rewind and disappear outside their half-open ranges. Credits are first-class markers and can be made skippable, but this change does not invent a separate autoplay system.
+
+The portable contract also supports explicit chapter markers and a chapter
+picker for future consumers. NJC+'s current database policy continues to allow
+intro, recap, credits and custom markers only; adding a new storage enum remains
+a deliberate NJC schema/API decision rather than a client-side loophole.
 
 The public content API now supplies the source markers and resolved platform-intro presentation to supported clients. Native and television players must implement the same composition contract before claiming platform parity.
 

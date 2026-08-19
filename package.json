@@ -23,6 +23,8 @@
     "internal:check": "pnpm --dir apps/internal test && pnpm --dir apps/internal typecheck && pnpm --dir apps/internal lint && pnpm --dir apps/internal build",
     "internal:audit": "node scripts/audit-internal-boundary.mjs",
     "internal:audit:write": "node scripts/audit-internal-boundary.mjs --write",
+    "media-player:check": "pnpm --dir packages/media-player test && pnpm --dir packages/media-player typecheck && pnpm --dir packages/media-player build",
+    "media-player:pack": "pnpm --dir packages/media-player pack",
     "status:dev": "pnpm --dir apps/status dev",
     "status:check": "pnpm --dir apps/status test && pnpm --dir apps/status typecheck && pnpm --dir apps/status lint && pnpm --dir apps/status build",
     "platform:check": "pnpm --dir platform check",

@@ -10,5 +10,6 @@ surface rather than manufacturing a package UI.
 | `backend` | Shared Drizzle database schema/connection exports | [Backend](backend/README.md) |
 | `contracts` | Cross-platform models, themes and public configuration | [Contracts](contracts/README.md) |
 | `domain-registry` | Canonical hostname catalog and provisioning policy | [Domain registry](domain-registry/README.md) |
+| `media-player` | Installable React video/audio player and controlled editorial timeline | [Media player](media-player/README.md) |
 
 ![A shared-contract consumer in dark mode](../docs/screenshots/dark/web-home.jpg)

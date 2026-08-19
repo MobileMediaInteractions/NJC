@@ -69,7 +69,8 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 
 ## NJC+ The Courier Cut and playback composition — production validation remaining
 
-> The shared millisecond source-timeline schema, visual Studio editor, player
+> The shared millisecond source-timeline schema, installable brand-neutral
+> `@harborline/media-player` React package, controlled visual Studio editor, player
 > skip lifecycle, global original-content intro inheritance/opt-out, 2.5-second
 > transition, private Courier Cut invitations, expiration/revocation,
 > viewing state, structured feedback, private Blob upload/proxy, release flag,
@@ -79,6 +80,12 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > impossible. Operating details and explicit
 > media limitations live in
 > [NJC+ timeline, platform intro and The Courier Cut](docs/NJC_PLUS_PREVIEW_TIMELINE.md).
+
+- [ ] Install the packed `@harborline/media-player` archive in a second owned
+  React application and run that application's browser matrix with its own
+  authenticated progress/timeline adapters before publishing the package to a
+  registry. Decide the private registry, ownership and license first; the
+  repository intentionally leaves the portable package `UNLICENSED` meanwhile.
 
 - [ ] Apply migration `0038` in production, confirm the separate private Blob
   store is configured, enable `njc_plus_preview_club` only after a security

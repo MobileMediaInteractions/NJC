@@ -27,6 +27,7 @@
     "@clerk/nextjs": "^7.5.17",
     "@harborline/backend": "workspace:*",
     "@harborline/contracts": "workspace:*",
+    "@harborline/media-player": "workspace:*",
     "@lexical/code": "0.38.2",
     "@lexical/history": "0.38.2",
     "@lexical/link": "0.38.2",

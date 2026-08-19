@@ -34,6 +34,7 @@ packages/
   api-client/  Shared platform-neutral API requester
   backend/     Neon/Postgres and Drizzle data layer
   contracts/   Shared TypeScript API contracts
+  media-player/ Portable React playback and editorial timeline package
 platform/      Licensable feature host, entitlement system and animation runtime
 tools/studio/  Tauri desktop IDE for animation and feature development
 visual-feature-platform/  Extractable visual feature model, compiler, runtime and playground
