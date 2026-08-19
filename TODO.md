@@ -80,10 +80,17 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > impossible. Operating details and explicit
 > media limitations live in
 > [NJC+ timeline, platform intro and The Courier Cut](docs/NJC_PLUS_PREVIEW_TIMELINE.md).
+> The package now also exposes per-capability switches, orderable and replaceable
+> controls, localization, multiple caption tracks, stable class hooks, expanded
+> design tokens, optional styling, generic HTTP and NJC session adapters, plus a
+> server-only public-news developer client. Adapter/security and customization
+> tests and the synthetic `/dev/media-player` viewer/timeline captures are
+> complete. Developer keys remain deliberately excluded from premium playback,
+> progress and Studio authorization.
 
 - [ ] Install the packed `@harborline/media-player` archive in a second owned
   React application and run that application's browser matrix with its own
-  authenticated progress/timeline adapters before publishing the package to a
+  authenticated progress/timeline configuration before publishing the package to a
   registry. Decide the private registry, ownership and license first; the
   repository intentionally leaves the portable package `UNLICENSED` meanwhile.
 

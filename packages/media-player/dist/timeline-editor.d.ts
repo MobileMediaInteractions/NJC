@@ -1,3 +1,3 @@
 import type { TimelineEditorProps } from "./types.js";
-export declare function TimelineEditor({ segments, mediaUrl, durationMs, inheritedIntro, allowedTypes, onChange, onSave, onDiscard, dirty, busy, statusMessage, readOnly, className }: TimelineEditorProps): import("react").JSX.Element;
+export declare function TimelineEditor({ segments, mediaUrl, durationMs, inheritedIntro, allowedTypes, onChange, onSave, onDiscard, dirty, busy, statusMessage, readOnly, className, classNames, labels: suppliedLabels, features: suppliedFeatures, style }: TimelineEditorProps): import("react").JSX.Element;
 //# sourceMappingURL=timeline-editor.d.ts.map

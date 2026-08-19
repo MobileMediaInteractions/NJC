@@ -1,3 +1,3 @@
 import type { MediaPlayerProps } from "./types.js";
-export declare function MediaPlayer({ contentId, kind, src, title, poster, captionsUrl, initialPositionMs, timelineSegments, platformIntro, previewNotice, branding, labels: suppliedLabels, persistIntervalMs, onProgress, onEvent, className, style, }: MediaPlayerProps): import("react").JSX.Element;
+export declare function MediaPlayer({ contentId, kind, src, title, poster, captionsUrl, captionTracks, initialPositionMs, timelineSegments, platformIntro, previewNotice, branding, labels: suppliedLabels, features: suppliedFeatures, controlOrder, playbackRates, seekStepSeconds, classNames, slots, controlsAriaLabel, ariaLabel, preload, crossOrigin, persistIntervalMs, dataAdapter, onProgress, onEvent, className, style }: MediaPlayerProps): import("react").JSX.Element;
 //# sourceMappingURL=media-player.d.ts.map

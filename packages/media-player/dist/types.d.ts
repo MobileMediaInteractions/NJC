@@ -59,6 +59,77 @@ export type MediaPlayerLabels = {
     loading: string;
     originalAudio: string;
     privatePreview: string;
+    closeChapters: string;
+    playbackPosition: string;
+    skipSegment: string;
+    transitionToProgram: string;
+    chapterFallback: string;
+};
+export type MediaControlId = "seek-backward" | "play-pause" | "seek-forward" | "time" | "volume" | "speed" | "chapters" | "captions" | "picture-in-picture" | "fullscreen";
+export type MediaPlayerFeatureConfig = {
+    platformIntro: boolean;
+    skipSegments: boolean;
+    scrubber: boolean;
+    seekBackward: boolean;
+    playPause: boolean;
+    seekForward: boolean;
+    time: boolean;
+    volume: boolean;
+    playbackSpeed: boolean;
+    chapters: boolean;
+    captions: boolean;
+    pictureInPicture: boolean;
+    fullscreen: boolean;
+    previewNotice: boolean;
+    audioBranding: boolean;
+    progressPersistence: boolean;
+};
+export type MediaPlayerClassNames = {
+    root: string;
+    media: string;
+    gap: string;
+    notice: string;
+    skip: string;
+    loading: string;
+    audioIdentity: string;
+    chapters: string;
+    controls: string;
+    scrubber: string;
+    controlRow: string;
+    time: string;
+};
+export type MediaPlayerSlotContext = {
+    title: string;
+    phase: "intro" | "gap" | "program";
+    playing: boolean;
+};
+export type MediaPlayerSlots = {
+    loading?: (context: MediaPlayerSlotContext) => ReactNode;
+    previewNotice?: (context: MediaPlayerSlotContext & {
+        notice: NonNullable<MediaPlayerProps["previewNotice"]>;
+    }) => ReactNode;
+    skipButton?: (context: MediaPlayerSlotContext & {
+        segment: PlayerTimelineSegment;
+        onSkip: () => void;
+    }) => ReactNode;
+    audioIdentity?: (context: MediaPlayerSlotContext & {
+        branding?: MediaPlayerProps["branding"];
+    }) => ReactNode;
+    beforeControls?: ReactNode;
+    afterControls?: ReactNode;
+    control?: (context: {
+        id: MediaControlId;
+        label: string;
+        active: boolean;
+        onPress: () => void;
+        defaultControl: ReactNode;
+    }) => ReactNode;
+};
+export type CaptionTrack = {
+    src: string;
+    srcLang: string;
+    label: string;
+    default?: boolean;
 };
 export type MediaPlayerProps = {
     contentId: string;
@@ -67,6 +138,7 @@ export type MediaPlayerProps = {
     title: string;
     poster?: string | null;
     captionsUrl?: string | null;
+    captionTracks?: CaptionTrack[];
     initialPositionMs?: number;
     timelineSegments?: TimelineSegment[];
     platformIntro?: PlatformIntroPresentation | null;
@@ -80,11 +152,61 @@ export type MediaPlayerProps = {
         subtitle?: string;
     };
     labels?: Partial<MediaPlayerLabels>;
+    features?: Partial<MediaPlayerFeatureConfig>;
+    controlOrder?: MediaControlId[];
+    playbackRates?: number[];
+    seekStepSeconds?: number;
+    classNames?: Partial<MediaPlayerClassNames>;
+    slots?: MediaPlayerSlots;
+    controlsAriaLabel?: string;
+    ariaLabel?: string;
+    preload?: "none" | "metadata" | "auto";
+    crossOrigin?: "anonymous" | "use-credentials";
     persistIntervalMs?: number;
+    dataAdapter?: Pick<MediaDataAdapter, "saveProgress">;
     onProgress?: (event: PlayerProgressEvent) => void | Promise<void>;
     onEvent?: (event: PlayerEvent) => void;
     className?: string;
     style?: CSSProperties;
+};
+export type TimelineEditorLabels = {
+    eyebrow: string;
+    title: string;
+    description: string;
+    inheritedPresentation: string;
+    inheritedHelp: string;
+    emptyPreview: string;
+    sourceTimeline: string;
+    zoom: string;
+    overlapReview: string;
+    resolveBeforeSaving: string;
+    idleStatus: string;
+    discard: string;
+    save: string;
+    saving: string;
+};
+export type TimelineEditorFeatureConfig = {
+    header: boolean;
+    inheritedIntro: boolean;
+    mediaPreview: boolean;
+    zoom: boolean;
+    addControls: boolean;
+    inspector: boolean;
+    validation: boolean;
+    actions: boolean;
+};
+export type TimelineEditorClassNames = {
+    root: string;
+    header: string;
+    inherited: string;
+    preview: string;
+    emptyPreview: string;
+    trackHeading: string;
+    trackScroll: string;
+    track: string;
+    addControls: string;
+    inspector: string;
+    footer: string;
 };
 export type TimelineValidationIssue = {
     segmentId: string;
@@ -106,5 +228,27 @@ export type TimelineEditorProps = {
     statusMessage?: string | null;
     readOnly?: boolean;
     className?: string;
+    classNames?: Partial<TimelineEditorClassNames>;
+    labels?: Partial<TimelineEditorLabels>;
+    features?: Partial<TimelineEditorFeatureConfig>;
+    style?: CSSProperties;
+};
+export type MediaPresentation = {
+    id: string;
+    kind: "video" | "audio";
+    title: string;
+    src: string;
+    poster?: string | null;
+    captionsUrl?: string | null;
+    timelineSegments?: TimelineSegment[];
+    platformIntro?: PlatformIntroPresentation | null;
+    initialPositionMs?: number;
+    metadata?: Record<string, unknown>;
+};
+export type MediaDataAdapter = {
+    loadPresentation?: (idOrSlug: string) => Promise<MediaPresentation>;
+    saveProgress?: (event: PlayerProgressEvent) => Promise<void>;
+    loadTimeline?: (contentId: string) => Promise<TimelineSegment[]>;
+    saveTimeline?: (contentId: string, segments: TimelineSegment[]) => Promise<TimelineSegment[]>;
 };
 //# sourceMappingURL=types.d.ts.map

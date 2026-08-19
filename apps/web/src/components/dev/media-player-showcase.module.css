@@ -1,0 +1,25 @@
+.page { min-height: 100vh; background: #06110f; color: #f6f1e5; padding: 5rem max(1.25rem, calc((100vw - 1280px) / 2)); font-family: var(--font-sans), system-ui, sans-serif; }
+.hero { display: grid; max-width: 74rem; gap: 1rem; padding: 4rem 0 5rem; }
+.hero p, .sectionIntro span, .capabilityPanel > p, .boundary > span { margin: 0; color: #d9a441; font-size: .72rem; font-weight: 900; letter-spacing: .18em; }
+.hero h1 { max-width: 13ch; margin: 0; font-family: Georgia, serif; font-size: clamp(3.4rem, 7vw, 7rem); font-weight: 500; line-height: .91; letter-spacing: -.055em; }
+.hero > span { max-width: 52rem; color: #aab7b3; font-size: 1.15rem; line-height: 1.65; }
+.viewerSection, .editorSection { border-top: 1px solid #ffffff22; padding: 3rem 0 5rem; }
+.sectionIntro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(18rem, 30rem); gap: 3rem; align-items: end; margin-bottom: 2rem; }
+.sectionIntro h2, .boundary h2 { margin: .5rem 0 0; font-family: Georgia, serif; font-size: clamp(2rem, 4vw, 3.6rem); font-weight: 500; line-height: 1; letter-spacing: -.04em; }
+.sectionIntro p, .boundary p { margin: 0; color: #96a6a1; line-height: 1.6; }
+.viewerGrid { display: grid; grid-template-columns: minmax(0, 2.25fr) minmax(16rem, .75fr); gap: 1.25rem; align-items: stretch; }
+.customPlayer { border: 1px solid #d9a44155; border-radius: var(--harbor-media-radius); box-shadow: 0 2.5rem 7rem #000a; }
+.releaseBadge { display: inline-flex; margin-bottom: .45rem; border: 1px solid #d9a44166; border-radius: 999px; padding: .25rem .5rem; color: #f0ca78; font-size: .58rem; font-weight: 900; letter-spacing: .12em; }
+.programFrame { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; background: radial-gradient(circle at 79% 45%, #d9a44144 0 14%, transparent 14.5%), linear-gradient(90deg, #0a1816 0 57%, #14342d 57%); padding: clamp(2rem, 5vw, 5rem); }
+.programFrame span, .programFrame small { color: #d9a441; font-size: .62rem; font-weight: 900; letter-spacing: .16em; }
+.programFrame strong { margin: .8rem 0 1.5rem; font-family: Georgia, serif; font-size: clamp(2rem, 4vw, 4.5rem); font-weight: 500; line-height: .91; letter-spacing: -.05em; }
+.programFrame small { color: #9db1ab; }
+.capabilityPanel { display: grid; align-content: start; border: 1px solid #ffffff1c; border-radius: 18px; background: #0b1a17; padding: 1.4rem; }
+.capabilityPanel > p { margin-bottom: .7rem; color: #73d6ba; }
+.capabilityPanel > div { display: grid; gap: .2rem; border-top: 1px solid #ffffff14; padding: 1rem 0; }
+.capabilityPanel strong { font-family: Georgia, serif; font-size: 1.15rem; font-weight: 500; }
+.capabilityPanel span { color: #8fa29c; font-size: .78rem; line-height: 1.5; }
+.editorSection { padding-bottom: 6rem; }
+.boundary { display: grid; max-width: 56rem; gap: 1rem; border: 1px solid #d9a44144; border-radius: 18px; background: linear-gradient(135deg, #10221e, #091512); padding: clamp(2rem, 5vw, 4rem); }
+.boundary p { max-width: 48rem; }
+@media (max-width: 850px) { .sectionIntro, .viewerGrid { grid-template-columns: 1fr; } .page { padding-top: 1rem; } .hero { padding-top: 2rem; } }

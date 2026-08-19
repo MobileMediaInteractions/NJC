@@ -35,6 +35,10 @@ workspaces are indexed in [`packages/README.md`](../../../packages/README.md).
 
 ![Visual Feature Playground](visual-feature-playground.jpg)
 
+![Portable media player SDK](media-player-sdk-viewer.jpg)
+
+![Portable timeline SDK](media-player-sdk-timeline.jpg)
+
 ## Safety rules
 
 - Never capture authenticated staff, reader, financial, analytics, entitlement

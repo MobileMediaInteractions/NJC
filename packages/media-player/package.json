@@ -1,6 +1,6 @@
 {
   "name": "@harborline/media-player",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Portable React video/audio player and editorial timeline controls",
   "type": "module",
   "license": "UNLICENSED",
@@ -17,6 +17,16 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./adapters": {
+      "types": "./dist/adapters.d.ts",
+      "import": "./dist/adapters.js",
+      "default": "./dist/adapters.js"
+    },
+    "./njc-server": {
+      "types": "./dist/njc-server.d.ts",
+      "import": "./dist/njc-server.js",
+      "default": "./dist/njc-server.js"
     },
     "./styles.css": "./src/styles.css"
   },

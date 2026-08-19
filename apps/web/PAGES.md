@@ -184,4 +184,5 @@ launched premium page.
 | `/link-in-bio` | Uses the Link in Bio capture above |
 | `/link-in-bio/[slug]` | Audited redirect, not a rendered page |
 | `/dev/platform` | Internal platform activation surface; represented by the developer authentication boundary |
+| `/dev/media-player` | Safe synthetic workbench for the portable viewer and timeline package; ![viewer](../../docs/screenshots/dark/media-player-sdk-viewer.jpg) ![timeline](../../docs/screenshots/dark/media-player-sdk-timeline.jpg) |
 | `/employee-link/v1/[...path]` | Validated application handoff, not a standalone content page |
