@@ -824,15 +824,123 @@ export const liveEvents = pgTable(
     slug: text("slug").notNull(),
     title: text("title").notNull(),
     description: text("description"),
+    status: text("status").notNull().default("draft"),
+    location: text("location"),
     streamUrl: text("stream_url"),
+    heroImageUrl: text("hero_image_url"),
+    heroImageAlt: text("hero_image_alt"),
+    relatedStoryId: uuid("related_story_id").references(() => stories.id, {
+      onDelete: "set null",
+    }),
+    isFeatured: boolean("is_featured").notNull().default(false),
     isLive: boolean("is_live").notNull().default(false),
+    scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
     startedAt: timestamp("started_at", { withTimezone: true }),
     endedAt: timestamp("ended_at", { withTimezone: true }),
+    createdByClerkId: text("created_by_clerk_id"),
+    updatedByClerkId: text("updated_by_clerk_id"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("live_events_slug_idx").on(table.slug),
+    index("live_events_status_started_idx").on(table.status, table.startedAt),
+    index("live_events_featured_idx").on(table.isFeatured, table.status),
+    check(
+      "live_events_status_check",
+      sql`${table.status} in ('draft', 'scheduled', 'live', 'paused', 'ended', 'archived')`,
+    ),
+  ],
+);
+
+export interface LiveEventAuthorSnapshot {
+  clerkId: string;
+  name: string;
+  role: string;
+  initials: string;
+}
+
+export const liveEventUpdates = pgTable(
+  "live_event_updates",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => liveEvents.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull().default("update"),
+    status: text("status").notNull().default("draft"),
+    headline: text("headline"),
+    body: text("body").notNull(),
+    mediaUrl: text("media_url"),
+    mediaAlt: text("media_alt"),
+    sourceUrl: text("source_url"),
+    sourceLabel: text("source_label"),
+    authorSnapshot: jsonb("author_snapshot")
+      .$type<LiveEventAuthorSnapshot>()
+      .notNull(),
+    isPinned: boolean("is_pinned").notNull().default(false),
+    revision: integer("revision").notNull().default(1),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    correctedAt: timestamp("corrected_at", { withTimezone: true }),
+    retractedAt: timestamp("retracted_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("live_event_updates_event_published_idx").on(
+      table.eventId,
+      table.publishedAt,
+    ),
+    index("live_event_updates_event_status_idx").on(
+      table.eventId,
+      table.status,
+    ),
+    check(
+      "live_event_updates_kind_check",
+      sql`${table.kind} in ('update', 'breaking', 'result', 'quote', 'context', 'media', 'correction')`,
+    ),
+    check(
+      "live_event_updates_status_check",
+      sql`${table.status} in ('draft', 'published', 'retracted')`,
+    ),
+    check(
+      "live_event_updates_revision_positive_check",
+      sql`${table.revision} > 0`,
+    ),
+  ],
+);
+
+export const liveEventUpdateRevisions = pgTable(
+  "live_event_update_revisions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    updateId: uuid("update_id")
+      .notNull()
+      .references(() => liveEventUpdates.id, { onDelete: "cascade" }),
+    revision: integer("revision").notNull(),
+    snapshot: jsonb("snapshot")
+      .$type<Record<string, unknown>>()
+      .notNull(),
+    reason: text("reason").notNull(),
+    actorClerkId: text("actor_clerk_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
-  (table) => [uniqueIndex("live_events_slug_idx").on(table.slug)],
+  (table) => [
+    uniqueIndex("live_event_update_revisions_version_idx").on(
+      table.updateId,
+      table.revision,
+    ),
+  ],
 );
 
 export const newsTips = pgTable(

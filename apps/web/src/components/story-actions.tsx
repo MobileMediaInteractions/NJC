@@ -3,11 +3,24 @@
 import { useEffect, useRef, useState } from "react";
 import { Bookmark, ExternalLink, Link2, Mail, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-const bookmarkStorageKey = "njc:saved-story-urls";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  normalizeSavedStoryPath,
+  readSavedStoryPaths,
+  SAVED_STORIES_CHANGE_EVENT,
+  writeSavedStoryPaths,
+} from "@/lib/saved-stories";
 
 type StoryActionsProps = {
   articleUrl: string;
+  compact?: boolean;
   emailUrl: string;
   headline: string;
   shareUrl: string;
@@ -16,11 +29,15 @@ type StoryActionsProps = {
 
 function getSavedStoryUrls() {
   try {
-    const saved = JSON.parse(window.localStorage.getItem(bookmarkStorageKey) ?? "[]");
-    return Array.isArray(saved) ? saved.filter((value): value is string => typeof value === "string") : [];
+    return readSavedStoryPaths(window.localStorage, window.location.origin);
   } catch {
     return [];
   }
+}
+
+function currentStoryPath(articleUrl: string) {
+  return normalizeSavedStoryPath(window.location.pathname, window.location.origin)
+    ?? normalizeSavedStoryPath(articleUrl, window.location.origin);
 }
 
 async function copyToClipboard(value: string) {
@@ -45,16 +62,23 @@ async function copyToClipboard(value: string) {
   if (!copied) throw new Error("Clipboard access is unavailable");
 }
 
-export function StoryActions({ articleUrl, emailUrl, headline, shareUrl, xUrl }: StoryActionsProps) {
+export function StoryActions({ articleUrl, compact = false, emailUrl, headline, shareUrl, xUrl }: StoryActionsProps) {
   const [isSaved, setIsSaved] = useState(false);
   const [notice, setNotice] = useState("");
   const noticeTimer = useRef<number | null>(null);
 
   useEffect(() => {
-    const syncSavedState = () => setIsSaved(getSavedStoryUrls().includes(articleUrl));
+    const syncSavedState = () => {
+      const path = currentStoryPath(articleUrl);
+      setIsSaved(Boolean(path && getSavedStoryUrls().includes(path)));
+    };
     syncSavedState();
     window.addEventListener("storage", syncSavedState);
-    return () => window.removeEventListener("storage", syncSavedState);
+    window.addEventListener(SAVED_STORIES_CHANGE_EVENT, syncSavedState);
+    return () => {
+      window.removeEventListener("storage", syncSavedState);
+      window.removeEventListener(SAVED_STORIES_CHANGE_EVENT, syncSavedState);
+    };
   }, [articleUrl]);
 
   useEffect(() => () => {
@@ -69,13 +93,20 @@ export function StoryActions({ articleUrl, emailUrl, headline, shareUrl, xUrl }:
 
   function toggleSaved() {
     try {
+      const path = currentStoryPath(articleUrl);
+      if (!path) {
+        showNotice("This article does not have a valid local story address.");
+        return;
+      }
       const saved = getSavedStoryUrls();
-      const nextSaved = saved.includes(articleUrl)
-        ? saved.filter((url) => url !== articleUrl)
-        : [...saved, articleUrl];
-      window.localStorage.setItem(bookmarkStorageKey, JSON.stringify(nextSaved));
-      const nextState = nextSaved.includes(articleUrl);
+      const nextSaved = writeSavedStoryPaths(
+        window.localStorage,
+        saved.includes(path) ? saved.filter((url) => url !== path) : [...saved, path],
+        window.location.origin,
+      );
+      const nextState = nextSaved.includes(path);
       setIsSaved(nextState);
+      window.dispatchEvent(new Event(SAVED_STORIES_CHANGE_EVENT));
       showNotice(nextState ? "Article saved on this device." : "Article removed from saved stories.");
     } catch {
       showNotice("This browser could not save the article.");
@@ -109,6 +140,42 @@ export function StoryActions({ articleUrl, emailUrl, headline, shareUrl, xUrl }:
     } catch {
       showNotice("The article link could not be copied.");
     }
+  }
+
+  if (compact) {
+    return (
+      <div className="flex flex-col items-start gap-2 sm:items-end">
+        <div className="flex items-center gap-1">
+          <Button variant="outline" size="icon" type="button" aria-label={isSaved ? "Remove this article from saved stories" : "Save this article"} aria-pressed={isSaved} title={isSaved ? "Remove saved article" : "Save article"} onClick={toggleSaved}>
+            <Bookmark className={isSaved ? "size-4 fill-current" : "size-4"} />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" type="button" aria-label="Share this article" title="Share article">
+                <Share2 className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuLabel>Share article</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <a href={xUrl} target="_blank" rel="noopener noreferrer"><Share2 /> Share on X</a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href={emailUrl}><Mail /> Email article</a>
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={(event) => { event.preventDefault(); void openShareOptions(); }}>
+                <ExternalLink /> Device share options
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={(event) => { event.preventDefault(); void copyLink(); }}>
+                <Link2 /> Copy link
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <p className="min-h-4 text-xs font-medium text-brand-blue" role="status" aria-live="polite">{notice}</p>
+      </div>
+    );
   }
 
   return (

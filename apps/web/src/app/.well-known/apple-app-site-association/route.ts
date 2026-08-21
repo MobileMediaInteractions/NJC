@@ -1,6 +1,17 @@
 import { NextResponse } from "next/server";
+import { buildAppleAppSiteAssociation } from "@/lib/mobile-associations";
 
 export function GET() {
-  const appId = process.env.EMPLOYEE_IOS_APP_ID;
-  return NextResponse.json({ applinks: { apps: [], details: appId ? [{ appID: appId, paths: ["/employee-link/*"] }] : [] } }, { headers: { "Cache-Control": "public, max-age=3600", "Content-Type": "application/json" } });
+  return NextResponse.json(
+    buildAppleAppSiteAssociation({
+      readerAppId: process.env.READER_IOS_APP_ID,
+      employeeAppId: process.env.EMPLOYEE_IOS_APP_ID,
+    }),
+    {
+      headers: {
+        "Cache-Control": "public, max-age=3600",
+        "Content-Type": "application/json",
+      },
+    },
+  );
 }

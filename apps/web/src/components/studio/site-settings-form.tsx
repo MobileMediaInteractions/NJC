@@ -7,16 +7,20 @@ import {
   BadgeDollarSign,
   BellRing,
   Bot,
+  ChevronDown,
+  ChevronUp,
   CheckCircle2,
   ExternalLink,
   FileText,
   LayoutGrid,
   Loader2,
   Navigation,
+  Palette,
   Plus,
   Settings2,
   ShieldAlert,
   SlidersHorizontal,
+  Smartphone,
   Sparkles,
   Trash2,
   Zap,
@@ -36,8 +40,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { EditableList } from "@/components/studio/editable-list";
 import {
   type AdPlacementName,
+  crossesV2ProductionBoundary,
   type SiteConfiguration,
   type StudioModuleKey,
+  type V2HomepageModuleKey,
 } from "@/lib/site-settings";
 import { configurationImpact } from "@/lib/platform-feature-registry";
 
@@ -48,6 +54,15 @@ const placements: Array<{ key: AdPlacementName; label: string; description: stri
   { key: "articleInline", label: "Article inline", description: "Responsive unit after the article body and before tags." },
   { key: "sectionInline", label: "Section inline", description: "Responsive unit between the leading section package and story grid." },
 ];
+
+const v2ModuleLabels: Record<V2HomepageModuleKey, { label: string; description: string }> = {
+  live: { label: "Live and breaking", description: "Promote an active Live Desk above the lead package." },
+  lead: { label: "Primary lead", description: "One dominant image-and-headline package." },
+  secondary: { label: "Secondary leads", description: "Two deliberate follow-up stories after the lead." },
+  latest: { label: "Latest rail", description: "A fast, text-first chronological briefing." },
+  sections: { label: "Section packages", description: "Topic-led reporting with varied editorial rhythm." },
+  newsletter: { label: "Newsletter", description: "The restrained Middlesex Morning signup surface." },
+};
 
 const studioModules: Array<{
   key: StudioModuleKey;
@@ -93,6 +108,7 @@ export function SiteSettingsForm({
   initialRevision,
   history,
   operationalHealth,
+  environmentDesignOverride,
 }: {
   initialConfiguration: SiteConfiguration;
   canManage: boolean;
@@ -100,6 +116,7 @@ export function SiteSettingsForm({
   initialRevision: number;
   history: ConfigurationHistoryRow[];
   operationalHealth: { database: boolean; identity: boolean; scheduler: boolean; aiImages: boolean };
+  environmentDesignOverride: "legacy" | "v2" | null;
 }) {
   const [configuration, setConfiguration] = useState(initialConfiguration);
   const [lastSavedConfiguration, setLastSavedConfiguration] = useState(initialConfiguration);
@@ -112,7 +129,12 @@ export function SiteSettingsForm({
   const [confirmation, setConfirmation] = useState("");
   const dirty = JSON.stringify(configuration) !== JSON.stringify(lastSavedConfiguration);
   const impact = configurationImpact(lastSavedConfiguration, configuration);
-  const highImpact = impact.some((entry) => /pseudonym|scheduling|authorization|audit/.test(entry.key));
+  const productionDesignTransition = crossesV2ProductionBoundary(
+    lastSavedConfiguration.presentation.designMode,
+    configuration.presentation.designMode,
+  );
+  const highImpact = productionDesignTransition ||
+    impact.some((entry) => /pseudonym|scheduling|authorization|audit/.test(entry.key));
 
   function updatePublication(key: keyof SiteConfiguration["publication"], value: string) {
     setConfiguration((current) => ({ ...current, publication: { ...current.publication, [key]: value } }));
@@ -146,6 +168,41 @@ export function SiteSettingsForm({
         },
       },
     }));
+  }
+
+  function updateNativeApps<Key extends keyof SiteConfiguration["nativeApps"]>(
+    key: Key,
+    value: SiteConfiguration["nativeApps"][Key],
+  ) {
+    setConfiguration((current) => ({
+      ...current,
+      nativeApps: { ...current.nativeApps, [key]: value },
+    }));
+  }
+
+  function updatePresentation<Key extends keyof SiteConfiguration["presentation"]>(
+    key: Key,
+    value: SiteConfiguration["presentation"][Key],
+  ) {
+    setConfiguration((current) => ({
+      ...current,
+      presentation: { ...current.presentation, [key]: value },
+    }));
+  }
+
+  function updateV2Presentation<Key extends keyof SiteConfiguration["presentation"]["v2"]>(
+    key: Key,
+    value: SiteConfiguration["presentation"]["v2"][Key],
+  ) {
+    updatePresentation("v2", { ...configuration.presentation.v2, [key]: value });
+  }
+
+  function moveV2Module(index: number, direction: -1 | 1) {
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= configuration.presentation.v2.homepageModules.length) return;
+    const modules = [...configuration.presentation.v2.homepageModules];
+    [modules[index], modules[nextIndex]] = [modules[nextIndex], modules[index]];
+    updateV2Presentation("homepageModules", modules);
   }
 
   function updateAdvertising<Key extends keyof SiteConfiguration["advertising"]>(key: Key, value: SiteConfiguration["advertising"][Key]) {
@@ -283,6 +340,7 @@ export function SiteSettingsForm({
             <p className="mb-2 px-2 text-[0.65rem] font-black uppercase tracking-[0.16em] text-muted-foreground">Control areas</p>
             <TabsList className="h-auto w-full max-w-full justify-start gap-1 overflow-x-auto bg-transparent p-0 lg:flex-col lg:items-stretch">
               <TabsTrigger value="publication" className="h-10 shrink-0 justify-start px-3 lg:w-full"><Navigation /> Publication</TabsTrigger>
+              <TabsTrigger value="design" className="h-10 shrink-0 justify-start px-3 lg:w-full"><Palette /> Site design</TabsTrigger>
               <TabsTrigger value="editorial" className="h-10 shrink-0 justify-start px-3 lg:w-full"><FileText /> Editorial</TabsTrigger>
               <TabsTrigger value="features" className="h-10 shrink-0 justify-start px-3 lg:w-full"><SlidersHorizontal /> Features</TabsTrigger>
               <TabsTrigger value="easter-egg" className="h-10 shrink-0 justify-start px-3 lg:w-full"><Sparkles /> Easter egg</TabsTrigger>
@@ -301,6 +359,56 @@ export function SiteSettingsForm({
         </aside>
 
         <div className="min-w-0">
+        <TabsContent value="design" className="space-y-6">
+          <Card>
+            <CardHeader><CardTitle>Public presentation version</CardTitle><CardDescription>Content, URLs, accounts and analytics stay shared. Administrators control the production rendering system; other approved Studio roles retain signed preview access.</CardDescription></CardHeader>
+            <CardContent className="space-y-4">
+              {environmentDesignOverride ? (
+                <div className="flex gap-3 rounded-lg border border-amber-400/50 bg-amber-400/10 p-4 text-sm" role="status">
+                  <ShieldAlert className="mt-0.5 size-5 shrink-0 text-amber-700 dark:text-amber-300" />
+                  <p><strong>Environment override active: {environmentDesignOverride === "v2" ? "V2" : "Legacy"}.</strong> Ordinary public requests use this renderer regardless of the saved release state until <code>SITE_DESIGN_OVERRIDE</code> is removed. Signed staff preview links can still compare either renderer.</p>
+                </div>
+              ) : null}
+              {([
+                ["legacy", "Legacy", "Keep the original Courier interface in production."],
+                ["v2-preview", "V2 Preview", "Keep Legacy public while staff compare the new editorial system."],
+                ["v2-production", "V2 Production", "Make the new editorial system the production default."],
+              ] as const).map(([value, label, description]) => (
+                <button key={value} type="button" disabled={!canManage} onClick={() => updatePresentation("designMode", value)} className={`flex w-full items-start gap-4 rounded-xl border p-4 text-left transition ${configuration.presentation.designMode === value ? "border-primary bg-primary/8 ring-2 ring-primary/20" : "bg-muted/10 hover:bg-muted/30"}`} aria-pressed={configuration.presentation.designMode === value}>
+                  <span className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-full border ${configuration.presentation.designMode === value ? "border-primary" : "border-muted-foreground/40"}`}>{configuration.presentation.designMode === value ? <span className="size-2.5 rounded-full bg-primary" /> : null}</span>
+                  <span><strong className="block text-sm">{label}</strong><span className="mt-1 block text-xs leading-5 text-muted-foreground">{description}</span></span>
+                </button>
+              ))}
+              <div className="flex flex-wrap gap-2 border-t pt-4">
+                <Button asChild variant="outline"><a href="/api/v1/studio/settings/design-preview?design=v2&returnTo=/" target="_blank" rel="noopener noreferrer"><ExternalLink /> Preview V2</a></Button>
+                <Button asChild variant="outline"><a href="/api/v1/studio/settings/design-preview?design=legacy&returnTo=/" target="_blank" rel="noopener noreferrer"><ExternalLink /> Preview Legacy</a></Button>
+                <Button asChild variant="ghost"><a href="/api/v1/studio/settings/design-preview?design=production&returnTo=/" target="_blank" rel="noopener noreferrer">Use production default</a></Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>V2 homepage composition</CardTitle><CardDescription>Administrators select approved modules and their order. The renderer owns typography, spacing and responsive recomposition.</CardDescription></CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex gap-3 rounded-lg border border-amber-400/50 bg-amber-400/10 p-4 text-xs leading-5">
+                <ShieldAlert className="mt-0.5 size-4 shrink-0 text-amber-700 dark:text-amber-300" />
+                <p><strong>No one-to-one Legacy composition exists.</strong> Legacy keeps its fixed homepage hierarchy while sharing the same published stories and Live Desk state. Reordering or suppressing these modules affects V2 only; compare both signed previews before release.</p>
+              </div>
+              {configuration.presentation.v2.homepageModules.map((module, index) => {
+                const copy = v2ModuleLabels[module];
+                return <div key={module} className="flex items-center gap-3 rounded-xl border bg-muted/10 p-3"><span className="grid size-8 shrink-0 place-items-center rounded-full bg-secondary text-xs font-black tabular-nums">{String(index + 1).padStart(2, "0")}</span><span className="min-w-0 flex-1"><strong className="block text-sm">{copy.label}</strong><span className="block text-xs text-muted-foreground">{copy.description}</span></span><div className="flex gap-1"><Button type="button" variant="ghost" size="icon" disabled={!canManage || index === 0} onClick={() => moveV2Module(index, -1)} aria-label={`Move ${copy.label} earlier`}><ChevronUp /></Button><Button type="button" variant="ghost" size="icon" disabled={!canManage || index === configuration.presentation.v2.homepageModules.length - 1} onClick={() => moveV2Module(index, 1)} aria-label={`Move ${copy.label} later`}><ChevronDown /></Button><Button type="button" variant="ghost" size="icon" disabled={!canManage || configuration.presentation.v2.homepageModules.length === 1} onClick={() => updateV2Presentation("homepageModules", configuration.presentation.v2.homepageModules.filter((item) => item !== module))} aria-label={`Disable ${copy.label}`}><Trash2 /></Button></div></div>;
+              })}
+              {Object.entries(v2ModuleLabels).filter(([module]) => !configuration.presentation.v2.homepageModules.includes(module as V2HomepageModuleKey)).map(([module, copy]) => <Button key={module} type="button" variant="outline" disabled={!canManage} onClick={() => updateV2Presentation("homepageModules", [...configuration.presentation.v2.homepageModules, module as V2HomepageModuleKey])}><Plus /> Add {copy.label}</Button>)}
+            </CardContent>
+          </Card>
+
+          <Card><CardHeader><CardTitle>V2 behavior</CardTitle><CardDescription>Quiet interface features that remain subordinate to the reporting.</CardDescription></CardHeader><CardContent className="space-y-3">
+            <Toggle label="Article trust panel" description="Show structured publication, update, source and correction context." checked={configuration.presentation.v2.showArticleTrustPanel} onCheckedChange={(value) => updateV2Presentation("showArticleTrustPanel", value)} disabled={!canManage} />
+            <Toggle label="Reading progress" description="Show a restrained two-pixel progress line only after reading begins." checked={configuration.presentation.v2.showReadingProgress} onCheckedChange={(value) => updateV2Presentation("showReadingProgress", value)} disabled={!canManage} />
+            <Toggle label="Translucent header material" description="Use the restrained blur treatment for the global interface layer." checked={configuration.presentation.v2.useTranslucentHeader} onCheckedChange={(value) => updateV2Presentation("useTranslucentHeader", value)} disabled={!canManage} />
+          </CardContent></Card>
+        </TabsContent>
+
         <TabsContent value="publication" className="space-y-6">
           <Card><CardHeader><CardTitle>Brand and coverage</CardTitle><CardDescription>These values feed the public masthead, footer, metadata, feeds and public configuration API.</CardDescription></CardHeader><CardContent className="grid gap-5 sm:grid-cols-2">
             <TextField label="Publication name" value={configuration.publication.name} onChange={(value) => updatePublication("name", value)} disabled={!canManage} />
@@ -356,7 +464,7 @@ export function SiteSettingsForm({
         </TabsContent>
 
         <TabsContent value="features">
-          <Card><CardHeader><CardTitle>Reader and commercial features</CardTitle><CardDescription>These flags are published through the shared configuration API so web, mobile and television clients can converge on the same availability.</CardDescription></CardHeader><CardContent className="space-y-5">
+          <div className="space-y-6"><Card><CardHeader><CardTitle>Reader and commercial features</CardTitle><CardDescription>These flags are published through the shared configuration API so web, mobile and television clients can converge on the same availability.</CardDescription></CardHeader><CardContent className="space-y-5">
             <Toggle label="Pseudonymous bylines" description="Allows eligible Studio authors to choose an approved saved pseudonym for a story while preserving internal accountability." checked={configuration.features.pseudonyms} disabled={!canManage} onCheckedChange={(value) => updateFeature("pseudonyms", value)} />
             <Toggle label="Secure distribution" description="Makes the authorized pre-publication distribution workspace available to supported clients." checked={configuration.features.distribution} disabled={!canManage} onCheckedChange={(value) => updateFeature("distribution", value)} />
             <Toggle label="Press & Media request portal" description="Enables public AI-assisted intake and policy evaluation on the dedicated Press hostname. Studio review and historical audit records remain available when disabled." checked={configuration.features.pressPortal} disabled={!canManage} onCheckedChange={(value) => updateFeature("pressPortal", value)} />
@@ -369,6 +477,14 @@ export function SiteSettingsForm({
             <Toggle label="Membership" description="Reserved membership surfaces for a future provider." checked={configuration.features.membership} disabled={!canManage} onCheckedChange={(value) => updateFeature("membership", value)} />
             <Toggle label="Donations" description="Reserved reader-support surfaces for a future provider." checked={configuration.features.donations} disabled={!canManage} onCheckedChange={(value) => updateFeature("donations", value)} />
           </CardContent></Card>
+          <Card><CardHeader><CardTitle className="flex items-center gap-2"><Smartphone className="size-5" /> Native reader-app handoff</CardTitle><CardDescription>Controls the non-blocking mobile-web panel that can open the current page in the reader app. Store links remain blank until real listings exist.</CardDescription></CardHeader><CardContent className="space-y-5">
+            <Toggle label="Offer the native app on mobile web" description="Shows iOS and Android readers a bottom panel after privacy choices are settled. Continue on site always remains available." checked={configuration.nativeApps.handoffPromptEnabled} disabled={!canManage} onCheckedChange={(value) => updateNativeApps("handoffPromptEnabled", value)} />
+            <div className="grid gap-4 lg:grid-cols-2">
+              <TextField label="Apple App Store URL" value={configuration.nativeApps.iosStoreUrl} onChange={(value) => updateNativeApps("iosStoreUrl", value)} disabled={!canManage} placeholder="Leave blank until the listing is live" />
+              <TextField label="Google Play URL" value={configuration.nativeApps.androidStoreUrl} onChange={(value) => updateNativeApps("androidStoreUrl", value)} disabled={!canManage} placeholder="Leave blank until the listing is live" />
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-4 text-xs leading-5 text-muted-foreground">Browsers do not expose a universal installed-app lookup. Android may report a verified Play installation; iOS confirms only after the reader chooses Open app and Safari moves to the installed app. The panel never claims installation before the platform proves it.</div>
+          </CardContent></Card></div>
         </TabsContent>
 
         <TabsContent value="easter-egg" className="space-y-6">

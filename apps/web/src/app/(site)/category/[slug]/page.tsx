@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import { AdSlot } from "@/components/ad-slot";
 import { JsonLd } from "@/components/json-ld";
 import { StoryCard } from "@/components/story-card";
+import { StoryCardV2 } from "@/components/site-v2/story-card-v2";
 import { getCategoryLabel, getPublishedStories } from "@/lib/content";
 import { categoryPageJsonLd } from "@/lib/seo";
 import { getSiteConfiguration } from "@/lib/site-settings";
+import { getResolvedSiteDesign } from "@/lib/site-design";
 
 const validCategories = [
   "middlesex",
@@ -50,6 +52,18 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     getSiteConfiguration(),
   ]);
   const label = getCategoryLabel(slug);
+  const design = await getResolvedSiteDesign(configuration);
+
+  if (design === "v2") {
+    const [lead, ...rest] = stories;
+    return (
+      <div className="v2-section-page v2-page-width">
+        <JsonLd data={categoryPageJsonLd(slug, label, categoryDescriptions[slug], configuration.publication)} />
+        <header className="v2-section-page__header"><p>{configuration.publication.shortName} desk</p><h1>{label}</h1><span>{categoryDescriptions[slug]}</span></header>
+        {lead ? <><StoryCardV2 story={lead} variant="standard" /><div className="v2-section-page__grid">{rest.slice(0, 12).map((story, index) => <StoryCardV2 key={story.id} story={story} variant={index > 5 ? "compact" : "standard"} />)}</div><div className="v2-section-ad"><AdSlot placement="sectionInline" /></div></> : <p className="v2-empty-message">No stories are published in this section yet.</p>}
+      </div>
+    );
+  }
 
   return (
     <div className="container-news py-10">

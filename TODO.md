@@ -10,6 +10,54 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > store/certification captures remain part of the existing mobile, TV and Roku
 > validation work below rather than being simulated with private or fake data.
 
+## Public Site V2 — production validation and deeper editorial tooling remaining
+
+> The independent Legacy/V2 visual systems, three-state administrator release
+> control, signed custom-domain and same-host Vercel/local staff previews,
+> guarded production promotion, ordered V2 homepage modules with an explicit
+> Legacy-equivalence warning, V2 tokens,
+> responsive header/footer, homepage, article, section, Latest and first-class
+> Search presentation (header expansion, protected two-character grouped
+> autocomplete and keyboard combobox), trust panel, article-scoped reading
+> progress, dark mode, reduced motion, print
+> styles, tests and operating guide are implemented. Legacy remains the safe
+> visual default for older stored configuration while shared capabilities such
+> as Live Desk remain available to both renderers. See
+> [Public Site V2](docs/design/PUBLIC_SITE_V2.md).
+
+- [ ] Complete the production preview matrix in the V2 runbook with real
+  journalism and separate administrator/editor accounts, then record explicit
+  editorial, accessibility and launch approval before selecting **V2
+  Production**. Confirm that switching back to **Legacy** is immediate and does
+  not change stories, URLs, analytics identity or canonical metadata.
+- [ ] Replace the transitional V2 token/shell treatment with dedicated V2
+  renderers for the remaining public routes. This includes Live, author and
+  staff profiles, Watch, Weather, newsletters, tips, press/media, legal,
+  20 Under 20, developer/account surfaces and their empty, loading, error,
+  offline and not-found states. Preserve the existing URLs, data contracts and
+  working Legacy behavior; do not describe these routes as fully redesigned
+  until each route has been reviewed at phone, tablet and desktop sizes.
+- [ ] Add Search content-type facets only after the corresponding structured
+  analysis, video and photo metadata exists. Keep the current first-class
+  grouped autocomplete and full-results URL intact; do not infer editorial
+  classifications from labels or presentation alone.
+- [ ] Add the remaining structured CMS body blocks from the V2 specification:
+  lead and inline image captions/credits kept distinct from accessibility alt
+  text, art-directed galleries and crop/focal-point metadata, native
+  video/audio, chart plus accessible-table equivalents, source
+  documents/citations, timelines, interactives, maps and story clusters. Do
+  not encode these as unvalidated arbitrary HTML or one giant rich-text blob.
+- [ ] Build the account-backed Following and cross-device saved/history synchronization,
+  contextual notification follow prompts, text-size presets and approved
+  article audio pipeline. The validated local `/saved` library remains the
+  private, same-browser progressive fallback; do not describe it as account
+  synchronization.
+- [ ] Add Studio composition controls for future approved V2 modules (split
+  feature, three-up, four-up, visual feature, timeline, explainer, data
+  feature, audio, most read and emergency utility)
+  only after their real content contracts, Legacy mappings and empty/error
+  behavior are defined. Never invent readership or market data to fill them.
+
 ## Mandatory first implementation — remaining analytics v2 production validation
 
 > The ground-up code/documentation rebuild, production migration, protected
@@ -73,6 +121,33 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   web, iOS, Android, employee, Apple TV, Android TV, Roku, NJC+, CDN, developer
   API, and Studio NJ Dev clients, including enabled, disabled, stale, and
   unavailable states on real devices where applicable.
+
+## Courier Live Desk — production validation remaining
+
+> The first-party continuous-reporting engine is implemented at code level:
+> private newsroom desks, explicit lifecycle transitions, draft/published/
+> retracted timeline updates, correction revisions, attribution, pinned
+> essentials, optional verified media and streams, public live-blog structured
+> data, visibility-aware refresh, homepage/header promotion, Studio controls,
+> role enforcement, API audit events, portable backup coverage, migration and
+> unit tests are complete. See
+> [Courier Live Desk](docs/editorial/LIVE_DESK.md).
+
+- [ ] Apply migration `0040_low_dragon_lord.sql` in production and rehearse the
+  complete workflow with separate reporter and publisher accounts: private
+  draft, scheduled desk, start, draft update, publish, correction, pin/unpin,
+  pause/resume, retraction, end and archive. Confirm no private or retracted
+  update appears in a public/API response and every mutation is auditable.
+- [ ] Run the active desk on production Chrome, Safari, Firefox, iOS Safari and
+  Android Chrome/PWA under foreground, background, offline, reconnect and slow
+  network conditions. Verify deduplication, unseen-update announcements,
+  manual refresh, keyboard flow, screen-reader live regions, reduced motion,
+  dark/light themes and that polling stops after completion.
+- [ ] Validate `LiveBlogPosting` in Google's rich-results tooling with a real
+  approved desk; verify the homepage and header priority disappear immediately
+  when coverage ends, the existing `/api/v1/live` legacy channel contract stays
+  unchanged on mobile/TV/Roku, and an encrypted portable backup restores both
+  live timeline tables and revision history.
 
 ## NJC+ The Courier Cut and playback composition — production validation remaining
 
@@ -328,6 +403,32 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   at representative mobile breakpoints. Resolve any tap-target, focus-order,
   text-scaling, layout-shift or contrast regression before treating the PWA as
   store-quality, and record the accepted device/browser matrix in this section.
+
+## Native reader-app handoff — signing and real-device validation remaining
+
+> The production website now exposes separate reader and employee association
+> records without overwriting either application, limits verified reader links
+> to implemented mobile routes, and offers a consent-aware, non-blocking iOS/
+> Android handoff panel. It remains disabled by default until the signed app
+> associations are deployed. The browser never claims that an app is installed
+> before a user gesture proves the app can open; missing store listings fail
+> back to ordinary website reading.
+
+- [ ] Configure the signed release identities in Vercel with
+  `READER_IOS_APP_ID`, `READER_ANDROID_PACKAGE` and
+  `READER_ANDROID_SHA256_CERT_FINGERPRINTS`, deploy, and verify both
+  `/.well-known` documents from their canonical HTTPS URLs. Preserve the
+  employee association entries in the same responses.
+- [ ] On physical iOS and Android devices, test the story, Latest, Weather and
+  Watch routes with the reader app installed and absent. Confirm installed
+  builds resume the intended route, uninstalled devices never produce a false
+  success claim, blank store destinations keep readers on-site, configured
+  official store destinations open only their allowlisted store host, and
+  **Continue on site** dismisses the prompt for the current browser session.
+- [ ] Link the mobile project to the owned Expo account, add its real EAS
+  project ID, configure Apple/Android signing and notification credentials,
+  create the signed IPA/AAB, and repeat the association checks against those
+  exact release certificates before distribution.
 
 ## Roku — highest platform priority after the mandatory implementations
 

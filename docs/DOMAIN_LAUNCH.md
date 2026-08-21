@@ -68,7 +68,15 @@ No native rebuild is required merely to attach the web domain. Before the mobile
 - `EXPO_PUBLIC_EMPLOYEE_API_URL`
 - `EXPO_PUBLIC_EMPLOYEE_LINK_HOST` (hostname only)
 
-For employee Universal Links/App Links, also configure `EMPLOYEE_IOS_APP_ID` and `EMPLOYEE_ANDROID_SHA256_CERT_FINGERPRINTS`, then verify both `/.well-known` responses on physical devices. Do not invent App Store, Play Store, signing or association values.
+For the public reader app, configure `READER_IOS_APP_ID`,
+`READER_ANDROID_PACKAGE` and
+`READER_ANDROID_SHA256_CERT_FINGERPRINTS`. For the employee app, configure
+`EMPLOYEE_IOS_APP_ID`, `EMPLOYEE_ANDROID_PACKAGE` and
+`EMPLOYEE_ANDROID_SHA256_CERT_FINGERPRINTS`. The shared `/.well-known`
+responses retain both identities while limiting the reader app to routes that
+its current Expo Router build actually supports. Verify every association and
+fallback on signed physical-device builds. Do not invent App Store, Play Store,
+signing or association values.
 
 ## Rollback
 

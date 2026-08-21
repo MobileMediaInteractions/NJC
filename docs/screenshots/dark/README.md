@@ -19,6 +19,23 @@ workspaces are indexed in [`packages/README.md`](../../../packages/README.md).
 
 ![Legal center](web-legal.jpg)
 
+## Public Site V2 verification
+
+These four captures were recorded from the checked-out V2 renderer on August
+21, 2026 with `SITE_DESIGN_OVERRIDE=v2`. Desktop captures use a 1440×900
+viewport and the phone capture uses 390×844. The browser was in its
+system-dark appearance. The local editorial database contained no published
+stories, so the homepage, search and Saved Stories images preserve the real
+empty/no-match states instead of introducing sample reporting.
+
+![V2 desktop homepage with the verified empty newsroom state](web-v2-home-desktop.png)
+
+![V2 search dialog for the non-sensitive query Middlesex](web-v2-search-dialog.png)
+
+![V2 Saved Stories empty state](web-v2-saved-empty.png)
+
+![V2 mobile homepage](web-v2-home-mobile.png)
+
 ## Services and protected boundaries
 
 ![Press portal](press-portal.jpg)

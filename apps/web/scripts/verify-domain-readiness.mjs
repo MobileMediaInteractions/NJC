@@ -85,21 +85,39 @@ const checks = [
     },
   },
   {
-    name: "employee iOS association",
+    name: "iOS application associations",
     path: "/.well-known/apple-app-site-association",
     status: 200,
     validate(response, body) {
       if (!response.headers.get("content-type")?.includes("application/json")) return false;
-      return Array.isArray(JSON.parse(body)?.applinks?.details);
+      const details = JSON.parse(body)?.applinks?.details;
+      if (!Array.isArray(details)) return false;
+      const configuredAppIds = [
+        process.env.READER_IOS_APP_ID,
+        process.env.EMPLOYEE_IOS_APP_ID,
+      ].filter(Boolean);
+      return configuredAppIds.every((appID) => details.some((item) => item?.appID === appID));
     },
   },
   {
-    name: "employee Android association",
+    name: "Android application associations",
     path: "/.well-known/assetlinks.json",
     status: 200,
     validate(response, body) {
       if (!response.headers.get("content-type")?.includes("application/json")) return false;
-      return Array.isArray(JSON.parse(body));
+      const entries = JSON.parse(body);
+      if (!Array.isArray(entries)) return false;
+      const configuredPackages = [
+        process.env.READER_ANDROID_PACKAGE && process.env.READER_ANDROID_SHA256_CERT_FINGERPRINTS
+          ? process.env.READER_ANDROID_PACKAGE
+          : null,
+        process.env.EMPLOYEE_ANDROID_PACKAGE && process.env.EMPLOYEE_ANDROID_SHA256_CERT_FINGERPRINTS
+          ? process.env.EMPLOYEE_ANDROID_PACKAGE
+          : null,
+      ].filter(Boolean);
+      return configuredPackages.every((packageName) =>
+        entries.some((item) => item?.target?.package_name === packageName),
+      );
     },
   },
 ];

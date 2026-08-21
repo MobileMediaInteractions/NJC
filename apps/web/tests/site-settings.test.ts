@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  crossesV2ProductionBoundary,
   defaultSiteConfiguration,
   formatDatelines,
   include20Under20Navigation,
@@ -115,6 +116,58 @@ test("older stored configuration keeps external analytics off", () => {
     measurementId: "",
   });
   assert.equal(isGoogleAnalyticsLive(parsed), false);
+});
+
+test("older stored configuration keeps the unreleased native app handoff off", () => {
+  const configuration = configurationCopy() as Partial<ReturnType<typeof configurationCopy>>;
+  delete configuration.nativeApps;
+  const parsed = siteConfigurationSchema.parse(configuration);
+  assert.deepEqual(parsed.nativeApps, {
+    handoffPromptEnabled: false,
+    iosStoreUrl: "",
+    androidStoreUrl: "",
+  });
+});
+
+test("older stored configuration stays on Legacy until V2 is explicitly released", () => {
+  const configuration = configurationCopy() as Partial<ReturnType<typeof configurationCopy>>;
+  delete configuration.presentation;
+  const parsed = siteConfigurationSchema.parse(configuration);
+  assert.equal(parsed.presentation.designMode, "legacy");
+  assert.deepEqual(parsed.presentation.v2.homepageModules, [
+    "live",
+    "lead",
+    "secondary",
+    "latest",
+    "sections",
+    "newsletter",
+  ]);
+});
+
+test("V2 homepage composition rejects duplicate modules", () => {
+  const configuration = configurationCopy();
+  configuration.presentation.v2.homepageModules = ["lead", "lead"];
+  assert.equal(siteConfigurationSchema.safeParse(configuration).success, false);
+});
+
+test("only entering or leaving V2 Production crosses the guarded release boundary", () => {
+  assert.equal(crossesV2ProductionBoundary("legacy", "v2-preview"), false);
+  assert.equal(crossesV2ProductionBoundary("v2-preview", "legacy"), false);
+  assert.equal(crossesV2ProductionBoundary("legacy", "v2-production"), true);
+  assert.equal(crossesV2ProductionBoundary("v2-preview", "v2-production"), true);
+  assert.equal(crossesV2ProductionBoundary("v2-production", "legacy"), true);
+  assert.equal(crossesV2ProductionBoundary("v2-production", "v2-preview"), true);
+  assert.equal(crossesV2ProductionBoundary("v2-production", "v2-production"), false);
+});
+
+test("native app store destinations are restricted to official stores", () => {
+  const configuration = configurationCopy();
+  configuration.nativeApps.iosStoreUrl = "https://apps.apple.com/us/app/example/id123";
+  configuration.nativeApps.androidStoreUrl = "https://play.google.com/store/apps/details?id=com.example";
+  assert.equal(siteConfigurationSchema.safeParse(configuration).success, true);
+
+  configuration.nativeApps.iosStoreUrl = "https://example.com/fake-ipa";
+  assert.equal(siteConfigurationSchema.safeParse(configuration).success, false);
 });
 
 test("older stored configuration receives the enabled Night Courier easter egg", () => {

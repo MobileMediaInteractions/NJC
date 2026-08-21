@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, ilike, isNull, or } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, isNull, or, sql } from "drizzle-orm";
 import { getDb, hasDatabase } from "@harborline/backend/db";
 import { stories } from "@harborline/backend/schema";
 import type { Story } from "@/lib/types";
@@ -6,6 +6,7 @@ import {
   legacyPublicBylineSnapshot,
   publicStoryAuthor,
 } from "@/lib/pseudonyms";
+import { publicSearchLikePattern } from "@/lib/public-search";
 import { publishDueStories } from "@/lib/scheduled-publication";
 
 const DEFAULT_STORY_IMAGE = "/assets/editorial/v1/garden-state-engraving.png";
@@ -108,6 +109,7 @@ export async function getPublishedStoryIndex(options?: {
 
 export async function getPublishedStories(options?: {
   category?: string;
+  excludeNoIndex?: boolean;
   limit?: number;
   query?: string;
 }): Promise<Story[]> {
@@ -120,15 +122,23 @@ export async function getPublishedStories(options?: {
   try {
     await publishDueStories();
     const conditions = [eq(stories.status, "published")];
+    if (options?.excludeNoIndex) {
+      conditions.push(eq(stories.noIndex, false));
+    }
     if (options?.category) {
       conditions.push(eq(stories.categorySlug, options.category));
     }
     if (options?.query) {
+      const pattern = publicSearchLikePattern(options.query);
       conditions.push(
         or(
-          ilike(stories.headline, `%${options.query}%`),
-          ilike(stories.dek, `%${options.query}%`),
-          ilike(stories.location, `%${options.query}%`),
+          ilike(stories.headline, pattern),
+          ilike(stories.dek, pattern),
+          ilike(stories.location, pattern),
+          ilike(stories.categoryLabel, pattern),
+          ilike(sql`${stories.tags}::text`, pattern),
+          ilike(sql`${stories.publicBylineSnapshot}::text`, pattern),
+          ilike(sql`${stories.publicBylinesSnapshot}::text`, pattern),
         )!,
       );
     }

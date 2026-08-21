@@ -1,5 +1,6 @@
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { SiteFooterV2 } from "@/components/site-v2/site-footer-v2";
 import { GoogleAdSenseScript } from "@/components/google-ads";
 import { GoogleAnalytics } from "@/components/google-analytics";
 import { AdBlockNotice } from "@/components/ad-block-notice";
@@ -15,6 +16,7 @@ import { isNjcPlusPublicEnabled } from "@/lib/feature-flags";
 import { normalizeStudioHref } from "@/lib/site-account";
 import { hasPublicStaffProfiles } from "@/lib/staff-profiles";
 import { PublicPwaShell } from "@/components/pwa/public-pwa-shell";
+import { getResolvedSiteDesign } from "@/lib/site-design";
 
 export const dynamic = "force-dynamic";
 
@@ -29,11 +31,13 @@ export default async function PublicSiteLayout({ children }: { children: React.R
     hasAdFreeNjcPlusAccess(),
   ]);
   const advertising = configuration.advertising;
+  const design = await getResolvedSiteDesign(configuration);
   const googleAnalytics = configuration.measurement.googleAnalytics;
   const hasConfiguredSurface = advertising.autoAds || Object.values(advertising.placements).some((placement) => placement.enabled);
   const advertisingLive = !adFree && isGoogleAdsLive(configuration) && hasConfiguredSurface;
   return (
-    <PublicPwaShell>
+    <PublicPwaShell nativeApps={configuration.nativeApps}>
+      <div className={`public-design-root site-${design}`} data-site-design={design}>
       <GoogleAnalytics
         enabled={isGoogleAnalyticsLive(configuration)}
         measurementId={googleAnalytics.measurementId}
@@ -55,14 +59,21 @@ export default async function PublicSiteLayout({ children }: { children: React.R
         plusEnabled={plusEnabled}
         clerkEnabled={Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)}
         studioHref={normalizeStudioHref(process.env.NEXT_PUBLIC_STUDIO_URL)}
+        design={design}
+        v2TranslucentHeader={configuration.presentation.v2.useTranslucentHeader}
       />
       <main id="main-content" className="flex-1">{children}</main>
-      <SiteFooter
-        publication={configuration.publication}
-        features={configuration.features}
-        staffPageEnabled={staffPageEnabled}
-        easterEggEnabled={configuration.easterEgg.enabled}
-      />
+      {design === "v2" ? (
+        <SiteFooterV2 publication={configuration.publication} features={configuration.features} staffPageEnabled={staffPageEnabled} />
+      ) : (
+        <SiteFooter
+          publication={configuration.publication}
+          features={configuration.features}
+          staffPageEnabled={staffPageEnabled}
+          easterEggEnabled={configuration.easterEgg.enabled}
+        />
+      )}
+      </div>
     </PublicPwaShell>
   );
 }

@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { SectionHeading } from "@/components/section-heading";
 import { StoryCard } from "@/components/story-card";
+import { StoryCardV2 } from "@/components/site-v2/story-card-v2";
 import { getPublishedStories } from "@/lib/content";
+import { getSiteConfiguration } from "@/lib/site-settings";
+import { getResolvedSiteDesign } from "@/lib/site-design";
 
 export const metadata: Metadata = {
   title: "Latest Middlesex County and New Jersey News",
@@ -16,7 +19,11 @@ export const metadata: Metadata = {
 };
 
 export default async function LatestPage() {
-  const stories = await getPublishedStories({ limit: 40 });
+  const [stories, configuration] = await Promise.all([getPublishedStories({ limit: 40 }), getSiteConfiguration()]);
+  const design = await getResolvedSiteDesign(configuration);
+  if (design === "v2") {
+    return <div className="v2-latest-page v2-page-width"><header><p>Updated throughout the day</p><h1>Latest</h1><span>The newest verified reporting from the Courier newsroom.</span></header><div>{stories.length ? stories.map((story) => <StoryCardV2 key={story.id} story={story} variant="horizontal" />) : <p className="v2-empty-message">No verified stories have been published yet.</p>}</div><aside><p>News tip?</p><h2>Tell the local desk what’s happening.</h2><span>Send photos, video or a confidential note to our editors.</span><a href="/tips">Submit a tip →</a></aside></div>;
+  }
   return (
     <div className="container-news py-10">
       <SectionHeading title="Latest news" kicker="Updated throughout the day" />

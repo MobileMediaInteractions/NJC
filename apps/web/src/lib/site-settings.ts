@@ -124,6 +124,42 @@ export const defaultStudioConfiguration = {
   },
 } as const;
 
+export const publicSiteDesignModes = [
+  "legacy",
+  "v2-preview",
+  "v2-production",
+] as const;
+
+export type PublicSiteDesignMode = (typeof publicSiteDesignModes)[number];
+
+export function crossesV2ProductionBoundary(
+  before: PublicSiteDesignMode,
+  after: PublicSiteDesignMode,
+) {
+  return (before === "v2-production") !== (after === "v2-production");
+}
+
+export const v2HomepageModuleKeys = [
+  "live",
+  "lead",
+  "secondary",
+  "latest",
+  "sections",
+  "newsletter",
+] as const;
+
+export type V2HomepageModuleKey = (typeof v2HomepageModuleKeys)[number];
+
+export const defaultPresentationConfiguration = {
+  designMode: "legacy" as PublicSiteDesignMode,
+  v2: {
+    homepageModules: [...v2HomepageModuleKeys],
+    showArticleTrustPanel: true,
+    showReadingProgress: true,
+    useTranslucentHeader: true,
+  },
+} as const;
+
 const navigationItemSchema = z.object({
   label: z.string().trim().min(1).max(40),
   href: z.string().trim().regex(/^\/[A-Za-z0-9/_-]*$/, "Navigation links must be local paths beginning with /").max(160),
@@ -149,6 +185,18 @@ const googleAnalyticsSchema = z.object({
     });
   }
 });
+
+const optionalStoreUrl = (hostname: string, label: string) =>
+  z.string().trim().refine((value) => {
+    if (!value) return true;
+    try {
+      const url = new URL(value);
+      return url.protocol === "https:" &&
+        (url.hostname === hostname || url.hostname.endsWith(`.${hostname}`));
+    } catch {
+      return false;
+    }
+  }, `Use a complete ${label} HTTPS URL or leave this blank`);
 
 export const siteConfigurationSchema = z.object({
   publication: z.object({
@@ -196,6 +244,33 @@ export const siteConfigurationSchema = z.object({
       measurementId: "",
     },
   }),
+  nativeApps: z.object({
+    handoffPromptEnabled: z.boolean(),
+    iosStoreUrl: optionalStoreUrl("apps.apple.com", "Apple App Store"),
+    androidStoreUrl: optionalStoreUrl("play.google.com", "Google Play"),
+  }).default({
+    handoffPromptEnabled: false,
+    iosStoreUrl: "",
+    androidStoreUrl: "",
+  }),
+  presentation: z.object({
+    designMode: z.enum(publicSiteDesignModes),
+    v2: z.object({
+      homepageModules: z.array(z.enum(v2HomepageModuleKeys))
+        .min(1)
+        .max(v2HomepageModuleKeys.length)
+        .refine((modules) => new Set(modules).size === modules.length, "V2 homepage modules must be unique"),
+      showArticleTrustPanel: z.boolean(),
+      showReadingProgress: z.boolean(),
+      useTranslucentHeader: z.boolean(),
+    }),
+  }).default(() => ({
+    designMode: defaultPresentationConfiguration.designMode,
+    v2: {
+      ...defaultPresentationConfiguration.v2,
+      homepageModules: [...defaultPresentationConfiguration.v2.homepageModules],
+    },
+  })),
   advertising: z.object({
     enabled: z.boolean(),
     provider: z.literal("google-adsense"),
@@ -370,6 +445,18 @@ export const defaultSiteConfiguration: SiteConfiguration = {
     googleAnalytics: {
       enabled: false,
       measurementId: "",
+    },
+  },
+  nativeApps: {
+    handoffPromptEnabled: false,
+    iosStoreUrl: "",
+    androidStoreUrl: "",
+  },
+  presentation: {
+    designMode: defaultPresentationConfiguration.designMode,
+    v2: {
+      ...defaultPresentationConfiguration.v2,
+      homepageModules: [...defaultPresentationConfiguration.v2.homepageModules],
     },
   },
   advertising: {

@@ -2,13 +2,13 @@
   "format": "njc-internal-boundary-register-v2",
   "source": "git tracked and pending repository files",
   "counts": {
-    "trackedFiles": 1304,
-    "routeSurfaces": 269,
-    "databaseTables": 110,
-    "workspaces": 21,
-    "todoMarkerFiles": 4,
-    "testFixtureFiles": 95,
-    "generatedFiles": 2
+    "trackedFiles": 1407,
+    "routeSurfaces": 281,
+    "databaseTables": 112,
+    "workspaces": 22,
+    "todoMarkerFiles": 6,
+    "testFixtureFiles": 104,
+    "generatedFiles": 30
   },
   "workspaces": [
     {
@@ -86,6 +86,12 @@
     {
       "directory": "packages/domain-registry",
       "package": "@njcourier/domain-registry",
+      "classification": "shared-build-time",
+      "deployment": "not-deployed"
+    },
+    {
+      "directory": "packages/media-player",
+      "package": "@harborline/media-player",
       "classification": "shared-build-time",
       "deployment": "not-deployed"
     },
@@ -734,6 +740,24 @@
       "disposition": "retain-and-regression-test"
     },
     {
+      "path": "/api/v1/live/coverage",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/live/coverage/route.ts",
+      "classification": "public-or-account-api",
+      "auth": "endpoint-specific validation, consent, account, or abuse control",
+      "disposition": "retain-and-regression-test"
+    },
+    {
+      "path": "/api/v1/live/coverage/[slug]",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/live/coverage/[slug]/route.ts",
+      "classification": "public-or-account-api",
+      "auth": "endpoint-specific validation, consent, account, or abuse control",
+      "disposition": "retain-and-regression-test"
+    },
+    {
       "path": "/api/v1/mobile/admin/alerts",
       "kind": "route",
       "workspace": "apps/web",
@@ -1076,6 +1100,15 @@
       "disposition": "retain-and-regression-test"
     },
     {
+      "path": "/api/v1/search/suggestions",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/search/suggestions/route.ts",
+      "classification": "public-or-account-api",
+      "auth": "endpoint-specific validation, consent, account, or abuse control",
+      "disposition": "retain-and-regression-test"
+    },
+    {
       "path": "/api/v1/stories",
       "kind": "route",
       "workspace": "apps/web",
@@ -1319,6 +1352,42 @@
       "disposition": "migrate-after-parity"
     },
     {
+      "path": "/api/v1/studio/live",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/live/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/api/v1/studio/live/[id]",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/live/[id]/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/api/v1/studio/live/[id]/updates",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/live/[id]/updates/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/api/v1/studio/live/[id]/updates/[updateId]",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/live/[id]/updates/[updateId]/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
       "path": "/api/v1/studio/media",
       "kind": "route",
       "workspace": "apps/web",
@@ -1535,6 +1604,15 @@
       "disposition": "migrate-after-parity"
     },
     {
+      "path": "/api/v1/studio/settings/design-preview",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/settings/design-preview/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
       "path": "/api/v1/studio/settings/revisions",
       "kind": "route",
       "workspace": "apps/web",
@@ -1724,6 +1802,15 @@
       "disposition": "retain-public"
     },
     {
+      "path": "/dev/media-player",
+      "kind": "page",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/dev/media-player/page.tsx",
+      "classification": "public-page",
+      "auth": "none unless page performs its own account check",
+      "disposition": "retain-public"
+    },
+    {
       "path": "/dev/platform",
       "kind": "page",
       "workspace": "apps/web",
@@ -1863,6 +1950,15 @@
       "kind": "page",
       "workspace": "apps/web",
       "file": "apps/web/src/app/(site)/live/page.tsx",
+      "classification": "public-page",
+      "auth": "none unless page performs its own account check",
+      "disposition": "retain-public"
+    },
+    {
+      "path": "/live/[slug]",
+      "kind": "page",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/(site)/live/[slug]/page.tsx",
       "classification": "public-page",
       "auth": "none unless page performs its own account check",
       "disposition": "retain-public"
@@ -2037,6 +2133,15 @@
       "classification": "identity-entry",
       "auth": "Clerk or validated app handoff",
       "disposition": "retain-public-entry"
+    },
+    {
+      "path": "/saved",
+      "kind": "page",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/(site)/saved/page.tsx",
+      "classification": "public-page",
+      "auth": "none unless page performs its own account check",
+      "disposition": "retain-public"
     },
     {
       "path": "/search",
@@ -2232,6 +2337,15 @@
       "kind": "page",
       "workspace": "apps/web",
       "file": "apps/web/src/app/studio/links/page.tsx",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/studio/live",
+      "kind": "page",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/studio/live/page.tsx",
       "classification": "internal",
       "auth": "Clerk staff identity plus role/action policy",
       "disposition": "migrate-after-parity"
@@ -2866,6 +2980,20 @@
     {
       "export": "linkInBioEntries",
       "table": "link_in_bio_entries",
+      "file": "packages/backend/src/db/schema.ts",
+      "classification": "operational-private",
+      "disposition": "shared-authorized-data"
+    },
+    {
+      "export": "liveEventUpdateRevisions",
+      "table": "live_event_update_revisions",
+      "file": "packages/backend/src/db/schema.ts",
+      "classification": "operational-private",
+      "disposition": "shared-authorized-data"
+    },
+    {
+      "export": "liveEventUpdates",
+      "table": "live_event_updates",
       "file": "packages/backend/src/db/schema.ts",
       "classification": "operational-private",
       "disposition": "shared-authorized-data"
@@ -4164,6 +4292,15 @@
     },
     {
       "file": "apps/mobile/assets/images/splash-icon.png",
+      "owner": "reader-platforms",
+      "classification": "public-or-account-client",
+      "disposition": "retain-outside-internal-host",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/mobile/eas.json",
       "owner": "reader-platforms",
       "classification": "public-or-account-client",
       "disposition": "retain-outside-internal-host",
@@ -5531,6 +5668,24 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/drizzle/0039_bitter_cannonball.sql",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/drizzle/0040_low_dragon_lord.sql",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/drizzle/meta/_journal.json",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -5891,6 +6046,24 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/drizzle/meta/0039_snapshot.json",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/drizzle/meta/0040_snapshot.json",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/eslint.config.mjs",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -5931,6 +6104,15 @@
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/public/demo/harborline-player-demo.mp4",
+      "owner": "publication-web",
+      "classification": "public-static",
+      "disposition": "retain-public",
       "testFixture": false,
       "generated": false,
       "hasTodoMarker": false
@@ -6197,6 +6379,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/(site)/live/[slug]/page.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/(site)/live/page.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -6243,6 +6434,15 @@
     },
     {
       "file": "apps/web/src/app/(site)/profile/[[...profile]]/page.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/(site)/saved/page.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -6800,6 +7000,24 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/api/v1/live/coverage/[slug]/route.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/live/coverage/route.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/api/v1/live/route.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -7151,6 +7369,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/api/v1/search/suggestions/route.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/api/v1/stories/[slug]/route.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -7394,6 +7621,42 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/api/v1/studio/live/[id]/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/studio/live/[id]/updates/[updateId]/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/studio/live/[id]/updates/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/studio/live/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/api/v1/studio/media/[id]/content/route.ts",
       "owner": "newsroom-operations",
       "classification": "internal-browser-workflow",
@@ -7601,6 +7864,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/api/v1/studio/settings/design-preview/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/api/v1/studio/settings/revisions/[revision]/rollback/route.ts",
       "owner": "newsroom-operations",
       "classification": "internal-browser-workflow",
@@ -7755,6 +8027,15 @@
     },
     {
       "file": "apps/web/src/app/courier-cut/page.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/dev/media-player/page.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -8123,6 +8404,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/site-v2.css",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/sitemap.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -8259,6 +8549,15 @@
     },
     {
       "file": "apps/web/src/app/studio/links/page.tsx",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/studio/live/page.tsx",
       "owner": "newsroom-operations",
       "classification": "internal-browser-workflow",
       "disposition": "migrate-after-parity",
@@ -8645,6 +8944,24 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/components/dev/media-player-showcase.module.css",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/dev/media-player-showcase.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/components/developers/api-key-manager.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -8745,6 +9062,24 @@
     },
     {
       "file": "apps/web/src/components/json-ld.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/live-coverage-card.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/live-coverage-timeline.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -8861,7 +9196,25 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/components/pwa/native-app-handoff.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/components/pwa/public-pwa-shell.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/saved-stories-library.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -8915,6 +9268,78 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/components/site-v2/article-text-size-control.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/site-v2/home-v2.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/site-v2/reading-progress.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/site-v2/search-overlay-v2.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/site-v2/site-footer-v2.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/site-v2/site-header-v2.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/site-v2/story-card-v2.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/site-v2/story-v2.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/components/story-actions.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -8925,6 +9350,15 @@
     },
     {
       "file": "apps/web/src/components/story-card.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/story-public-note.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -9051,6 +9485,15 @@
     },
     {
       "file": "apps/web/src/components/studio/link-in-bio-manager.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/studio/live-desk-manager.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -10022,6 +10465,24 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/lib/live-coverage-client.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/lib/live-coverage.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/lib/live.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -10041,6 +10502,24 @@
     },
     {
       "file": "apps/web/src/lib/media-upload.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/lib/mobile-associations.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/lib/native-app-handoff.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -10346,7 +10825,25 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/lib/public-search.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/lib/reader-api-access.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/lib/reader-api-compatibility.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -10365,6 +10862,15 @@
     },
     {
       "file": "apps/web/src/lib/release-channel.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/lib/saved-stories.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -10392,6 +10898,15 @@
     },
     {
       "file": "apps/web/src/lib/site-account.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/lib/site-design.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -10491,6 +11006,15 @@
     },
     {
       "file": "apps/web/src/lib/story-lead-media.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/lib/story-notes.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -10904,7 +11428,25 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/tests/live-coverage.test.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": true,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/tests/media-upload.test.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": true,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/tests/mobile-associations.test.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -11039,6 +11581,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/tests/public-search.test.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": true,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/tests/push-service-worker.test.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -11066,6 +11617,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/tests/reader-api-compatibility.test.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": true,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/tests/redis.test.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -11084,7 +11644,25 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/tests/saved-stories.test.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": true,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/tests/seo.test.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": true,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/tests/site-design.test.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -11372,6 +11950,24 @@
       "hasTodoMarker": false
     },
     {
+      "file": "docs/design/PUBLIC_SITE_V2_CONFORMANCE.md",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": true
+    },
+    {
+      "file": "docs/design/PUBLIC_SITE_V2.md",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": true
+    },
+    {
       "file": "docs/DISTRIBUTION.md",
       "owner": "project-operations",
       "classification": "documentation",
@@ -11400,6 +11996,15 @@
     },
     {
       "file": "docs/editorial/APPROVAL_AND_SCHEDULING.md",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/editorial/LIVE_DESK.md",
       "owner": "project-operations",
       "classification": "documentation",
       "disposition": "retain-no-secrets",
@@ -11508,6 +12113,15 @@
     },
     {
       "file": "docs/operations/DOMAIN_CONTROL.md",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/operations/READER_API_COMPATIBILITY.md",
       "owner": "project-operations",
       "classification": "documentation",
       "disposition": "retain-no-secrets",
@@ -11634,6 +12248,24 @@
     },
     {
       "file": "docs/screenshots/dark/link-in-bio.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/media-player-sdk-timeline.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/media-player-sdk-viewer.jpg",
       "owner": "project-operations",
       "classification": "documentation",
       "disposition": "retain-no-secrets",
@@ -12030,6 +12662,42 @@
     },
     {
       "file": "docs/screenshots/dark/web-tips.jpg",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-v2-home-desktop.png",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-v2-home-mobile.png",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-v2-saved-empty.png",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/screenshots/dark/web-v2-search-dialog.png",
       "owner": "project-operations",
       "classification": "documentation",
       "disposition": "retain-no-secrets",
@@ -12489,6 +13157,393 @@
     },
     {
       "file": "packages/domain-registry/src/index.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/adapters.d.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/adapters.d.ts.map",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/adapters.js",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/adapters.js.map",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/index.d.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/index.d.ts.map",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/index.js",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/index.js.map",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/media-player.d.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/media-player.d.ts.map",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/media-player.js",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/media-player.js.map",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/njc-server.d.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/njc-server.d.ts.map",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/njc-server.js",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/njc-server.js.map",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/timeline-editor.d.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/timeline-editor.d.ts.map",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/timeline-editor.js",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/timeline-editor.js.map",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/timeline.d.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/timeline.d.ts.map",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/timeline.js",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/timeline.js.map",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/types.d.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/types.d.ts.map",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/types.js",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/dist/types.js.map",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": true,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/package.json",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/README.md",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/src/adapters.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/src/index.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/src/media-player.tsx",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/src/njc-server.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/src/styles.css",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/src/timeline-editor.tsx",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/src/timeline.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/src/types.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/tests/adapters.test.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": true,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/tests/customization.test.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": true,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/tests/timeline.test.ts",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": true,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/tsconfig.build.json",
+      "owner": "repository-maintainers",
+      "classification": "repository-build-control",
+      "disposition": "retain-reviewed",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "packages/media-player/tsconfig.json",
       "owner": "repository-maintainers",
       "classification": "repository-build-control",
       "disposition": "retain-reviewed",

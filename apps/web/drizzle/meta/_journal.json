@@ -281,6 +281,13 @@
       "when": 1787303183364,
       "tag": "0039_bitter_cannonball",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1787304811127,
+      "tag": "0040_low_dragon_lord",
+      "breakpoints": true
     }
   ]
 }

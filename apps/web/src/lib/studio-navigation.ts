@@ -96,6 +96,13 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         module: "stories",
       },
       {
+        id: "live-desk",
+        label: "Live Desk",
+        href: "/studio/live",
+        roles: editorialRoles,
+        module: "stories",
+      },
+      {
         id: "media",
         label: "Media library",
         href: "/studio/media",

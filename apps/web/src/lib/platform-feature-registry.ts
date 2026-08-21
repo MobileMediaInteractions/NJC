@@ -79,6 +79,9 @@ const studioModules: FeatureRegistryEntry[] = studioModuleKeys.map((key) => ({
 export const platformFeatureRegistry: FeatureRegistryEntry[] = [
   ...runtimeFeatures,
   ...studioModules,
+  { key: "reader.presentation.v2", name: "Public site V2", description: "Independent editorial presentation system with Legacy, staff-preview and production release states.", owner: "Audience product", category: "Reader experience", platforms: ["web", "studio"], classification: "release-gated", availability: "available", defaultState: "disabled", dependencies: ["safety.authorization", "safety.audit"], conflicts: [], permission: "site_settings.manage", rollout: "runtime", operationalReadiness: "Signed Studio preview and request-time dual renderer connected", configurationPath: "presentation.designMode" },
+  { key: "reader.presentation.v2-composition", name: "Public site V2 composition", description: "Ordered allowlist of approved V2 homepage modules, managed without exposing layout code or CSS.", owner: "Audience product", category: "Reader experience", platforms: ["web", "studio"], classification: "configuration-only", availability: "available", defaultState: "enabled", dependencies: ["reader.presentation.v2", "safety.authorization", "safety.audit"], conflicts: [], permission: "site_settings.manage", rollout: "runtime", operationalReadiness: "Validated module order, Legacy-equivalence warning, revision history and audit metadata connected", configurationPath: "presentation.v2.homepageModules" },
+  { key: "reader.native-app-handoff", name: "Native app handoff", description: "Offers mobile web readers a safe path into the iOS or Android reader app without blocking continued website use.", owner: "Audience product", category: "Reader features", platforms: ["web", "ios", "android", "studio"], classification: "toggleable", availability: "environment-required", defaultState: "disabled", dependencies: [], conflicts: [], permission: "site_settings.manage", rollout: "runtime", operationalReadiness: "Consent-aware web handoff and custom scheme connected; keep disabled until signed reader identities are deployed, and never fabricate a passive-install result", configurationPath: "nativeApps.handoffPromptEnabled" },
   { key: "studio.editorial.rich-composer", name: "Visual story composer", description: "Versioned rich article editing with write, split and live reader-preview modes while retaining portable plain-copy fallbacks.", owner: "Editorial product", category: "Editorial workflow", platforms: ["studio", "web"], classification: "toggleable", availability: "available", defaultState: "enabled", dependencies: ["safety.authorization", "safety.audit"], conflicts: [], permission: "story.edit", rollout: "runtime", operationalReadiness: "Rich document validation, revision snapshots and safe public rendering connected", configurationPath: "studio.experience.richStoryEditor" },
   { key: "studio.editorial.ai-image-placeholders", name: "AI image placeholders", description: "Creates temporary, provenance-tracked editorial illustrations from story copy; placeholders must be replaced before approval or publication.", owner: "Editorial product", category: "Editorial workflow", platforms: ["studio", "web"], classification: "toggleable", availability: "environment-required", defaultState: "disabled", dependencies: ["safety.authorization", "safety.audit", "platform.cdn"], conflicts: [], permission: "story.edit", rollout: "runtime", operationalReadiness: "Requires Cloudflare Workers AI and Vercel Blob credentials", configurationPath: "studio.experience.aiImagePlaceholders" },
   { key: "editorial.approval-gated-scheduling", name: "Approval-gated scheduling", description: "Hash-bound approval and durable scheduled publication queue.", owner: "Editorial operations", category: "Editorial workflow", platforms: ["studio", "web", "ios", "android", "apple-tv", "android-tv", "roku", "developer-api"], classification: "toggleable", availability: "available", defaultState: "enabled", dependencies: ["safety.authorization", "safety.audit", "operations.scheduler"], conflicts: [], permission: "story.publish", rollout: "runtime", operationalReadiness: "Worker and queue enabled", configurationPath: "studio.automations.scheduledPublishing" },
@@ -100,5 +103,14 @@ export function registryValue(configuration: SiteConfiguration, path?: string) {
 }
 
 export function configurationImpact(before: SiteConfiguration, after: SiteConfiguration) {
-  return platformFeatureRegistry.filter((entry) => entry.configurationPath && registryValue(before, entry.configurationPath) !== registryValue(after, entry.configurationPath));
+  return platformFeatureRegistry.filter((entry) => {
+    if (!entry.configurationPath) return false;
+    const previous = registryValue(before, entry.configurationPath);
+    const next = registryValue(after, entry.configurationPath);
+    if (Object.is(previous, next)) return false;
+    if (previous && next && typeof previous === "object" && typeof next === "object") {
+      return JSON.stringify(previous) !== JSON.stringify(next);
+    }
+    return true;
+  });
 }

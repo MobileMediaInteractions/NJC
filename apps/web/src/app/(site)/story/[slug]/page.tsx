@@ -9,6 +9,7 @@ import { StoryActions } from "@/components/story-actions";
 import { StoryCard } from "@/components/story-card";
 import { StoryRichContent } from "@/components/story-rich-content";
 import { StoryPublicNote } from "@/components/story-public-note";
+import { StoryV2 } from "@/components/site-v2/story-v2";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getAuthorProfileUrlBySlug } from "@/lib/authors";
@@ -17,6 +18,7 @@ import { formatStoryDate } from "@/lib/format";
 import { getSiteOrigin } from "@/lib/origin";
 import { isSearchIndexingEnabled, storyPageJsonLd } from "@/lib/seo";
 import { getSiteConfiguration } from "@/lib/site-settings";
+import { getResolvedSiteDesign } from "@/lib/site-design";
 import {
   getPublicStaffProfileByIdentity,
   getPublicStaffProfileBySlug,
@@ -120,6 +122,22 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
     updatedAt: story.updatedAt,
   });
   const publicAuthors = story.authors?.length ? story.authors : [story.author];
+  const design = await getResolvedSiteDesign(configuration);
+
+  if (design === "v2") {
+    return (
+      <>
+        <JsonLd data={storyPageJsonLd(story, configuration.publication, authorProfile)} />
+        <StoryV2
+          story={story}
+          related={related}
+          configuration={configuration}
+          authorProfile={authorProfile}
+          shareLinks={shareLinks}
+        />
+      </>
+    );
+  }
 
   return (
     <article>

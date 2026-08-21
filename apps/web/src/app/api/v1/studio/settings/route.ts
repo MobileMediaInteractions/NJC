@@ -10,6 +10,7 @@ import {
   saveSiteConfiguration,
   siteConfigurationSchema,
   StaleSiteConfigurationError,
+  crossesV2ProductionBoundary,
 } from "@/lib/site-settings";
 import { configurationImpact } from "@/lib/platform-feature-registry";
 
@@ -70,7 +71,11 @@ export async function PATCH(request: Request) {
     const before = (await getSiteConfigurationRecord()).configuration;
     const impact = configurationImpact(before, configuration);
     const highImpactDisabled = impact.some((entry) => entry.defaultState === "enabled" && entry.configurationPath && entry.key.match(/pseudonym|scheduling|authorization|audit/));
-    if (highImpactDisabled && parsed.data.confirmation !== "APPLY PRODUCTION CHANGE") {
+    const productionDesignTransition = crossesV2ProductionBoundary(
+      before.presentation.designMode,
+      configuration.presentation.designMode,
+    );
+    if ((highImpactDisabled || productionDesignTransition) && parsed.data.confirmation !== "APPLY PRODUCTION CHANGE") {
       return NextResponse.json({ error: { code: "confirmation_required", message: "Type APPLY PRODUCTION CHANGE in the review screen for this high-impact change" } }, { status: 409 });
     }
     const affectedPlatforms = [...new Set(impact.flatMap((entry) => entry.platforms))];
@@ -86,6 +91,9 @@ export async function PATCH(request: Request) {
         ),
         advertisingEnabled: configuration.advertising.enabled,
         advertisingPreviewMode: configuration.advertising.previewMode,
+        previousPublicSiteDesignMode: before.presentation.designMode,
+        publicSiteDesignMode: configuration.presentation.designMode,
+        v2HomepageModules: configuration.presentation.v2.homepageModules,
         autoAds: configuration.advertising.autoAds,
         enabledPlacements: Object.entries(configuration.advertising.placements)
           .filter(([, placement]) => placement.enabled)

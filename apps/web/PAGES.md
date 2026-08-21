@@ -1,22 +1,30 @@
 # Web page and screenshot inventory
 
-This inventory covers every human-facing route family in `apps/web`. Captures
-were taken from the production route on August 18, 2026 at a 1440×900 desktop
-viewport with the Courier's system-dark appearance, except the explicitly
-mobile client captures. API routes, metadata routes, feeds, sitemaps and image
-renderers are contracts rather than pages and are documented by their owning
-runbooks and tests.
+This inventory covers every human-facing route family in `apps/web`. The
+original capture set was taken from the production route on August 18, 2026 at
+a 1440×900 desktop viewport with the Courier's system-dark appearance, except
+the explicitly mobile client captures. The labeled V2 verification captures
+were recorded from the checked-out renderer on August 21, 2026; they document
+its real empty editorial state and are not presented as production content.
+API routes, metadata routes, feeds, sitemaps and image renderers are contracts
+rather than pages and are documented by their owning runbooks and tests.
 
 ## Publication and discovery
 
 | Route | Purpose | Dark-mode capture |
 | --- | --- | --- |
-| `/` | Front page and primary edition briefing | ![Homepage](../../docs/screenshots/dark/web-home.jpg) |
+| `/` | Front page and primary edition briefing | ![Legacy production homepage](../../docs/screenshots/dark/web-home.jpg) ![V2 desktop verification](../../docs/screenshots/dark/web-v2-home-desktop.png) ![V2 mobile verification](../../docs/screenshots/dark/web-v2-home-mobile.png) |
 | `/latest` | Reverse-chronological newsroom index | ![Latest](../../docs/screenshots/dark/web-latest.jpg) |
-| `/search` | Reader search and result states | ![Search](../../docs/screenshots/dark/web-search.jpg) |
+| `/search` | Reader search and result states; the V2 dialog capture uses the non-sensitive query `Middlesex` against an empty local editorial database | ![Search results route](../../docs/screenshots/dark/web-search.jpg) ![V2 search dialog](../../docs/screenshots/dark/web-v2-search-dialog.png) |
+| `/saved` | Private browser-local saved-story library | ![V2 Saved Stories empty state](../../docs/screenshots/dark/web-v2-saved-empty.png) |
 | `/story/[slug]` | Published article template; capture uses a real published story | ![Story](../../docs/screenshots/dark/web-story.jpg) |
 | `/author/[slug]` | Public contributor archive; capture uses Abdullah Muzammil | ![Author](../../docs/screenshots/dark/web-author.jpg) |
 | `/staff` | Published staff directory; with no opted-in profiles it redirects home | ![Empty staff redirect](../../docs/screenshots/dark/web-staff-empty.jpg) |
+
+The primary publication routes now have independent Legacy and V2 renderers.
+Studio controls the production renderer and issues signed staff comparison
+previews without changing the route, content, canonical URL or analytics
+identity. See [Public Site V2](../../docs/design/PUBLIC_SITE_V2.md).
 
 ## News desks
 
@@ -39,6 +47,7 @@ runbooks and tests.
 | `/newsletter` | Newsletter and alert registration | ![Newsletter](../../docs/screenshots/dark/web-newsletter.jpg) |
 | `/weather` | Local weather surface | ![Weather](../../docs/screenshots/dark/web-weather.jpg) |
 | `/live` | Live coverage state | ![Live](../../docs/screenshots/dark/web-live.jpg) |
+| `/live/[slug]` | Courier Live Desk timeline, stream and correction record | Uses the live index capture until an approved public desk is active |
 | `/watch` | Video and watch surface | ![Watch](../../docs/screenshots/dark/web-watch.jpg) |
 | `/advertise` | Advertising information | ![Advertise](../../docs/screenshots/dark/web-advertise.jpg) |
 | `/about` | Publication identity and mission | ![About](../../docs/screenshots/dark/web-about.jpg) |
@@ -108,6 +117,7 @@ signed-out state for every row is this capture:
 | `/studio/stories/new` | Story creation and WYSIWYG workflow |
 | `/studio/stories/[id]` | Story review, approval and revision history |
 | `/studio/stories/[id]/edit` | Pre-publication or active-story editing |
+| `/studio/live` | Continuous reporting desks, timeline updates and lifecycle controls |
 | `/studio/tips` | Submitted-tip triage |
 | `/studio/media` | Public/private media catalog |
 | `/studio/20-under-20` | Program, nomination and selection controls |

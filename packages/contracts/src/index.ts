@@ -193,6 +193,76 @@ export interface LiveSnapshot {
   schedule: Array<{ startsAt: string; title: string }>;
 }
 
+export const liveCoverageStatuses = [
+  "draft",
+  "scheduled",
+  "live",
+  "paused",
+  "ended",
+  "archived",
+] as const;
+export type LiveCoverageStatus = (typeof liveCoverageStatuses)[number];
+
+export const liveUpdateKinds = [
+  "update",
+  "breaking",
+  "result",
+  "quote",
+  "context",
+  "media",
+  "correction",
+] as const;
+export type LiveUpdateKind = (typeof liveUpdateKinds)[number];
+
+export interface LiveCoverageUpdate {
+  id: string;
+  kind: LiveUpdateKind;
+  headline: string | null;
+  body: string;
+  mediaUrl: string | null;
+  mediaAlt: string | null;
+  sourceUrl: string | null;
+  sourceLabel: string | null;
+  author: {
+    name: string;
+    role: string;
+    initials: string;
+  };
+  isPinned: boolean;
+  revision: number;
+  publishedAt: string;
+  correctedAt: string | null;
+}
+
+export interface LiveCoverageEvent {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  status: LiveCoverageStatus;
+  location: string | null;
+  streamUrl: string | null;
+  heroImageUrl: string | null;
+  heroImageAlt: string | null;
+  relatedStoryId: string | null;
+  isFeatured: boolean;
+  scheduledAt: string | null;
+  startedAt: string | null;
+  endedAt: string | null;
+  updatedAt: string;
+  updateCount: number;
+  latestUpdateAt: string | null;
+}
+
+export interface LiveCoverageDetail extends LiveCoverageEvent {
+  updates: LiveCoverageUpdate[];
+  /**
+   * Published update IDs that stopped being public after an incremental
+   * cursor. Clients must remove these IDs from an already-rendered timeline.
+   */
+  removedUpdateIds: string[];
+}
+
 export interface ApiEnvelope<T> {
   data: T;
   meta: Record<string, unknown> & { apiVersion: string };

@@ -9,7 +9,9 @@ import {
   useState,
 } from "react";
 import { Download, Share, WifiOff } from "lucide-react";
+import { NativeAppHandoff } from "@/components/pwa/native-app-handoff";
 import { Button } from "@/components/ui/button";
+import type { SiteConfiguration } from "@/lib/site-settings";
 import {
   Dialog,
   DialogContent,
@@ -58,7 +60,13 @@ function isPublicHost() {
   ].some((prefix) => hostname.startsWith(prefix));
 }
 
-export function PublicPwaShell({ children }: { children: React.ReactNode }) {
+export function PublicPwaShell({
+  children,
+  nativeApps,
+}: {
+  children: React.ReactNode;
+  nativeApps: SiteConfiguration["nativeApps"];
+}) {
   const [promptEvent, setPromptEvent] = useState<InstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
   const [ios, setIos] = useState(false);
@@ -166,6 +174,8 @@ export function PublicPwaShell({ children }: { children: React.ReactNode }) {
           <WifiOff className="size-4" /> Offline — showing saved coverage
         </div>
       ) : null}
+
+      <NativeAppHandoff configuration={nativeApps} />
 
       <Dialog open={showIosHelp} onOpenChange={setShowIosHelp}>
         <DialogContent className="bottom-[max(1rem,env(safe-area-inset-bottom))] top-auto translate-y-0 sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2">

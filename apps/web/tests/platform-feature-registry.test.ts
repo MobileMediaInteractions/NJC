@@ -16,3 +16,22 @@ test("impact preview maps a runtime change to affected platforms", () => {
   assert.deepEqual(impact.map((entry) => entry.key), ["reader.pseudonyms"]);
   assert.ok(impact[0]?.platforms.includes("studio"));
 });
+
+test("impact preview tracks V2 composition changes without flagging equal arrays", () => {
+  const unchanged = structuredClone(defaultSiteConfiguration);
+  assert.equal(
+    configurationImpact(defaultSiteConfiguration, unchanged).some(
+      (entry) => entry.key === "reader.presentation.v2-composition",
+    ),
+    false,
+  );
+
+  const changed = structuredClone(defaultSiteConfiguration);
+  changed.presentation.v2.homepageModules = ["lead", "latest"];
+  assert.equal(
+    configurationImpact(defaultSiteConfiguration, changed).some(
+      (entry) => entry.key === "reader.presentation.v2-composition",
+    ),
+    true,
+  );
+});

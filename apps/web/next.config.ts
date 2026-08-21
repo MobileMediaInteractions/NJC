@@ -49,6 +49,7 @@ const studioSections = [
   "finance",
   "legal",
   "links",
+  "live",
   "media",
   "njc-plus",
   "notifications",

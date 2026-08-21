@@ -4,24 +4,33 @@ import type { Metadata } from "next";
 import { ArrowRight, Landmark, Mail, MapPinned, ShieldCheck } from "lucide-react";
 import { AdSlot } from "@/components/ad-slot";
 import { JsonLd } from "@/components/json-ld";
+import { LiveCoverageCard } from "@/components/live-coverage-card";
+import { HomeV2 } from "@/components/site-v2/home-v2";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { SectionHeading } from "@/components/section-heading";
 import { StoryCard } from "@/components/story-card";
 import { getPublishedStories } from "@/lib/content";
+import { getPublicLiveEvents } from "@/lib/live-coverage";
 import { timeAgo } from "@/lib/format";
 import { homePageJsonLd } from "@/lib/seo";
 import { getSiteConfiguration } from "@/lib/site-settings";
+import { getResolvedSiteDesign } from "@/lib/site-design";
 import type { Story } from "@/lib/types";
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [stories, configuration] = await Promise.all([
+  const [stories, configuration, liveEvents] = await Promise.all([
     getPublishedStories({ limit: 24 }),
     getSiteConfiguration(),
+    getPublicLiveEvents(3).catch((error) => {
+      console.error("Homepage live desk lookup failed", error);
+      return [];
+    }),
   ]);
   const [lead, ...latest] = stories;
+  const liveEvent = liveEvents.find((event) => event.status === "live" || event.status === "paused");
   const date = new Intl.DateTimeFormat("en-US", {
     weekday: "long",
     month: "long",
@@ -29,11 +38,23 @@ export default async function HomePage() {
     year: "numeric",
     timeZone: configuration.publication.timezone,
   }).format(new Date());
+  const design = await getResolvedSiteDesign(configuration);
+
+  if (design === "v2") {
+    return (
+      <>
+        <JsonLd data={homePageJsonLd(configuration.publication)} />
+        <HomeV2 stories={stories} configuration={configuration} liveEvent={liveEvent} date={date} />
+      </>
+    );
+  }
 
   return (
     <>
       <JsonLd data={homePageJsonLd(configuration.publication)} />
       <div className="container-news py-4 sm:py-6"><AdSlot placement="homepageLeaderboard" size="leaderboard" /></div>
+
+      {liveEvent ? <section className="container-news pb-6"><LiveCoverageCard event={liveEvent} featured /></section> : null}
 
       <section className="container-news border-t-4 border-brand-navy pb-10 pt-3 sm:pb-14">
         <div className="mb-5 flex items-center justify-between gap-5">

@@ -11,18 +11,34 @@
       "icon": "./assets/images/courier-icon.png",
       "supportsTablet": true,
       "bundleIdentifier": "com.mobilemediainteractions.thenews",
+      "buildNumber": "1",
+      "associatedDomains": ["applinks:www.thejerseycourier.com"],
       "infoPlist": {
         "LSApplicationQueriesSchemes": ["njcourier-employee"]
       }
     },
     "android": {
       "package": "com.mobilemediainteractions.thenews",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#173E32",
         "foregroundImage": "./assets/images/courier-android-foreground.png",
         "monochromeImage": "./assets/images/courier-android-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            { "scheme": "https", "host": "www.thejerseycourier.com", "pathPrefix": "/story/" },
+            { "scheme": "https", "host": "www.thejerseycourier.com", "path": "/latest" },
+            { "scheme": "https", "host": "www.thejerseycourier.com", "path": "/weather" },
+            { "scheme": "https", "host": "www.thejerseycourier.com", "path": "/watch" }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "output": "static",
@@ -58,9 +74,7 @@
       ]
     ],
     "extra": {
-      "eas": {
-        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
-      }
+      "apiUrl": "https://www.thejerseycourier.com"
     },
     "experiments": {
       "typedRoutes": true,

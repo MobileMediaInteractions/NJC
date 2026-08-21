@@ -18,6 +18,7 @@ import {
 import { BrandMark } from "@/components/brand-mark";
 import { PwaInstallButton } from "@/components/pwa/public-pwa-shell";
 import { ThemeMenu } from "@/components/theme-menu";
+import { SiteHeaderV2 } from "@/components/site-v2/site-header-v2";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -34,7 +35,8 @@ import {
   type SiteAccountAction,
 } from "@/lib/site-account";
 import type { SiteConfiguration } from "@/lib/site-settings";
-import type { Story, WeatherSnapshot } from "@harborline/contracts";
+import type { LiveCoverageEvent, Story, WeatherSnapshot } from "@harborline/contracts";
+import type { PublicSiteDesign } from "@/lib/site-design";
 
 type SiteHeaderProps = {
   publication: SiteConfiguration["publication"];
@@ -43,6 +45,8 @@ type SiteHeaderProps = {
   plusEnabled?: boolean;
   clerkEnabled: boolean;
   studioHref: string;
+  design?: PublicSiteDesign;
+  v2TranslucentHeader?: boolean;
 };
 
 export function SiteHeader(props: SiteHeaderProps) {
@@ -74,9 +78,10 @@ function AuthenticatedSiteHeader(props: SiteHeaderProps) {
   return <SiteHeaderContent {...props} accountAction={accountAction} />;
 }
 
-function SiteHeaderContent({ publication, navigation, features, accountAction, plusEnabled = false }: SiteHeaderProps & { accountAction: SiteAccountAction }) {
+function SiteHeaderContent({ publication, navigation, features, accountAction, plusEnabled = false, design = "legacy", v2TranslucentHeader = true }: SiteHeaderProps & { accountAction: SiteAccountAction }) {
   const [weather, setWeather] = useState<WeatherSnapshot | null>(null);
   const [latestStory, setLatestStory] = useState<Story | null>(null);
+  const [liveEvent, setLiveEvent] = useState<LiveCoverageEvent | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -89,13 +94,35 @@ function SiteHeaderContent({ publication, navigation, features, accountAction, p
         if (!response.ok) throw new Error("Stories unavailable");
         return (await response.json() as { data: Story[] }).data[0] ?? null;
       }),
-    ]).then(([weatherResult, storyResult]) => {
+      fetch("/api/v1/live/coverage?limit=3").then(async (response) => {
+        if (!response.ok) throw new Error("Live coverage unavailable");
+        const events = (await response.json() as { data: LiveCoverageEvent[] }).data;
+        return events.find((event) => event.status === "live" || event.status === "paused") ?? null;
+      }),
+    ]).then(([weatherResult, storyResult, liveResult]) => {
       if (!active) return;
       if (weatherResult.status === "fulfilled") setWeather(weatherResult.value);
       if (storyResult.status === "fulfilled") setLatestStory(storyResult.value);
+      if (liveResult.status === "fulfilled") setLiveEvent(liveResult.value);
     });
     return () => { active = false; };
   }, [features.weather]);
+
+  if (design === "v2") {
+    return (
+      <SiteHeaderV2
+        publication={publication}
+        navigation={navigation}
+        features={features}
+        accountAction={accountAction}
+        plusEnabled={plusEnabled}
+        weather={weather}
+        liveEvent={liveEvent}
+        latestStory={latestStory}
+        translucent={v2TranslucentHeader}
+      />
+    );
+  }
 
   return (
     <>
@@ -170,15 +197,15 @@ function SiteHeaderContent({ publication, navigation, features, accountAction, p
         </div>
       </nav>
 
-      {latestStory ? <div className="border-b bg-secondary/75">
+      {liveEvent || latestStory ? <div className={`border-b ${liveEvent ? "bg-brand-red text-white" : "bg-secondary/75"}`}>
         <div className="container-news flex min-h-9 items-center gap-3 overflow-hidden text-[0.72rem]">
-          <span className="shrink-0 font-black uppercase tracking-[0.12em] text-brand-red">Latest</span>
-          <span className="h-3.5 w-px shrink-0 bg-border" />
-          <Link href={`/story/${latestStory.slug}`} className="truncate font-semibold hover:underline">
-            {latestStory.headline}
+          <span className={`shrink-0 font-black uppercase tracking-[0.12em] ${liveEvent ? "text-white" : "text-brand-red"}`}>{liveEvent ? "Live" : "Latest"}</span>
+          <span className={`h-3.5 w-px shrink-0 ${liveEvent ? "bg-white/35" : "bg-border"}`} />
+          <Link href={liveEvent ? `/live/${liveEvent.slug}` : `/story/${latestStory!.slug}`} className="truncate font-semibold hover:underline">
+            {liveEvent?.title ?? latestStory!.headline}
           </Link>
-          <Link href="/latest" className="ml-auto hidden shrink-0 font-semibold text-brand-blue hover:underline md:block">
-            All local coverage
+          <Link href={liveEvent ? `/live/${liveEvent.slug}` : "/latest"} className={`ml-auto hidden shrink-0 font-semibold hover:underline md:block ${liveEvent ? "text-white" : "text-brand-blue"}`}>
+            {liveEvent ? "Follow updates" : "All local coverage"}
           </Link>
         </div>
       </div> : null}
