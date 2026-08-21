@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { storyRichTextDocumentSchema } from "@/lib/story-rich-text";
+import { STORY_NOTE_MAX_CHARACTERS } from "@/lib/story-notes";
 
 export const storyInput = z.object({
   headline: z.string().trim().min(8, "Enter a headline with at least 8 characters.").max(180),
@@ -8,6 +9,9 @@ export const storyInput = z.object({
   body: z.array(z.string().trim().min(1)).min(1, "Write at least one story paragraph."),
   richBody: storyRichTextDocumentSchema.nullable().optional(),
   includeWhyItMatters: z.boolean().default(false),
+  includePublicNote: z.boolean().default(false),
+  publicNoteType: z.enum(["editors_note", "reporting_note", "update_note"]).default("editors_note"),
+  publicNote: z.string().trim().max(STORY_NOTE_MAX_CHARACTERS).default(""),
   categorySlug: z.enum(["local", "middlesex", "statehouse", "public-square", "opinion", "sports", "jersey-laurels", "investigates", "weather", "culture"]),
   categoryLabel: z.string().trim().min(2).max(80),
   location: z.string().trim().min(2, "Enter a dateline or location.").max(80),
@@ -28,6 +32,13 @@ export const storyInput = z.object({
   publishedAtRiskAcknowledged: z.boolean().default(false),
   publishedAtChangeReason: z.string().trim().max(500).optional().or(z.literal("")),
 }).superRefine((value, context) => {
+  if (value.includePublicNote && value.publicNote.length < 10) {
+    context.addIssue({
+      code: "custom",
+      path: ["publicNote"],
+      message: "Write at least 10 characters for the public story note.",
+    });
+  }
   if (value.imageUrl && !value.imageAlt?.trim()) {
     context.addIssue({ code: "custom", path: ["imageAlt"], message: "Describe the lead image for readers using screen readers." });
   }

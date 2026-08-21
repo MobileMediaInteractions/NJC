@@ -65,6 +65,9 @@ export async function POST(request: Request) {
       publishedAtRiskAcknowledged: _publishedAtRiskAcknowledged,
       publishedAtChangeReason: _publishedAtChangeReason,
       includeWhyItMatters,
+      includePublicNote,
+      publicNoteType,
+      publicNote,
       bylineMode,
       status: _requestedStatus,
       imageUrl: _imageUrl,
@@ -93,6 +96,8 @@ export async function POST(request: Request) {
         whyItMatters: includeWhyItMatters
           ? generateWhyItMatters(parsed.data)
           : null,
+        publicNoteType: includePublicNote ? publicNoteType : null,
+        publicNote: includePublicNote ? publicNote : null,
         ...leadMedia,
         imageAlt: parsed.data.imageAlt || null,
         seoTitle: parsed.data.seoTitle || null,

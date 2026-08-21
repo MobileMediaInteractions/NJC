@@ -98,6 +98,8 @@ export default async function EditStoryPage({ params }: { params: Promise<{ id: 
           body: story.body,
           richBody: story.richBody as import("@harborline/contracts").StoryRichTextDocument | null,
           whyItMatters: story.whyItMatters,
+          publicNoteType: story.publicNoteType,
+          publicNote: story.publicNote,
           categorySlug: story.categorySlug,
           location: story.location,
           imageUrl: story.imageUrl,

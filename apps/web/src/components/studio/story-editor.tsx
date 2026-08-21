@@ -16,13 +16,15 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { EditableList } from "@/components/studio/editable-list";
 import { StoryRichContent } from "@/components/story-rich-content";
+import { StoryPublicNote } from "@/components/story-public-note";
 import { validateStoryImage } from "@/lib/media-upload";
 import { toLocalDateTimeInput } from "@/lib/local-datetime";
 import { firstStoryError, storyInput, type StoryFieldErrors } from "@/lib/story-input";
 import type { StoryBylineOption } from "@/lib/pseudonyms";
 import { createPlainStoryRichTextDocument } from "@/lib/story-rich-text";
 import { generateWhyItMatters, WHY_IT_MATTERS_MAX_CHARACTERS } from "@/lib/why-it-matters";
-import type { StoryRichTextDocument } from "@harborline/contracts";
+import { isStoryNoteType, STORY_NOTE_MAX_CHARACTERS, storyNoteTypes } from "@/lib/story-notes";
+import type { StoryNoteType, StoryRichTextDocument } from "@harborline/contracts";
 
 const RichStoryEditor = dynamic(
   () => import("@/components/studio/story-rich-editor").then((module) => module.StoryRichEditor),
@@ -40,6 +42,9 @@ type StoryEditorDraftState = {
   body: string;
   richBody: StoryRichTextDocument;
   includeWhyItMatters: boolean;
+  includePublicNote: boolean;
+  publicNoteType: StoryNoteType;
+  publicNote: string;
   category: string;
   location: string;
   tags: string[];
@@ -71,6 +76,8 @@ export interface StoryEditorInitialStory {
   body: string[];
   richBody: StoryRichTextDocument | null;
   whyItMatters: string | null;
+  publicNoteType: StoryNoteType | null;
+  publicNote: string | null;
   categorySlug: string;
   location: string;
   imageUrl: string | null;
@@ -123,6 +130,9 @@ export function StoryEditor({
     richStoryEditorDefaultMode,
   );
   const [includeWhyItMatters, setIncludeWhyItMatters] = useState(Boolean(initialStory?.whyItMatters));
+  const [includePublicNote, setIncludePublicNote] = useState(Boolean(initialStory?.publicNote));
+  const [publicNoteType, setPublicNoteType] = useState<StoryNoteType>(initialStory?.publicNoteType ?? "editors_note");
+  const [publicNote, setPublicNote] = useState(initialStory?.publicNote ?? "");
   const [category, setCategory] = useState(initialStory?.categorySlug ?? "middlesex");
   const [location, setLocation] = useState(initialStory?.location ?? datelines[0] ?? "New Brunswick");
   const [tags, setTags] = useState(initialStory?.tags ?? []);
@@ -170,12 +180,12 @@ export function StoryEditor({
   const recoveryKey = `njc:story-recovery:${initialStory?.id ?? "new"}`;
   const baseline = initialStory?.updatedAt ?? "new";
   const draftState = useMemo<StoryEditorDraftState>(() => ({
-    headline, slug, dek, body, richBody, includeWhyItMatters, category,
+    headline, slug, dek, body, richBody, includeWhyItMatters, includePublicNote, publicNoteType, publicNote, category,
     location, tags, seoTitle, seoDescription, canonicalUrl, noIndex, breaking,
     schedulePlanned, scheduledAt, bylineMode, imageUrl, imageAlt, imageAssetId,
     imageKind,
   }), [
-    headline, slug, dek, body, richBody, includeWhyItMatters, category,
+    headline, slug, dek, body, richBody, includeWhyItMatters, includePublicNote, publicNoteType, publicNote, category,
     location, tags, seoTitle, seoDescription, canonicalUrl, noIndex, breaking,
     schedulePlanned, scheduledAt, bylineMode, imageUrl, imageAlt, imageAssetId,
     imageKind,
@@ -241,7 +251,7 @@ export function StoryEditor({
       focusFirstInvalidField(errors);
       return;
     }
-    const input = { headline, slug, dek, body: bodyParagraphs, richBody: richStoryEditorEnabled ? richBody : null, includeWhyItMatters, categorySlug: category, categoryLabel, location, imageUrl, imageAlt, imageAssetId, imageKind, tags, seoTitle, seoDescription, canonicalUrl, noIndex, bylineMode, status, isBreaking: breaking, scheduledAt: parsedScheduledAt?.toISOString() ?? "", publishedAt: "", publishedAtRiskAcknowledged: false, publishedAtChangeReason: "" };
+    const input = { headline, slug, dek, body: bodyParagraphs, richBody: richStoryEditorEnabled ? richBody : null, includeWhyItMatters, includePublicNote, publicNoteType, publicNote, categorySlug: category, categoryLabel, location, imageUrl, imageAlt, imageAssetId, imageKind, tags, seoTitle, seoDescription, canonicalUrl, noIndex, bylineMode, status, isBreaking: breaking, scheduledAt: parsedScheduledAt?.toISOString() ?? "", publishedAt: "", publishedAtRiskAcknowledged: false, publishedAtChangeReason: "" };
     const validation = storyInput.safeParse(input);
     if (!validation.success) {
       const errors = validation.error.flatten().fieldErrors;
@@ -405,6 +415,9 @@ export function StoryEditor({
     setHeadline(draft.headline); setSlug(draft.slug); setDek(draft.dek);
     setBody(draft.body); setRichBody(draft.richBody);
     setIncludeWhyItMatters(draft.includeWhyItMatters);
+    setIncludePublicNote(draft.includePublicNote ?? false);
+    setPublicNoteType(draft.publicNoteType ?? "editors_note");
+    setPublicNote(draft.publicNote ?? "");
     setCategory(draft.category); setLocation(draft.location); setTags(draft.tags);
     setSeoTitle(draft.seoTitle); setSeoDescription(draft.seoDescription);
     setCanonicalUrl(draft.canonicalUrl); setNoIndex(draft.noIndex);
@@ -488,6 +501,8 @@ export function StoryEditor({
                   document={richBody}
                   paragraphs={bodyParagraphs}
                   whyItMatters={generatedWhyItMatters}
+                  publicNoteType={includePublicNote ? publicNoteType : null}
+                  publicNote={includePublicNote ? publicNote : ""}
                 />
               ) : null}
             </div>
@@ -610,6 +625,40 @@ export function StoryEditor({
               <p className="text-xs leading-5 text-muted-foreground">The server regenerates the final wording on every save, caps it at {WHY_IT_MATTERS_MAX_CHARACTERS} characters and never invents information outside the article.</p>
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Public story note</CardTitle>
+              <CardDescription>Add a clearly labeled note that readers will see with the article.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <Label htmlFor="include-public-note">Include a note</Label>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">The note is reviewed, versioned and published as part of the story.</p>
+                </div>
+                <Switch id="include-public-note" checked={includePublicNote} onCheckedChange={setIncludePublicNote} />
+              </div>
+              {includePublicNote ? (
+                <div className="space-y-4 border-t pt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="public-note-type">Note type</Label>
+                    <Select value={publicNoteType} onValueChange={(value) => { if (isStoryNoteType(value)) setPublicNoteType(value); }}>
+                      <SelectTrigger id="public-note-type"><SelectValue /></SelectTrigger>
+                      <SelectContent>{storyNoteTypes.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
+                    </Select>
+                    <p className="text-xs leading-5 text-muted-foreground">{storyNoteTypes.find((option) => option.value === publicNoteType)?.description}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between gap-3"><Label htmlFor="publicNote">Note <span className="text-destructive">*</span></Label><span className="text-xs text-muted-foreground">{publicNote.length}/{STORY_NOTE_MAX_CHARACTERS}</span></div>
+                    <Textarea id="publicNote" value={publicNote} onChange={(event) => setPublicNote(event.target.value)} maxLength={STORY_NOTE_MAX_CHARACTERS} rows={6} placeholder="Explain the editorial context readers need to understand." aria-invalid={Boolean(fieldError("publicNote"))} />
+                    {fieldError("publicNote") ? <p className="text-xs text-destructive">{fieldError("publicNote")}</p> : null}
+                  </div>
+                  <StoryPublicNote type={publicNoteType}>{publicNote || "Your public note preview will appear here."}</StoryPublicNote>
+                  {publicNoteType === "update_note" ? <p className="text-xs leading-5 text-amber-500">An update note explains a meaningful change; it does not replace the newsroom&apos;s correction and revision requirements.</p> : null}
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
           <Card><CardHeader><CardTitle className="text-base">Search appearance</CardTitle><CardDescription>Defaults are generated from the story. Override only when the search result needs clearer wording.</CardDescription></CardHeader><CardContent className="space-y-4"><div className="space-y-2"><div className="flex justify-between"><Label htmlFor="seo-title">SEO title</Label><span className="text-xs text-muted-foreground">{seoTitle.length}/70</span></div><Input id="seo-title" value={seoTitle} onChange={(event) => setSeoTitle(event.target.value)} maxLength={70} placeholder={headline || "Uses headline by default"} /></div><div className="space-y-2"><div className="flex justify-between"><Label htmlFor="seo-description">Search description</Label><span className="text-xs text-muted-foreground">{seoDescription.length}/180</span></div><Textarea id="seo-description" value={seoDescription} onChange={(event) => setSeoDescription(event.target.value)} maxLength={180} placeholder={dek || "Uses summary by default"} /></div><div className="space-y-2"><Label htmlFor="canonical-url">Canonical URL</Label><Input id="canonical-url" type="url" value={canonicalUrl} onChange={(event) => setCanonicalUrl(event.target.value)} placeholder="Leave blank for this story URL" aria-invalid={Boolean(fieldError("canonicalUrl"))} />{fieldError("canonicalUrl") && <p className="text-xs text-destructive">{fieldError("canonicalUrl")}</p>}</div><Separator /><div className="flex items-center justify-between gap-4"><div><Label htmlFor="no-index">Exclude from search</Label><p className="mt-1 text-xs text-muted-foreground">Adds noindex and removes the story from sitemaps.</p></div><Switch id="no-index" checked={noIndex} onCheckedChange={setNoIndex} /></div></CardContent></Card>
           <Card><CardHeader><CardTitle className="text-base">Lead media</CardTitle><CardDescription>Upload approved media, or generate a temporary story-aware illustration for layout and review.</CardDescription></CardHeader><CardContent className="space-y-4">
             <input ref={fileInputRef} id="image-upload" type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadImage(file); }} disabled={uploadState === "uploading"} />
@@ -664,6 +713,9 @@ function isStoryEditorRecovery(value: unknown): value is StoryEditorRecovery {
     typeof draft.body === "string" &&
     draft.richBody &&
     typeof draft.includeWhyItMatters === "boolean" &&
+    (draft.includePublicNote === undefined || typeof draft.includePublicNote === "boolean") &&
+    (draft.publicNoteType === undefined || isStoryNoteType(draft.publicNoteType)) &&
+    (draft.publicNote === undefined || typeof draft.publicNote === "string") &&
     typeof draft.category === "string" &&
     typeof draft.location === "string" &&
     Array.isArray(draft.tags) &&
@@ -694,6 +746,8 @@ function ArticlePreview({
   document,
   paragraphs,
   whyItMatters,
+  publicNoteType,
+  publicNote,
 }: {
   headline: string;
   dek: string;
@@ -706,6 +760,8 @@ function ArticlePreview({
   document: StoryRichTextDocument | null;
   paragraphs: string[];
   whyItMatters: string;
+  publicNoteType: StoryNoteType | null;
+  publicNote: string;
 }) {
   return (
     <aside className="min-h-[38rem] overflow-hidden rounded-xl border bg-[#fbfaf6] text-[#142d27] shadow-sm" aria-label="Live reader preview">
@@ -732,6 +788,7 @@ function ArticlePreview({
           <div className="mx-6 flex aspect-video items-center justify-center border border-dashed border-[#c7c4ba] bg-[#f1efe8] text-xs text-[#737c78] sm:mx-9">Lead image preview</div>
         )}
         <div className="px-6 py-8 sm:px-9">
+          {publicNoteType && publicNote.trim() ? <StoryPublicNote type={publicNoteType} className="mb-7">{publicNote}</StoryPublicNote> : null}
           {whyItMatters ? (
             <div className="mb-7 border-t-4 border-[#d39a38] bg-[#173e32] p-4 text-white">
               <p className="text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#e0ad50]">Why it matters</p>

@@ -8,6 +8,8 @@ const material = {
   dek: "The vote followed three public hearings.",
   body: ["The council voted Tuesday after hearing from residents."],
   whyItMatters: null,
+  publicNoteType: null,
+  publicNote: null,
   categorySlug: "local",
   categoryLabel: "Local",
   location: "New Brunswick",
@@ -37,8 +39,17 @@ test("content hashes are stable and material changes invalidate them", () => {
   const first = storyContentHash(material);
   assert.equal(first, storyContentHash({ ...material }));
   assert.notEqual(first, storyContentHash({ ...material, headline: "Changed headline" }));
+  assert.notEqual(first, storyContentHash({
+    ...material,
+    publicNoteType: "editors_note",
+    publicNote: "The editor added verified context about the reporting process.",
+  }));
   assert.deepEqual(storyPublicationBlockers(material), []);
   assert.deepEqual(storyPublicationBlockers({ ...material, body: [] }), ["body_missing"]);
+  assert.deepEqual(
+    storyPublicationBlockers({ ...material, publicNoteType: "editors_note" }),
+    ["public_note_incomplete"],
+  );
   assert.deepEqual(
     storyPublicationBlockers({ ...material, imageKind: "ai_placeholder" }),
     ["lead_media_temporary_ai_placeholder"],

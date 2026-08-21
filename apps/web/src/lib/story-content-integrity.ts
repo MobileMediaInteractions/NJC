@@ -6,6 +6,8 @@ export type StoryPublicationMaterial = {
   body: string[];
   richBody?: unknown;
   whyItMatters: string | null;
+  publicNoteType?: "editors_note" | "reporting_note" | "update_note" | null;
+  publicNote?: string | null;
   categorySlug: string;
   categoryLabel: string;
   location: string;
@@ -48,6 +50,7 @@ export function storyPublicationBlockers(story: StoryPublicationMaterial) {
   if (!story.body.some((paragraph) => paragraph.trim())) blockers.push("body_missing");
   if (story.imageUrl && !story.imageAlt?.trim()) blockers.push("lead_media_alt_missing");
   if (story.imageKind === "ai_placeholder") blockers.push("lead_media_temporary_ai_placeholder");
+  if (Boolean(story.publicNoteType) !== Boolean(story.publicNote?.trim())) blockers.push("public_note_incomplete");
   if (!story.publicBylineSnapshot) blockers.push("byline_missing");
   return blockers;
 }

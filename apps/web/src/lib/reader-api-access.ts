@@ -11,6 +11,7 @@ export const officialReaderOrigins = [
 ] as const;
 
 export const officialReaderClients = ["mobile", "tvos", "androidtv", "roku"] as const;
+export const legacyRokuV1UserAgent = /^Harborline-Roku\/1\.0\.0$/;
 
 type ReaderSource = "web" | (typeof officialReaderClients)[number];
 type ReaderAccess = { allowed: true; source: ReaderSource; origin: string | null } | { allowed: false };
@@ -58,6 +59,9 @@ export function evaluateReaderApiAccess(request: Request, options?: { allowLocal
   if (/^NJCourier-Roku\/[0-9A-Za-z._-]+$/.test(request.headers.get("user-agent") ?? "")) {
     return { allowed: true, source: "roku", origin: null };
   }
+  if (legacyRokuV1UserAgent.test(request.headers.get("user-agent") ?? "")) {
+    return { allowed: true, source: "roku", origin: null };
+  }
 
   const headerOrigin = normalizeOrigin(request.headers.get("origin"));
   const referrerOrigin = normalizeOrigin(request.headers.get("referer"));
@@ -76,7 +80,7 @@ function rateLimitIdentifier(request: Request, source: ReaderSource) {
 function responseHeaders(origin: string | null) {
   const headers = new Headers({
     "Cache-Control": "private, no-store",
-    "Vary": "Origin, Referer, Sec-Fetch-Site, X-NJC-Client",
+    "Vary": "Origin, Referer, Sec-Fetch-Site, User-Agent, X-NJC-Client, X-NJC-Capabilities",
     "X-Robots-Tag": "noindex, nofollow",
   });
   if (origin) headers.set("Access-Control-Allow-Origin", origin);

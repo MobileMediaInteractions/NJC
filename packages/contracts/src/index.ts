@@ -99,6 +99,11 @@ export interface StoryRichTextDocument {
   };
 }
 
+export type StoryNoteType =
+  | "editors_note"
+  | "reporting_note"
+  | "update_note";
+
 export interface Story {
   id: string;
   slug: string;
@@ -107,6 +112,8 @@ export interface Story {
   body: string[];
   richBody?: StoryRichTextDocument | null;
   whyItMatters?: string;
+  publicNoteType?: StoryNoteType;
+  publicNote?: string;
   category: string;
   categoryLabel: string;
   location: string;

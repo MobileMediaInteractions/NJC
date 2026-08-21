@@ -4,6 +4,7 @@ export type {
   Story,
   StoryRichTextDocument,
   StoryRichTextNode,
+  StoryNoteType,
   StoryStatus,
   WeatherSnapshot,
 } from "@harborline/contracts";

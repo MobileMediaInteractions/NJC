@@ -148,6 +148,12 @@ export default function StoryScreen() {
             <Text style={styles.actionText}>Share</Text>
           </Pressable>
         </View>
+        {story.publicNoteType && story.publicNote ? (
+          <View style={styles.publicNote}>
+            <Text style={styles.publicNoteLabel}>{storyNoteLabel(story.publicNoteType)}</Text>
+            <Text style={styles.publicNoteBody}>{story.publicNote}</Text>
+          </View>
+        ) : null}
         {story.whyItMatters ? (
           <View style={styles.whyItMatters}>
             <Text style={styles.whyItMattersLabel}>WHY IT MATTERS</Text>
@@ -169,6 +175,12 @@ export default function StoryScreen() {
       </View>
     </ScrollView>
   );
+}
+
+function storyNoteLabel(type: NonNullable<Story["publicNoteType"]>) {
+  if (type === "reporting_note") return "REPORTING NOTE";
+  if (type === "update_note") return "UPDATE NOTE";
+  return "EDITOR’S NOTE";
 }
 
 const makeStyles = (colors: AppColors) =>
@@ -223,6 +235,25 @@ const makeStyles = (colors: AppColors) =>
       borderRadius: 7,
     },
     actionText: { color: colors.blue, fontWeight: "800" },
+    publicNote: {
+      backgroundColor: colors.brandNavy,
+      borderLeftWidth: 4,
+      borderLeftColor: colors.yellow,
+      padding: 18,
+      marginBottom: 22,
+    },
+    publicNoteLabel: {
+      color: colors.yellow,
+      fontSize: 11,
+      fontWeight: "900",
+      letterSpacing: 2,
+    },
+    publicNoteBody: {
+      color: colors.onBrand,
+      fontSize: 16,
+      lineHeight: 25,
+      marginTop: 10,
+    },
     whyItMatters: {
       backgroundColor: colors.brandNavy,
       borderTopWidth: 4,

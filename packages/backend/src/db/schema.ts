@@ -127,6 +127,10 @@ export const stories = pgTable(
     body: jsonb("body").$type<string[]>().notNull().default([]),
     richBody: jsonb("rich_body"),
     whyItMatters: text("why_it_matters"),
+    publicNoteType: text("public_note_type").$type<
+      "editors_note" | "reporting_note" | "update_note"
+    >(),
+    publicNote: text("public_note"),
     categorySlug: text("category_slug").notNull().default("local"),
     categoryLabel: text("category_label").notNull().default("Local"),
     location: text("location").notNull().default("Middlesex County"),
@@ -206,6 +210,14 @@ export const stories = pgTable(
     index("stories_status_published_idx").on(table.status, table.publishedAt),
     index("stories_category_idx").on(table.categorySlug, table.publishedAt),
     check("stories_content_version_positive_check", sql`${table.contentVersion} > 0`),
+    check(
+      "stories_public_note_type_check",
+      sql`${table.publicNoteType} is null or ${table.publicNoteType} in ('editors_note', 'reporting_note', 'update_note')`,
+    ),
+    check(
+      "stories_public_note_pair_check",
+      sql`(${table.publicNoteType} is null and ${table.publicNote} is null) or (${table.publicNoteType} is not null and nullif(btrim(${table.publicNote}), '') is not null)`,
+    ),
   ],
 );
 

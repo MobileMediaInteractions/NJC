@@ -103,3 +103,15 @@ test("meaningful revision detection covers workflow, byline and media metadata",
     imageAlt: "Council members vote from the dais.",
   }), true);
 });
+
+test("public story-note changes are visible in the editorial comparison", () => {
+  const changes = buildStoryRevisionDiff(
+    { publicNoteType: null, publicNote: null },
+    {
+      publicNoteType: "reporting_note",
+      publicNote: "The Courier reviewed the underlying municipal records.",
+    },
+  );
+  assert.deepEqual(changes.map((change) => change.field), ["publicNoteType", "publicNote"]);
+  assert.equal(changes.find((change) => change.field === "publicNote")?.lines?.some((line) => line.kind === "added"), true);
+});

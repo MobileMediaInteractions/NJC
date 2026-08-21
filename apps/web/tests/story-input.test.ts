@@ -31,8 +31,34 @@ test("accepts a complete publish request with optional URLs left blank", () => {
   assert.equal(result.success, true);
   if (result.success) {
     assert.equal(result.data.includeWhyItMatters, false);
+    assert.equal(result.data.includePublicNote, false);
+    assert.equal(result.data.publicNoteType, "editors_note");
     assert.equal(result.data.bylineMode, "account");
   }
+});
+
+test("validates the three public story-note types and requires meaningful copy", () => {
+  for (const publicNoteType of ["editors_note", "reporting_note", "update_note"] as const) {
+    assert.equal(storyInput.safeParse({
+      ...validStory,
+      includePublicNote: true,
+      publicNoteType,
+      publicNote: "Readers need this verified editorial context.",
+    }).success, true);
+  }
+  const incomplete = storyInput.safeParse({
+    ...validStory,
+    includePublicNote: true,
+    publicNoteType: "editors_note",
+    publicNote: "Short",
+  });
+  assert.equal(incomplete.success, false);
+  if (!incomplete.success) assert.match(incomplete.error.flatten().fieldErrors.publicNote?.[0] ?? "", /at least 10/i);
+  assert.equal(storyInput.safeParse({
+    ...validStory,
+    includePublicNote: false,
+    publicNote: "",
+  }).success, true);
 });
 
 test("accepts validated rich copy and rejects unsupported rich nodes", () => {

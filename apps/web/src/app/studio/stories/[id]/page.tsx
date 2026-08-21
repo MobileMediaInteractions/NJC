@@ -15,6 +15,7 @@ import { StoryAuthorControl } from "@/components/studio/story-author-control";
 import { StudioShell } from "@/components/studio/studio-shell";
 import { StoryTimestampEditor } from "@/components/studio/story-timestamp-editor";
 import { StoryRichContent } from "@/components/story-rich-content";
+import { StoryPublicNote } from "@/components/story-public-note";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -137,6 +138,7 @@ export default async function StudioStoryReviewPage({ params }: { params: Promis
             <CardHeader><CardTitle>Editorial preview</CardTitle><CardDescription>Review the complete copy and lead image before changing its status.</CardDescription></CardHeader>
             <CardContent>
               {story.imageUrl ? <figure className="mb-7"><div className="relative aspect-video overflow-hidden rounded-md bg-muted"><Image src={story.imageUrl} alt={story.imageAlt ?? ""} fill priority sizes="(max-width: 1024px) 100vw, 760px" className="object-cover" />{story.imageKind === "ai_placeholder" ? <div className="absolute inset-x-0 bottom-0 bg-amber-950/90 px-4 py-2 text-xs font-bold uppercase tracking-wider text-amber-100">Temporary AI illustration · publication blocked</div> : null}</div>{story.imageAlt ? <figcaption className="mt-2 text-xs text-muted-foreground">{story.imageAlt}</figcaption> : null}</figure> : <div className="mb-7 grid min-h-40 place-items-center rounded-md border border-dashed text-muted-foreground"><div className="text-center"><ImageIcon className="mx-auto size-6" /><p className="mt-2 text-sm">No lead image</p></div></div>}
+              {story.publicNoteType && story.publicNote ? <StoryPublicNote type={story.publicNoteType} className="mb-7">{story.publicNote}</StoryPublicNote> : null}
               <article className="text-[1.05rem] leading-8"><StoryRichContent document={story.richBody as import("@harborline/contracts").StoryRichTextDocument | null} fallback={story.body} dropCap={false} /></article>
             </CardContent>
           </Card>

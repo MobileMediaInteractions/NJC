@@ -115,6 +115,7 @@ function apiRequest(path as String, method as String, body as Dynamic) as Object
   transfer.AddHeader("Accept", "application/json")
   transfer.AddHeader("Content-Type", "application/json")
   transfer.AddHeader("X-NJC-Client", "roku")
+  transfer.AddHeader("X-NJC-Capabilities", "structured-story-notes-v1")
   transfer.AddHeader("User-Agent", "NJCourier-Roku/" + m.top.appVersion)
   if m.top.accessToken <> "" transfer.AddHeader("Authorization", "Bearer " + m.top.accessToken)
 

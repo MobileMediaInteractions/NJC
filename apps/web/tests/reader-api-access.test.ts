@@ -29,10 +29,12 @@ test("reader API rejects direct and cross-site access", () => {
 test("reader API recognizes official app clients only on an official API origin", () => {
   const roku = evaluateReaderApiAccess(new Request("https://njc-web.vercel.app/api/v1/stories", { headers: { "X-NJC-Client": "roku" } }));
   const installedRoku = evaluateReaderApiAccess(new Request("https://njc-web.vercel.app/api/v1/stories", { headers: { "User-Agent": "NJCourier-Roku/1.0.0" } }));
+  const originalRoku = evaluateReaderApiAccess(new Request("https://njc-web.vercel.app/api/v1/stories", { headers: { "User-Agent": "Harborline-Roku/1.0.0" } }));
   const unknown = evaluateReaderApiAccess(new Request("https://njc-web.vercel.app/api/v1/stories", { headers: { "X-NJC-Client": "scraper" } }));
   const wrongHost = evaluateReaderApiAccess(new Request("https://example.com/api/v1/stories", { headers: { "X-NJC-Client": "roku" } }));
   assert.deepEqual(roku, { allowed: true, source: "roku", origin: null });
   assert.deepEqual(installedRoku, { allowed: true, source: "roku", origin: null });
+  assert.deepEqual(originalRoku, { allowed: true, source: "roku", origin: null });
   assert.deepEqual(unknown, { allowed: false });
   assert.deepEqual(wrongHost, { allowed: false });
 });

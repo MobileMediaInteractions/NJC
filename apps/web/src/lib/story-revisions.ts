@@ -1,8 +1,12 @@
+import { isStoryNoteType, storyNoteLabel } from "@/lib/story-notes";
+
 export const editableStoryFields = [
   ["headline", "Headline"],
   ["dek", "Summary"],
   ["body", "Story body"],
   ["whyItMatters", "Why it matters"],
+  ["publicNoteType", "Story-note type"],
+  ["publicNote", "Public story note"],
   ["slug", "Story URL"],
   ["categorySlug", "Section"],
   ["location", "Dateline"],
@@ -65,7 +69,7 @@ export function buildStoryRevisionDiff(
       label,
       before: previous,
       after: next,
-      ...(field === "body" || field === "headline" || field === "dek"
+      ...(field === "body" || field === "headline" || field === "dek" || field === "publicNote"
         ? { lines: diffStoryLines(previous, next) }
         : {}),
     }];
@@ -197,6 +201,9 @@ function tokenizeWords(value: string) {
 }
 
 function formatRevisionValue(value: RevisionValue, field: string) {
+  if (field === "publicNoteType" && isStoryNoteType(value)) {
+    return storyNoteLabel(value);
+  }
   if (field === "publicBylineSnapshot" && isObject(value)) {
     const name = typeof value.name === "string" ? value.name : "Assigned byline";
     const mode = value.mode === "pseudonym" ? "pseudonym" : "account identity";

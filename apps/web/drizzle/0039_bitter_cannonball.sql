@@ -1,0 +1,4 @@
+ALTER TABLE "stories" ADD COLUMN "public_note_type" text;--> statement-breakpoint
+ALTER TABLE "stories" ADD COLUMN "public_note" text;--> statement-breakpoint
+ALTER TABLE "stories" ADD CONSTRAINT "stories_public_note_type_check" CHECK ("stories"."public_note_type" is null or "stories"."public_note_type" in ('editors_note', 'reporting_note', 'update_note'));--> statement-breakpoint
+ALTER TABLE "stories" ADD CONSTRAINT "stories_public_note_pair_check" CHECK (("stories"."public_note_type" is null and "stories"."public_note" is null) or ("stories"."public_note_type" is not null and nullif(btrim("stories"."public_note"), '') is not null));

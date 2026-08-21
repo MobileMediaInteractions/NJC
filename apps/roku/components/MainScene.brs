@@ -295,6 +295,10 @@ sub showStories(stories as Dynamic)
     if story.author <> invalid then item.authorName = safeString(story.author.name)
     item.AddField("whyItMatters", "string", false)
     item.whyItMatters = safeString(story.whyItMatters)
+    item.AddField("publicNoteType", "string", false)
+    item.publicNoteType = safeString(story.publicNoteType)
+    item.AddField("publicNote", "string", false)
+    item.publicNote = safeString(story.publicNote)
   end for
   m.storyList.content = root
   m.storyList.jumpToRowItem = [0, 0]
@@ -332,7 +336,14 @@ sub onStorySelected(event as Object)
     m.detailBody.translation = [148, 586]
     m.detailBody.height = 356
   end if
-  m.detailPages = buildArticlePages(item.storyParagraphs, hasWhy)
+  displayParagraphs = []
+  if item.publicNote <> ""
+    displayParagraphs.Push(storyNoteLabel(item.publicNoteType) + Chr(10) + item.publicNote)
+  end if
+  for each paragraph in item.storyParagraphs
+    displayParagraphs.Push(paragraph)
+  end for
+  m.detailPages = buildArticlePages(displayParagraphs, hasWhy)
   m.detailPageIndex = 0
   renderArticlePage()
   m.detailOverlay.visible = true
@@ -691,6 +702,12 @@ end function
 function titleCase(value as String) as String
   if value = "" return value
   return UCase(Left(value, 1)) + Mid(value, 2)
+end function
+
+function storyNoteLabel(noteType as String) as String
+  if noteType = "reporting_note" return "REPORTING NOTE"
+  if noteType = "update_note" return "UPDATE NOTE"
+  return "EDITOR'S NOTE"
 end function
 
 function hasStoryItems() as Boolean

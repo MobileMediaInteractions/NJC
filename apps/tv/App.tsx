@@ -150,6 +150,7 @@ function useTvTheme() {
 async function api<T>(path: string, init?: RequestInit) {
   const headers = new Headers(init?.headers);
   headers.set("X-NJC-Client", tvAudiencePlatform);
+  headers.set("X-NJC-Capabilities", "structured-story-notes-v1");
   return requestHarborlineApi<T>(path, { baseUrl: apiUrl }, { ...init, headers });
 }
 
@@ -667,6 +668,12 @@ function StoryDetail({
         <Text style={styles.storyByline}>
           By {story.author.name} · {story.readingMinutes} MIN READ
         </Text>
+        {story.publicNoteType && story.publicNote ? (
+          <View style={styles.storyPublicNote}>
+            <Text style={styles.storyPublicNoteLabel}>{storyNoteLabel(story.publicNoteType)}</Text>
+            <Text style={styles.storyPublicNoteBody}>{story.publicNote}</Text>
+          </View>
+        ) : null}
         {story.whyItMatters ? (
           <View style={styles.storyWhyItMatters}>
             <Text style={styles.storyWhyItMattersLabel}>WHY IT MATTERS</Text>
@@ -681,6 +688,12 @@ function StoryDetail({
       </ScrollView>
     </View>
   );
+}
+
+function storyNoteLabel(type: NonNullable<Story["publicNoteType"]>) {
+  if (type === "reporting_note") return "REPORTING NOTE";
+  if (type === "update_note") return "UPDATE NOTE";
+  return "EDITOR’S NOTE";
 }
 
 function StoryTile({
@@ -1017,6 +1030,26 @@ const createStyles = (colors: TvColors) =>
       fontWeight: "800",
       marginTop: 28,
       marginBottom: 36,
+    },
+    storyPublicNote: {
+      backgroundColor: colors.blue,
+      borderLeftWidth: 5,
+      borderLeftColor: colors.yellow,
+      paddingHorizontal: 28,
+      paddingVertical: 24,
+      marginBottom: 36,
+    },
+    storyPublicNoteLabel: {
+      color: colors.yellow,
+      fontSize: 14,
+      fontWeight: "900",
+      letterSpacing: 2.4,
+    },
+    storyPublicNoteBody: {
+      color: colors.onMedia,
+      fontSize: 20,
+      lineHeight: 31,
+      marginTop: 13,
     },
     storyWhyItMatters: {
       backgroundColor: colors.blue,

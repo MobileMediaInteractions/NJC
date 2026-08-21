@@ -8,6 +8,7 @@ import { NewsletterForm } from "@/components/newsletter-form";
 import { StoryActions } from "@/components/story-actions";
 import { StoryCard } from "@/components/story-card";
 import { StoryRichContent } from "@/components/story-rich-content";
+import { StoryPublicNote } from "@/components/story-public-note";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getAuthorProfileUrlBySlug } from "@/lib/authors";
@@ -147,6 +148,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
       <div className={`container-news grid gap-10 py-10 ${story.whyItMatters ? "max-w-[65rem] lg:grid-cols-[minmax(0,42rem)_1fr]" : "max-w-[42rem]"}`}>
         <div>
           <p className="mb-6 text-xs font-bold uppercase tracking-wider text-brand-blue">{story.location}</p>
+          {story.publicNoteType && story.publicNote ? <StoryPublicNote type={story.publicNoteType} className="mb-8">{story.publicNote}</StoryPublicNote> : null}
           {story.whyItMatters ? <div className="mb-8 border-t-4 border-brand-yellow bg-brand-navy p-5 text-white lg:hidden"><p className="eyebrow text-brand-yellow">Why it matters</p><p className="mt-3 text-sm leading-6 text-white/72">{story.whyItMatters}</p></div> : null}
           <StoryRichContent document={story.richBody} fallback={story.body} className="text-[1.08rem] leading-[1.85] text-foreground/90" />
           <div className="my-10"><AdSlot placement="articleInline" label="Advertisement" /></div>

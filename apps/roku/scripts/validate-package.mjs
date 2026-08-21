@@ -97,6 +97,9 @@ if (!source.includes("hasPrereleaseAccess()") || !source.includes('m.releaseFlai
 if (!source.includes("absoluteMediaUrl(story.image)") || !source.includes('m.apiBase + uri')) {
   throw new Error("Roku story artwork must resolve site-relative media against the configured API origin.");
 }
+if (!source.includes('transfer.AddHeader("X-NJC-Capabilities", "structured-story-notes-v1")')) {
+  throw new Error("Current Roku builds must explicitly negotiate structured story-note delivery.");
+}
 if (!source.includes('apiRequest("/api/v1/config"') || !source.includes("validConfiguration") || !source.includes('registry.Write("rokuConfig"')) {
   throw new Error("Roku must consume and retain a validated last-known-good Studio configuration.");
 }

@@ -30,6 +30,8 @@ export function normalizeStory(row: typeof stories.$inferSelect): Story {
     body: row.body,
     richBody: row.richBody as unknown as Story["richBody"],
     whyItMatters: row.whyItMatters ?? undefined,
+    publicNoteType: row.publicNoteType ?? undefined,
+    publicNote: row.publicNote ?? undefined,
     category: row.categorySlug,
     categoryLabel: row.categoryLabel,
     location: row.location,

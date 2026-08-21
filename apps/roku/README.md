@@ -24,6 +24,14 @@ still be photographed on the physical-device certification matrix.
 - Launch channel icon and splash artwork for FHD, HD and SD televisions
 - A separately labeled beta artwork set bundled for entitled accounts inside the same app
 
+The reader API also retains a bounded compatibility profile for the immutable
+Roku 1.0.0 contract. It restores that build&apos;s historical user-agent access,
+converts relative artwork, and folds every representable current story field
+into the single body value that build reads, with any public story note last.
+See [Reader API compatibility](../../docs/operations/READER_API_COMPATIBILITY.md)
+for the exact contract and the client-side behavior that still requires an app
+update.
+
 Roku does not currently expose a documented app-facing light/dark appearance preference. The `System` choice therefore uses New Jersey Courier’s television-optimized dark palette; explicit Light and Dark choices remain available and persistent.
 
 ## Validate and build

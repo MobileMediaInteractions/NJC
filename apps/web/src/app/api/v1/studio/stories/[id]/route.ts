@@ -623,6 +623,9 @@ export async function PUT(
     publishedAtRiskAcknowledged: _publishedAtRiskAcknowledged,
     publishedAtChangeReason: _publishedAtChangeReason,
     includeWhyItMatters,
+    includePublicNote,
+    publicNoteType,
+    publicNote,
     bylineMode,
     status: requestedStatus,
     imageUrl: _imageUrl,
@@ -732,6 +735,8 @@ export async function PUT(
       whyItMatters: includeWhyItMatters
         ? generateWhyItMatters(parsedBody.data)
         : null,
+      publicNoteType: includePublicNote ? publicNoteType : null,
+      publicNote: includePublicNote ? publicNote : null,
       ...leadMedia,
       imageAlt: parsedBody.data.imageAlt || null,
       seoTitle: parsedBody.data.seoTitle || null,
@@ -824,6 +829,8 @@ export async function PUT(
         whyItMatters: includeWhyItMatters
           ? generateWhyItMatters(parsedBody.data)
           : null,
+        publicNoteType: includePublicNote ? publicNoteType : null,
+        publicNote: includePublicNote ? publicNote : null,
         ...leadMedia,
         imageAlt: parsedBody.data.imageAlt || null,
         seoTitle: parsedBody.data.seoTitle || null,

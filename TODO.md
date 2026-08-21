@@ -47,7 +47,14 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > The pseudonym/byline system, approval-gated publishing state machine, durable
 > scheduling queue, typed Studio configuration registry, production migrations,
 > portable backup support, and code-level verification are implemented and
-> deployed. Completed work has been removed from this TODO. Operational details live in
+> deployed. Story creation now also supports versioned **Editor’s Note**,
+> **Reporting Note** and
+> **Update Note** callouts with validated copy, reviewer/public previews,
+> revision comparisons, approval invalidation, and web, mobile, TV and Roku
+> reader presentation. These story-note controls are complete at code level and
+> will become production-active when migration `0039_bitter_cannonball.sql` is
+> applied by the normal Vercel deployment. Completed work has been removed from
+> this TODO. Operational details live in
 > [Pseudonyms and public bylines](docs/editorial/PSEUDONYMS_AND_BYLINES.md),
 > [Approval and scheduled publication](docs/editorial/APPROVAL_AND_SCHEDULING.md),
 > and the [Studio configuration registry](docs/operations/CONFIGURATION_REGISTRY.md).
@@ -323,6 +330,22 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   store-quality, and record the accepted device/browser matrix in this section.
 
 ## Roku — highest platform priority after the mandatory implementations
+
+> The reader API now negotiates structured notes with current clients and
+> provides an exact `Harborline-Roku/1.0.0` compatibility projection for the
+> original installed binary. Every representable current story field is folded
+> into its existing category, image and `body[0]` contract, with the public note
+> last. This cannot replace the old binary&apos;s fixed eight-line overlay or add
+> newer SceneGraph interactions. See
+> [Reader API compatibility](docs/operations/READER_API_COMPATIBILITY.md).
+
+- [ ] After the server change is deployed, test an unchanged production-pointing
+  Roku 1.0.0 installation on real hardware: confirm its historical user agent
+  is accepted, relative fallback artwork loads, Breaking/Exclusive/Developing
+  treatment survives, the byline/context/topics are present, and the public
+  story note is the final API body content. Record where its immutable
+  non-scrolling eight-line overlay clips the projected copy; do not count
+  server delivery as proof that clipped text is visible.
 
 - [ ] Accept the ground-up custom Roku redesign on representative real hardware. The implemented SceneGraph interface now uses NJ Courier's editorial direction, custom focus/navigation components, configuration-driven sections, explicit loading/error/empty states and a modal remote-controlled article reader rather than stock Roku templates.
   - Preserve the original product direction during acceptance: “If Netflix can get a design like that, we need to get a full matched UI/UX as the site itself. It needs to look like Roku got a browser and we just took the site and went *plop*.” Use Netflix only as the television-quality benchmark; the visual system and layouts must remain original to NJ Courier.
