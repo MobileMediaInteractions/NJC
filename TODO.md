@@ -99,7 +99,10 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > **Reporting Note** and
 > **Update Note** callouts with validated copy, reviewer/public previews,
 > revision comparisons, approval invalidation, and web, mobile, TV and Roku
-> reader presentation. These story-note controls are complete at code level and
+> reader presentation. Final published stories also have a permission-gated,
+> classified and reasoned reopening override that preserves public copy while
+> routing every proposed change through the existing comparison and independent
+> approval workflow. These editorial controls are complete at code level and
 > will become production-active when migration `0039_bitter_cannonball.sql` is
 > applied by the normal Vercel deployment. Completed work has been removed from
 > this TODO. Operational details live in
@@ -111,7 +114,8 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   and publisher accounts: Draft → Review → approval → scheduled → Published;
   then verify material-edit invalidation, cancellation, rescheduling, overdue
   recovery, failed/blocked visibility, pseudonym moderation, collaborative
-  bylines, and an audited historical correction.
+  bylines, a final-story reopening override with a recorded reason, independent
+  approval of its proposed comparison, and an audited historical correction.
 - [ ] Add database-backed concurrency and browser E2E coverage for competing
   approvals/workers/configuration saves, rollback, every supported Studio role,
   and scheduled publication around a real daylight-saving transition. The

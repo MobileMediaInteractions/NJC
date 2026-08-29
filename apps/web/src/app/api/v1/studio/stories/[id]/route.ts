@@ -31,6 +31,11 @@ import { storyContentHash, storyPublicationBlockers } from "@/lib/story-content-
 import { canApproveStory } from "@/lib/story-scheduling-policy";
 import { InvalidStoryLeadMediaError, resolveStoryLeadMedia } from "@/lib/story-lead-media";
 import { hasMeaningfulStoryRevisionChange } from "@/lib/story-revisions";
+import {
+  getPublishedStoryOverrideBlocker,
+  publishedStoryOverrideInput,
+  publishedStoryOverrideLabels,
+} from "@/lib/published-story-override";
 
 const storyId = z.uuid();
 const transitionInput = z.discriminatedUnion("status", [
@@ -68,6 +73,7 @@ const storyActionInput = z.union([
     action: z.literal("close_editing"),
     confirmation: z.literal("CLOSE STORY"),
   }),
+  publishedStoryOverrideInput,
 ]);
 
 export async function PATCH(
@@ -189,6 +195,88 @@ export async function PATCH(
         return NextResponse.json({ error: { code: "forbidden", message: "Publisher access is required to retry a held schedule" } }, { status: 403 });
       }
       return NextResponse.json({ error: { code: "approval_required", message: "A blocked publication must be reviewed and approved again before it can be rescheduled." } }, { status: 409 });
+    }
+
+    if (mutation.action === "reopen_editing") {
+      const workflowConfiguration = await getSiteConfiguration();
+      const [pendingRevision] = await getDb()
+        .select({ id: storyRevisions.id })
+        .from(storyRevisions)
+        .where(and(
+          eq(storyRevisions.storyId, current.id),
+          eq(storyRevisions.reviewStatus, "pending"),
+        ))
+        .limit(1);
+      const blocker = getPublishedStoryOverrideBlocker({
+        role: viewer.role,
+        status: current.status,
+        isActive: current.isActive,
+        featureEnabled:
+          workflowConfiguration.studio.editorialWorkflow.activeStoryRevisions,
+        hasPendingRevision: Boolean(pendingRevision),
+      });
+      if (blocker) {
+        const errors = {
+          forbidden: ["forbidden", "Publisher access is required to reopen a final published story", 403],
+          feature_disabled: ["feature_disabled", "Active-story revisions are disabled in Studio Configuration", 409],
+          not_published: ["invalid_state", "Only a published story can use this override", 409],
+          already_active: ["already_active", "This published story is already open for approved revisions", 409],
+          revision_pending: ["revision_pending", "Resolve the pending live-story revision before using an override", 409],
+        } as const;
+        const [code, message, status] = errors[blocker];
+        return NextResponse.json({ error: { code, message } }, { status });
+      }
+
+      const updated = await getDb().transaction(async (tx) => {
+        const [story] = await tx
+          .update(stories)
+          .set({ isActive: true, editingClosedAt: null })
+          .where(and(
+            eq(stories.id, current.id),
+            eq(stories.status, "published"),
+            eq(stories.isActive, false),
+          ))
+          .returning();
+        if (!story) return null;
+
+        const [latest] = await tx
+          .select({ version: storyRevisions.version })
+          .from(storyRevisions)
+          .where(eq(storyRevisions.storyId, story.id))
+          .orderBy(desc(storyRevisions.version))
+          .limit(1);
+        await tx.insert(storyRevisions).values({
+          storyId: story.id,
+          editorId: viewer.databaseId ?? null,
+          version: (latest?.version ?? 0) + 1,
+          snapshot: story,
+          note: `Published-story override · ${publishedStoryOverrideLabels[mutation.purpose]} · ${mutation.reason}`,
+          reviewStatus: "applied",
+        });
+        return story;
+      });
+      if (!updated) {
+        return NextResponse.json(
+          { error: { code: "conflict", message: "The story changed while the override was being applied. Reload and review its current state." } },
+          { status: 409 },
+        );
+      }
+      await writeApiAudit({
+        actorClerkId: viewer.id,
+        event: "story.editing_reopened",
+        request,
+        metadata: {
+          storyId: updated.id,
+          slug: updated.slug,
+          purpose: mutation.purpose,
+          reason: mutation.reason,
+        },
+      });
+      revalidateStoryPaths(updated);
+      return NextResponse.json({
+        data: updated,
+        meta: { apiVersion: "1", next: `/studio/stories/${updated.id}/edit` },
+      });
     }
 
     if (!canPublishStory(viewer.role)) {

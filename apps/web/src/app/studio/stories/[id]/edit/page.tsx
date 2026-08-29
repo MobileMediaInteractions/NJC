@@ -51,7 +51,7 @@ export default async function EditStoryPage({ params }: { params: Promise<{ id: 
     story.status !== "scheduled" &&
     !publishedEditingAllowed
   ) {
-    return <StudioShell viewer={viewer}><StatusCard title="This story is final" description="Editing privileges were closed when this published story stopped being active." /></StudioShell>;
+    return <StudioShell viewer={viewer}><StatusCard title="This story is final" description="Routine editing was closed when this published story stopped being active. A publisher may return to the review page and use the audited override workflow when a verified correction or material update is required." /></StudioShell>;
   }
   if (publishedEditingAllowed) {
     const [pendingRevision] = await getDb()

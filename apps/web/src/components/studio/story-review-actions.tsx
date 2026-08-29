@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, CalendarClock, CheckCircle2, Loader2, LockKeyhole, Pencil, RotateCcw, Send, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CalendarClock, CheckCircle2, Loader2, LockKeyhole, Pencil, RotateCcw, Send, ShieldAlert, ShieldCheck, UnlockKeyhole } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -8,8 +8,14 @@ import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescript
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { toLocalDateTimeInput } from "@/lib/local-datetime";
+import {
+  publishedStoryOverrideLabels,
+  type PublishedStoryOverridePurpose,
+} from "@/lib/published-story-override";
 import type { StoryStatus } from "@/lib/types";
 
 type Approval = { approvedAt: string; note: string | null } | null;
@@ -18,9 +24,12 @@ type PublicationJob = { status: string; originalScheduledAt: string; scheduledAt
 export function StoryReviewActions({ id, slug, headline, bylineName, status, scheduledAt, publicationTimezone, canPublish, canApprove, canSubmitReview, isActive, activeStoryRevisionsEnabled, approval, publicationJob, publicationBlocker }: { id: string; slug: string; headline: string; bylineName: string; status: StoryStatus; scheduledAt: string | null; publicationTimezone: string; canPublish: boolean; canApprove: boolean; canSubmitReview: boolean; isActive: boolean; activeStoryRevisionsEnabled: boolean; approval: Approval; publicationJob: PublicationJob; publicationBlocker?: string | null }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
-  const [dialog, setDialog] = useState<"schedule" | "publish" | "approve" | "close" | null>(null);
+  const [dialog, setDialog] = useState<"schedule" | "publish" | "approve" | "close" | "reopen" | null>(null);
   const [activePublication, setActivePublication] = useState(isActive && activeStoryRevisionsEnabled);
   const [closeConfirmation, setCloseConfirmation] = useState("");
+  const [reopenConfirmation, setReopenConfirmation] = useState("");
+  const [reopenPurpose, setReopenPurpose] = useState<PublishedStoryOverridePurpose>("correction");
+  const [reopenReason, setReopenReason] = useState("");
   const [approvalNote, setApprovalNote] = useState("");
   const [scheduleValue, setScheduleValue] = useState(() => toLocalDateTimeInput(scheduledAt));
   const [message, setMessage] = useState("");
@@ -65,7 +74,19 @@ export function StoryReviewActions({ id, slug, headline, bylineName, status, sch
   async function closeEditing() {
     if (closeConfirmation !== "CLOSE STORY") return setError("Type CLOSE STORY exactly before closing editing.");
     const payload = await request({ action: "close_editing", confirmation: closeConfirmation }, "close");
-    if (payload) setMessage("The story is final and can no longer be edited.");
+    if (payload) setMessage("The story is final and routine editing is closed.");
+  }
+
+  async function reopenEditing() {
+    if (reopenConfirmation !== "REOPEN STORY") return setError("Type REOPEN STORY exactly before applying the override.");
+    if (reopenReason.trim().length < 20) return setError("Explain why this published story must be reopened using at least 20 characters.");
+    const payload = await request({
+      action: "reopen_editing",
+      purpose: reopenPurpose,
+      reason: reopenReason,
+      confirmation: reopenConfirmation,
+    }, "reopen");
+    if (payload?.meta?.next) window.location.assign(payload.meta.next);
   }
 
   function preset(minutes: number) {
@@ -85,6 +106,7 @@ export function StoryReviewActions({ id, slug, headline, bylineName, status, sch
       {status === "scheduled" && canPublish ? <><Button variant="outline" onClick={() => void cancelSchedule()} disabled={busy !== null}><RotateCcw /> Cancel schedule</Button><Button variant="outline" onClick={() => setDialog("schedule")} disabled={Boolean(publicationBlocker)}><CalendarClock /> Reschedule</Button><Button onClick={() => setDialog("publish")} disabled={Boolean(publicationBlocker)}><Send /> Publish now</Button></> : null}
       {status === "published" && isActive && canSubmitReview ? <Button variant="outline" asChild><Link href={`/studio/stories/${id}/edit`}><Pencil /> Propose update</Link></Button> : null}
       {status === "published" && isActive && canPublish ? <Button variant="outline" onClick={() => setDialog("close")}><LockKeyhole /> Mark story final</Button> : null}
+      {status === "published" && !isActive && canPublish && activeStoryRevisionsEnabled ? <Button variant="outline" onClick={() => setDialog("reopen")}><UnlockKeyhole /> Reopen with override</Button> : null}
       {status === "published" ? <Button asChild><Link href={`/story/${slug}`}>View live story</Link></Button> : null}
     </div>
 
@@ -92,7 +114,7 @@ export function StoryReviewActions({ id, slug, headline, bylineName, status, sch
 
     {approval ? <p className="text-sm text-emerald-400"><ShieldCheck className="mr-1.5 inline size-4" /> Approved {formatSchedule(approval.approvedAt, publicationTimezone)}{approval.note ? ` · ${approval.note}` : ""}</p> : status === "review" ? <p className="text-sm text-muted-foreground">Independent approval is required before scheduling or publishing.</p> : null}
     {publicationJob ? <p className="text-sm text-muted-foreground"><CalendarClock className="mr-1.5 inline size-4" /> Queue: <span className="capitalize">{publicationJob.status}</span> · {formatSchedule(publicationJob.scheduledAt, publicationTimezone)}{publicationJob.originalScheduledAt !== publicationJob.scheduledAt ? ` · originally ${formatSchedule(publicationJob.originalScheduledAt, publicationTimezone)}` : ""} · {publicationJob.attempts} attempt{publicationJob.attempts === 1 ? "" : "s"}{publicationJob.error ? ` · ${publicationJob.error}` : ""}</p> : null}
-    {status === "published" ? <p className="text-sm text-muted-foreground">{isActive ? "Active story — approved updates may still be published." : "Final story — editing privileges are permanently closed."}</p> : null}
+    {status === "published" ? <p className="text-sm text-muted-foreground">{isActive ? "Active story — approved updates may still be published." : activeStoryRevisionsEnabled ? "Final story — routine editing is closed; a recorded publisher override is required to propose changes." : "Final story — editing is closed and published-story revisions are disabled in Configuration."}</p> : null}
     {message ? <p role="status" className="flex items-center gap-2 text-sm text-emerald-400"><CheckCircle2 className="size-4" /> {message}</p> : null}
     {error && !dialog ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
 
@@ -102,7 +124,9 @@ export function StoryReviewActions({ id, slug, headline, bylineName, status, sch
 
     <AlertDialog open={dialog === "publish"} onOpenChange={(open) => setDialog(open ? "publish" : null)}><AlertDialogContent><AlertDialogHeader><AlertDialogMedia><Send /></AlertDialogMedia><AlertDialogTitle>Publish approved story now?</AlertDialogTitle><AlertDialogDescription>“{headline}” will appear under “By {bylineName}” across the site, apps, TV clients, feeds and search surfaces. Publication rechecks the approved content and byline.</AlertDialogDescription></AlertDialogHeader>{activeStoryRevisionsEnabled ? <ActiveStoryChoice id="publish-active-story" checked={activePublication} onCheckedChange={setActivePublication} /> : null}{error ? <ErrorText text={error} /> : null}<AlertDialogFooter><AlertDialogCancel>Keep reviewing</AlertDialogCancel><Button onClick={() => void transition("published")} disabled={busy !== null}>{busy === "published" ? <Loader2 className="animate-spin" /> : <Send />} Confirm publication</Button></AlertDialogFooter></AlertDialogContent></AlertDialog>
 
-    <AlertDialog open={dialog === "close"} onOpenChange={(open) => setDialog(open ? "close" : null)}><AlertDialogContent><AlertDialogHeader><AlertDialogMedia><LockKeyhole /></AlertDialogMedia><AlertDialogTitle>End editing permanently?</AlertDialogTitle><AlertDialogDescription>The story remains public, but new revisions will be disabled.</AlertDialogDescription></AlertDialogHeader><div className="space-y-2"><Label htmlFor="close-story-confirmation">Type CLOSE STORY to verify</Label><Input id="close-story-confirmation" value={closeConfirmation} onChange={(event) => setCloseConfirmation(event.target.value)} /></div>{error ? <ErrorText text={error} /> : null}<AlertDialogFooter><AlertDialogCancel>Keep active</AlertDialogCancel><Button variant="destructive" onClick={() => void closeEditing()} disabled={busy !== null || closeConfirmation !== "CLOSE STORY"}><LockKeyhole /> Close editing</Button></AlertDialogFooter></AlertDialogContent></AlertDialog>
+    <AlertDialog open={dialog === "close"} onOpenChange={(open) => setDialog(open ? "close" : null)}><AlertDialogContent><AlertDialogHeader><AlertDialogMedia><LockKeyhole /></AlertDialogMedia><AlertDialogTitle>Mark this story final?</AlertDialogTitle><AlertDialogDescription>The story remains public and routine editing closes. Reopening it later requires a publisher override with a recorded reason; every proposed change still requires independent approval.</AlertDialogDescription></AlertDialogHeader><div className="space-y-2"><Label htmlFor="close-story-confirmation">Type CLOSE STORY to verify</Label><Input id="close-story-confirmation" value={closeConfirmation} onChange={(event) => setCloseConfirmation(event.target.value)} /></div>{error ? <ErrorText text={error} /> : null}<AlertDialogFooter><AlertDialogCancel>Keep active</AlertDialogCancel><Button variant="destructive" onClick={() => void closeEditing()} disabled={busy !== null || closeConfirmation !== "CLOSE STORY"}><LockKeyhole /> Close editing</Button></AlertDialogFooter></AlertDialogContent></AlertDialog>
+
+    <AlertDialog open={dialog === "reopen"} onOpenChange={(open) => setDialog(open ? "reopen" : null)}><AlertDialogContent><AlertDialogHeader><AlertDialogMedia><ShieldAlert /></AlertDialogMedia><AlertDialogTitle>Override the final-story lock?</AlertDialogTitle><AlertDialogDescription>This does not alter the live article. It only reopens a controlled workspace where an editor may propose a comparison. A different publisher must approve the exact revision before readers see any change.</AlertDialogDescription></AlertDialogHeader><div className="space-y-4"><div className="space-y-2"><Label htmlFor="reopen-purpose">Editorial purpose</Label><Select value={reopenPurpose} onValueChange={(value) => setReopenPurpose(value as PublishedStoryOverridePurpose)}><SelectTrigger id="reopen-purpose" className="w-full"><SelectValue /></SelectTrigger><SelectContent>{Object.entries(publishedStoryOverrideLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select></div><div className="space-y-2"><Label htmlFor="reopen-reason">Required override record</Label><Textarea id="reopen-reason" value={reopenReason} onChange={(event) => setReopenReason(event.target.value)} maxLength={1000} placeholder="Describe the verified issue, what must be reconsidered, and why the normal final-story lock should be lifted." /><p className="text-xs text-muted-foreground">{reopenReason.trim().length}/1,000 characters · minimum 20</p></div><div className="space-y-2"><Label htmlFor="reopen-story-confirmation">Type REOPEN STORY to verify</Label><Input id="reopen-story-confirmation" value={reopenConfirmation} onChange={(event) => setReopenConfirmation(event.target.value)} autoComplete="off" /></div></div>{error ? <ErrorText text={error} /> : null}<AlertDialogFooter><AlertDialogCancel>Keep story final</AlertDialogCancel><Button variant="destructive" onClick={() => void reopenEditing()} disabled={busy !== null || reopenConfirmation !== "REOPEN STORY" || reopenReason.trim().length < 20}>{busy === "reopen" ? <Loader2 className="animate-spin" /> : <UnlockKeyhole />} Apply override and edit</Button></AlertDialogFooter></AlertDialogContent></AlertDialog>
   </div>;
 }
 

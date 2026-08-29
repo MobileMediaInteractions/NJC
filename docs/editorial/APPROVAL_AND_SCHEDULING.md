@@ -13,6 +13,23 @@ Studio treats review, approval, and publication as separate events.
 5. A material edit cancels an open job, invalidates approval, and returns the
    story to Draft. Rescheduling and cancellation are audited separately.
 
+## Published-story overrides
+
+Publishing an active story permits later proposed revisions. Marking it final
+closes routine editing without deleting its history. When verified new
+reporting, a factual correction, a legal or safety issue, or a transparency
+need requires another change, a publisher may use **Reopen with override** on
+the story review page.
+
+The override requires a classified purpose, a meaningful written reason, and
+the exact typed confirmation `REOPEN STORY`. Studio records the operator,
+reason, purpose, timestamp, and reopened snapshot in immutable revision and API
+audit history. Applying the override does not change public copy, publication
+time, byline, URL, or approval state. It only reopens the existing active-story
+workspace. The proposed comparison must still be approved by a different
+publisher before it replaces the live article. Disabling active-story revisions
+in Configuration disables this override as well.
+
 ## Timing and recovery
 
 Vercel Hobby retains the daily maintenance run. A public-repository GitHub
