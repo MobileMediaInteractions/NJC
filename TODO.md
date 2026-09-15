@@ -56,7 +56,8 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   keyboard, screen-reader, reduced-motion, Media Session, iOS Safari, Android
   Chrome/PWA and desktop production matrix described in
   `docs/TWO_DUDES_IN_WHEELS.md`. The public series home, player, versioned scene
-  engine and persistent display switch are implemented; do not replace this
+  engine, persistent display switch, validated `.njmotion` authoring format and
+  synthetic `/dev/motiondeck` workbench are implemented; do not replace this
   validation with a fake episode or invented vehicle telemetry.
 - [ ] Build the account-backed Following and cross-device saved/history synchronization,
   contextual notification follow prompts, text-size presets and approved

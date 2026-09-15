@@ -54,7 +54,14 @@ export function TwoDudesMotionDeck({
     >
       <div className={styles.ambient} aria-hidden="true"><i /><i /><i /></div>
       {frame.visual ? (
-        <figure key={frame.visual.id} className={styles.photoLayer}>
+        <figure
+          key={frame.visual.id}
+          className={styles.photoLayer}
+          data-placement={frame.visual.placement}
+          data-fit={frame.visual.fit}
+          data-entrance={frame.visual.entrance}
+          data-pan={frame.visual.pan}
+        >
           <Image
             src={frame.visual.imageUrl}
             alt={frame.visual.alt}

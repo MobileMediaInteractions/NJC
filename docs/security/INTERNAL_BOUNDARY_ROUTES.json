@@ -2,8 +2,8 @@
   "format": "njc-internal-boundary-register-v2",
   "source": "git tracked and pending repository files",
   "counts": {
-    "trackedFiles": 1420,
-    "routeSurfaces": 282,
+    "trackedFiles": 1430,
+    "routeSurfaces": 283,
     "databaseTables": 112,
     "workspaces": 22,
     "todoMarkerFiles": 6,
@@ -1806,6 +1806,15 @@
       "kind": "page",
       "workspace": "apps/web",
       "file": "apps/web/src/app/dev/media-player/page.tsx",
+      "classification": "public-page",
+      "auth": "none unless page performs its own account check",
+      "disposition": "retain-public"
+    },
+    {
+      "path": "/dev/motiondeck",
+      "kind": "page",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/dev/motiondeck/page.tsx",
       "classification": "public-page",
       "auth": "none unless page performs its own account check",
       "disposition": "retain-public"
@@ -3671,6 +3680,51 @@
     },
     {
       "file": "apps/cdn/public/assets/njc-plus/v1/signal-field.png",
+      "owner": "brand-assets",
+      "classification": "public-static",
+      "disposition": "retain-public-no-private-assets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/cdn/public/assets/podcasts/two-dudes-in-wheels/demo/motiondeck-demo.njmotion",
+      "owner": "brand-assets",
+      "classification": "public-static",
+      "disposition": "retain-public-no-private-assets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/cdn/public/assets/podcasts/two-dudes-in-wheels/demo/v1/demo-audio.mp3",
+      "owner": "brand-assets",
+      "classification": "public-static",
+      "disposition": "retain-public-no-private-assets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/cdn/public/assets/podcasts/two-dudes-in-wheels/demo/v1/driver-cockpit.svg",
+      "owner": "brand-assets",
+      "classification": "public-static",
+      "disposition": "retain-public-no-private-assets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/cdn/public/assets/podcasts/two-dudes-in-wheels/demo/v1/exterior.svg",
+      "owner": "brand-assets",
+      "classification": "public-static",
+      "disposition": "retain-public-no-private-assets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/cdn/public/assets/podcasts/two-dudes-in-wheels/demo/v1/passenger-cabin.svg",
       "owner": "brand-assets",
       "classification": "public-static",
       "disposition": "retain-public-no-private-assets",
@@ -8071,6 +8125,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/dev/motiondeck/page.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/dev/platform/page.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -8981,6 +9044,24 @@
     },
     {
       "file": "apps/web/src/components/dev/media-player-showcase.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/dev/motiondeck-demo.module.css",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/dev/motiondeck-demo.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -10708,6 +10789,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/lib/njmotion.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/lib/origin.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -12203,6 +12293,15 @@
     },
     {
       "file": "docs/NJC_PLUS.md",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "docs/NJMOTION_FORMAT.md",
       "owner": "project-operations",
       "classification": "documentation",
       "disposition": "retain-no-secrets",

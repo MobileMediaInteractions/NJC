@@ -16,6 +16,11 @@
     "njcPlusPrimaryLight": "/assets/njc-plus/v1/njc-plus-primary-light.svg",
     "njcPlusIcon": "/assets/njc-plus/v1/njc-plus-icon.svg",
     "njcPlusSignalField": "/assets/njc-plus/v1/signal-field.png",
-    "twoDudesInWheelsPlaceholderLogo": "/assets/podcasts/two-dudes-in-wheels/v1/logo-placeholder.png"
+    "twoDudesInWheelsPlaceholderLogo": "/assets/podcasts/two-dudes-in-wheels/v1/logo-placeholder.png",
+    "twoDudesInWheelsDemoTimeline": "/assets/podcasts/two-dudes-in-wheels/demo/motiondeck-demo.njmotion",
+    "twoDudesInWheelsDemoAudio": "/assets/podcasts/two-dudes-in-wheels/demo/v1/demo-audio.mp3",
+    "twoDudesInWheelsDemoExterior": "/assets/podcasts/two-dudes-in-wheels/demo/v1/exterior.svg",
+    "twoDudesInWheelsDemoDriverCockpit": "/assets/podcasts/two-dudes-in-wheels/demo/v1/driver-cockpit.svg",
+    "twoDudesInWheelsDemoPassengerCabin": "/assets/podcasts/two-dudes-in-wheels/demo/v1/passenger-cabin.svg"
   }
 }

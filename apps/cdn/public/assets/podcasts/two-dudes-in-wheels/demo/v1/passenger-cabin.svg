@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Synthetic demonstration passenger cabin</title>
+  <desc id="desc">An original vector passenger seat and window scene made only to demonstrate Courier MotionDeck.</desc>
+  <defs><linearGradient id="window" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#3c7c87"/><stop offset=".7" stop-color="#d9a441"/><stop offset="1" stop-color="#26392f"/></linearGradient><linearGradient id="seat" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e9e0cb"/><stop offset="1" stop-color="#61796e"/></linearGradient></defs>
+  <rect width="1600" height="900" fill="#08110e"/>
+  <path d="M185 80h1225v453H185Z" fill="url(#window)" stroke="#73877d" stroke-width="18"/>
+  <path d="M226 460 406 241m-13 219 239-292m84 292 248-306m74 306 220-271" stroke="#18382f" stroke-width="18" opacity=".84"/>
+  <path d="M0 554c365-54 997-62 1600 0v346H0Z" fill="#16221e"/>
+  <path d="M832 898c-43-178-35-360 54-503 64-104 248-93 296 19 59 137 74 308 48 484Z" fill="url(#seat)" stroke="#f3ecdd" stroke-width="10"/>
+  <path d="M865 539c95 35 191 35 287 0M843 690c121 30 239 30 354 0" fill="none" stroke="#476258" stroke-width="12"/>
+  <rect x="256" y="620" width="433" height="145" rx="38" fill="#0b1814" stroke="#d9a441" stroke-width="7"/>
+  <text x="313" y="680" fill="#d9a441" font-family="Arial, sans-serif" font-size="24" font-weight="700" letter-spacing="5">THE OTHER SEAT</text><text x="313" y="724" fill="#edf2ec" font-family="Arial, sans-serif" font-size="21">Space · comfort · visibility</text>
+  <text x="70" y="85" fill="#fff" font-family="Arial, sans-serif" font-size="27" font-weight="700" letter-spacing="8">PASSENGER PERSPECTIVE</text>
+</svg>

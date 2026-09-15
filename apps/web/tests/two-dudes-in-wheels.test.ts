@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import {
   buildPodcastWaveform,
   courierMotionDeck,
@@ -8,6 +12,19 @@ import {
   twoDudesInWheelsSeries,
 } from "../src/lib/two-dudes-in-wheels";
 import { buildMotionDeckFrame } from "../src/lib/two-dudes-motion-deck";
+import {
+  NJMOTION_MAGIC,
+  NjMotionError,
+  compileNjMotion,
+  parseNjMotion,
+} from "../src/lib/njmotion";
+
+const demoDocumentPath = fileURLToPath(new URL(
+  "../../cdn/public/assets/podcasts/two-dudes-in-wheels/demo/motiondeck-demo.njmotion",
+  import.meta.url,
+));
+const demoSource = readFileSync(demoDocumentPath, "utf8");
+const demoAssetRoot = fileURLToPath(new URL("../../cdn/public/assets", import.meta.url));
 
 const validEpisode = {
   id: "e14bf0df-b403-4c90-8dbb-160a79f30ed4",
@@ -66,4 +83,50 @@ test("fallback waveforms are stable, bounded and series launch data stays honest
   assert.ok(first.every((value) => value >= 0.08 && value <= 1));
   assert.equal(twoDudesInWheelsSeries.status, "in-production");
   assert.equal(twoDudesInWheelsSeries.episodes.length, 0);
+});
+
+test("the checked-in NJMotion fixture validates and compiles every timed track", () => {
+  const document = parseNjMotion(demoSource);
+  const episode = compileNjMotion(document);
+  assert.equal(document.timebase, 1_000);
+  assert.equal(episode.durationMs, 36_000);
+  assert.equal(episode.visualCues.length, 3);
+  assert.equal(episode.animationCues.length, 3);
+  assert.equal(episode.transcript.length, 3);
+  assert.equal(episode.chapters.length, 3);
+  assert.equal(episode.visualCues[1]?.placement, "left-panel");
+  assert.equal(episode.visualCues[2]?.entrance, "reveal");
+  assert.match(episode.audioUrl, /demo-audio\.mp3$/);
+  for (const asset of document.assets) {
+    assert.ok(asset.checksumSha256, `${asset.id} should be reproducible`);
+    const bytes = readFileSync(resolve(demoAssetRoot, asset.src.slice(1)));
+    assert.equal(createHash("sha256").update(bytes).digest("hex"), asset.checksumSha256);
+  }
+});
+
+test("NJMotion rejects unmarked, malformed and path-traversing documents", () => {
+  assert.throws(() => parseNjMotion(demoSource.replace(NJMOTION_MAGIC, "JSON/1")), NjMotionError);
+  assert.throws(() => parseNjMotion(`${NJMOTION_MAGIC}\n{broken`), NjMotionError);
+  assert.throws(
+    () => parseNjMotion(demoSource.replace(
+      "/podcasts/two-dudes-in-wheels/demo/v1/exterior.svg",
+      "/podcasts/../../private.svg",
+    )),
+    NjMotionError,
+  );
+});
+
+test("NJMotion never compiles unknown, mistyped or overlong asset references", () => {
+  assert.throws(
+    () => parseNjMotion(demoSource.replace('"assetId": "exterior"', '"assetId": "private-master"')),
+    NjMotionError,
+  );
+  assert.throws(
+    () => parseNjMotion(demoSource.replace('"kind": "image", "src": "/podcasts/two-dudes-in-wheels/demo/v1/exterior.svg", "mimeType": "image/svg+xml"', '"kind": "audio", "src": "/podcasts/two-dudes-in-wheels/demo/v1/exterior.svg", "mimeType": "image/svg+xml"')),
+    NjMotionError,
+  );
+  assert.throws(
+    () => parseNjMotion(demoSource.replace('"end": 36000, "assetId": "passenger-cabin"', '"end": 46000, "assetId": "passenger-cabin"')),
+    NjMotionError,
+  );
 });

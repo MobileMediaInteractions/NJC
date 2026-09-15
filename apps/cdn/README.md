@@ -12,8 +12,14 @@ Paths are immutable once published. Add a new version directory instead of repla
 ```text
 /assets/brand/v1/...
 /assets/editorial/v1/...
+/assets/podcasts/two-dudes-in-wheels/demo/...
 /assets/manifest.json
 ```
+
+The podcast demo directory contains synthetic, public workbench fixtures and a
+versioned `.njmotion` timeline. It must never be presented as a published review
+or reused as an undocumented source of vehicle claims. The format is served as
+`application/vnd.njc.motiondeck`; see `docs/NJMOTION_FORMAT.md` for the contract.
 
 Deploy this folder as a second Vercel project with Root Directory `apps/cdn`,
 Framework Preset `Other`, and the `cdn.thejerseycourier.com` hostname. Set the

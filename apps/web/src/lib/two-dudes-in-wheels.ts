@@ -21,6 +21,10 @@ export const twoDudesVisualCueSchema = timedCue.extend({
   caption: z.string().trim().min(3).max(240),
   perspective: z.enum(["driver", "passenger", "both", "road"]),
   focalPoint: z.object({ x: z.number().min(0).max(100), y: z.number().min(0).max(100) }).default({ x: 50, y: 50 }),
+  placement: z.enum(["full", "left-panel", "right-panel", "inset"]).default("full"),
+  fit: z.enum(["cover", "contain"]).default("cover"),
+  entrance: z.enum(["crossfade", "slide-left", "slide-right", "zoom", "reveal"]).default("crossfade"),
+  pan: z.enum(["none", "left-to-right", "right-to-left", "push-in", "pull-out"]).default("none"),
 });
 
 export const twoDudesTranscriptCueSchema = timedCue.extend({

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Synthetic demonstration driver cockpit</title>
+  <desc id="desc">An original vector dashboard and steering wheel scene made only to demonstrate Courier MotionDeck.</desc>
+  <defs><radialGradient id="screen"><stop stop-color="#28776b"/><stop offset="1" stop-color="#081410"/></radialGradient><linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d8a347"/><stop offset=".55" stop-color="#2c6270"/><stop offset="1" stop-color="#081410"/></linearGradient></defs>
+  <rect width="1600" height="900" fill="#07100e"/>
+  <path d="M0 0h1600v375L0 524Z" fill="url(#glass)"/>
+  <path d="M0 502c383-92 799-104 1600-143v541H0Z" fill="#111d19"/>
+  <path d="M0 586c466-125 1054-118 1600-66" fill="none" stroke="#344943" stroke-width="90"/>
+  <rect x="655" y="486" width="420" height="215" rx="28" fill="url(#screen)" stroke="#89aea0" stroke-width="6"/>
+  <path d="m710 646 89-84 70 47 127-91" fill="none" stroke="#d9a441" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="427" cy="674" r="214" fill="#0a0f0d" stroke="#d9a441" stroke-width="31"/><circle cx="427" cy="674" r="61" fill="#d9a441"/><path d="M427 613V460M366 707 225 815m263-108 142 108" stroke="#d9a441" stroke-width="34" stroke-linecap="round"/>
+  <g fill="#e9efe9" font-family="Arial, sans-serif"><text x="700" y="541" font-size="25" font-weight="700" letter-spacing="5">COURIER DEMO DRIVE</text><text x="700" y="681" font-size="19" opacity=".6">Illustrative display · no measured telemetry</text><text x="70" y="85" font-size="27" font-weight="700" letter-spacing="8">DRIVER PERSPECTIVE</text></g>
+</svg>

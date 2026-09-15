@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Synthetic demonstration coupe on a New Jersey road</title>
+  <desc id="desc">An original vector illustration made only to demonstrate Courier MotionDeck.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#163d50"/><stop offset="1" stop-color="#d9a441"/></linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8f1df"/><stop offset=".58" stop-color="#b6c5c0"/><stop offset="1" stop-color="#658076"/></linearGradient>
+    <filter id="shadow"><feGaussianBlur stdDeviation="25"/></filter>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <circle cx="1260" cy="190" r="110" fill="#ffe4a0" opacity=".82"/>
+  <path d="M0 505 230 440l160 34 240-118 280 100 260-142 430 182v404H0Z" fill="#183a31"/>
+  <path d="M0 650h1600v250H0Z" fill="#101715"/>
+  <path d="M0 763h1600" stroke="#d9a441" stroke-width="13" stroke-dasharray="125 95"/>
+  <ellipse cx="834" cy="745" rx="535" ry="70" fill="#000" opacity=".45" filter="url(#shadow)"/>
+  <path d="M340 684c26-116 105-177 230-204l177-39c93-21 184-13 270 25l196 85c67 29 111 83 130 161H305l35-28Z" fill="url(#body)" stroke="#eff8f2" stroke-width="8"/>
+  <path d="m610 493 157-35c71-16 136-9 201 19l121 52-479-36Z" fill="#0b292d" stroke="#a6c7c4" stroke-width="6"/>
+  <path d="M366 655h120m683 0h139" stroke="#d9a441" stroke-width="17" stroke-linecap="round"/>
+  <circle cx="550" cy="703" r="91" fill="#09100e" stroke="#d9a441" stroke-width="16"/><circle cx="1124" cy="703" r="91" fill="#09100e" stroke="#d9a441" stroke-width="16"/>
+  <circle cx="550" cy="703" r="38" fill="#8ea39b"/><circle cx="1124" cy="703" r="38" fill="#8ea39b"/>
+  <g fill="#fff" font-family="Arial, sans-serif"><text x="70" y="86" font-size="28" font-weight="700" letter-spacing="8">SYNTHETIC DEMONSTRATION ART</text><text x="70" y="126" font-size="21" opacity=".72">Not a photographed or reviewed vehicle</text></g>
+</svg>

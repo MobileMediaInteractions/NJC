@@ -1,0 +1,46 @@
+NJC-MOTIONDECK/1
+{
+  "format": "com.thejerseycourier.motiondeck",
+  "version": 1,
+  "timebase": 1000,
+  "episode": {
+    "id": "42817ce0-1ef4-4c55-91af-94ac92b572e9",
+    "slug": "motiondeck-system-demonstration",
+    "number": 1,
+    "title": "MotionDeck system demonstration",
+    "description": "A short synthetic demonstration of synchronized photography, scene composition and audio-only playback.",
+    "publishedAt": "2026-09-15T16:00:00.000Z",
+    "duration": 36000,
+    "audioAssetId": "demo-audio",
+    "car": { "year": 2026, "make": "Courier", "model": "Concept", "trim": "Demonstration only" }
+  },
+  "assets": [
+    { "id": "demo-audio", "kind": "audio", "src": "/podcasts/two-dudes-in-wheels/demo/v1/demo-audio.mp3", "mimeType": "audio/mpeg", "checksumSha256": "3c9e2e1887a26880c8cc3fcd1e24f59daa23836ce0c8a26a834f04ca8920cec6" },
+    { "id": "exterior", "kind": "image", "src": "/podcasts/two-dudes-in-wheels/demo/v1/exterior.svg", "mimeType": "image/svg+xml", "width": 1600, "height": 900, "checksumSha256": "2a5302d510f38a8049d77dd9a7b67212d8b168a7a61e8eb6cfc5f2cf3eca7bf3" },
+    { "id": "driver-cockpit", "kind": "image", "src": "/podcasts/two-dudes-in-wheels/demo/v1/driver-cockpit.svg", "mimeType": "image/svg+xml", "width": 1600, "height": 900, "checksumSha256": "d06c273250e8d410eec91ae216e5eb03ac18ae7dc5f9fcde6b23226cf27b67fd" },
+    { "id": "passenger-cabin", "kind": "image", "src": "/podcasts/two-dudes-in-wheels/demo/v1/passenger-cabin.svg", "mimeType": "image/svg+xml", "width": 1600, "height": 900, "checksumSha256": "02201a61ba0bf0b632492092906165f28043fd88a9cf82dd21b9e035ed8cb5d0" }
+  ],
+  "timeline": {
+    "waveform": [0.2,0.34,0.28,0.58,0.42,0.72,0.54,0.86,0.48,0.69,0.32,0.77,0.55,0.91,0.61,0.45,0.74,0.5,0.83,0.39,0.64,0.95,0.57,0.71,0.36,0.8,0.46,0.68,0.89,0.53,0.76,0.43,0.85,0.6,0.7,0.31,0.78,0.49,0.92,0.56,0.73,0.38,0.81,0.51,0.66,0.87,0.47,0.75,0.41,0.84,0.59,0.69,0.35,0.79,0.52,0.9,0.62,0.44,0.82,0.54,0.67,0.4,0.74,0.5],
+    "visuals": [
+      { "id": "visual-exterior", "start": 0, "end": 12000, "assetId": "exterior", "alt": "Synthetic silver concept coupe traveling along an illustrated New Jersey road at sunset", "caption": "Original demonstration artwork — not a photographed or reviewed vehicle.", "perspective": "road", "focalPoint": { "x": 55, "y": 55 }, "placement": "full", "fit": "cover", "entrance": "crossfade", "pan": "left-to-right" },
+      { "id": "visual-driver", "start": 12000, "end": 24000, "assetId": "driver-cockpit", "alt": "Synthetic driver cockpit illustration with steering wheel and an abstract center display", "caption": "Driver-view demonstration art with no measured vehicle telemetry.", "perspective": "driver", "focalPoint": { "x": 42, "y": 55 }, "placement": "left-panel", "fit": "cover", "entrance": "slide-right", "pan": "push-in" },
+      { "id": "visual-passenger", "start": 24000, "end": 36000, "assetId": "passenger-cabin", "alt": "Synthetic passenger cabin illustration showing a front seat and wide side window", "caption": "Passenger-view demonstration art created for this player workbench.", "perspective": "passenger", "focalPoint": { "x": 63, "y": 55 }, "placement": "right-panel", "fit": "cover", "entrance": "reveal", "pan": "pull-out" }
+    ],
+    "scenes": [
+      { "id": "scene-road", "start": 0, "end": 12000, "scene": "road", "perspective": "road", "motion": "drive", "transition": "road-wipe", "eyebrow": "00:00 · Road context", "title": "One audio clock. A living canvas.", "callouts": [{ "label": "Asset", "value": "Exterior illustration" }, { "label": "Motion", "value": "Left-to-right pan" }] },
+      { "id": "scene-driver", "start": 12000, "end": 24000, "scene": "cockpit", "perspective": "driver", "motion": "sport", "transition": "dashboard", "eyebrow": "00:12 · Driver view", "title": "Controls enter on the beat.", "callouts": [{ "label": "Placement", "value": "Left panel" }, { "label": "Entrance", "value": "Slide from left" }] },
+      { "id": "scene-passenger", "start": 24000, "end": 36000, "scene": "passenger", "perspective": "passenger", "motion": "calm", "transition": "crossfade", "eyebrow": "00:24 · Passenger view", "title": "The other seat gets the frame.", "callouts": [{ "label": "Placement", "value": "Right panel" }, { "label": "Motion", "value": "Slow pull-out" }] }
+    ],
+    "transcript": [
+      { "id": "transcript-opening", "start": 0, "end": 12000, "speaker": "narrator", "text": "This is synthetic demonstration audio. The road illustration pans while the timecode advances." },
+      { "id": "transcript-driver", "start": 12000, "end": 24000, "speaker": "driver", "text": "At twelve seconds, the driver panel arrives and the scene changes without loading a video." },
+      { "id": "transcript-passenger", "start": 24000, "end": 36000, "speaker": "passenger", "text": "At twenty-four seconds, the passenger view takes over. Audio-only mode keeps every playback control." }
+    ],
+    "chapters": [
+      { "id": "chapter-road", "start": 0, "title": "Road context" },
+      { "id": "chapter-driver", "start": 12000, "title": "Driver view" },
+      { "id": "chapter-passenger", "start": 24000, "title": "Passenger view" }
+    ]
+  }
+}

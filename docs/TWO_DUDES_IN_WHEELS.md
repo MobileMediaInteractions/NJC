@@ -51,6 +51,22 @@ The listening-mode preference is stored under the versioned key
 `njc:two-dudes-display:v1`. If storage is blocked, the selection still works for
 the current page session and audio playback is never blocked.
 
+### NJMotion timeline files
+
+MotionDeck can load the first-party `.njmotion` timecode format. Version 1 uses
+an identifying magic header, a fixed millisecond timebase, an allowlisted asset
+catalog and typed tracks for visuals, procedural scenes, transcript, chapters
+and waveform data. Visual cues define focal point, full/panel/inset placement,
+contain/cover fit, bounded entrances and bounded pan/zoom behavior. The
+renderer owns every actual style and animation; the document cannot inject
+HTML, CSS, JavaScript or arbitrary file paths.
+
+The no-index `/dev/motiondeck` workbench loads the checked-in format fixture and
+36-second synthetic audio bed so timing, seeking, image placement, animations
+and Audio Only mode can be tested without publishing a fake car review. The
+complete format contract and examples live in
+[NJMotion 1.0](NJMOTION_FORMAT.md).
+
 ## Episode contract
 
 `apps/web/src/lib/two-dudes-in-wheels.ts` is the current code-owned release
@@ -70,6 +86,11 @@ The current transparent series mark lives at
 `/assets/podcasts/two-dudes-in-wheels/v1/logo-placeholder.png`. It is explicitly
 provisional and must be replaced with a newly versioned asset after final brand
 approval; the existing immutable placeholder path should not be overwritten.
+
+Synthetic demonstration files live separately under
+`/assets/podcasts/two-dudes-in-wheels/demo/`. Every image identifies itself as
+demonstration art, and the workbench discloses that its audio, vehicle, captions
+and commentary are fixtures rather than reporting.
 
 ## Release checklist
 

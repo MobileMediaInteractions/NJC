@@ -130,6 +130,16 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: "/assets/:path*.njmotion",
+        headers: [
+          {
+            key: "Content-Type",
+            value: "application/vnd.njc.motiondeck; charset=utf-8",
+          },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+        ],
+      },
+      {
         source: "/api/:path*",
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
       },

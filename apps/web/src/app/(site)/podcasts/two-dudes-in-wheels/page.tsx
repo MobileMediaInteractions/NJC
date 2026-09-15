@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Armchair, AudioLines, CarFront, Headphones, Route, ShieldCheck } from "lucide-react";
+import { Armchair, AudioLines, Beaker, CarFront, Headphones, Route, ShieldCheck } from "lucide-react";
 import { TwoDudesPlayer } from "@/components/podcasts/two-dudes-player";
 import { Button } from "@/components/ui/button";
 import { podcastAssets } from "@/lib/assets";
@@ -45,7 +45,7 @@ export default function TwoDudesInWheelsPage() {
           <p className="eyebrow text-brand-yellow">{twoDudesInWheelsSeries.eyebrow} · In production</p>
           <h1 className="mt-5 text-6xl font-black leading-[0.88] tracking-[-0.075em] sm:text-7xl lg:text-[7.4rem]">Two Dudes<br /><span className="text-brand-yellow">in Wheels.</span></h1>
           <p className="mt-7 max-w-2xl text-lg leading-8 text-white/65 sm:text-xl">{twoDudesInWheelsSeries.description}</p>
-          <div className="mt-8 flex flex-wrap gap-3"><Button asChild size="lg" className="rounded-full bg-brand-yellow px-6 text-brand-navy hover:bg-[#e6ba65]"><Link href="/newsletter"><Headphones /> Get the launch alert</Link></Button><Button asChild size="lg" variant="outline" className="rounded-full border-white/20 bg-transparent px-6 text-white hover:bg-white/10 hover:text-white"><Link href="/latest">Read the Courier</Link></Button></div>
+          <div className="mt-8 flex flex-wrap gap-3"><Button asChild size="lg" className="rounded-full bg-brand-yellow px-6 text-brand-navy hover:bg-[#e6ba65]"><Link href="/newsletter"><Headphones /> Get the launch alert</Link></Button><Button asChild size="lg" variant="outline" className="rounded-full border-white/20 bg-transparent px-6 text-white hover:bg-white/10 hover:text-white"><Link href="/dev/motiondeck"><Beaker /> Try the player demo</Link></Button></div>
         </div>
         <HeroCar />
       </section>
