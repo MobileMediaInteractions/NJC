@@ -10,28 +10,13 @@
   box-shadow: 0 2rem 6rem rgb(0 0 0 / 30%);
 }
 
-.stage { position: relative; min-height: 23rem; overflow: hidden; background: #0c241c; }
-.visualCue { position: absolute; inset: 0; animation: cue-in 650ms ease both; }
-.visualCue::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 38%, rgb(2 8 6 / 82%)); }
-.carImage { object-fit: cover; }
-.visualCue figcaption { position: absolute; z-index: 2; inset: auto 1.25rem 1.25rem; max-width: 40rem; font-size: 0.9rem; line-height: 1.5; }
-.visualCue figcaption span { display: block; margin-bottom: 0.35rem; color: var(--wheel-signal); font-size: 0.65rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; }
-.stageIdentity { position: absolute; z-index: 3; top: 1.4rem; left: 1.4rem; display: grid; text-transform: uppercase; text-shadow: 0 2px 18px #000; }
-.stageIdentity span { color: var(--wheel-signal); font-size: 0.72rem; font-weight: 900; letter-spacing: 0.2em; }
-.stageIdentity strong { margin-top: -0.08em; font-size: clamp(2rem, 6vw, 4.5rem); font-weight: 950; letter-spacing: -0.075em; line-height: 0.95; }
-.stageIdentity small { margin-top: 0.65rem; color: rgb(255 255 255 / 66%); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.1em; }
-
-.roadStage { position: absolute; inset: 0; overflow: hidden; background: linear-gradient(170deg, #254b42, #08120f 72%); }
-.skyGlow { position: absolute; width: 38rem; height: 38rem; top: -24rem; right: -7rem; border-radius: 50%; background: #e2b65b; filter: blur(36px); opacity: 0.42; }
-.road { position: absolute; inset: 58% -10% -26%; transform: perspective(420px) rotateX(52deg); background: #111a17; }
-.road i { position: absolute; width: 22%; height: 0.42rem; top: 48%; border-radius: 999px; background: #e8c67c; animation: road-line 1.25s linear infinite paused; }
-.road i:nth-child(1) { left: 4%; }.road i:nth-child(2) { left: 39%; }.road i:nth-child(3) { left: 74%; }
-.roadStageMoving .road i { animation-play-state: running; }
-.roadStage svg { position: absolute; z-index: 2; width: min(86%, 48rem); left: 50%; bottom: 0.5rem; transform: translateX(-50%); overflow: visible; filter: drop-shadow(0 1.4rem 1.2rem rgb(0 0 0 / 55%)); }
-.roadStage svg path { fill: #d8d4c8; }.roadStage svg path:nth-child(2) { fill: #173e32; }.roadStage svg circle { fill: #080b0a; stroke: #d6a448; stroke-width: 8; }
-.roadStageMoving svg { animation: car-motion 1.6s ease-in-out infinite; }
-
 .console { padding: clamp(1.2rem, 4vw, 2.4rem); background: radial-gradient(circle at 85% 0, rgb(214 164 72 / 9%), transparent 34%), #07130f; }
+.displayMode { display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 1.25rem; }
+.displayMode > span { margin-right: auto; color: rgb(255 255 255 / 42%); font-size: 0.58rem; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; }
+.displayMode button { display: inline-flex; align-items: center; gap: 0.38rem; min-height: 2.2rem; padding: 0 0.75rem; border: 1px solid rgb(255 255 255 / 13%); border-radius: 999px; background: transparent; color: rgb(255 255 255 / 62%); font-size: 0.66rem; font-weight: 800; }
+.displayMode button svg { width: 0.85rem; }
+.displayMode button[aria-pressed="true"] { border-color: var(--wheel-signal); background: var(--wheel-signal); color: #0b1712; }
+.displayMode button:focus-visible { outline: 3px solid var(--wheel-signal); outline-offset: 3px; }
 .episodeHeading { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
 .episodeHeading span { color: var(--wheel-signal); font-size: 0.68rem; font-weight: 850; letter-spacing: 0.15em; text-transform: uppercase; }
 .episodeHeading h2 { margin-top: 0.25rem; font-size: clamp(1.45rem, 4vw, 2.35rem); font-weight: 850; letter-spacing: -0.045em; line-height: 1.05; }
@@ -69,25 +54,21 @@
 .transcript button { color: rgb(255 255 255 / 70%); line-height: 1.5; }
 .transcript .activeTranscript { border-color: var(--wheel-signal); background: rgb(214 164 72 / 10%); color: #fff; }
 
-@keyframes cue-in { from { opacity: 0; transform: scale(1.035); } to { opacity: 1; transform: scale(1); } }
-@keyframes road-line { from { transform: translateX(320%); } to { transform: translateX(-460%); } }
-@keyframes car-motion { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-4px); } }
 @keyframes wave-pulse { from { transform: scaleY(0.72); } to { transform: scaleY(1.08); } }
 
 @media (min-width: 62rem) {
   .player { grid-template-columns: minmax(0, 1.2fr) minmax(26rem, 0.8fr); }
-  .stage { min-height: 42rem; }
   .console { min-height: 42rem; }
+  .player.audioOnly { grid-template-columns: 1fr; }
+  .audioOnly .console { width: min(100%, 58rem); min-height: auto; justify-self: center; }
 }
 
 @media (max-width: 38rem) {
-  .stage { min-height: 20rem; }
-  .stageIdentity strong { font-size: 2.6rem; }
   .waveform { height: 4.25rem; }
   .waveform i:nth-child(3n) { display: none; }
   .nowTalking { grid-template-columns: 1fr; gap: 0.45rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .visualCue, .roadStageMoving svg, .roadStageMoving .road i, .waveform.isPlaying i { animation: none; }
+  .waveform.isPlaying i { animation: none; }
 }

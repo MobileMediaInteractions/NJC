@@ -34,6 +34,19 @@ export const twoDudesChapterSchema = z.object({
   title: z.string().trim().min(2).max(100),
 });
 
+export const twoDudesAnimationCueSchema = timedCue.extend({
+  scene: z.enum(["road", "cockpit", "passenger", "detail", "verdict"]),
+  perspective: z.enum(["driver", "passenger", "both", "road"]),
+  motion: z.enum(["calm", "drive", "sport"]),
+  transition: z.enum(["crossfade", "dashboard", "road-wipe"]),
+  title: z.string().trim().min(2).max(90),
+  eyebrow: z.string().trim().min(2).max(50).optional(),
+  callouts: z.array(z.object({
+    label: z.string().trim().min(1).max(40),
+    value: z.string().trim().min(1).max(70),
+  })).max(3).default([]),
+});
+
 export const twoDudesEpisodeSchema = z.object({
   id: z.uuid(),
   slug: z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
@@ -51,11 +64,12 @@ export const twoDudesEpisodeSchema = z.object({
   }),
   waveform: z.array(z.number().min(0.05).max(1)).min(32).max(192).optional(),
   visualCues: z.array(twoDudesVisualCueSchema).max(120).default([]),
+  animationCues: z.array(twoDudesAnimationCueSchema).max(240).default([]),
   transcript: z.array(twoDudesTranscriptCueSchema).max(2_000).default([]),
   chapters: z.array(twoDudesChapterSchema).max(40).default([]),
 }).superRefine((episode, context) => {
   const ids = new Set<string>();
-  const ranges = [...episode.visualCues, ...episode.transcript];
+  const ranges = [...episode.visualCues, ...episode.animationCues, ...episode.transcript];
   for (const cue of ranges) {
     if (cue.endMs <= cue.startMs) {
       context.addIssue({ code: "custom", message: `${cue.id} must end after it starts` });
@@ -82,6 +96,7 @@ export const twoDudesEpisodeSchema = z.object({
 export type TwoDudesEpisode = z.infer<typeof twoDudesEpisodeSchema>;
 export type TwoDudesVisualCue = z.infer<typeof twoDudesVisualCueSchema>;
 export type TwoDudesTranscriptCue = z.infer<typeof twoDudesTranscriptCueSchema>;
+export type TwoDudesAnimationCue = z.infer<typeof twoDudesAnimationCueSchema>;
 
 export const twoDudesInWheelsSeries = {
   title: "Two Dudes in Wheels",
@@ -96,6 +111,12 @@ export const twoDudesInWheelsSeries = {
   ],
   episodes: [] as TwoDudesEpisode[],
 };
+
+export const courierMotionDeck = {
+  name: "Courier MotionDeck",
+  version: 1,
+  preferenceKey: "njc:two-dudes-display:v1",
+} as const;
 
 export function findEpisodeMoment<T extends { startMs: number; endMs: number }>(
   cues: T[],

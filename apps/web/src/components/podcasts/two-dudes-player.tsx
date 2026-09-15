@@ -1,14 +1,19 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { Gauge, Pause, Play, RotateCcw, RotateCw, Share2, Volume2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
+import { EyeOff, Gauge, Pause, Play, RotateCcw, RotateCw, Share2, Sparkles, Volume2 } from "lucide-react";
+import { TwoDudesMotionDeck } from "./two-dudes-motion-deck";
+import { buildMotionDeckFrame } from "@/lib/two-dudes-motion-deck";
 import {
   buildPodcastWaveform,
-  findEpisodeMoment,
+  courierMotionDeck,
   type TwoDudesEpisode,
 } from "@/lib/two-dudes-in-wheels";
 import styles from "./two-dudes-player.module.css";
+
+type DisplayMode = "motion" | "audio";
+const displayModeEvent = "njc:two-dudes-display-change";
+let sessionDisplayMode: DisplayMode = "motion";
 
 export function TwoDudesPlayer({ episode }: { episode: TwoDudesEpisode }) {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -17,14 +22,19 @@ export function TwoDudesPlayer({ episode }: { episode: TwoDudesEpisode }) {
   const [durationMs, setDurationMs] = useState(episode.durationMs);
   const [speed, setSpeed] = useState(1);
   const [muted, setMuted] = useState(false);
+  const displayMode = useSyncExternalStore(
+    subscribeToDisplayMode,
+    readDisplayMode,
+    () => "motion",
+  );
   const [message, setMessage] = useState("");
   const waveform = useMemo(
     () => episode.waveform ?? buildPodcastWaveform(`${episode.id}:${episode.title}`),
     [episode.id, episode.title, episode.waveform],
   );
   const progress = durationMs > 0 ? Math.min(positionMs / durationMs, 1) : 0;
-  const activeVisual = findEpisodeMoment(episode.visualCues, positionMs);
-  const activeTranscript = findEpisodeMoment(episode.transcript, positionMs);
+  const frame = buildMotionDeckFrame(episode, positionMs);
+  const activeTranscript = frame.transcript;
 
   useEffect(() => {
     if (!("mediaSession" in navigator)) return;
@@ -83,6 +93,16 @@ export function TwoDudesPlayer({ episode }: { episode: TwoDudesEpisode }) {
     setSpeed(next);
   }
 
+  function chooseDisplayMode(mode: DisplayMode) {
+    sessionDisplayMode = mode;
+    try {
+      window.localStorage.setItem(courierMotionDeck.preferenceKey, mode);
+    } catch {
+      // The current session still honors the selection when storage is unavailable.
+    }
+    window.dispatchEvent(new Event(displayModeEvent));
+  }
+
   async function shareEpisode() {
     const url = window.location.href;
     const data = { title: episode.title, text: `Listen to ${episode.title} from Two Dudes in Wheels.`, url };
@@ -99,7 +119,7 @@ export function TwoDudesPlayer({ episode }: { episode: TwoDudesEpisode }) {
   }
 
   return (
-    <section className={styles.player} aria-label={`${episode.title} podcast player`}>
+    <section className={`${styles.player} ${displayMode === "audio" ? styles.audioOnly : ""}`} aria-label={`${episode.title} podcast player`}>
       <audio
         ref={audioRef}
         src={episode.audioUrl}
@@ -131,31 +151,14 @@ export function TwoDudesPlayer({ episode }: { episode: TwoDudesEpisode }) {
         onVolumeChange={(event) => setMuted(event.currentTarget.muted || event.currentTarget.volume === 0)}
       />
 
-      <div className={styles.stage}>
-        {activeVisual ? (
-          <figure key={activeVisual.id} className={styles.visualCue}>
-            <Image
-              src={activeVisual.imageUrl}
-              alt={activeVisual.alt}
-              fill
-              priority={activeVisual === episode.visualCues[0]}
-              sizes="(max-width: 900px) 100vw, 62vw"
-              style={{ objectPosition: `${activeVisual.focalPoint.x}% ${activeVisual.focalPoint.y}%` }}
-              className={styles.carImage}
-            />
-            <figcaption><span>{perspectiveLabel(activeVisual.perspective)}</span>{activeVisual.caption}</figcaption>
-          </figure>
-        ) : (
-          <RoadStage playing={playing} car={`${episode.car.year} ${episode.car.make} ${episode.car.model}`} />
-        )}
-        <div className={styles.stageIdentity}>
-          <span>Two Dudes</span>
-          <strong>in Wheels</strong>
-          <small>{episode.car.year} {episode.car.make} {episode.car.model}{episode.car.trim ? ` · ${episode.car.trim}` : ""}</small>
-        </div>
-      </div>
+      {displayMode === "motion" ? <TwoDudesMotionDeck frame={frame} car={episode.car} playing={playing} /> : null}
 
       <div className={styles.console}>
+        <div className={styles.displayMode} aria-label="Listening display">
+          <span>Experience</span>
+          <button type="button" aria-pressed={displayMode === "motion"} onClick={() => chooseDisplayMode("motion")}><Sparkles /> MotionDeck</button>
+          <button type="button" aria-pressed={displayMode === "audio"} onClick={() => chooseDisplayMode("audio")}><EyeOff /> Audio only</button>
+        </div>
         <div className={styles.episodeHeading}>
           <div><span>Episode {episode.episodeNumber}</span><h2>{episode.title}</h2></div>
           <button type="button" onClick={() => void shareEpisode()} aria-label="Share this episode"><Share2 /></button>
@@ -197,10 +200,6 @@ export function TwoDudesPlayer({ episode }: { episode: TwoDudesEpisode }) {
   );
 }
 
-function RoadStage({ playing, car }: { playing: boolean; car: string }) {
-  return <div className={`${styles.roadStage} ${playing ? styles.roadStageMoving : ""}`} role="img" aria-label={`Animated road scene for the ${car}`}><div className={styles.skyGlow} /><div className={styles.road}><i /><i /><i /></div><svg viewBox="0 0 760 300" aria-hidden="true"><path d="M131 205c14-48 43-78 93-87l96-19c50-10 85-9 134 4l105 28c34 9 59 31 74 60l10 20-33 8H151l-36-6 16-8Z" /><path d="m250 126 74-15c41-8 73-7 114 3l73 20-261-8Z" /><circle cx="235" cy="217" r="46" /><circle cx="552" cy="217" r="46" /></svg></div>;
-}
-
 function formatTime(valueMs: number) {
   const seconds = Math.max(0, Math.floor(valueMs / 1_000));
   const hours = Math.floor(seconds / 3_600);
@@ -211,10 +210,24 @@ function formatTime(valueMs: number) {
     : `${minutes}:${String(remainder).padStart(2, "0")}`;
 }
 
-function perspectiveLabel(value: TwoDudesEpisode["visualCues"][number]["perspective"]) {
-  return value === "driver" ? "Driver view" : value === "passenger" ? "Passenger view" : value === "both" ? "Both seats" : "Road context";
-}
-
 function speakerLabel(value: TwoDudesEpisode["transcript"][number]["speaker"]) {
   return value === "driver" ? "Driver" : value === "passenger" ? "Passenger" : "NJC";
+}
+
+function subscribeToDisplayMode(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener(displayModeEvent, onStoreChange);
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener(displayModeEvent, onStoreChange);
+  };
+}
+
+function readDisplayMode(): DisplayMode {
+  try {
+    const saved = window.localStorage.getItem(courierMotionDeck.preferenceKey);
+    return saved === "audio" || saved === "motion" ? saved : sessionDisplayMode;
+  } catch {
+    return sessionDisplayMode;
+  }
 }

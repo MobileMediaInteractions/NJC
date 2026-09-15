@@ -50,10 +50,14 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 - [ ] Complete the first real **Two Dudes in Wheels** release: final licensed
   audio, normalized waveform peaks, reviewed transcript and speaker timing,
   licensed/credited car photography, accessible descriptions, chapters and
-  synchronized visual cues. Then run the keyboard, screen-reader, reduced-
-  motion, Media Session, iOS Safari, Android Chrome/PWA and desktop production
-  matrix described in `docs/TWO_DUDES_IN_WHEELS.md`. The public series home and
-  player are implemented; do not replace this validation with a fake episode.
+  synchronized MotionDeck cues. Approve a final series logo and publish it under
+  a new immutable asset version rather than overwriting the transparent `v1`
+  placeholder. Then run both MotionDeck and Audio only modes through the
+  keyboard, screen-reader, reduced-motion, Media Session, iOS Safari, Android
+  Chrome/PWA and desktop production matrix described in
+  `docs/TWO_DUDES_IN_WHEELS.md`. The public series home, player, versioned scene
+  engine and persistent display switch are implemented; do not replace this
+  validation with a fake episode or invented vehicle telemetry.
 - [ ] Build the account-backed Following and cross-device saved/history synchronization,
   contextual notification follow prompts, text-size presets and approved
   article audio pipeline. The validated local `/saved` library remains the

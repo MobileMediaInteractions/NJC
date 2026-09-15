@@ -2,7 +2,7 @@
   "format": "njc-internal-boundary-register-v2",
   "source": "git tracked and pending repository files",
   "counts": {
-    "trackedFiles": 1416,
+    "trackedFiles": 1420,
     "routeSurfaces": 282,
     "databaseTables": 112,
     "workspaces": 22,
@@ -3671,6 +3671,15 @@
     },
     {
       "file": "apps/cdn/public/assets/njc-plus/v1/signal-field.png",
+      "owner": "brand-assets",
+      "classification": "public-static",
+      "disposition": "retain-public-no-private-assets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/cdn/public/assets/podcasts/two-dudes-in-wheels/v1/logo-placeholder.png",
       "owner": "brand-assets",
       "classification": "public-static",
       "disposition": "retain-public-no-private-assets",
@@ -9196,6 +9205,24 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/components/podcasts/two-dudes-motion-deck.module.css",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/podcasts/two-dudes-motion-deck.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/components/podcasts/two-dudes-player.module.css",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -11231,6 +11258,15 @@
     },
     {
       "file": "apps/web/src/lib/two-dudes-in-wheels.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/lib/two-dudes-motion-deck.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
