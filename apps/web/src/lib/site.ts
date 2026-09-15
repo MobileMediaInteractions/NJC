@@ -19,6 +19,7 @@ export const siteConfig = {
   accentColor: "#C49545",
   navigation: [
     { label: "Latest", href: "/latest" },
+    { label: "Podcasts", href: "/podcasts/two-dudes-in-wheels" },
     { label: "Middlesex", href: "/category/middlesex" },
     { label: "Statehouse", href: "/category/statehouse" },
     { label: "Public Square", href: "/category/public-square" },

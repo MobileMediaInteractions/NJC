@@ -5,6 +5,7 @@ import {
   defaultSiteConfiguration,
   formatDatelines,
   include20Under20Navigation,
+  includePodcastNavigation,
   isGoogleAdsLive,
   isGoogleAnalyticsLive,
   normalizePublisherId,
@@ -88,6 +89,22 @@ test("20 Under 20 replaces the former staff navigation slot", () => {
       { label: "20 Under 20", href: "/20-under-20" },
     ],
   );
+});
+
+test("the public podcast is inserted after Latest without duplicating configured navigation", () => {
+  assert.deepEqual(
+    includePodcastNavigation([
+      { label: "Latest", href: "/latest" },
+      { label: "Middlesex", href: "/category/middlesex" },
+    ]),
+    [
+      { label: "Latest", href: "/latest" },
+      { label: "Podcasts", href: "/podcasts/two-dudes-in-wheels" },
+      { label: "Middlesex", href: "/category/middlesex" },
+    ],
+  );
+  const configured = [{ label: "Listen", href: "/podcasts/two-dudes-in-wheels" }];
+  assert.deepEqual(includePodcastNavigation(configured), configured);
 });
 
 test("editorial datelines round trip and reject duplicates", () => {

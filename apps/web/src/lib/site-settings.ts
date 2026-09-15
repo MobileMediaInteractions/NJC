@@ -412,6 +412,24 @@ export function include20Under20Navigation(
   return navigation.length < 12 ? [...navigation, initiative] : navigation;
 }
 
+export function includePodcastNavigation(
+  navigation: SiteConfiguration["navigation"],
+) {
+  const podcast = {
+    label: "Podcasts",
+    href: "/podcasts/two-dudes-in-wheels",
+  };
+  if (navigation.some((item) => item.href === podcast.href)) return navigation;
+  if (navigation.length >= 12) return navigation;
+  const latestIndex = navigation.findIndex((item) => item.href === "/latest");
+  if (latestIndex < 0) return [podcast, ...navigation];
+  return [
+    ...navigation.slice(0, latestIndex + 1),
+    podcast,
+    ...navigation.slice(latestIndex + 1),
+  ];
+}
+
 export const defaultSiteConfiguration: SiteConfiguration = {
   publication: {
     name: siteConfig.name,
@@ -547,7 +565,9 @@ export const getSiteConfiguration = cache(async function getSiteConfiguration() 
     if (parsed.success) {
       return {
         ...parsed.data,
-        navigation: include20Under20Navigation(parsed.data.navigation),
+        navigation: includePodcastNavigation(
+          include20Under20Navigation(parsed.data.navigation),
+        ),
       };
     }
     if (record) console.error("Stored site configuration is invalid", parsed.error.flatten());

@@ -49,6 +49,7 @@ identity. See [Public Site V2](../../docs/design/PUBLIC_SITE_V2.md).
 | `/live` | Live coverage state | ![Live](../../docs/screenshots/dark/web-live.jpg) |
 | `/live/[slug]` | Courier Live Desk timeline, stream and correction record | Uses the live index capture until an approved public desk is active |
 | `/watch` | Video and watch surface | ![Watch](../../docs/screenshots/dark/web-watch.jpg) |
+| `/podcasts/two-dudes-in-wheels` | Public home and synchronized audio experience for the in-production **Two Dudes in Wheels** car-review podcast | [`../../docs/screenshots/dark/web-two-dudes-in-wheels.png`](../../docs/screenshots/dark/web-two-dudes-in-wheels.png) |
 | `/advertise` | Advertising information | ![Advertise](../../docs/screenshots/dark/web-advertise.jpg) |
 | `/about` | Publication identity and mission | ![About](../../docs/screenshots/dark/web-about.jpg) |
 | `/press` | Original main-domain press-kit workflow | ![Press kit](../../docs/screenshots/dark/web-press-kit.jpg) |

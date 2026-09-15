@@ -2,9 +2,9 @@
 
 This file tracks known follow-up work. Items here are requirements, not claims that the feature is already implemented.
 
-> Documentation baseline (August 18, 2026): every pnpm application, package,
-> tool and investigation workspace now has an owning README; all 99 human-facing
-> `apps/web` page files are mapped in `apps/web/PAGES.md`; and 49 dark-mode or
+> Documentation inventory (September 15, 2026): every pnpm application, package,
+> tool and investigation workspace now has an owning README; all 104 human-facing
+> `apps/web` page files are mapped in `apps/web/PAGES.md`; and 56 dark-mode or
 > safe-boundary captures are indexed under `docs/screenshots/dark`. Protected
 > interiors remain represented by their signed-out boundary, and real-device
 > store/certification captures remain part of the existing mobile, TV and Roku
@@ -47,6 +47,13 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   video/audio, chart plus accessible-table equivalents, source
   documents/citations, timelines, interactives, maps and story clusters. Do
   not encode these as unvalidated arbitrary HTML or one giant rich-text blob.
+- [ ] Complete the first real **Two Dudes in Wheels** release: final licensed
+  audio, normalized waveform peaks, reviewed transcript and speaker timing,
+  licensed/credited car photography, accessible descriptions, chapters and
+  synchronized visual cues. Then run the keyboard, screen-reader, reduced-
+  motion, Media Session, iOS Safari, Android Chrome/PWA and desktop production
+  matrix described in `docs/TWO_DUDES_IN_WHEELS.md`. The public series home and
+  player are implemented; do not replace this validation with a fake episode.
 - [ ] Build the account-backed Following and cross-device saved/history synchronization,
   contextual notification follow prompts, text-size presets and approved
   article audio pipeline. The validated local `/saved` library remains the

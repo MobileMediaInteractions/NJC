@@ -33,6 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/category/sports",
     "/category/opinion",
     "/newsletter",
+    "/podcasts/two-dudes-in-wheels",
     "/press",
     "/about",
     "/20-under-20",
