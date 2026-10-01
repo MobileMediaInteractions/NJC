@@ -15,6 +15,7 @@ export async function POST(request: Request) {
         email: parsed.data.email || null,
         subject: parsed.data.subject,
         body: parsed.data.body,
+        category: parsed.data.category,
         source: "website",
         status: "new",
       })

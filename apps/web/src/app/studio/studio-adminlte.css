@@ -1,0 +1,291 @@
+.studio-app {
+  --lte-sidebar-width: 21rem;
+  --studio-canvas: #f2f4f6;
+  --studio-panel: #fff;
+  --studio-ink: #25313b;
+  --studio-muted: #65717c;
+  --studio-border: #dce2e7;
+  --studio-accent: #28634f;
+  --studio-sidebar: #18232d;
+  --studio-sidebar-2: #202d38;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--studio-canvas);
+  color: var(--studio-ink);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 0.925rem;
+}
+
+.studio-app[data-bs-theme="dark"] {
+  --studio-canvas: #101820;
+  --studio-panel: #18232c;
+  --studio-ink: #e6edf2;
+  --studio-muted: #a5b0b9;
+  --studio-border: #34414b;
+  --studio-accent: #a9d2bb;
+  --studio-sidebar: #0c1319;
+  --studio-sidebar-2: #141f28;
+}
+
+.studio-app .app-body-layout {
+  display: block;
+  min-height: 100vh;
+  background: var(--studio-canvas);
+  color: var(--studio-ink);
+}
+
+@media (min-width: 1024px) {
+  .studio-app .app-body-layout {
+    display: grid;
+    grid-template-columns: 21rem minmax(0, 1fr);
+  }
+
+  .studio-app[data-sidebar-collapsed="true"] .app-body-layout {
+    grid-template-columns: 4.75rem minmax(0, 1fr);
+  }
+
+  .studio-app[data-sidebar-collapsed="false"][data-sidebar-compact="true"] .app-body-layout {
+    grid-template-columns: 19rem minmax(0, 1fr);
+  }
+}
+
+.studio-app .app-sidebar {
+  z-index: 35;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  border-right: 1px solid var(--studio-border);
+  background: var(--studio-sidebar);
+}
+
+.studio-app .app-sidebar > div,
+.studio-app .app-sidebar .bg-\[\#061b16\],
+.studio-app .app-sidebar .bg-\[\#0a241c\] {
+  background-color: var(--studio-sidebar) !important;
+}
+
+.studio-app .app-sidebar .bg-\[\#04140f\] {
+  background-color: #111a22 !important;
+}
+
+.studio-app .app-header {
+  min-height: 4.75rem;
+  border-color: var(--studio-border);
+  background: color-mix(in srgb, var(--studio-panel) 94%, transparent);
+  color: var(--studio-ink);
+  box-shadow: 0 1px 2px rgb(13 27 39 / 5%);
+  backdrop-filter: blur(16px);
+}
+
+.studio-app .app-main {
+  min-height: calc(100vh - 4.75rem);
+  margin: 0;
+  background: var(--studio-canvas);
+  color: var(--studio-ink);
+}
+
+.studio-app .app-main > * {
+  color: inherit;
+}
+
+.studio-app [data-slot="card"] {
+  border-color: var(--studio-border);
+  border-radius: 0.85rem;
+  background: var(--studio-panel);
+  color: var(--studio-ink);
+  box-shadow: 0 2px 8px rgb(22 37 48 / 4%);
+}
+
+.studio-app [data-slot="card-description"],
+.studio-app .text-muted-foreground {
+  color: var(--studio-muted);
+}
+
+.studio-app [data-slot="input"],
+.studio-app [data-slot="textarea"],
+.studio-app select,
+.studio-app input:not([type="checkbox"]):not([type="radio"]),
+.studio-app textarea {
+  border-color: var(--studio-border);
+  background-color: var(--studio-panel);
+  color: var(--studio-ink);
+}
+
+.studio-app .app-main a:not([class*="text-"]) {
+  color: var(--studio-accent);
+}
+
+.studio-app .app-main h1,
+.studio-app .app-main h2,
+.studio-app .app-main h3,
+.studio-app .app-main h4 {
+  letter-spacing: -0.025em;
+}
+
+.studio-app .app-sidebar .rounded-xl,
+.studio-app .app-sidebar .rounded-md {
+  border-radius: 0.55rem;
+}
+
+.studio-app .app-main table {
+  color: var(--studio-ink);
+}
+
+.studio-app .app-main th,
+.studio-app .app-main td {
+  border-color: var(--studio-border);
+}
+
+.studio-app :focus-visible {
+  outline-color: var(--studio-accent);
+}
+
+.mag-engine-hero {
+  border: 1px solid var(--studio-border);
+  background: linear-gradient(118deg, color-mix(in srgb, var(--studio-panel) 92%, #6b9d78 8%), var(--studio-panel) 70%);
+  box-shadow: 0 6px 24px rgb(17 34 25 / 5%);
+}
+
+.mag-flipbook-shell {
+  border-color: var(--studio-border);
+  background: var(--studio-panel);
+  color: var(--studio-ink);
+}
+
+.mag-flipbook-stage {
+  position: relative;
+  display: grid;
+  min-height: 34rem;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--studio-border);
+  border-radius: 1rem;
+  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--studio-panel) 78%, #8da395 22%), var(--studio-canvas));
+}
+
+.mag-flipbook-canvas {
+  display: grid;
+  width: min(100%, 64rem);
+  min-height: 32rem;
+  place-items: center;
+}
+
+.mag-flipbook-canvas .stf__parent {
+  margin-inline: auto;
+  box-shadow: 0 20px 70px rgb(8 15 12 / 28%);
+}
+
+.mag-flipbook-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background: color-mix(in srgb, var(--studio-canvas) 92%, transparent);
+  color: var(--studio-muted);
+  font-size: 0.9rem;
+}
+
+.magazine-source-pages {
+  position: fixed;
+  top: 0;
+  left: -100000px;
+  width: 420px;
+  height: 594px;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.magazine-source-page {
+  width: 420px;
+  height: 594px;
+  overflow: hidden;
+  background: #fcfaf5;
+  color: #1c271f;
+}
+
+.mag-page-paper {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  background: #fcfaf5;
+  color: #1c271f;
+}
+
+.mag-page-image {
+  display: block;
+  width: 100%;
+  max-height: 43%;
+  object-fit: cover;
+}
+
+.mag-page-copy {
+  flex: 1;
+  overflow: hidden;
+  padding: 2rem 2.15rem 1rem;
+  white-space: pre-wrap;
+}
+
+.mag-page-kicker {
+  margin: 0 0 0.8rem;
+  color: #856342;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.mag-page-copy h3 {
+  margin: 0 0 1rem;
+  font-family: Georgia, serif;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.08;
+}
+
+.mag-page-copy p {
+  margin: 0 0 0.8rem;
+  font-family: Georgia, serif;
+  font-size: 0.83rem;
+  line-height: 1.6;
+}
+
+.mag-page-folio {
+  padding: 0.5rem 1.5rem 1rem;
+  color: #737a71;
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+@media (max-width: 1023px) {
+  .studio-app .app-body-layout,
+  .studio-app[data-sidebar-collapsed="false"] .app-body-layout,
+  .studio-app[data-sidebar-collapsed="true"] .app-body-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .mag-flipbook-stage,
+  .mag-flipbook-canvas {
+    min-height: 24rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-app *,
+  .studio-app *::before,
+  .studio-app *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

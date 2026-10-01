@@ -53,7 +53,8 @@ export default async function PublicSiteLayout({ children }: { children: React.R
       <SiteHeader
         publication={configuration.publication}
         navigation={configuration.navigation.filter(
-          (item) => item.href !== "/staff" || staffPageEnabled,
+          (item) => (item.href !== "/staff" || staffPageEnabled) &&
+            (item.href !== "/community" || configuration.features.community),
         )}
         features={configuration.features}
         plusEnabled={plusEnabled}

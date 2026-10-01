@@ -469,6 +469,42 @@ export const mediaAssetUsages = pgTable(
   ],
 );
 
+export type StudioMagazinePage = {
+  id: string;
+  kicker: string;
+  title: string;
+  body: string;
+  imageAssetId?: string;
+};
+
+export const studioMagazines = pgTable(
+  "studio_magazines",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    slug: text("slug").notNull(),
+    description: text("description").notNull().default(""),
+    status: text("status").notNull().default("draft"),
+    sourceKind: text("source_kind").notNull().default("composer"),
+    sourceAssetId: uuid("source_asset_id").references(() => mediaAssets.id, { onDelete: "restrict" }),
+    pages: jsonb("pages").$type<StudioMagazinePage[]>().notNull().default([]),
+    pageCount: integer("page_count").notNull().default(0),
+    createdByClerkId: text("created_by_clerk_id").notNull(),
+    updatedByClerkId: text("updated_by_clerk_id").notNull(),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("studio_magazines_slug_idx").on(table.slug),
+    index("studio_magazines_status_updated_idx").on(table.status, table.updatedAt),
+    index("studio_magazines_source_asset_idx").on(table.sourceAssetId),
+    check("studio_magazines_status_check", sql`${table.status} in ('draft', 'review', 'approved', 'archived')`),
+    check("studio_magazines_source_kind_check", sql`${table.sourceKind} in ('composer', 'bookwright-pdf')`),
+    check("studio_magazines_page_count_check", sql`${table.pageCount} >= 0`),
+  ],
+);
+
 export const distributionFiles = pgTable(
   "distribution_files",
   {
@@ -951,13 +987,74 @@ export const newsTips = pgTable(
     email: text("email"),
     subject: text("subject").notNull(),
     body: text("body").notNull(),
+    category: text("category").notNull().default("other"),
     status: text("status").notNull().default("new"),
     source: text("source").notNull().default("website"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
-  (table) => [index("news_tips_status_idx").on(table.status, table.createdAt)],
+  (table) => [
+    index("news_tips_status_idx").on(table.status, table.createdAt),
+    check(
+      "news_tips_category_check",
+      sql`${table.category} in ('local-government', 'education', 'public-safety', 'business-development', 'transportation', 'environment', 'health', 'community', 'other')`,
+    ),
+  ],
+);
+
+export const communityBulletins = pgTable(
+  "community_bulletins",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    slug: text("slug").notNull(),
+    category: text("category").notNull().default("community"),
+    description: text("description").notNull(),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    venue: text("venue"),
+    city: text("city"),
+    organizer: text("organizer"),
+    externalUrl: text("external_url"),
+    status: text("status").notNull().default("draft"),
+    isFeatured: boolean("is_featured").notNull().default(false),
+    createdByClerkId: text("created_by_clerk_id").notNull(),
+    updatedByClerkId: text("updated_by_clerk_id").notNull(),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("community_bulletins_slug_idx").on(table.slug),
+    index("community_bulletins_status_starts_idx").on(table.status, table.startsAt),
+    check("community_bulletins_status_check", sql`${table.status} in ('draft', 'published', 'archived')`),
+  ],
+);
+
+export const communityEventSubmissions = pgTable(
+  "community_event_submissions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    category: text("category").notNull().default("community"),
+    description: text("description").notNull(),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    venue: text("venue"),
+    city: text("city"),
+    organizer: text("organizer"),
+    externalUrl: text("external_url"),
+    submitterName: text("submitter_name"),
+    submitterEmail: text("submitter_email"),
+    status: text("status").notNull().default("pending"),
+    reviewedByClerkId: text("reviewed_by_clerk_id"),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("community_event_submissions_status_created_idx").on(table.status, table.createdAt),
+    check("community_event_submissions_status_check", sql`${table.status} in ('pending', 'reviewing', 'approved', 'declined')`),
+  ],
 );
 
 export interface TwentyUnderTwentyHonoreeSnapshot {

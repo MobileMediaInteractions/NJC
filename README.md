@@ -16,6 +16,8 @@ The New Jersey Courier is a county-first digital newspaper platform launching in
 - **Public Square / Weekly Pulse** — transparent, non-scientific civic polling with Sunday context
 - **Jersey Gridiron & Court** — high-school sports and moderated Player of the Week ballots
 - **Jersey Laurels** — annual, reader-nominated community recognition
+- **In the Community** — an editor-moderated Middlesex County event bulletin
+  with a private reader-submission queue
 - **Courier Watch** — public records, service journalism and accountability reporting
 
 ![The Courier's 20 Under 20 program](docs/screenshots/product/20-under-20.jpg)

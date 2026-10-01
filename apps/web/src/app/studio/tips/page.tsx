@@ -8,7 +8,7 @@ import { TipStatusControl } from "@/components/studio/tip-status-control";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getStudioUser } from "@/lib/auth";
-import { canViewNewsTips, type TipStatus } from "@/lib/newsroom-tips";
+import { canViewNewsTips, tipCategories, type TipStatus } from "@/lib/newsroom-tips";
 import { siteConfig } from "@/lib/site";
 
 export default async function StudioTipsPage() {
@@ -96,6 +96,7 @@ export default async function StudioTipsPage() {
                       <Badge variant={tip.status === "new" ? "destructive" : "secondary"} className="capitalize">
                         {tip.status}
                       </Badge>
+                      <Badge variant="outline">{tipCategories.find(([value]) => value === tip.category)?.[1] ?? "Other / not sure"}</Badge>
                       <time className="text-xs text-muted-foreground">
                         {formatTipDate(tip.createdAt)}
                       </time>

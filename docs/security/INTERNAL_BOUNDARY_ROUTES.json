@@ -2,12 +2,12 @@
   "format": "njc-internal-boundary-register-v2",
   "source": "git tracked and pending repository files",
   "counts": {
-    "trackedFiles": 1430,
-    "routeSurfaces": 283,
-    "databaseTables": 112,
+    "trackedFiles": 1436,
+    "routeSurfaces": 293,
+    "databaseTables": 115,
     "workspaces": 22,
-    "todoMarkerFiles": 6,
-    "testFixtureFiles": 106,
+    "todoMarkerFiles": 8,
+    "testFixtureFiles": 105,
     "generatedFiles": 30
   },
   "workspaces": [
@@ -348,6 +348,15 @@
       "kind": "route",
       "workspace": "apps/web",
       "file": "apps/web/src/app/api/v1/comments/route.ts",
+      "classification": "public-or-account-api",
+      "auth": "endpoint-specific validation, consent, account, or abuse control",
+      "disposition": "retain-and-regression-test"
+    },
+    {
+      "path": "/api/v1/community/submissions",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/community/submissions/route.ts",
       "classification": "public-or-account-api",
       "auth": "endpoint-specific validation, consent, account, or abuse control",
       "disposition": "retain-and-regression-test"
@@ -1190,6 +1199,33 @@
       "disposition": "migrate-after-parity"
     },
     {
+      "path": "/api/v1/studio/community",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/community/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/api/v1/studio/community/bulletins/[id]",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/community/bulletins/[id]/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/api/v1/studio/community/submissions/[id]",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/community/submissions/[id]/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
       "path": "/api/v1/studio/distribution/accounts",
       "kind": "route",
       "workspace": "apps/web",
@@ -1383,6 +1419,51 @@
       "kind": "route",
       "workspace": "apps/web",
       "file": "apps/web/src/app/api/v1/studio/live/[id]/updates/[updateId]/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/api/v1/studio/mag-engine",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/mag-engine/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/api/v1/studio/mag-engine/[id]",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/mag-engine/[id]/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/api/v1/studio/mag-engine/[id]/document",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/mag-engine/[id]/document/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/api/v1/studio/mag-engine/assets",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/mag-engine/assets/route.ts",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/api/v1/studio/mag-engine/upload",
+      "kind": "route",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/api/v1/studio/mag-engine/upload/route.ts",
       "classification": "internal",
       "auth": "Clerk staff identity plus role/action policy",
       "disposition": "migrate-after-parity"
@@ -1766,6 +1847,15 @@
       "disposition": "retain-public"
     },
     {
+      "path": "/community",
+      "kind": "page",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/(site)/community/page.tsx",
+      "classification": "public-page",
+      "auth": "none unless page performs its own account check",
+      "disposition": "retain-public"
+    },
+    {
       "path": "/community-guidelines",
       "kind": "page",
       "workspace": "apps/web",
@@ -1806,15 +1896,6 @@
       "kind": "page",
       "workspace": "apps/web",
       "file": "apps/web/src/app/dev/media-player/page.tsx",
-      "classification": "public-page",
-      "auth": "none unless page performs its own account check",
-      "disposition": "retain-public"
-    },
-    {
-      "path": "/dev/motiondeck",
-      "kind": "page",
-      "workspace": "apps/web",
-      "file": "apps/web/src/app/dev/motiondeck/page.tsx",
       "classification": "public-page",
       "auth": "none unless page performs its own account check",
       "disposition": "retain-public"
@@ -2108,15 +2189,6 @@
       "disposition": "retain-public-product"
     },
     {
-      "path": "/podcasts/two-dudes-in-wheels",
-      "kind": "page",
-      "workspace": "apps/web",
-      "file": "apps/web/src/app/(site)/podcasts/two-dudes-in-wheels/page.tsx",
-      "classification": "public-page",
-      "auth": "none unless page performs its own account check",
-      "disposition": "retain-public"
-    },
-    {
       "path": "/press",
       "kind": "page",
       "workspace": "apps/web",
@@ -2279,6 +2351,15 @@
       "disposition": "migrate-after-parity"
     },
     {
+      "path": "/studio/community",
+      "kind": "page",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/studio/community/page.tsx",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
       "path": "/studio/distribution",
       "kind": "page",
       "workspace": "apps/web",
@@ -2364,6 +2445,15 @@
       "kind": "page",
       "workspace": "apps/web",
       "file": "apps/web/src/app/studio/live/page.tsx",
+      "classification": "internal",
+      "auth": "Clerk staff identity plus role/action policy",
+      "disposition": "migrate-after-parity"
+    },
+    {
+      "path": "/studio/mag-engine",
+      "kind": "page",
+      "workspace": "apps/web",
+      "file": "apps/web/src/app/studio/mag-engine/page.tsx",
       "classification": "internal",
       "auth": "Clerk staff identity plus role/action policy",
       "disposition": "migrate-after-parity"
@@ -2804,6 +2894,20 @@
       "table": "comments",
       "file": "packages/backend/src/db/schema.ts",
       "classification": "operational-private",
+      "disposition": "shared-authorized-data"
+    },
+    {
+      "export": "communityBulletins",
+      "table": "community_bulletins",
+      "file": "packages/backend/src/db/schema.ts",
+      "classification": "publication-content",
+      "disposition": "public-read-private-write"
+    },
+    {
+      "export": "communityEventSubmissions",
+      "table": "community_event_submissions",
+      "file": "packages/backend/src/db/schema.ts",
+      "classification": "professional-contact-and-authorization",
       "disposition": "shared-authorized-data"
     },
     {
@@ -3451,6 +3555,13 @@
       "disposition": "shared-authorized-data"
     },
     {
+      "export": "studioMagazines",
+      "table": "studio_magazines",
+      "file": "packages/backend/src/db/schema.ts",
+      "classification": "operational-private",
+      "disposition": "shared-authorized-data"
+    },
+    {
       "export": "twentyUnderTwentyPrograms",
       "table": "twenty_under_twenty_programs",
       "file": "packages/backend/src/db/schema.ts",
@@ -3680,60 +3791,6 @@
     },
     {
       "file": "apps/cdn/public/assets/njc-plus/v1/signal-field.png",
-      "owner": "brand-assets",
-      "classification": "public-static",
-      "disposition": "retain-public-no-private-assets",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
-      "file": "apps/cdn/public/assets/podcasts/two-dudes-in-wheels/demo/motiondeck-demo.njmotion",
-      "owner": "brand-assets",
-      "classification": "public-static",
-      "disposition": "retain-public-no-private-assets",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
-      "file": "apps/cdn/public/assets/podcasts/two-dudes-in-wheels/demo/v1/demo-audio.mp3",
-      "owner": "brand-assets",
-      "classification": "public-static",
-      "disposition": "retain-public-no-private-assets",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
-      "file": "apps/cdn/public/assets/podcasts/two-dudes-in-wheels/demo/v1/driver-cockpit.svg",
-      "owner": "brand-assets",
-      "classification": "public-static",
-      "disposition": "retain-public-no-private-assets",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
-      "file": "apps/cdn/public/assets/podcasts/two-dudes-in-wheels/demo/v1/exterior.svg",
-      "owner": "brand-assets",
-      "classification": "public-static",
-      "disposition": "retain-public-no-private-assets",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
-      "file": "apps/cdn/public/assets/podcasts/two-dudes-in-wheels/demo/v1/passenger-cabin.svg",
-      "owner": "brand-assets",
-      "classification": "public-static",
-      "disposition": "retain-public-no-private-assets",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
-      "file": "apps/cdn/public/assets/podcasts/two-dudes-in-wheels/v1/logo-placeholder.png",
       "owner": "brand-assets",
       "classification": "public-static",
       "disposition": "retain-public-no-private-assets",
@@ -5758,6 +5815,24 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/drizzle/0041_shiny_ulik.sql",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/drizzle/0042_unusual_korg.sql",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/drizzle/meta/_journal.json",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -6136,6 +6211,24 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/drizzle/meta/0041_snapshot.json",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/drizzle/meta/0042_snapshot.json",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/eslint.config.mjs",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -6379,6 +6472,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/(site)/community/page.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/(site)/cookies/page.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -6479,15 +6581,6 @@
     },
     {
       "file": "apps/web/src/app/(site)/page.tsx",
-      "owner": "publication-web",
-      "classification": "mixed-public-and-privileged",
-      "disposition": "retain-and-classify-by-route",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
-      "file": "apps/web/src/app/(site)/podcasts/two-dudes-in-wheels/page.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -6695,6 +6788,15 @@
     },
     {
       "file": "apps/web/src/app/api/v1/comments/route.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/community/submissions/route.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -7540,6 +7642,33 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/api/v1/studio/community/bulletins/[id]/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/studio/community/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/studio/community/submissions/[id]/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/api/v1/studio/distribution/accounts/route.ts",
       "owner": "newsroom-operations",
       "classification": "internal-browser-workflow",
@@ -7730,6 +7859,51 @@
     },
     {
       "file": "apps/web/src/app/api/v1/studio/live/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/studio/mag-engine/[id]/document/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/studio/mag-engine/[id]/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/studio/mag-engine/assets/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/studio/mag-engine/route.ts",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/api/v1/studio/mag-engine/upload/route.ts",
       "owner": "newsroom-operations",
       "classification": "internal-browser-workflow",
       "disposition": "migrate-after-parity",
@@ -8117,15 +8291,6 @@
     },
     {
       "file": "apps/web/src/app/dev/media-player/page.tsx",
-      "owner": "publication-web",
-      "classification": "mixed-public-and-privileged",
-      "disposition": "retain-and-classify-by-route",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
-      "file": "apps/web/src/app/dev/motiondeck/page.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -8548,6 +8713,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/studio/community/page.tsx",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/studio/distribution/[id]/page.tsx",
       "owner": "newsroom-operations",
       "classification": "internal-browser-workflow",
@@ -8648,6 +8822,15 @@
     },
     {
       "file": "apps/web/src/app/studio/live/page.tsx",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/app/studio/mag-engine/page.tsx",
       "owner": "newsroom-operations",
       "classification": "internal-browser-workflow",
       "disposition": "migrate-after-parity",
@@ -8935,6 +9118,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/app/studio/studio-adminlte.css",
+      "owner": "newsroom-operations",
+      "classification": "internal-browser-workflow",
+      "disposition": "migrate-after-parity",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/app/studio/team/[id]/page.tsx",
       "owner": "newsroom-operations",
       "classification": "internal-browser-workflow",
@@ -9007,6 +9199,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/components/community-event-form.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/components/cookie-consent.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -9044,24 +9245,6 @@
     },
     {
       "file": "apps/web/src/components/dev/media-player-showcase.tsx",
-      "owner": "publication-web",
-      "classification": "mixed-public-and-privileged",
-      "disposition": "retain-and-classify-by-route",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
-      "file": "apps/web/src/components/dev/motiondeck-demo.module.css",
-      "owner": "publication-web",
-      "classification": "mixed-public-and-privileged",
-      "disposition": "retain-and-classify-by-route",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
-      "file": "apps/web/src/components/dev/motiondeck-demo.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -9286,42 +9469,6 @@
       "hasTodoMarker": false
     },
     {
-      "file": "apps/web/src/components/podcasts/two-dudes-motion-deck.module.css",
-      "owner": "publication-web",
-      "classification": "mixed-public-and-privileged",
-      "disposition": "retain-and-classify-by-route",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
-      "file": "apps/web/src/components/podcasts/two-dudes-motion-deck.tsx",
-      "owner": "publication-web",
-      "classification": "mixed-public-and-privileged",
-      "disposition": "retain-and-classify-by-route",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
-      "file": "apps/web/src/components/podcasts/two-dudes-player.module.css",
-      "owner": "publication-web",
-      "classification": "mixed-public-and-privileged",
-      "disposition": "retain-and-classify-by-route",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
-      "file": "apps/web/src/components/podcasts/two-dudes-player.tsx",
-      "owner": "publication-web",
-      "classification": "mixed-public-and-privileged",
-      "disposition": "retain-and-classify-by-route",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
       "file": "apps/web/src/components/press-kit-form.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -9529,6 +9676,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/components/studio/community-manager.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/components/studio/configuration-registry-panel.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -9638,6 +9794,24 @@
     },
     {
       "file": "apps/web/src/components/studio/live-desk-manager.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/studio/mag-engine-manager.tsx",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/components/studio/magazine-flipbook.tsx",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -10375,6 +10549,24 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/lib/community-rate-limit.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/lib/community.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/lib/content.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -10645,6 +10837,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "apps/web/src/lib/mag-engine.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
       "file": "apps/web/src/lib/media-upload.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -10781,15 +10982,6 @@
     },
     {
       "file": "apps/web/src/lib/njc-plus.ts",
-      "owner": "publication-web",
-      "classification": "mixed-public-and-privileged",
-      "disposition": "retain-and-classify-by-route",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
-      "file": "apps/web/src/lib/njmotion.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -11347,24 +11539,6 @@
       "hasTodoMarker": false
     },
     {
-      "file": "apps/web/src/lib/two-dudes-in-wheels.ts",
-      "owner": "publication-web",
-      "classification": "mixed-public-and-privileged",
-      "disposition": "retain-and-classify-by-route",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
-      "file": "apps/web/src/lib/two-dudes-motion-deck.ts",
-      "owner": "publication-web",
-      "classification": "mixed-public-and-privileged",
-      "disposition": "retain-and-classify-by-route",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
       "file": "apps/web/src/lib/types.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -11402,6 +11576,15 @@
     },
     {
       "file": "apps/web/src/proxy.ts",
+      "owner": "publication-web",
+      "classification": "mixed-public-and-privileged",
+      "disposition": "retain-and-classify-by-route",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": false
+    },
+    {
+      "file": "apps/web/src/types/page-flip.d.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
       "disposition": "retain-and-classify-by-route",
@@ -12022,15 +12205,6 @@
       "hasTodoMarker": false
     },
     {
-      "file": "apps/web/tests/two-dudes-in-wheels.test.ts",
-      "owner": "publication-web",
-      "classification": "mixed-public-and-privileged",
-      "disposition": "retain-and-classify-by-route",
-      "testFixture": true,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
       "file": "apps/web/tests/why-it-matters.test.ts",
       "owner": "publication-web",
       "classification": "mixed-public-and-privileged",
@@ -12146,6 +12320,15 @@
       "testFixture": false,
       "generated": false,
       "hasTodoMarker": false
+    },
+    {
+      "file": "docs/COMMUNITY_BULLETIN.md",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": true
     },
     {
       "file": "docs/design/PUBLIC_SITE_V2_CONFORMANCE.md",
@@ -12293,15 +12476,6 @@
     },
     {
       "file": "docs/NJC_PLUS.md",
-      "owner": "project-operations",
-      "classification": "documentation",
-      "disposition": "retain-no-secrets",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
-      "file": "docs/NJMOTION_FORMAT.md",
       "owner": "project-operations",
       "classification": "documentation",
       "disposition": "retain-no-secrets",
@@ -12877,15 +13051,6 @@
       "hasTodoMarker": false
     },
     {
-      "file": "docs/screenshots/dark/web-two-dudes-in-wheels.png",
-      "owner": "project-operations",
-      "classification": "documentation",
-      "disposition": "retain-no-secrets",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
       "file": "docs/screenshots/dark/web-v2-home-desktop.png",
       "owner": "project-operations",
       "classification": "documentation",
@@ -13147,6 +13312,15 @@
       "hasTodoMarker": false
     },
     {
+      "file": "docs/studio/MAGENGINE.md",
+      "owner": "project-operations",
+      "classification": "documentation",
+      "disposition": "retain-no-secrets",
+      "testFixture": false,
+      "generated": false,
+      "hasTodoMarker": true
+    },
+    {
       "file": "docs/SUBDOMAINS.md",
       "owner": "project-operations",
       "classification": "documentation",
@@ -13157,15 +13331,6 @@
     },
     {
       "file": "docs/TV_PAIRING.md",
-      "owner": "project-operations",
-      "classification": "documentation",
-      "disposition": "retain-no-secrets",
-      "testFixture": false,
-      "generated": false,
-      "hasTodoMarker": false
-    },
-    {
-      "file": "docs/TWO_DUDES_IN_WHEELS.md",
       "owner": "project-operations",
       "classification": "documentation",
       "disposition": "retain-no-secrets",

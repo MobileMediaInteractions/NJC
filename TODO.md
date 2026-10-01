@@ -2,13 +2,75 @@
 
 This file tracks known follow-up work. Items here are requirements, not claims that the feature is already implemented.
 
-> Documentation inventory (September 15, 2026): every pnpm application, package,
-> tool and investigation workspace now has an owning README; all 104 human-facing
-> `apps/web` page files are mapped in `apps/web/PAGES.md`; and 56 dark-mode or
+> Documentation inventory (October 1, 2026): every pnpm application, package,
+> tool and investigation workspace now has an owning README; all 106 human-facing
+> `apps/web` page files are mapped in `apps/web/PAGES.md`; and 55 dark-mode or
 > safe-boundary captures are indexed under `docs/screenshots/dark`. Protected
 > interiors remain represented by their signed-out boundary, and real-device
 > store/certification captures remain part of the existing mobile, TV and Roku
 > validation work below rather than being simulated with private or fake data.
+
+## Studio AdminLTE redesign and MagEngine — implementation and activation
+
+> Studio now uses an AdminLTE 4 / Bootstrap 5 application shell and a shared
+> responsive light/dark visual system while retaining the existing permission-
+> checked workspaces, navigation, chat, notifications, command palette and
+> feature pages. The new **MagEngine** workspace supports structured magazine
+> drafts, approved newsroom-image selection, private PDF import from Blurb
+> BookWright exports, and on-demand StPageFlip previews. The retired podcast
+> feature's pages, player, timeline format, demos, assets, navigation entries
+> and active-worktree test/docs references have been removed. See
+> [MagEngine architecture and rollout](docs/studio/MAGENGINE.md).
+
+- [ ] Apply migration `0042_unusual_korg.sql` through the normal deployment process and
+  confirm the `studio_magazines` table exists before enabling MagEngine in
+  production. Configure the existing private Vercel Blob store and
+  `PRIVATE_BLOB_READ_WRITE_TOKEN`; never make BookWright source PDFs public.
+- [ ] Finish route-specific AdminLTE/Bootstrap component conversion where
+  existing workspace controls still use the legacy shared UI primitives, then
+  review every Studio destination at supported desktop, tablet and mobile
+  breakpoints in both light and dark themes. Capture refreshed screens in
+  `docs/screenshots/dark`, update `apps/web/PAGES.md`, and confirm no feature is
+  clipped or displaced.
+- [ ] Import newsroom-approved BookWright PDF exports and confirm page order,
+  crop/bleed marks, image resolution, typography, large-file behavior, keyboard
+  navigation and PDF fallback. StPageFlip is a screen preview, not a print
+  proofing or PDF-editing tool; the original PDF remains unchanged.
+- [ ] Before any reader-facing magazine release, define the publication route,
+  reader access policy, image attribution/rights checks, and independent
+  approval requirements. MagEngine's current `approved` state is internal
+  workflow state and does not publish the issue.
+- [ ] Confirm removal of the retired podcast feature from the checked-out
+  source tree, production navigation and generated route inventory. Git history
+  is intentionally preserved; do not rewrite or force-push history to erase
+  the old commits.
+
+## In the Community — production activation
+
+> The autumnal `/community` bulletin, private reader event submissions, Studio
+> review/composition controls, tipline topic selection, configuration switches,
+> database migration and portable-backup integration are implemented. Reader
+> event suggestions stay private until newsroom staff create a bulletin draft;
+> only publishing roles can make listings public. Do not add invented sample
+> events. See [the workflow and safeguards](docs/COMMUNITY_BULLETIN.md).
+
+- [ ] Deploy and confirm migration `0041_shiny_ulik.sql` before
+  enabling the public feature in production. Confirm Postgres and the existing
+  Upstash integration are configured; the process-local rate-limit fallback
+  does not coordinate across Vercel instances.
+- [ ] Capture `/community` in dark mode after deployment using either its
+  truthful empty state or editor-approved public listings. Do not include
+  reader-submission contact details in screenshots; update
+  `apps/web/PAGES.md` and `docs/screenshots/dark/README.md` with the verified
+  capture.
+- [ ] Run a newsroom rehearsal with separate reporter and publisher roles:
+  public submission → private review → draft creation → publish → unpublish;
+  verify tip categories, module-disable behavior, HTTPS-only event links,
+  rate-limit response and portable export/restore on a non-production copy.
+- [ ] Set and document a newsroom-approved retention period for declined event
+  suggestions and submitter contact details; implement and audit automatic
+  deletion or de-identification only after the privacy owner approves that
+  schedule.
 
 ## Public Site V2 — production validation and deeper editorial tooling remaining
 
@@ -47,18 +109,6 @@ This file tracks known follow-up work. Items here are requirements, not claims t
   video/audio, chart plus accessible-table equivalents, source
   documents/citations, timelines, interactives, maps and story clusters. Do
   not encode these as unvalidated arbitrary HTML or one giant rich-text blob.
-- [ ] Complete the first real **Two Dudes in Wheels** release: final licensed
-  audio, normalized waveform peaks, reviewed transcript and speaker timing,
-  licensed/credited car photography, accessible descriptions, chapters and
-  synchronized MotionDeck cues. Approve a final series logo and publish it under
-  a new immutable asset version rather than overwriting the transparent `v1`
-  placeholder. Then run both MotionDeck and Audio only modes through the
-  keyboard, screen-reader, reduced-motion, Media Session, iOS Safari, Android
-  Chrome/PWA and desktop production matrix described in
-  `docs/TWO_DUDES_IN_WHEELS.md`. The public series home, player, versioned scene
-  engine, persistent display switch, validated `.njmotion` authoring format and
-  synthetic `/dev/motiondeck` workbench are implemented; do not replace this
-  validation with a fake episode or invented vehicle telemetry.
 - [ ] Build the account-backed Following and cross-device saved/history synchronization,
   contextual notification follow prompts, text-size presets and approved
   article audio pipeline. The validated local `/saved` library remains the

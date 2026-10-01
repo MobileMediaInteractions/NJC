@@ -17,6 +17,8 @@ import {
   Users,
 } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
+import { ThemeMenu } from "@/components/theme-menu";
+import { useTheme } from "@/components/theme-provider";
 import { StudioCommandPalette } from "@/components/studio/studio-command-palette";
 import { StudioMiniChat } from "@/components/studio/studio-mini-chat";
 import { StudioWorkspaceNavigation } from "@/components/studio/studio-workspace-navigation";
@@ -79,6 +81,7 @@ export function StudioShellClient({
   studioConfiguration: SiteConfiguration["studio"];
 }) {
   const pathname = usePathname();
+  const { resolvedTheme } = useTheme();
   const cleanStudioPaths = usesCleanStudioNavigationPaths(pathname);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -165,15 +168,15 @@ export function StudioShellClient({
     unreadChatCount: communication.unreadChat,
     cleanStudioPaths,
   };
-  const primaryAction = getPrimaryAction(activeHub.id, pressEnabled);
+  const primaryAction = getPrimaryAction(activeHub.id, pressEnabled, activeItem?.id);
   const quickActions = getQuickActions(hubs, pressEnabled);
   const standaloneWorkspace = activeHub.id === "teamspace";
 
   return (
-    <div className="studio-app min-h-screen bg-[#eef0eb] text-foreground dark:bg-[#07100c]">
+    <div className="studio-app app-wrapper min-h-screen text-foreground" data-bs-theme={resolvedTheme} data-sidebar-collapsed={collapsed ? "true" : "false"} data-sidebar-compact={studioConfiguration.experience.compactNavigation ? "true" : "false"}>
       <div
         className={cn(
-          "min-h-screen transition-[grid-template-columns] duration-300 ease-out motion-reduce:transition-none lg:grid",
+          "app-body-layout min-h-screen transition-[grid-template-columns] duration-300 ease-out motion-reduce:transition-none lg:grid",
           collapsed
             ? "lg:grid-cols-[4.75rem_minmax(0,1fr)]"
             : studioConfiguration.experience.compactNavigation
@@ -181,7 +184,7 @@ export function StudioShellClient({
               : "lg:grid-cols-[21rem_minmax(0,1fr)]",
         )}
       >
-        <aside className="sticky top-0 hidden h-screen min-h-0 shadow-[10px_0_34px_rgba(3,24,17,.1)] lg:block">
+        <aside className="app-sidebar sticky top-0 hidden h-screen min-h-0 shadow-[10px_0_34px_rgba(3,24,17,.1)] lg:block">
           <StudioWorkspaceNavigation
             {...navigationProps}
             collapsed={collapsed}
@@ -207,7 +210,7 @@ export function StudioShellClient({
         </Sheet>
 
         <div className="min-w-0">
-          <header className="sticky top-0 z-30 flex h-[4.75rem] items-center justify-between border-b border-black/8 bg-[#f7f7f3]/90 px-3 backdrop-blur-2xl dark:border-white/8 dark:bg-[#0d1713]/90 sm:px-5">
+          <header className="app-header navbar sticky top-0 z-30 flex h-[4.75rem] items-center justify-between border-b border-black/8 px-3 sm:px-5">
             <div className="flex min-w-0 items-center gap-2">
               <Button
                 variant="ghost"
@@ -321,6 +324,7 @@ export function StudioShellClient({
                 setStatus={communication.setStatus}
                 markNotificationRead={communication.markNotificationRead}
               />
+              <ThemeMenu />
               {primaryAction ? (
                 <Button asChild size="sm" className="shadow-sm">
                   <Link
@@ -344,8 +348,9 @@ export function StudioShellClient({
           </header>
 
           <main
+            id="studio-main"
             className={cn(
-              "w-full",
+              "app-main w-full",
               standaloneWorkspace
                 ? "p-2 sm:p-3"
                 : "mx-auto max-w-[96rem] p-4 sm:p-6 lg:p-7",
@@ -456,7 +461,10 @@ function AccountMenu({ viewer }: { viewer: StudioUser }) {
   );
 }
 
-function getPrimaryAction(hub: StudioHubId, pressEnabled: boolean) {
+function getPrimaryAction(hub: StudioHubId, pressEnabled: boolean, itemId?: string) {
+  if (itemId === "mag-engine") {
+    return { label: "New magazine", href: "/studio/mag-engine" };
+  }
   if (hub === "distribution" && pressEnabled) {
     return {
       label: "New release",

@@ -1,9 +1,32 @@
 import { z } from "zod";
 import type { StaffRole } from "@/lib/types";
 
+export const tipCategories = [
+  ["local-government", "Local government"],
+  ["education", "Education"],
+  ["public-safety", "Public safety"],
+  ["business-development", "Business & development"],
+  ["transportation", "Transportation"],
+  ["environment", "Environment"],
+  ["health", "Health"],
+  ["community", "Community"],
+  ["other", "Other / not sure"],
+] as const;
+
 export const tipInput = z.object({
   name: z.string().trim().max(100).optional().or(z.literal("")),
   email: z.email().optional().or(z.literal("")),
+  category: z.enum([
+    "local-government",
+    "education",
+    "public-safety",
+    "business-development",
+    "transportation",
+    "environment",
+    "health",
+    "community",
+    "other",
+  ]).default("other"),
   subject: z.string().trim().min(4).max(180),
   body: z.string().trim().min(10).max(10_000),
 });

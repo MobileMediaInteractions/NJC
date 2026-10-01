@@ -14,12 +14,3 @@ export const brandAssets = {
   appIcon: assetUrl("/brand/v1/app-icon.svg"),
   gardenStateEngraving: assetUrl("/editorial/v1/garden-state-engraving.png"),
 } as const;
-
-export const podcastAssets = {
-  twoDudesInWheelsPlaceholderLogo: assetUrl(
-    "/podcasts/two-dudes-in-wheels/v1/logo-placeholder.png",
-  ),
-  twoDudesInWheelsDemoTimeline: assetUrl(
-    "/podcasts/two-dudes-in-wheels/demo/motiondeck-demo.njmotion",
-  ),
-} as const;

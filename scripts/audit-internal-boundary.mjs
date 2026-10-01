@@ -1,10 +1,10 @@
 import { execFileSync } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { relative, resolve, sep } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
 const output = resolve(root, "docs/security/INTERNAL_BOUNDARY_ROUTES.json");
-const tracked = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard"], { cwd: root, encoding: "utf8" }).trim().split("\n").filter(Boolean);
+const tracked = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard"], { cwd: root, encoding: "utf8" }).trim().split("\n").filter((file) => file && existsSync(resolve(root, file)));
 const routeFiles = tracked.filter((file) => /^apps\/(web|internal|platform-playground)\/src\/app\/(?:.+\/)?(page|route)\.tsx?$/.test(file));
 
 const readableExtensions = new Set([
@@ -112,12 +112,13 @@ const tables = [...schema.matchAll(/export const (\w+) = pgTable\(\s*(?:\n\s*)?[
   const name = match[2];
   let classification = "operational-private";
   let disposition = "shared-authorized-data";
-  if (/^(categories|stories|storyAuthors|mediaAssetUsages)$/.test(match[1])) classification = "publication-content";
+  if (/^(categories|stories|storyAuthors|mediaAssetUsages|communityBulletins)$/.test(match[1])) classification = "publication-content";
   if (/^(analytics|audience)/.test(match[1])) classification = "privacy-sensitive-analytics";
   if (/^(employee|users$)/.test(match[1])) classification = "internal-confidential";
   if (/^(financial|premiumSubscriptions|stripe)/.test(match[1])) classification = "restricted-financial";
   if (/^(apiKeys|deviceSessions|devicePairing|platformSigning|platformLicense|platformInstall)/.test(match[1])) classification = "security-sensitive";
   if (/^(pressKit|pressAssets)/.test(match[1])) classification = "professional-contact-and-authorization";
+  if (/^communityEventSubmissions$/.test(match[1])) classification = "professional-contact-and-authorization";
   if (/^(distribution)/.test(match[1])) classification = "controlled-distribution";
   if (classification === "publication-content") disposition = "public-read-private-write";
   return { export: match[1], table: name, file: schemaFile, classification, disposition };

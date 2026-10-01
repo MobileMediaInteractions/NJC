@@ -19,7 +19,6 @@ export const siteConfig = {
   accentColor: "#C49545",
   navigation: [
     { label: "Latest", href: "/latest" },
-    { label: "Podcasts", href: "/podcasts/two-dudes-in-wheels" },
     { label: "Middlesex", href: "/category/middlesex" },
     { label: "Statehouse", href: "/category/statehouse" },
     { label: "Public Square", href: "/category/public-square" },
@@ -27,6 +26,7 @@ export const siteConfig = {
     { label: "Gridiron & Court", href: "/category/sports" },
     { label: "Jersey Laurels", href: "/category/jersey-laurels" },
     { label: "20 Under 20", href: "/20-under-20" },
+    { label: "In the Community", href: "/community" },
   ],
   monetization: {
     adsEnabled: false,

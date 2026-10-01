@@ -110,11 +110,25 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         module: "media",
       },
       {
+        id: "mag-engine",
+        label: "MagEngine",
+        href: "/studio/mag-engine",
+        roles: publishingRoles,
+        module: "magEngine",
+      },
+      {
         id: "tips",
         label: "News tips",
         href: "/studio/tips",
         roles: editorialRoles,
         module: "tips",
+      },
+      {
+        id: "community-bulletin",
+        label: "In the Community",
+        href: "/studio/community",
+        roles: editorialRoles,
+        module: "community",
       },
       {
         id: "twenty-under-twenty",

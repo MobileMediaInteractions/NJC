@@ -44,13 +44,12 @@ identity. See [Public Site V2](../../docs/design/PUBLIC_SITE_V2.md).
 | --- | --- | --- |
 | `/20-under-20` | Annual student recognition program | ![20 Under 20](../../docs/screenshots/dark/web-20-under-20.jpg) |
 | `/tips` | Secure news-tip intake | ![Tips](../../docs/screenshots/dark/web-tips.jpg) |
+| `/community` | Autumnal reader bulletin for editor-published local events; the submission form stores suggestions privately for review | Screenshot pending; capture only with verified public listings or the truthful empty state |
 | `/newsletter` | Newsletter and alert registration | ![Newsletter](../../docs/screenshots/dark/web-newsletter.jpg) |
 | `/weather` | Local weather surface | ![Weather](../../docs/screenshots/dark/web-weather.jpg) |
 | `/live` | Live coverage state | ![Live](../../docs/screenshots/dark/web-live.jpg) |
 | `/live/[slug]` | Courier Live Desk timeline, stream and correction record | Uses the live index capture until an approved public desk is active |
 | `/watch` | Video and watch surface | ![Watch](../../docs/screenshots/dark/web-watch.jpg) |
-| `/podcasts/two-dudes-in-wheels` | Public home and synchronized audio experience for the in-production **Two Dudes in Wheels** car-review podcast | [`../../docs/screenshots/dark/web-two-dudes-in-wheels.png`](../../docs/screenshots/dark/web-two-dudes-in-wheels.png) |
-| `/dev/motiondeck` | No-index workbench that validates and renders the checked-in `.njmotion` timeline with explicitly synthetic audio and vehicle art | Capture pending after the next screenshot-library refresh |
 | `/advertise` | Advertising information | ![Advertise](../../docs/screenshots/dark/web-advertise.jpg) |
 | `/about` | Publication identity and mission | ![About](../../docs/screenshots/dark/web-about.jpg) |
 | `/press` | Original main-domain press-kit workflow | ![Press kit](../../docs/screenshots/dark/web-press-kit.jpg) |
@@ -121,7 +120,9 @@ signed-out state for every row is this capture:
 | `/studio/stories/[id]/edit` | Pre-publication or active-story editing |
 | `/studio/live` | Continuous reporting desks, timeline updates and lifecycle controls |
 | `/studio/tips` | Submitted-tip triage |
+| `/studio/community` | Community bulletin authoring and private reader-event review |
 | `/studio/media` | Public/private media catalog |
+| `/studio/mag-engine` | MagEngine magazine composer and private BookWright PDF import/page-turn preview |
 | `/studio/20-under-20` | Program, nomination and selection controls |
 | `/studio/legal` | Severity-gated legal-center changes |
 | `/studio/links` | Link in Bio curation |

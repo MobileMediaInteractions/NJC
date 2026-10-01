@@ -73,7 +73,9 @@ const studioModules: Array<{
   { key: "commandReference", label: "Commands and shortcuts", description: "Searchable help for navigation and guarded actions.", group: "Operations" },
   { key: "stories", label: "Stories", description: "Draft, review, schedule and publish journalism.", group: "Newsroom" },
   { key: "media", label: "Media library", description: "Upload and reuse newsroom images.", group: "Newsroom" },
+  { key: "magEngine", label: "MagEngine", description: "Create magazine drafts and privately import BookWright PDF issues.", group: "Newsroom" },
   { key: "tips", label: "News tips", description: "Review sensitive reader submissions.", group: "Newsroom" },
+  { key: "community", label: "Community bulletin", description: "Publish local events and review reader suggestions.", group: "Newsroom" },
   { key: "twentyUnderTwenty", label: "20 Under 20", description: "Program and nomination controls.", group: "Newsroom" },
   { key: "distributionManager", label: "Secure distribution", description: "Pre-publication package delivery.", group: "Operations" },
   { key: "pressReleases", label: "Press releases", description: "Release authoring and PDF generation.", group: "Operations" },
@@ -469,6 +471,7 @@ export function SiteSettingsForm({
             <Toggle label="Secure distribution" description="Makes the authorized pre-publication distribution workspace available to supported clients." checked={configuration.features.distribution} disabled={!canManage} onCheckedChange={(value) => updateFeature("distribution", value)} />
             <Toggle label="Press & Media request portal" description="Enables public AI-assisted intake and policy evaluation on the dedicated Press hostname. Studio review and historical audit records remain available when disabled." checked={configuration.features.pressPortal} disabled={!canManage} onCheckedChange={(value) => updateFeature("pressPortal", value)} />
             <Toggle label="Link in Bio" description="Publishes the curated social article landing page on links.thejerseycourier.com. Existing entries remain in Studio when disabled." checked={configuration.features.linkInBio} disabled={!canManage} onCheckedChange={(value) => updateFeature("linkInBio", value)} />
+            <Toggle label="In the Community bulletin" description="Enables the public local-event bulletin and reader event-submission form. Existing private submissions and Studio review controls remain available when disabled." checked={configuration.features.community} disabled={!canManage} onCheckedChange={(value) => updateFeature("community", value)} />
             <Toggle label="Comments" description="Reader discussion endpoints and future story controls." checked={configuration.features.comments} disabled={!canManage} onCheckedChange={(value) => updateFeature("comments", value)} />
             <Toggle label="Newsletters" description="Newsletter signup surfaces and API availability." checked={configuration.features.newsletters} disabled={!canManage} onCheckedChange={(value) => updateFeature("newsletters", value)} />
             <Toggle label="Breaking-news alerts" description="Alert enrollment and delivery surfaces." checked={configuration.features.alerts} disabled={!canManage} onCheckedChange={(value) => updateFeature("alerts", value)} />

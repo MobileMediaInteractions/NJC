@@ -288,6 +288,20 @@
       "when": 1787304811127,
       "tag": "0040_low_dragon_lord",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1790828963907,
+      "tag": "0041_shiny_ulik",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1790830890974,
+      "tag": "0042_unusual_korg",
+      "breakpoints": true
     }
   ]
 }

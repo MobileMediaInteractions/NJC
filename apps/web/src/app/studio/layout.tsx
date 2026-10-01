@@ -1,4 +1,7 @@
 import type { Metadata } from "next";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "admin-lte/dist/css/adminlte.min.css";
+import "./studio-adminlte.css";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
