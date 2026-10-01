@@ -173,10 +173,10 @@ export function StudioShellClient({
   const standaloneWorkspace = activeHub.id === "teamspace";
 
   return (
-    <div className="studio-app app-wrapper min-h-screen text-foreground" data-bs-theme={resolvedTheme} data-sidebar-collapsed={collapsed ? "true" : "false"} data-sidebar-compact={studioConfiguration.experience.compactNavigation ? "true" : "false"}>
+    <div className="studio-app studio-shell-root min-h-screen text-foreground" data-bs-theme={resolvedTheme} data-sidebar-collapsed={collapsed ? "true" : "false"} data-sidebar-compact={studioConfiguration.experience.compactNavigation ? "true" : "false"}>
       <div
         className={cn(
-          "app-body-layout min-h-screen transition-[grid-template-columns] duration-300 ease-out motion-reduce:transition-none lg:grid",
+          "studio-shell-grid min-h-screen transition-[grid-template-columns] duration-300 ease-out motion-reduce:transition-none lg:grid",
           collapsed
             ? "lg:grid-cols-[4.75rem_minmax(0,1fr)]"
             : studioConfiguration.experience.compactNavigation
@@ -184,7 +184,7 @@ export function StudioShellClient({
               : "lg:grid-cols-[21rem_minmax(0,1fr)]",
         )}
       >
-        <aside className="app-sidebar sticky top-0 hidden h-screen min-h-0 shadow-[10px_0_34px_rgba(3,24,17,.1)] lg:block">
+        <aside className="studio-shell-sidebar sticky top-0 hidden h-screen min-h-0 shadow-[10px_0_34px_rgba(3,24,17,.1)] lg:block">
           <StudioWorkspaceNavigation
             {...navigationProps}
             collapsed={collapsed}
@@ -210,7 +210,7 @@ export function StudioShellClient({
         </Sheet>
 
         <div className="min-w-0">
-          <header className="app-header navbar sticky top-0 z-30 flex h-[4.75rem] items-center justify-between border-b border-black/8 px-3 sm:px-5">
+          <header className="studio-shell-header sticky top-0 z-30 flex h-[4.75rem] items-center justify-between border-b border-black/8 px-3 sm:px-5">
             <div className="flex min-w-0 items-center gap-2">
               <Button
                 variant="ghost"
@@ -350,7 +350,7 @@ export function StudioShellClient({
           <main
             id="studio-main"
             className={cn(
-              "app-main w-full",
+              "studio-shell-main w-full",
               standaloneWorkspace
                 ? "p-2 sm:p-3"
                 : "mx-auto max-w-[96rem] p-4 sm:p-6 lg:p-7",
