@@ -1,6 +1,26 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { getStoryShareLinks, getStoryShareUrl, getStorySocialImageUrl } from "../src/lib/story-sharing";
+import { getStoryShortUrl } from "../src/lib/story-short-code";
+
+test("all article sharing actions use the stable short URL while canonical navigation stays unchanged", () => {
+  const storyId = "12345678-1234-4234-9234-123456789abc";
+  const siteOrigin = "https://www.thejerseycourier.com";
+  const input = { storyId, siteOrigin, headline: "Community reporting", slug: "community-reporting", updatedAt: "2026-10-15T12:00:00Z" };
+  const links = getStoryShareLinks(input);
+  const shortUrl = getStoryShortUrl(storyId, siteOrigin)!;
+  assert.equal(links.shareUrl, shortUrl);
+  assert.equal(new URL(links.shareUrl).search, "");
+  assert.equal(links.articleUrl, `${siteOrigin}/story/community-reporting`);
+  assert.equal(new URL(links.emailUrl).searchParams.get("body"), `Community reporting\n\n${shortUrl}`);
+  assert.equal(new URL(links.xUrl).searchParams.get("text"), `Community reporting\n\n${shortUrl}`);
+  assert.equal(getStoryShareLinks({ ...input, slug: "changed-slug", updatedAt: "2026-10-16T12:00:00Z" }).shareUrl, shortUrl);
+});
+
+test("invalid or absent IDs retain the backwards-compatible long-link fallback", () => {
+  const input = { headline: "A story", siteOrigin: "https://www.thejerseycourier.com", slug: "a-story" };
+  assert.equal(getStoryShareLinks({ ...input, storyId: "invalid" }).shareUrl, getStoryShareLinks(input).shareUrl);
+});
 
 test("X share intent includes the article headline and canonical URL", () => {
   const shareUrl = new URL(getStoryShareUrl({

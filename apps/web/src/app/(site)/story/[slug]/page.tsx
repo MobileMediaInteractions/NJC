@@ -115,6 +115,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   ]);
   const related = relatedStories.filter((item) => item.slug !== story.slug).slice(0, 3);
   const shareLinks = getStoryShareLinks({
+    storyId: story.id,
     canonicalUrl: story.canonicalUrl,
     headline: story.headline,
     siteOrigin: getSiteOrigin(),

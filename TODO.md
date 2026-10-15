@@ -10,6 +10,29 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > store/certification captures remain part of the existing mobile, TV and Roku
 > validation work below rather than being simulated with private or fake data.
 
+## Article short links — deployed validation remaining
+
+> October 15: both article renderers now share stable `/s/<code>` links on the
+> configured full site domain for X, email, device sharing and Copy link. The
+> 22-character base-62 code losslessly encodes each existing UUID, without new
+> database tables, backfills, dependencies or paid services. Long article URLs
+> and canonical metadata remain intact. Published-only, noncached redirects
+> resolve the current slug, preserve bounded campaign attribution and fail
+> closed for unpublished/deleted records or invalid IDs. Database outages return
+> retryable 503 responses, not permanent false 404s. The isolated release passed
+> 23 focused sharing/saved-story/SEO tests, targeted lint and a production web
+> build including TypeScript checks. Live database/social unfurls remain unverified. See
+> [article short links](docs/editorial/ARTICLE_SHORT_LINKS.md).
+
+- [ ] After deployment, verify an actual existing article's Copy link, X/email
+  share text, GET/HEAD redirect, both public designs, canonical metadata and
+  mobile device sharing against the production database. Check a corrected slug
+  and an unpublished test article with authorized staff; never alter a real
+  published story solely to test this. Check Discord/X unfurls independently,
+  since their preview caches are outside application control.
+- [ ] If short links are wanted in native mobile/TV sharing as well, adopt the
+  same UUID encoding without replacing older clients' full-story URLs.
+
 ## Account sessions and compact footer — production activation remaining
 
 > October 15: main-site sign-in/sign-up now fall back to a server-verified

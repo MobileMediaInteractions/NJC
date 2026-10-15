@@ -18,6 +18,7 @@ rather than pages and are documented by their owning runbooks and tests.
 | `/search` | Reader search and result states; the V2 dialog capture uses the non-sensitive query `Middlesex` against an empty local editorial database | ![Search results route](../../docs/screenshots/dark/web-search.jpg) ![V2 search dialog](../../docs/screenshots/dark/web-v2-search-dialog.png) |
 | `/saved` | Private browser-local saved-story library | ![V2 Saved Stories empty state](../../docs/screenshots/dark/web-v2-saved-empty.png) |
 | `/story/[slug]` | Published article template; capture uses a real published story | ![Story](../../docs/screenshots/dark/web-story.jpg) |
+| `/s/[code]` | Stable article-share redirect using the existing article ID; published stories only, no new page or duplicate canonical | Redirect only; see [short-link contract](../../docs/editorial/ARTICLE_SHORT_LINKS.md) |
 | `/author/[slug]` | Public contributor archive; capture uses Abdullah Muzammil | ![Author](../../docs/screenshots/dark/web-author.jpg) |
 | `/staff` | Published staff directory; with no opted-in profiles it redirects home | ![Empty staff redirect](../../docs/screenshots/dark/web-staff-empty.jpg) |
 

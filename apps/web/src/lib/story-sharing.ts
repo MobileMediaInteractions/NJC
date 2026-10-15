@@ -1,6 +1,9 @@
+import { getStoryShortUrl } from "@/lib/story-short-code";
+
 const xPostIntentUrl = "https://x.com/intent/post";
 
 type StoryShareInput = {
+  storyId?: string;
   canonicalUrl?: string;
   headline: string;
   siteOrigin: string;
@@ -21,7 +24,7 @@ export function getStorySocialImageUrl({ siteOrigin, slug, updatedAt }: Pick<Sto
   return imageUrl.toString();
 }
 
-export function getStoryShareLinks({ canonicalUrl, headline, siteOrigin, slug, updatedAt }: StoryShareInput) {
+export function getStoryShareLinks({ canonicalUrl, headline, siteOrigin, slug, storyId, updatedAt }: StoryShareInput) {
   let articleUrl: URL;
 
   try {
@@ -30,9 +33,10 @@ export function getStoryShareLinks({ canonicalUrl, headline, siteOrigin, slug, u
     articleUrl = new URL(`/story/${slug}`, siteOrigin);
   }
 
-  const shareUrl = new URL(articleUrl);
+  const shortUrl = getStoryShortUrl(storyId, siteOrigin);
+  const shareUrl = new URL(shortUrl ?? articleUrl);
   const version = getVersionToken(updatedAt);
-  if (version) shareUrl.searchParams.set("share", version);
+  if (version && !shortUrl) shareUrl.searchParams.set("share", version);
 
   const intent = new URL(xPostIntentUrl);
   intent.searchParams.set("text", `${headline}\n\n${shareUrl.toString()}`);
