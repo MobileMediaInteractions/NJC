@@ -10,6 +10,47 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > store/certification captures remain part of the existing mobile, TV and Roku
 > validation work below rather than being simulated with private or fake data.
 
+## Account sessions and compact footer — production activation remaining
+
+> October 15: main-site sign-in/sign-up now fall back to a server-verified
+> `/auth/continue` destination: authorized staff enter Studio and readers enter
+> Profile. Valid explicit return destinations remain intact; signed-in staff
+> skip Studio's root sign-in form. Clerk remains the sole session authority.
+> Both public designs now share a compact, theme-aware footer with shortcuts,
+> keyboard-native expandable groups, retained destinations and privacy controls.
+> Twenty-one focused routing/authorization/footer/theme/Easter-egg tests and
+> targeted lint pass. Local footer checks covered light/dark, native keyboard
+> toggles and exclusive expansion, 1224px desktop, 390px and 320px phone widths;
+> the collapsed footer measured 246px desktop and 284px at 390px, with no
+> horizontal overflow. Existing production screenshots predate the new footer.
+> The legacy renderer was also checked in the browser: matching 246px desktop
+> footer, no horizontal overflow and no browser errors. The footer's hidden
+> Easter-egg marker remains on a visible line at phone sizes; Studio's location
+> instructions were updated to match.
+> Focused verification is local; production session sharing remains unverified.
+> The isolated release snapshot also passed a production web build, including
+> TypeScript validation and static-page generation, without production credentials.
+> See [account session policy and activation](docs/security/ACCOUNT_SESSIONS.md).
+
+- [ ] Reconcile the live site's observed Clerk development instance with an
+  approved production-instance migration. Preserve existing account IDs or
+  explicitly map users, staff roles, profiles, authorship, grants/entitlements
+  and audit references; do not blindly swap keys or delete accounts. Configure
+  root-domain DNS/TLS, approved OAuth credentials and exact required subdomains.
+- [ ] Confirm actual production session settings enforce at most 30 days.
+  Clerk's free production default is seven days; a custom 30-day lifetime is
+  paid. Do not buy an upgrade, bypass expiry or promise 30-day persistence under
+  the free-only requirement. An alternative-provider migration requires a
+  separate approved decision if 30 days is mandatory.
+- [ ] Deploy and test real site → Studio sign-in continuity, browser reopening,
+  both-direction navigation, expiry, revocation, sign-out propagation, role
+  changes, readers without Studio permission, account switching and OAuth/product
+  return paths using separate browser profiles. Local credentials are absent,
+  so these authenticated checks have not been completed.
+- [ ] Confirm the compact footer on deployed legacy/V2 pages at phone/tablet/
+  desktop sizes in both themes, including native accordion keyboard operation,
+  feature-disabled links, empty staff directory, privacy controls and Back to top.
+
 ## Studio AdminLTE redesign and MagEngine — implementation and activation
 
 > Studio now uses an AdminLTE 4 / Bootstrap 5 application shell and a shared

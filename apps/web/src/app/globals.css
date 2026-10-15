@@ -3,6 +3,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "./site-v2.css";
+@import "./site-footer.css";
 
 @custom-variant dark (&:is(.dark *));
 

@@ -28,6 +28,7 @@ export const config = {
     "/distribution/:path*",
     "/sign-in/:path*",
     "/sign-up/:path*",
+    "/auth/continue",
     "/api/v1/studio/:path*",
     "/api/v1/plus/:path*",
     "/api/v1/distribution/:path*",

@@ -65,7 +65,7 @@ export default async function PublicSiteLayout({ children }: { children: React.R
       />
       <main id="main-content" className="flex-1">{children}</main>
       {design === "v2" ? (
-        <SiteFooterV2 publication={configuration.publication} features={configuration.features} staffPageEnabled={staffPageEnabled} />
+        <SiteFooterV2 publication={configuration.publication} features={configuration.features} staffPageEnabled={staffPageEnabled} easterEggEnabled={configuration.easterEgg.enabled} />
       ) : (
         <SiteFooter
           publication={configuration.publication}

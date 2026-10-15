@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { SignUp } from "@clerk/nextjs";
 import { BrandMark } from "@/components/brand-mark";
 import { isClerkConfigured } from "@/lib/auth";
+import { ACCOUNT_CONTINUE_PATH } from "@/lib/account-sign-in";
 
 export const metadata: Metadata = {
   title: "Create account",
@@ -16,7 +17,7 @@ export default function SignUpPage() {
           <SignUp
             path="/sign-up"
             signInUrl="/sign-in"
-            forceRedirectUrl="/developers"
+            fallbackRedirectUrl={ACCOUNT_CONTINUE_PATH}
           />
         ) : (
           <div className="rounded-lg bg-card p-6 text-sm text-muted-foreground">

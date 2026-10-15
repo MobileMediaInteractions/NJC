@@ -6,6 +6,7 @@ import { AudienceTracker } from "@/components/audience-tracker";
 import { CookieConsent } from "@/components/cookie-consent";
 import { SitePushReconciler } from "@/components/site-push-reconciler";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ACCOUNT_CONTINUE_PATH } from "@/lib/account-sign-in";
 
 export function AppProviders({
   children,
@@ -24,5 +25,5 @@ export function AppProviders({
       </TooltipProvider>
     </ThemeProvider>
   );
-  return clerkEnabled ? <ClerkProvider>{content}</ClerkProvider> : content;
+  return clerkEnabled ? <ClerkProvider signInFallbackRedirectUrl={ACCOUNT_CONTINUE_PATH} signUpFallbackRedirectUrl={ACCOUNT_CONTINUE_PATH}>{content}</ClerkProvider> : content;
 }

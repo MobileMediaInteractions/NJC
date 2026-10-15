@@ -77,11 +77,21 @@ identity. See [Public Site V2](../../docs/design/PUBLIC_SITE_V2.md).
 | --- | --- | --- |
 | `/sign-in/[[...sign-in]]` | Reader sign-in and provider callback states | ![Sign in](../../docs/screenshots/dark/web-sign-in.jpg) |
 | `/sign-up/[[...sign-up]]` | Reader account creation and provider callback states | ![Sign up](../../docs/screenshots/dark/web-sign-up.jpg) |
+| `/auth/continue` | No-index server-verified post-login continuation: staff to Studio, readers to Profile, safe intended destinations retained | Redirect-only route; no account/session screenshot |
 | `/profile/[[...profile]]` | Account management; signed-out requests preserve the destination and route to sign-in | ![Profile auth boundary](../../docs/screenshots/dark/web-profile-auth.jpg) |
 | `/login/quick` | QR-assisted quick sign-in | ![Quick sign-in](../../docs/screenshots/dark/web-login-quick.jpg) |
 | `/login/tv` | Manual television pairing | ![TV pairing](../../docs/screenshots/dark/web-login-tv.jpg) |
 
 No screenshot contains an active pairing code, token or authenticated account.
+
+Both public renderers now share the compact footer: key links remain visible,
+extended navigation uses native expandable groups, and privacy controls remain
+directly available. Existing screenshots above predate this October 15 footer
+update. Local checks covered light/dark presentation, keyboard disclosures and
+desktop/390px/320px widths without horizontal overflow. See
+[account-session activation](../../docs/security/ACCOUNT_SESSIONS.md) for the
+production Clerk setup that remains necessary; navigation tests do not prove
+cross-subdomain session persistence.
 
 ## Dedicated host surfaces
 

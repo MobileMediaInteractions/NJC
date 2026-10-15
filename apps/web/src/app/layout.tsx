@@ -142,7 +142,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>
-      <body className="min-h-full flex flex-col">
+      <body id="page-top" className="min-h-full flex flex-col">
         <AppProviders
           clerkEnabled={Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)}
         >

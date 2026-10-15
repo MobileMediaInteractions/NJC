@@ -32,7 +32,11 @@ asset infrastructure.
   keep authorized playback in NJC+ or add the dedicated host, but cannot select
   a Courier-Cut-only mode.
 - `press-portal` and `distribution` provide purpose-built external workflows.
-- `login`, `sign-in`, `sign-up` and `profile` provide reader identity flows.
+- `login`, `sign-in`, `sign-up`, `auth/continue` and `profile` provide reader
+  identity flows. The verified continuation sends staff to Studio and readers
+  to Profile. Shared production sessions and lifetime configuration are covered
+  in [account sessions](../../docs/security/ACCOUNT_SESSIONS.md); the requested
+  30-day lifetime cannot be enabled as a free Clerk production customization.
 - `api` contains reader, newsroom, employee, platform and webhook contracts.
 
 The exhaustive visual route inventory is in [PAGES.md](PAGES.md). It maps each

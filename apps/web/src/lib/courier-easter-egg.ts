@@ -1,6 +1,6 @@
 export const courierEasterEggPhrase = "exit nine keeps the presses awake";
 export const courierEasterEggLocation =
-  "Public footer → the newsroom desk and city line";
+  "Public footer → the copyright and newsroom line";
 
 const phraseWindowMs = 12_000;
 const frequencyWindowMs = 5_000;

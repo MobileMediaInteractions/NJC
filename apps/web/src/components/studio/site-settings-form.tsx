@@ -521,7 +521,7 @@ export function SiteSettingsForm({
               <div className="grid gap-4 rounded-xl border bg-muted/25 p-5">
                 <div>
                   <p className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-primary">Exact location</p>
-                  <p className="mt-1 text-sm font-semibold">Public footer → the newsroom desk and city line</p>
+                  <p className="mt-1 text-sm font-semibold">Public footer → the copyright and newsroom line</p>
                 </div>
                 <div className="grid gap-4 lg:grid-cols-2">
                   <div className="rounded-lg border bg-background p-4">
@@ -529,13 +529,13 @@ export function SiteSettingsForm({
                     <ol className="mt-3 list-decimal space-y-2 pl-4 text-xs leading-5 text-muted-foreground">
                       <li>With no text field focused, type <code className="rounded bg-muted px-1.5 py-0.5 text-foreground">exit nine keeps the presses awake</code>.</li>
                       <li>Within 12 seconds, press <strong className="text-foreground">Option/Alt + Shift + 9</strong>.</li>
-                      <li>Within five seconds, select the footer desk line exactly five times.</li>
+                      <li>Within five seconds, select the footer copyright/newsroom line exactly five times.</li>
                     </ol>
                   </div>
                   <div className="rounded-lg border bg-background p-4">
                     <p className="text-xs font-black uppercase tracking-[0.12em]">Touch ritual</p>
                     <ol className="mt-3 list-decimal space-y-2 pl-4 text-xs leading-5 text-muted-foreground">
-                      <li>Press the footer desk line for between 0.8 and 1.3 seconds.</li>
+                      <li>Press the footer copyright line for between 0.8 and 1.3 seconds.</li>
                       <li>Release, then tap the same line nine times within six seconds.</li>
                     </ol>
                   </div>
