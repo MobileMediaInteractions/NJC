@@ -44,3 +44,10 @@ body, undated/past events, safe external URLs, escaped text, honest empty states
 slug validation, first-paint theme bootstrap, explicit preference retention and
 blocked-storage/cached-document fallback. See `apps/web/tests/community-public.test.ts`
 and `apps/web/tests/theme-bootstrap.test.ts`.
+
+Release `5e8ad2c` was verified Ready in Vercel Production (2m 34s). Live checks
+covered the homepage/index cards, the full Taplife and Two Jeans bulletins,
+canonical metadata and a 390px dark-mode refresh with no horizontal overflow or
+browser console errors. Twenty-five focused tests, targeted ESLint and the
+production web build passed. The broader existing routing parity test still
+reports a missing `/mag-engine` Studio-host rewrite, recorded separately in TODO.

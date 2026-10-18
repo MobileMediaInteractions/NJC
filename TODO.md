@@ -17,12 +17,19 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > public designs, dark refresh, saved Light on a dark device and 390px layout
 > without horizontal overflow. The local browser had no console errors and no
 > production database credentials; live bulletin verification is separate.
+> Release `5e8ad2c` is now Ready in Vercel Production (2m 34s). The live main
+> homepage and community index both show the real Two Jeans and Taplife cards.
+> Taplife's card opened its complete bulletin with correct canonical metadata,
+> organizer and local event time; the undated Two Jeans page preserves the full
+> organizer-attributed update without inventing an event date or exposing private
+> contact details. Dark reload at 390px retained matching root/panel colors with
+> no horizontal overflow or browser console errors.
 > See [community public pages](docs/COMMUNITY_PUBLIC_PAGES.md).
 
-- [ ] Verify the deployed homepage → bulletin → full community page flow with
-  the existing Two Jeans and Taplife records in both public designs, at desktop
-  and phone widths; confirm light/dark reload and browser reopening on real
-  Safari/Chrome devices. Do not modify published content just to test it.
+- [ ] Complete real Safari/Chrome device reopening, cross-tab/device-appearance
+  changes and authenticated Studio-panel checks. V2 was checked locally; verify
+  the same populated flow in an authorized V2 preview without changing the
+  production design or published content solely for testing.
 - [ ] Repair the pre-existing clean Studio-host rewrite gap for `/mag-engine`;
   `subdomain-routing.test.ts` currently fails its navigation parity check at
   that route. The configuration and navigation files were unchanged by this
