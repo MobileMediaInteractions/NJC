@@ -27,16 +27,18 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > correctly. Reviewed Two Jeans and Taplife bulletins are both visible on the
 > public community page; source contact details were not published, and the
 > unrelated investigative story was left unchanged.
-> A follow-up fixes the older community manager's JSON-date rendering crash;
-> its regression tests, focused lint and production build pass. The previously
-> missing Production `NEXT_PUBLIC_SITE_URL` was configured to the main `www`
-> origin in Vercel; a new deployment is needed to replace the erroneous `ads`
-> canonical/share origin. No secrets, access rules or database migrations changed.
+> Follow-up `75b3e64` is also live in Production (Ready; 2m 15s) and fixes the
+> older community manager's JSON-date rendering crash. Its regression tests,
+> focused lint and production build pass. Production `NEXT_PUBLIC_SITE_URL` is
+> now explicitly the main `www` origin: the public article's canonical URL,
+> generated share links and GET/HEAD short-link redirects were verified there.
+> Both public bulletins return 200 and were confirmed in the browser; the two
+> handled news tips are Closed with their original records retained. No secrets,
+> access rules or database migrations changed. The broader community/image
+> workflow below remains unshipped and must not duplicate these published items.
 
-- [ ] Deploy the dated-bulletin rendering follow-up; confirm the existing dated
-  listing remains usable in Studio and canonical/share URLs use `www` on the
-  public article. Keep the full newer community workflow/image migrations below
-  separate from this narrow recovery release.
+- [ ] Carry forward the JSON-date regression coverage when replacing the older
+  community manager with the unshipped dedicated inbox/review implementation.
 
 ## Article short links — deployed validation remaining
 
