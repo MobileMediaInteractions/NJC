@@ -21,7 +21,7 @@ import type { StoryStatus } from "@/lib/types";
 type Approval = { approvedAt: string; note: string | null } | null;
 type PublicationJob = { status: string; originalScheduledAt: string; scheduledAt: string; attempts: number; error: string | null } | null;
 
-export function StoryReviewActions({ id, slug, headline, bylineName, status, scheduledAt, publicationTimezone, canPublish, canApprove, canSubmitReview, isActive, activeStoryRevisionsEnabled, approval, publicationJob, publicationBlocker }: { id: string; slug: string; headline: string; bylineName: string; status: StoryStatus; scheduledAt: string | null; publicationTimezone: string; canPublish: boolean; canApprove: boolean; canSubmitReview: boolean; isActive: boolean; activeStoryRevisionsEnabled: boolean; approval: Approval; publicationJob: PublicationJob; publicationBlocker?: string | null }) {
+export function StoryReviewActions({ id, slug, headline, bylineName, status, scheduledAt, publicationTimezone, canPublish, canApprove, canSubmitReview, isActive, activeStoryRevisionsEnabled, approval, approvalNeedsRenewal = false, publicationJob, publicationBlocker }: { id: string; slug: string; headline: string; bylineName: string; status: StoryStatus; scheduledAt: string | null; publicationTimezone: string; canPublish: boolean; canApprove: boolean; canSubmitReview: boolean; isActive: boolean; activeStoryRevisionsEnabled: boolean; approval: Approval; approvalNeedsRenewal?: boolean; publicationJob: PublicationJob; publicationBlocker?: string | null }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [dialog, setDialog] = useState<"schedule" | "publish" | "approve" | "close" | "reopen" | null>(null);
@@ -43,7 +43,13 @@ export function StoryReviewActions({ id, slug, headline, bylineName, status, sch
     try {
       const response = await fetch(`/api/v1/studio/stories/${encodeURIComponent(id)}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
       const payload = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(payload?.error?.message ?? `The editorial action failed (${response.status}).`);
+      if (!response.ok) {
+        if (payload?.error?.code === "approval_required" || payload?.error?.code === "conflict") {
+          setDialog(null);
+          router.refresh();
+        }
+        throw new Error(payload?.error?.message ?? `The editorial action failed (${response.status}).`);
+      }
       setDialog(null); router.refresh(); return payload;
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The newsroom service could not be reached.");
@@ -103,7 +109,7 @@ export function StoryReviewActions({ id, slug, headline, bylineName, status, sch
       {status === "review" && canPublish ? <Button variant="outline" onClick={() => void transition("draft")} disabled={busy !== null}><RotateCcw /> Return to draft</Button> : null}
       {status === "review" && !approval && canApprove ? <Button onClick={() => setDialog("approve")} disabled={busy !== null || Boolean(publicationBlocker)}><ShieldCheck /> Approve revision</Button> : null}
       {status === "review" && approval && canPublish ? <><Button variant="outline" onClick={() => setDialog("schedule")} disabled={Boolean(publicationBlocker)}><CalendarClock /> Schedule</Button><Button onClick={() => setDialog("publish")} disabled={Boolean(publicationBlocker)}><Send /> Publish now</Button></> : null}
-      {status === "scheduled" && canPublish ? <><Button variant="outline" onClick={() => void cancelSchedule()} disabled={busy !== null}><RotateCcw /> Cancel schedule</Button><Button variant="outline" onClick={() => setDialog("schedule")} disabled={Boolean(publicationBlocker)}><CalendarClock /> Reschedule</Button><Button onClick={() => setDialog("publish")} disabled={Boolean(publicationBlocker)}><Send /> Publish now</Button></> : null}
+      {status === "scheduled" && canPublish ? <><Button variant="outline" onClick={() => void cancelSchedule()} disabled={busy !== null}><RotateCcw /> Cancel schedule</Button>{approval ? <><Button variant="outline" onClick={() => setDialog("schedule")} disabled={Boolean(publicationBlocker)}><CalendarClock /> Reschedule</Button><Button onClick={() => setDialog("publish")} disabled={Boolean(publicationBlocker)}><Send /> Publish now</Button></> : null}</> : null}
       {status === "published" && isActive && canSubmitReview ? <Button variant="outline" asChild><Link href={`/studio/stories/${id}/edit`}><Pencil /> Propose update</Link></Button> : null}
       {status === "published" && isActive && canPublish ? <Button variant="outline" onClick={() => setDialog("close")}><LockKeyhole /> Mark story final</Button> : null}
       {status === "published" && !isActive && canPublish && activeStoryRevisionsEnabled ? <Button variant="outline" onClick={() => setDialog("reopen")}><UnlockKeyhole /> Reopen with override</Button> : null}
@@ -111,6 +117,8 @@ export function StoryReviewActions({ id, slug, headline, bylineName, status, sch
     </div>
 
     {publicationBlocker ? <p role="alert" className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm font-medium text-amber-500">{publicationBlocker}</p> : null}
+
+    {approvalNeedsRenewal && (status === "review" || status === "scheduled") ? <p role="alert" className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-500">The previous approval does not verify the current revision. {status === "scheduled" ? "Cancel the schedule to return to review, then approve the current revision before scheduling or publishing." : "An independent publisher must approve the current revision before scheduling or publishing."}</p> : null}
 
     {approval ? <p className="text-sm text-emerald-400"><ShieldCheck className="mr-1.5 inline size-4" /> Approved {formatSchedule(approval.approvedAt, publicationTimezone)}{approval.note ? ` · ${approval.note}` : ""}</p> : status === "review" ? <p className="text-sm text-muted-foreground">Independent approval is required before scheduling or publishing.</p> : null}
     {publicationJob ? <p className="text-sm text-muted-foreground"><CalendarClock className="mr-1.5 inline size-4" /> Queue: <span className="capitalize">{publicationJob.status}</span> · {formatSchedule(publicationJob.scheduledAt, publicationTimezone)}{publicationJob.originalScheduledAt !== publicationJob.scheduledAt ? ` · originally ${formatSchedule(publicationJob.originalScheduledAt, publicationTimezone)}` : ""} · {publicationJob.attempts} attempt{publicationJob.attempts === 1 ? "" : "s"}{publicationJob.error ? ` · ${publicationJob.error}` : ""}</p> : null}

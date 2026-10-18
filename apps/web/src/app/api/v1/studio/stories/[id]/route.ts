@@ -27,7 +27,7 @@ import {
 } from "@/lib/bylines";
 import { legacyPublicBylineSnapshot } from "@/lib/pseudonyms";
 import { getSiteConfiguration } from "@/lib/site-settings";
-import { storyContentHash, storyPublicationBlockers } from "@/lib/story-content-integrity";
+import { storyApprovalMatches, storyContentHash, storyPublicationBlockers } from "@/lib/story-content-integrity";
 import { canApproveStory } from "@/lib/story-scheduling-policy";
 import { InvalidStoryLeadMediaError, resolveStoryLeadMedia } from "@/lib/story-lead-media";
 import { hasMeaningfulStoryRevisionChange } from "@/lib/story-revisions";
@@ -130,6 +130,14 @@ export async function PATCH(
       }
       const hash = storyContentHash(current);
       const approval = await getDb().transaction(async (tx) => {
+        const [locked] = await tx.select().from(stories)
+          .where(eq(stories.id, current.id)).for("update").limit(1);
+        if (
+          !locked || locked.status !== current.status ||
+          locked.authorId !== current.authorId ||
+          locked.contentVersion !== current.contentVersion ||
+          storyContentHash(locked) !== hash
+        ) return null;
         await tx.update(storyApprovals).set({
           invalidatedAt: new Date(),
           invalidatedByClerkId: viewer.id,
@@ -146,6 +154,12 @@ export async function PATCH(
         await tx.update(stories).set({ contentHash: hash, updatedAt: new Date() }).where(eq(stories.id, current.id));
         return created;
       });
+      if (!approval) {
+        return NextResponse.json(
+          { error: { code: "conflict", message: "The story changed while you were approving it. Reload and review the current revision." } },
+          { status: 409 },
+        );
+      }
       await writeApiAudit({
         actorClerkId: viewer.id,
         event: "story.approved",
@@ -413,12 +427,7 @@ export async function PATCH(
           .where(and(eq(storyApprovals.storyId, current.id), isNull(storyApprovals.invalidatedAt)))
           .limit(1)
       : [];
-  const currentHash = storyContentHash(current);
-  const approvalMatches = Boolean(
-    activeApproval &&
-      activeApproval.contentVersion === current.contentVersion &&
-      activeApproval.contentHash === currentHash,
-  );
+  const approvalMatches = storyApprovalMatches(current, activeApproval);
   const isApprovedPublicationTransition =
     (nextStatus === "scheduled" || nextStatus === "published") &&
     (current.status === "review" || current.status === "scheduled") &&
@@ -489,6 +498,20 @@ export async function PATCH(
       }
     }
     const updated = await getDb().transaction(async (tx) => {
+      if (nextStatus === "scheduled" || nextStatus === "published") {
+        const [locked] = await tx.select().from(stories)
+          .where(eq(stories.id, current.id)).for("update").limit(1);
+        const [approval] = await tx.select().from(storyApprovals)
+          .where(and(eq(storyApprovals.storyId, current.id), isNull(storyApprovals.invalidatedAt)))
+          .limit(1);
+        if (
+          !locked || locked.status !== current.status ||
+          locked.authorId !== current.authorId ||
+          locked.contentVersion !== current.contentVersion ||
+          approval?.id !== activeApproval?.id ||
+          !storyApprovalMatches(locked, approval)
+        ) return null;
+      }
       const [story] = await tx.update(stories).set({
         status: nextStatus,
         publicBylineSnapshot: publishByline,

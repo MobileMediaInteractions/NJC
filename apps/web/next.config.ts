@@ -44,6 +44,7 @@ const studioSections = [
   "analytics",
   "chat",
   "commands",
+  "community",
   "distribution",
   "exports",
   "finance",

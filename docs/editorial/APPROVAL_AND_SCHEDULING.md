@@ -13,6 +13,26 @@ Studio treats review, approval, and publication as separate events.
 5. A material edit cancels an open job, invalidates approval, and returns the
    story to Draft. Rescheduling and cancellation are audited separately.
 
+## Approval integrity and recovery
+
+The content hash uses an explicit set of reviewed fields: copy, structured
+formatting, notes, URL, section, dateline, media, SEO, tags, presentation flags
+and public bylines. Database bookkeeping, the stored hash, timestamps, active
+editing state and publication/schedule state are excluded. Saving the approval
+or moving approved work into the publication queue must not alter that hash.
+The review page, immediate publication endpoint and scheduled worker use the
+same story-ID, content-version, hash and invalidation checks. Approval and
+publication recheck the story under a row lock to reject intervening edits.
+
+Approvals created before the October 14, 2026 correction hashed the full row,
+including its own `contentHash`. They cannot safely be reused with the corrected
+hash. After deployment, Studio displays an approval-renewal notice and offers
+**Approve revision** again. A different publisher must review and approve the
+current revision once, then publish or schedule normally. For an existing
+schedule with an invalid approval, cancel it to return to Review first. Prior
+approval records remain in history; a new approval supersedes them. This
+correction does not automatically publish any held work or change live copy.
+
 ## Published-story overrides
 
 Publishing an active story permits later proposed revisions. Marking it final

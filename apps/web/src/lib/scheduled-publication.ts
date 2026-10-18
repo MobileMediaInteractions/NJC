@@ -11,7 +11,7 @@ import {
 import { validateSavedPublicByline } from "@/lib/bylines";
 import { getSiteConfiguration } from "@/lib/site-settings";
 import {
-  storyContentHash,
+  storyApprovalMatches,
   storyPublicationBlockers,
 } from "@/lib/story-content-integrity";
 
@@ -81,6 +81,7 @@ export async function publishDueStories(now = new Date()) {
           .select()
           .from(stories)
           .where(eq(stories.id, job.storyId))
+          .for("update")
           .limit(1);
         const [approval] = await tx
           .select()
@@ -94,8 +95,7 @@ export async function publishDueStories(now = new Date()) {
         else if (approval.storyId !== story.id) reason = "approval_story_mismatch";
         else if (approval.contentVersion !== story.contentVersion) reason = "revision_changed";
         else {
-          const currentHash = storyContentHash(story);
-          if (currentHash !== approval.contentHash || currentHash !== job.contentHash) {
+          if (!storyApprovalMatches(story, approval) || approval.contentHash !== job.contentHash) {
             reason = "content_hash_changed";
           }
         }

@@ -10,6 +10,25 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > store/certification captures remain part of the existing mobile, TV and Roku
 > validation work below rather than being simulated with private or fake data.
 
+## October 18 community publishing recovery — release and live checks
+
+> The held Taplife article's displayed approval was rejected by the publication
+> API. Its former full-row hash included its own stored hash and workflow
+> timestamps. The focused repair hashes reviewed publication material only,
+> checks approval validity consistently in Review/API/worker, offers renewal for
+> stale approvals, and rechecks concurrent changes under a row lock. It also
+> adds the missing Studio-host `/community` rewrite to the existing protected
+> community workspace, without enabling unfinished rewards or migrating data.
+> The isolated release passed 20 focused routing/editorial tests, targeted
+> ESLint and the production web build including TypeScript validation.
+
+- [ ] Deploy this focused repair; renew the Taplife approval as an independent
+  publisher and verify a successful public result before claiming publication.
+- [ ] Open the corrected community admin route, inspect the actual production
+  queue and review community material without disclosing private source contact
+  details. Keep the separate investigative story unchanged. The full newer
+  community workflow/image migrations below remain a separate unshipped change.
+
 ## Article short links — deployed validation remaining
 
 > October 15: both article renderers now share stable `/s/<code>` links on the
