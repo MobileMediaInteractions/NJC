@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { communityCategories } from "@/lib/community";
+import { formatCommunityDate } from "@/lib/community-date-format";
 
 type Bulletin = typeof communityBulletins.$inferSelect;
 type Submission = typeof communityEventSubmissions.$inferSelect;
@@ -134,4 +135,4 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function Empty({ text }: { text: string }) { return <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">{text}</p>; }
 function dateForInput(value: Date | null) { if (!value) return ""; const date = new Date(value); const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000); return local.toISOString().slice(0, 16); }
 function toIsoDateTime(value: string) { if (!value) return ""; const date = new Date(value); return Number.isNaN(date.getTime()) ? value : date.toISOString(); }
-function formatDate(value: Date, timezone: string) { return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: timezone }).format(value); }
+function formatDate(value: Date | string, timezone: string) { return formatCommunityDate(value, timezone); }

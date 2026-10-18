@@ -21,13 +21,22 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > community workspace, without enabling unfinished rewards or migrating data.
 > The isolated release passed 20 focused routing/editorial tests, targeted
 > ESLint and the production web build including TypeScript validation.
+> Release `4276313` is live in Vercel Production (Ready; 2m 21s). Taplife's
+> independent approval was renewed through Studio and the article published
+> successfully on October 18. The protected community workspace now opens
+> correctly. Reviewed Two Jeans and Taplife bulletins are both visible on the
+> public community page; source contact details were not published, and the
+> unrelated investigative story was left unchanged.
+> A follow-up fixes the older community manager's JSON-date rendering crash;
+> its regression tests, focused lint and production build pass. The previously
+> missing Production `NEXT_PUBLIC_SITE_URL` was configured to the main `www`
+> origin in Vercel; a new deployment is needed to replace the erroneous `ads`
+> canonical/share origin. No secrets, access rules or database migrations changed.
 
-- [ ] Deploy this focused repair; renew the Taplife approval as an independent
-  publisher and verify a successful public result before claiming publication.
-- [ ] Open the corrected community admin route, inspect the actual production
-  queue and review community material without disclosing private source contact
-  details. Keep the separate investigative story unchanged. The full newer
-  community workflow/image migrations below remain a separate unshipped change.
+- [ ] Deploy the dated-bulletin rendering follow-up; confirm the existing dated
+  listing remains usable in Studio and canonical/share URLs use `www` on the
+  public article. Keep the full newer community workflow/image migrations below
+  separate from this narrow recovery release.
 
 ## Article short links — deployed validation remaining
 
