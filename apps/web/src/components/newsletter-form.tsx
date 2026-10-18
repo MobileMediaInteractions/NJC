@@ -38,7 +38,7 @@ export function NewsletterForm({ inverse = false }: { inverse?: boolean }) {
         value={email}
         onChange={(event) => setEmail(event.target.value)}
         placeholder="you@example.com"
-        className={inverse ? "h-11 border-white/25 bg-white text-brand-navy placeholder:text-brand-navy/50" : "h-11 bg-white"}
+        className={inverse ? "h-11 border-white/25 bg-white text-brand-navy placeholder:text-brand-navy/50" : "h-11 bg-background"}
       />
       <Button type="submit" disabled={state === "loading"} className="h-11 shrink-0 bg-brand-yellow font-bold text-brand-navy hover:bg-brand-yellow/90">
         {state === "loading" ? <Loader2 className="size-4 animate-spin" /> : <>Sign me up <ArrowRight className="size-4" /></>}

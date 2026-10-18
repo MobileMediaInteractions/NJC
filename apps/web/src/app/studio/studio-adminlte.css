@@ -17,7 +17,7 @@
   font-size: 0.925rem;
 }
 
-.studio-app[data-bs-theme="dark"] {
+html.dark .studio-app {
   --studio-canvas: #101820;
   --studio-panel: #18232c;
   --studio-ink: #e6edf2;

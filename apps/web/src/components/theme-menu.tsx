@@ -61,7 +61,7 @@ export function ThemeMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuLabel>Appearance</DropdownMenuLabel>
+        <DropdownMenuLabel>{preference !== "system" && preference === systemTheme ? `Appearance · ${preference === "dark" ? "Dark" : "Light"} saved` : "Appearance"}</DropdownMenuLabel>
         <DropdownMenuRadioGroup
           value={preference}
           onValueChange={(value) => setPreference(value as ThemePreference)}

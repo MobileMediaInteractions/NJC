@@ -1,9 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Fragment } from "react";
 import { ArrowRight, Mail } from "lucide-react";
 import { AdSlot } from "@/components/ad-slot";
 import { LiveCoverageCard } from "@/components/live-coverage-card";
 import { NewsletterForm } from "@/components/newsletter-form";
+import { CommunityHomeSection } from "@/components/community-home-section";
+import type { PublicCommunityBulletin } from "@/lib/community-public-model";
 import { timeAgo } from "@/lib/format";
 import type { SiteConfiguration, V2HomepageModuleKey } from "@/lib/site-settings";
 import type { LiveCoverageEvent, Story } from "@harborline/contracts";
@@ -13,11 +16,13 @@ export function HomeV2({
   configuration,
   liveEvent,
   date,
+  community,
 }: {
   stories: Story[];
   configuration: SiteConfiguration;
   liveEvent?: LiveCoverageEvent;
   date: string;
+  community: { bulletins: PublicCommunityBulletin[]; available: boolean };
 }) {
   const [lead] = stories;
   const secondary = stories.slice(1, 3);
@@ -35,9 +40,9 @@ export function HomeV2({
         <span>The reporting shaping New Jersey right now.</span>
       </section>
 
-      {modules.map((module) => (
+      {modules.map((module, index) => (
+        <Fragment key={module}>
         <HomeModule
-          key={module}
           module={module}
           lead={lead}
           secondary={secondary}
@@ -46,7 +51,10 @@ export function HomeV2({
           liveEvent={liveEvent}
           configuration={configuration}
         />
+        {configuration.features.community && index === Math.max(0, modules.indexOf("lead")) ? <CommunityHomeSection {...community} timezone={configuration.publication.timezone} /> : null}
+        </Fragment>
       ))}
+      {configuration.features.community && modules.length === 0 ? <CommunityHomeSection {...community} timezone={configuration.publication.timezone} /> : null}
 
       <div className="v2-page-width v2-home-ad"><AdSlot placement="homepageLeaderboard" size="leaderboard" /></div>
     </div>

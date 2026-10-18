@@ -9,25 +9,31 @@ import { HomeV2 } from "@/components/site-v2/home-v2";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { SectionHeading } from "@/components/section-heading";
 import { StoryCard } from "@/components/story-card";
+import { CommunityHomeSection } from "@/components/community-home-section";
 import { getPublishedStories } from "@/lib/content";
 import { getPublicLiveEvents } from "@/lib/live-coverage";
 import { timeAgo } from "@/lib/format";
 import { homePageJsonLd } from "@/lib/seo";
 import { getSiteConfiguration } from "@/lib/site-settings";
 import { getResolvedSiteDesign } from "@/lib/site-design";
+import { getPublicCommunityBulletins } from "@/lib/public-community";
 import type { Story } from "@/lib/types";
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [stories, configuration, liveEvents] = await Promise.all([
+  const configurationPromise = getSiteConfiguration();
+  const [stories, configuration, liveEvents, community] = await Promise.all([
     getPublishedStories({ limit: 24 }),
-    getSiteConfiguration(),
+    configurationPromise,
     getPublicLiveEvents(3).catch((error) => {
       console.error("Homepage live desk lookup failed", error);
       return [];
     }),
+    configurationPromise.then((config) => config.features.community
+      ? getPublicCommunityBulletins(3)
+      : { bulletins: [], available: true }),
   ]);
   const [lead, ...latest] = stories;
   const liveEvent = liveEvents.find((event) => event.status === "live" || event.status === "paused");
@@ -44,7 +50,7 @@ export default async function HomePage() {
     return (
       <>
         <JsonLd data={homePageJsonLd(configuration.publication)} />
-        <HomeV2 stories={stories} configuration={configuration} liveEvent={liveEvent} date={date} />
+        <HomeV2 stories={stories} configuration={configuration} liveEvent={liveEvent} date={date} community={community} />
       </>
     );
   }
@@ -90,6 +96,8 @@ export default async function HomePage() {
         )}
       </section>
 
+      {configuration.features.community ? <CommunityHomeSection {...community} timezone={configuration.publication.timezone} /> : null}
+
       {latest.length > 0 ? (
         <section className="container-news py-12 sm:py-16">
           <SectionHeading title="Latest Reporting" href="/latest" />
@@ -114,7 +122,7 @@ export default async function HomePage() {
             <h2 className="headline-balance mt-3 text-3xl font-black leading-none tracking-[-0.045em] sm:text-4xl">Useful local reporting before the day gets noisy.</h2>
             <p className="mt-4 max-w-xl text-sm leading-6 text-white/70">A concise weekday briefing. Breaking-news alerts stay separate, so readers control the volume.</p>
           </div>
-          <div className="bg-white p-5 text-foreground sm:p-7"><NewsletterForm /></div>
+          <div className="bg-card p-5 text-foreground sm:p-7"><NewsletterForm /></div>
         </div>
       </section> : null}
     </>

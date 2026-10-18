@@ -45,7 +45,8 @@ identity. See [Public Site V2](../../docs/design/PUBLIC_SITE_V2.md).
 | --- | --- | --- |
 | `/20-under-20` | Annual student recognition program | ![20 Under 20](../../docs/screenshots/dark/web-20-under-20.jpg) |
 | `/tips` | Secure news-tip intake | ![Tips](../../docs/screenshots/dark/web-tips.jpg) |
-| `/community` | Autumnal reader bulletin for editor-published local events; the submission form stores suggestions privately for review | Screenshot pending; capture only with verified public listings or the truthful empty state |
+| `/community` | Autumnal reader bulletin for editor-published local events and updates; clickable cards open dedicated full bulletins; suggestions remain private for review | Screenshot pending; capture only with verified public listings or the truthful empty state |
+| `/community/[slug]` | Full community-focused bulletin with organizer, event details, complete body and safe relevant links; published-only, with historical context for past events | See `docs/COMMUNITY_PUBLIC_PAGES.md` |
 | `/newsletter` | Newsletter and alert registration | ![Newsletter](../../docs/screenshots/dark/web-newsletter.jpg) |
 | `/weather` | Local weather surface | ![Weather](../../docs/screenshots/dark/web-weather.jpg) |
 | `/live` | Live coverage state | ![Live](../../docs/screenshots/dark/web-live.jpg) |

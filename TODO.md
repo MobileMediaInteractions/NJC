@@ -2,6 +2,32 @@
 
 This file tracks known follow-up work. Items here are requirements, not claims that the feature is already implemented.
 
+## October 18 homepage community discovery and persistent appearance
+
+> Both homepage designs now include the existing published community bulletin
+> immediately after lead coverage. Community cards open dedicated full-text
+> `/community/<slug>` pages with organizer, dates, venue and safe relevant links,
+> not news-story records. The existing community feature switch governs every
+> surface. Public-only projections exclude staff IDs and private submissions;
+> no new migration or paid infrastructure is required. Saved explicit Dark/Light
+> preferences are retained through first paint, hydration and cached-page return;
+> Studio panel colors now follow the same root dark-mode class.
+> The isolated release passed 25 focused tests, targeted ESLint and a production
+> web build with TypeScript checks. Local browser verification covered both
+> public designs, dark refresh, saved Light on a dark device and 390px layout
+> without horizontal overflow. The local browser had no console errors and no
+> production database credentials; live bulletin verification is separate.
+> See [community public pages](docs/COMMUNITY_PUBLIC_PAGES.md).
+
+- [ ] Verify the deployed homepage → bulletin → full community page flow with
+  the existing Two Jeans and Taplife records in both public designs, at desktop
+  and phone widths; confirm light/dark reload and browser reopening on real
+  Safari/Chrome devices. Do not modify published content just to test it.
+- [ ] Repair the pre-existing clean Studio-host rewrite gap for `/mag-engine`;
+  `subdomain-routing.test.ts` currently fails its navigation parity check at
+  that route. The configuration and navigation files were unchanged by this
+  community/theme release.
+
 > Documentation inventory (October 1, 2026): every pnpm application, package,
 > tool and investigation workspace now has an owning README; all 106 human-facing
 > `apps/web` page files are mapped in `apps/web/PAGES.md`; and 55 dark-mode or
