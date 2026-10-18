@@ -6,6 +6,7 @@ import { getEmployeeViewer } from "@/lib/employee-auth";
 import { getEmployeeUnreadChatCount } from "@/lib/employee-chat";
 import { canViewNewsTips } from "@/lib/newsroom-tips";
 import { getSiteConfiguration } from "@/lib/site-settings";
+import { isDomainControlOperator } from "@/lib/domain-control";
 import type { StudioUser } from "@/lib/types";
 
 export async function StudioShell({
@@ -21,6 +22,7 @@ export async function StudioShell({
   let pressEnabled = false;
   let alertsEnabled = ["admin", "editor", "producer"].includes(viewer.role);
   let financeEnabled = false;
+  let domainControlAllowed = false;
   const configurationPromise = getSiteConfiguration();
   if (hasDatabase() && canViewNewsTips(viewer.role)) {
     try {
@@ -40,6 +42,7 @@ export async function StudioShell({
     pressEnabled = Boolean(employeeViewer?.capabilities.includes("tools:press"));
     alertsEnabled = Boolean(employeeViewer?.capabilities.includes("tools:alerts"));
     financeEnabled = Boolean(employeeViewer?.capabilities.includes("tools:finance"));
+    domainControlAllowed = Boolean(employeeViewer && await isDomainControlOperator(employeeViewer));
     if (hasDatabase() && employeeViewer && chatEnabled) {
       unreadChatCount = await getEmployeeUnreadChatCount(employeeViewer);
     }
@@ -58,6 +61,7 @@ export async function StudioShell({
       pressEnabled={pressEnabled}
       alertsEnabled={alertsEnabled}
       financeEnabled={financeEnabled}
+      domainControlAllowed={domainControlAllowed}
       studioConfiguration={configuration.studio}
     >
       {children}

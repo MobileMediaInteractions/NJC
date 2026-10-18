@@ -18,6 +18,7 @@ export type StudioNavigationContext = {
   pressEnabled: boolean;
   alertsEnabled: boolean;
   financeEnabled: boolean;
+  domainControlAllowed?: boolean;
   modules?: Record<StudioModuleKey, boolean>;
 };
 
@@ -31,6 +32,7 @@ export type StudioNavigationItem = {
   requiresPress?: boolean;
   requiresAlerts?: boolean;
   requiresFinance?: boolean;
+  requiresDomainControl?: boolean;
   module?: StudioModuleKey;
 };
 
@@ -312,6 +314,7 @@ export const studioNavigationHubs: readonly StudioNavigationHub[] = [
         label: "Domain control",
         href: "/studio/settings/domains",
         roles: ["admin"],
+        requiresDomainControl: true,
       },
     ],
   },
@@ -326,6 +329,7 @@ export function isStudioNavigationItemVisible(
   if (item.requiresPress && !context.pressEnabled) return false;
   if (item.requiresAlerts && !context.alertsEnabled) return false;
   if (item.requiresFinance && !context.financeEnabled) return false;
+  if (item.requiresDomainControl && !context.domainControlAllowed) return false;
   if (item.module && context.modules?.[item.module] === false) return false;
   return true;
 }

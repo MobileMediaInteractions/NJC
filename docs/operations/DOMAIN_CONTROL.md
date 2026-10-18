@@ -55,14 +55,23 @@ not a replacement for provider controls:
 1. Exact production Studio host (or localhost in development).
 2. Authenticated, active Clerk/Studio account.
 3. Administrator role.
-4. Exact Clerk ID in `DOMAIN_CONTROL_OPERATOR_CLERK_IDS`.
+4. Exact verified **primary** email `alanmichaelsen12@gmail.com`, read from
+   Clerk server-side and bound to the authenticated Clerk ID. An optional
+   `DOMAIN_CONTROL_OPERATOR_CLERK_IDS` pin can narrow access further; it cannot
+   authorize any other email. Other administrators cannot see the navigation
+   item or configuration entry, load the page, or call the API.
 5. `DOMAIN_CONTROL_ENABLED=true` server-side release switch.
 6. Durable database availability for audit events.
-7. Five-minute HMAC preview bound to actor, hostname and operation.
+7. Five-minute HMAC preview bound to actor, hostname, operation and a unique
+   nonce. A Postgres transaction/advisory lock records the one-use intent in
+   `employee_audit_logs` before contacting providers. Replays are rejected;
+   a process interruption leaves a durable intent for reconciliation.
 8. Exact `CREATE <hostname>` confirmation plus a 20-character audit reason.
 9. Fixed Vercel team and project IDs; the client cannot choose either.
 10. A repository allowlist; no arbitrary hostname, record type, target, deletion
     or apex mutation is accepted.
+11. Same-origin JSON mutations, bounded request input, provider timeouts and
+    a fixed outbound provider allowlist. No provider credential follows a redirect.
 
 Every success and partial failure is written to `employee_audit_logs`. Provider
 tokens and DNS zone IDs are never returned to the browser or portable export.
@@ -72,7 +81,8 @@ The portable export records only the required environment-variable names.
 
 ```dotenv
 DOMAIN_CONTROL_ENABLED=true
-DOMAIN_CONTROL_OPERATOR_CLERK_IDS=user_exact_clerk_id
+# Optional additional immutable account pin; leave blank if not configured.
+DOMAIN_CONTROL_OPERATOR_CLERK_IDS=
 DOMAIN_CONTROL_CHALLENGE_SECRET=<32-or-more-random-characters>
 VERCEL_API_TOKEN=<scoped-expiring-token>
 VERCEL_PROJECT_ID=prj_HnakjR7NF2r9J4ufJOAZ8C8NCfWS
@@ -89,14 +99,56 @@ these are present:
 ```dotenv
 IONOS_DNS_API_TOKEN=<least-privilege-token>
 IONOS_DNS_ZONE_ID=<thejerseycourier.com-zone-id>
-IONOS_DNS_API_URL=https://dns.de-fra.ionos.com
+IONOS_DNS_API_URL=https://api.hosting.ionos.com/dns
 ```
 
-This adapter follows the official IONOS Cloud DNS v1 record API. A consumer
-IONOS domain account is not assumed to expose that Cloud DNS zone. If the
-actual authoritative zone is unavailable through that API, leave these values
-unset: Studio will attach the allowlisted hostname to Vercel and return the
-exact provider CNAME for a manual, reviewed DNS change.
+The adapter now follows the official [IONOS Hosting DNS API](https://developer.hosting.ionos.com/docs/dns):
+`X-API-Key`, `/v1/zones/<id>` and an array of FQDN records for creation. The
+previous unactivated Cloud-DNS adapter is no longer used. Legacy Cloud or custom
+endpoints fail closed instead of receiving a Hosting credential. No production
+IONOS variables were present at the October 18 inspection, so no existing live
+adapter configuration was changed.
+
+The configured zone must be exactly `thejerseycourier.com`. Already-correct
+CNAMEs are a no-op. Any same-name existing record, disabled record, different
+target or service conflict requires manual provider review; Studio never
+deactivates, deletes or replaces those records. Targets must be the actual
+Vercel-returned DNS recommendation, not arbitrary browser input.
+
+If DNS credentials are absent, the Vercel-only workflow still returns the
+recommended CNAME for manual entry. A DNS response or Vercel ownership result
+is not proof of successful TLS issuance.
+
+## Current activation status and secure setup
+
+October 18, 2026: the project Environment Variables UI was searched across all
+environments for `DOMAIN_CONTROL`, `VERCEL_API_TOKEN` and `IONOS_DNS`; each
+returned no results. No values were revealed or copied. Therefore production
+provisioning is **not activated**, even after deploying the owner-only controls.
+
+1. In `njc-web` → Environment Variables → Production, add a dedicated, scoped,
+   expiring Vercel API token as **Secret**, along with the fixed project/team IDs
+   above as Config. Never use a browser-session cookie as an API credential.
+2. Generate an independent cryptographically random 32+ character challenge
+   secret in a trusted password manager or terminal and add it directly as
+   Production Secret. Do not commit or paste it into chat.
+3. For optional DNS automation, create/add an IONOS Hosting DNS API credential
+   directly through the provider's official flow. Retrieve the authoritative
+   Courier zone ID via that provider; do not guess it. Keep the credential Secret.
+4. Initially keep `DOMAIN_CONTROL_ENABLED=false`; deploy and inspect readiness
+   while signed in to the verified owner account.
+5. After credential scope and recovery are reviewed, enable the release switch,
+   redeploy and perform a monitored idempotent activation. Confirm replay denial,
+   another administrator's denial, audit intent/result records, DNS and HTTPS.
+
+Creating provider credentials is a separate security-sensitive activation step.
+It has not been performed by this code change. No paid plan or service is added.
+
+The isolated release passed 24 focused authorization/DNS/navigation tests,
+targeted ESLint and a production web build with TypeScript checks. Live
+authenticated ownership checks and real database/provider mutation/replay
+rehearsals remain unverified until secure activation. The pure DNS planner tests
+do not claim to have changed or verified real DNS records.
 
 ## Recovery and verification
 

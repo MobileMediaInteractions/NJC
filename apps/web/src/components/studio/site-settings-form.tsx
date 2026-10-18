@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   Activity,
@@ -46,6 +47,7 @@ import {
   type V2HomepageModuleKey,
 } from "@/lib/site-settings";
 import { configurationImpact } from "@/lib/platform-feature-registry";
+import { studioNavigationHref, usesCleanStudioNavigationPaths } from "@/lib/studio-navigation";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -111,15 +113,18 @@ export function SiteSettingsForm({
   history,
   operationalHealth,
   environmentDesignOverride,
+  canManageDomains = false,
 }: {
   initialConfiguration: SiteConfiguration;
   canManage: boolean;
+  canManageDomains?: boolean;
   updatedAt: string | null;
   initialRevision: number;
   history: ConfigurationHistoryRow[];
   operationalHealth: { database: boolean; identity: boolean; scheduler: boolean; aiImages: boolean };
   environmentDesignOverride: "legacy" | "v2" | null;
 }) {
+  const pathname = usePathname();
   const [configuration, setConfiguration] = useState(initialConfiguration);
   const [lastSavedConfiguration, setLastSavedConfiguration] = useState(initialConfiguration);
   const [state, setState] = useState<SaveState>("idle");
@@ -318,6 +323,8 @@ export function SiteSettingsForm({
           </Button>
         </div>
       </div>
+
+      {canManageDomains ? <Card className="mt-6"><CardHeader><CardTitle>Domain Control</CardTitle><CardDescription>Private infrastructure controls for your verified owner account. Other Studio administrators cannot access this section.</CardDescription></CardHeader><CardContent><Button asChild variant="outline"><Link href={studioNavigationHref("/studio/settings/domains", usesCleanStudioNavigationPaths(pathname))}>Open Domain Control <ExternalLink /></Link></Button><p className="mt-3 text-xs leading-5 text-muted-foreground">Review provider readiness, inspect approved hostnames and confirm audited provisioning. Credentials stay server-side; this is not part of the shared site configuration.</p></CardContent></Card> : null}
 
       {!canManage ? <div className="mt-6 flex gap-3 rounded-lg border border-amber-400/40 bg-amber-400/10 p-4 text-sm"><ShieldAlert className="mt-0.5 size-5 shrink-0" /><p>You can review these values, but only an administrator can change production site configuration.</p></div> : null}
       {message ? <p role="status" className={`mt-5 rounded-lg border p-4 text-sm ${state === "error" ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-primary/30 bg-primary/10"}`}>{message}</p> : null}

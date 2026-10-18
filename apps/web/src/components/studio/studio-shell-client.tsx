@@ -68,6 +68,7 @@ export function StudioShellClient({
   pressEnabled,
   alertsEnabled,
   financeEnabled,
+  domainControlAllowed = false,
   studioConfiguration,
 }: {
   children: React.ReactNode;
@@ -78,6 +79,7 @@ export function StudioShellClient({
   pressEnabled: boolean;
   alertsEnabled: boolean;
   financeEnabled: boolean;
+  domainControlAllowed?: boolean;
   studioConfiguration: SiteConfiguration["studio"];
 }) {
   const pathname = usePathname();
@@ -98,6 +100,7 @@ export function StudioShellClient({
     pressEnabled,
     alertsEnabled,
     financeEnabled,
+    domainControlAllowed,
     modules: studioConfiguration.modules,
   };
   const { hubs, activeHub, activeItem } = resolveStudioNavigation(

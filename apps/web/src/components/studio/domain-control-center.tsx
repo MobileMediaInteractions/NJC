@@ -49,7 +49,7 @@ const initialDomains: DomainStatus[] = managedDomainCatalog.map((entry) => ({
 function statusLabel(domain: DomainStatus) {
   if (domain.activation === "security-gated") return "Perimeter required";
   if (domain.activation === "reserved" && !domain.cname.length) return "Reserved";
-  if (domain.cname.length && domain.attached !== false) return "Live DNS";
+  if (domain.cname.length) return domain.attached === true ? "DNS found · attached" : "DNS found · provider unchecked";
   if (domain.attached) return "Awaiting DNS";
   if (domain.activation === "required") return "Required";
   return "Not active";
@@ -64,6 +64,13 @@ export function DomainControlCenter({ canOperate }: { canOperate: boolean }) {
   const [confirmation, setConfirmation] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState<"loading" | "preview" | "provision" | null>(null);
+  const readyToProvision = Boolean(canOperate && readiness?.enabled && readiness.database && readiness.challengeSecret && readiness.vercel);
+  const missingSetup = readiness ? [
+    !readiness.enabled && "DOMAIN_CONTROL_ENABLED=true",
+    !readiness.database && "DATABASE_URL (durable audit storage)",
+    !readiness.challengeSecret && "DOMAIN_CONTROL_CHALLENGE_SECRET (at least 32 random characters)",
+    !readiness.vercel && "VERCEL_API_TOKEN, VERCEL_PROJECT_ID and VERCEL_TEAM_ID",
+  ].filter(Boolean) : [];
 
   const selectedDomain = useMemo(
     () => domains.find((domain) => domain.label === selected) ?? domains[0],
@@ -143,13 +150,13 @@ export function DomainControlCenter({ canOperate }: { canOperate: boolean }) {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error?.message ?? "Domain provisioning failed");
       const suffix = result.data.dnsAutomated
-        ? "DNS propagation and TLS issuance are now being verified."
+        ? "Refresh after DNS propagation, then verify HTTPS before treating the hostname as live."
         : `Vercel is attached. Create CNAME ${selected} → ${result.data.cnameTarget} at the authoritative DNS provider.`;
-      setMessage(`${result.data.hostname} was accepted. ${suffix}`);
       setPreview(null);
       setConfirmation("");
       setReason("");
       await load();
+      setMessage(`${result.data.hostname} was accepted. ${suffix}`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Domain provisioning failed");
     } finally {
@@ -167,11 +174,11 @@ export function DomainControlCenter({ canOperate }: { canOperate: boolean }) {
               <CardTitle className="mt-2 flex items-center gap-2 text-white"><Network className="size-5" /> Domain control center</CardTitle>
               <CardDescription className="max-w-3xl text-white/60">A two-phase, allowlisted provisioning workflow. It cannot remove domains, edit arbitrary DNS, publish the internal boundary, or expose provider credentials.</CardDescription>
             </div>
-            <Badge variant="outline" className="border-white/25 text-white">Super-admin operator only</Badge>
+            <Badge variant="outline" className="border-white/25 text-white">Verified owner only</Badge>
           </div>
         </CardHeader>
         <CardContent className="grid gap-4 pt-6 md:grid-cols-2 xl:grid-cols-3">
-          <ReadinessItem label="Explicit operator" ready={canOperate && (readiness?.operator ?? false)} />
+          <ReadinessItem label="Verified owner account" ready={canOperate} />
           <ReadinessItem label="Durable audit database" ready={readiness?.database ?? false} />
           <ReadinessItem label="Signed five-minute preview" ready={readiness?.challengeSecret ?? false} />
           <ReadinessItem label="Fixed Vercel project" ready={readiness?.vercel ?? false} />
@@ -179,6 +186,8 @@ export function DomainControlCenter({ canOperate }: { canOperate: boolean }) {
           <ReadinessItem label="Production release switch" ready={readiness?.enabled ?? false} />
         </CardContent>
       </Card>
+
+      {canOperate && missingSetup.length ? <Card><CardHeader><CardTitle>Complete secure server setup</CardTitle><CardDescription>Your account is authorized. Provisioning remains locked until the server is configured; adding your email does not grant provider API access.</CardDescription></CardHeader><CardContent><ul className="list-inside list-disc space-y-2 text-sm">{missingSetup.map((item) => <li key={String(item)} className="break-words font-mono">{item}</li>)}</ul><p className="mt-4 text-sm leading-6 text-muted-foreground">Set secrets directly in the existing Vercel project’s Production environment, then redeploy. Do not enter credentials into Studio. IONOS Hosting automation additionally requires IONOS_DNS_API_TOKEN, IONOS_DNS_ZONE_ID and IONOS_DNS_API_URL=https://api.hosting.ionos.com/dns. Without DNS credentials, approved Vercel attachments can still return manual CNAME instructions.</p></CardContent></Card> : null}
 
       {!canOperate ? (
         <Card><CardContent className="flex items-start gap-4 p-6"><LockKeyhole className="mt-0.5 size-5 text-amber-600" /><div><p className="font-semibold">This account is not a domain-control operator.</p><p className="mt-1 text-sm leading-6 text-muted-foreground">Administrator role alone is intentionally insufficient. An explicit server-side operator allowlist, durable audit storage and provider configuration are all required.</p></div></CardContent></Card>
@@ -213,7 +222,7 @@ export function DomainControlCenter({ canOperate }: { canOperate: boolean }) {
             <div className="space-y-2"><Label htmlFor="domain-purpose">Approved purpose</Label><select id="domain-purpose" className="h-10 w-full rounded-md border bg-background px-3 text-sm" value={selected} disabled={!canOperate || busy !== null} onChange={(event) => { setSelected(event.target.value as ManagedDomainLabel); setPreview(null); setConfirmation(""); }}><option value="">Select a hostname</option>{domains.filter((domain) => domain.provisionable).map((domain) => <option key={domain.label} value={domain.label}>{domain.hostname} — {domain.title}</option>)}</select></div>
             <div className="rounded-lg border bg-muted/25 p-4"><p className="text-xs font-black uppercase tracking-[0.12em]">Selected result</p><p className="mt-2 font-mono text-sm">{selectedDomain?.hostname}</p><p className="mt-2 text-xs text-muted-foreground">{selectedDomain?.purpose}</p></div>
           </div>
-          <Button onClick={() => void createPreview()} disabled={!canOperate || !selectedDomain?.provisionable || busy !== null}>{busy === "preview" ? <Loader2 className="animate-spin" /> : <ShieldCheck />} Create signed preview</Button>
+          <Button onClick={() => void createPreview()} disabled={!readyToProvision || !selectedDomain?.provisionable || busy !== null}>{busy === "preview" ? <Loader2 className="animate-spin" /> : <ShieldCheck />} Create signed preview</Button>
 
           {preview ? <div className="space-y-5 rounded-xl border border-amber-500/35 bg-amber-500/5 p-5">
             <div className="flex items-start gap-3"><CircleAlert className="mt-0.5 size-5 shrink-0 text-amber-600" /><div><p className="font-semibold">Production infrastructure change</p><p className="mt-1 text-sm leading-6 text-muted-foreground">This five-minute preview is bound to your account and {preview.hostname}. It attaches only to the fixed NJC project. {preview.automatedDns ? "The authoritative CNAME will also be reconciled automatically." : "DNS will not change automatically; the returned CNAME must be applied separately."}</p></div></div>

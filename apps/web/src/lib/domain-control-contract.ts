@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
 export const domainChallengeLifetimeSeconds = 300;
 
@@ -7,6 +7,7 @@ type ChallengePayload = {
   hostname: string;
   expiresAt: number;
   operation: "provision";
+  nonce: string;
 };
 
 function challengeSecret() {
@@ -35,6 +36,7 @@ export function createDomainProvisioningChallenge(actor: string, hostname: strin
     hostname,
     expiresAt: now + domainChallengeLifetimeSeconds * 1_000,
     operation: "provision",
+    nonce: randomUUID(),
   };
   const encoded = encode(JSON.stringify(payload));
   return `${encoded}.${sign(encoded)}`;
@@ -54,10 +56,11 @@ export function verifyDomainProvisioningChallenge(
   try {
     const payload = JSON.parse(decode(encoded)) as ChallengePayload;
     return payload.operation === "provision" &&
+      typeof payload.nonce === "string" && /^[a-f0-9-]{36}$/.test(payload.nonce) &&
       payload.actor === expected.actor &&
       payload.hostname === expected.hostname &&
       Number.isFinite(payload.expiresAt) &&
-      payload.expiresAt >= now;
+      payload.expiresAt > now && payload.expiresAt <= now + domainChallengeLifetimeSeconds * 1_000;
   } catch {
     return false;
   }

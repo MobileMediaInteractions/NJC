@@ -449,12 +449,27 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > The repository now has one typed hostname registry and a locked Studio
 > **Settings → Domain control** surface. Generic provisioning is limited to
 > pre-approved web hostnames, the exact production Studio host, an active
-> administrator on an explicit server-side operator allowlist, a signed
+> administrator with the verified primary email `alanmichaelsen12@gmail.com`, a signed
 > five-minute preview, an exact hostname confirmation, a substantial reason,
 > durable audit storage and a fixed Vercel project. It cannot delete domains,
 > edit arbitrary DNS, expose provider credentials, provision the CDN/status
 > projects, or publish the `int` security boundary. See
 > [the domain-control runbook](docs/operations/DOMAIN_CONTROL.md).
+
+> October 18: Domain Control is owner-only across Configuration, navigation,
+> direct page access and API authorization. An optional Clerk-ID pin only narrows
+> access. Same-origin JSON requests, nonce-bound previews, one-use durable audit
+> intents and a two-minute per-hostname lease protect provisioning. The DNS
+> adapter now uses the official IONOS Hosting API and refuses to replace,
+> disable or retarget existing records. Provider errors do not expose raw
+> credentials or database messages. The Vercel Environment Variables UI was
+> checked across all environments: `DOMAIN_CONTROL`, `VERCEL_API_TOKEN` and
+> `IONOS_DNS` each returned no results. Production provisioning therefore remains
+> locked; no provider tokens, DNS records or paid services were created.
+> The isolated owner-control release passed 24 focused tests, targeted ESLint
+> and a production web build including TypeScript checks. Authenticated live
+> owner/non-owner rehearsal and real Postgres/provider mutation tests remain
+> activation work, not completed claims.
 
 > Vercel attachment, authoritative IONOS CNAMEs, managed TLS and public HTTPS
 > verification are complete for `press`, `distribution`, `links`, `support`,
@@ -465,14 +480,14 @@ This file tracks known follow-up work. Items here are requirements, not claims t
 > to the canonical publication until a reviewed first-party surface replaces
 > each redirect. `int` remains DNS-dark.
 
-- [ ] After the current domain batch is attached and its authoritative CNAMEs
-  are verified, configure the production control with a dedicated
-  least-privilege Vercel token, optional IONOS Cloud DNS token/zone, an
-  independently generated challenge secret and the exact Clerk IDs of the
-  approved infrastructure operators. Keep `DOMAIN_CONTROL_ENABLED=false`
+- [ ] Configure the production control with a dedicated scoped, expiring Vercel
+  token, the fixed project/team IDs, optional IONOS Hosting DNS key/zone and an
+  independently generated challenge secret. Optionally pin the owner's exact
+  Clerk ID; never add other operator emails. Keep `DOMAIN_CONTROL_ENABLED=false`
   until provider scope, audit retention, token rotation and recovery have been
   reviewed; then perform one monitored idempotent activation and one denied
-  non-operator rehearsal before enabling ordinary use.
+  non-owner administrator rehearsal, expired/replayed-preview checks and a
+  concurrent duplicate rehearsal against Postgres before enabling ordinary use.
 - [ ] Keep the registry current whenever a hostname changes purpose, project,
   activation state or owner. Reserved hosts must redirect to the canonical
   publication until their first-party surface is approved. `status` must use

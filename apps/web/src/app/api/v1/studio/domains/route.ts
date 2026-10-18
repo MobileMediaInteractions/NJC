@@ -19,6 +19,8 @@ import {
   verifyDomainProvisioningChallenge,
 } from "@/lib/domain-control";
 import { getEmployeeViewer, writeEmployeeAudit } from "@/lib/employee-auth";
+import { isSameOriginDomainMutation, safeDomainControlError } from "@/lib/domain-control-access";
+import { claimDomainProvisioning } from "@/lib/domain-control-audit";
 
 export const dynamic = "force-dynamic";
 
@@ -34,10 +36,10 @@ async function authorize(request: Request) {
     return { response: noStoreJson({ error: { code: "wrong_host", message: "Domain control is available only on the production Studio hostname" } }, 404) };
   }
   const viewer = await getEmployeeViewer();
-  if (!viewer || viewer.role !== "admin" || !isDomainControlOperator(viewer.id)) {
+  if (!viewer || !await isDomainControlOperator(viewer)) {
     return { response: noStoreJson({ error: { code: "forbidden", message: "Explicit domain-control operator access is required" } }, 403) };
   }
-  if (!hasDatabase()) {
+  if (request.method !== "GET" && !hasDatabase()) {
     return { response: noStoreJson({ error: { code: "database_required", message: "Domain mutations require durable audit storage" } }, 503) };
   }
   return { viewer };
@@ -46,7 +48,7 @@ async function authorize(request: Request) {
 export async function GET(request: Request) {
   const access = await authorize(request);
   if ("response" in access) return access.response;
-  const readiness = getDomainControlReadiness(access.viewer.id);
+  const readiness = getDomainControlReadiness(true);
   let attached = new Map<string, { verified: boolean | null }>();
   let providerError: string | null = null;
   if (readiness.vercel) {
@@ -56,7 +58,7 @@ export async function GET(request: Request) {
         { verified: typeof domain.verified === "boolean" ? domain.verified : null },
       ]));
     } catch (error) {
-      providerError = error instanceof Error ? error.message : "Vercel status could not be read";
+      providerError = safeDomainControlError(error);
     }
   }
   const domains = await Promise.all(managedDomainCatalog.map(async (entry) => {
@@ -64,7 +66,7 @@ export async function GET(request: Request) {
     return {
       ...entry,
       hostname,
-      attached: entry.project === "cdn" ? null : attached.has(hostname),
+      attached: entry.project !== "web" || !readiness.vercel || providerError ? null : attached.has(hostname),
       verified: attached.get(hostname)?.verified ?? null,
       cname: await inspectPublicCname(hostname),
       provisionable: !isProvisioningBlocked(entry.label),
@@ -74,15 +76,20 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!isSameOriginDomainMutation(request)) return noStoreJson({ error: { code: "invalid_origin", message: "Use Domain Control from this Studio tab" } }, 403);
   const access = await authorize(request);
   if ("response" in access) return access.response;
-  const body = await request.json().catch(() => null);
+  if (!request.headers.get("content-type")?.startsWith("application/json")) return noStoreJson({ error: { code: "invalid_request", message: "JSON is required" } }, 415);
+  const raw = await request.text();
+  if (Buffer.byteLength(raw) > 8_192) return noStoreJson({ error: { code: "invalid_request", message: "Request too large" } }, 413);
+  let body: unknown;
+  try { body = JSON.parse(raw); } catch { body = null; }
   const preview = domainPreviewSchema.safeParse(body);
   if (preview.success) {
     if (isProvisioningBlocked(preview.data.label)) {
       return noStoreJson({ error: { code: "blocked_domain", message: "This hostname requires a separate security or deployment workflow" } }, 409);
     }
-    const readiness = getDomainControlReadiness(access.viewer.id);
+    const readiness = getDomainControlReadiness(true);
     if (!readiness.enabled || !readiness.challengeSecret || !readiness.vercel) {
       return noStoreJson({ error: { code: "not_configured", message: "Domain control is locked until its server-side safety configuration is complete" } }, 503);
     }
@@ -107,7 +114,7 @@ export async function POST(request: Request) {
   if (isProvisioningBlocked(label)) {
     return noStoreJson({ error: { code: "blocked_domain", message: "This hostname requires a separate security or deployment workflow" } }, 409);
   }
-  const readiness = getDomainControlReadiness(access.viewer.id);
+  const readiness = getDomainControlReadiness(true);
   if (!readiness.enabled || !readiness.challengeSecret || !readiness.vercel) {
     return noStoreJson({ error: { code: "not_configured", message: "Domain control is locked until its server-side safety configuration is complete" } }, 503);
   }
@@ -123,6 +130,9 @@ export async function POST(request: Request) {
   let cnameTarget: string | null = null;
   let dnsChanged: boolean | null = null;
   try {
+    if (!await claimDomainProvisioning({ actor: access.viewer.id, hostname, challenge, reason })) {
+      return noStoreJson({ error: { code: "challenge_used_or_busy", message: "This preview was used or this hostname was provisioned recently. Refresh status and allow two minutes before creating a new preview" } }, 409);
+    }
     await attachVercelProjectDomain(hostname);
     domainAttached = true;
     cnameTarget = await getVercelRecommendedCname(hostname);
@@ -140,7 +150,7 @@ export async function POST(request: Request) {
     });
     return noStoreJson({ data: { hostname, domainAttached, dnsAutomated: readiness.automatedDns, dnsChanged, cnameTarget, next: readiness.automatedDns ? "DNS propagation and TLS issuance are pending verification" : "Create the returned CNAME at the authoritative DNS provider" } }, 201);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Domain provisioning failed";
+    const message = safeDomainControlError(error);
     await writeEmployeeAudit(request, access.viewer, "infrastructure.domain_provision_failed", { type: "hostname", id: hostname }, {
       reason,
       projectId: process.env.VERCEL_PROJECT_ID,
