@@ -63,11 +63,13 @@ export function StoryRevisionHistory({
   liveSnapshot,
   revisions,
   canReview,
+  canReviewOwn,
 }: {
   storyId: string;
   liveSnapshot: StoryRevisionSnapshot;
   revisions: StoryRevisionRow[];
   canReview: boolean;
+  canReviewOwn: boolean;
 }) {
   const pending = revisions.find((revision) => revision.reviewStatus === "pending");
   const history = revisions.filter((revision) => revision.reviewStatus !== "pending");
@@ -79,7 +81,7 @@ export function StoryRevisionHistory({
           storyId={storyId}
           revision={pending}
           changes={buildStoryRevisionDiff(liveSnapshot, pending.snapshot)}
-          canReview={canReview && !pending.editorIsViewer}
+          canReview={canReview && (!pending.editorIsViewer || canReviewOwn)}
         />
       ) : null}
       <RevisionWorkbench
@@ -351,7 +353,7 @@ function RestoreRevision({ storyId, revisionId, version }: { storyId: string; re
         setMessage(payload?.error?.message ?? "The revision could not be restored.");
         return;
       }
-      setMessage(payload?.meta?.requiresReview ? "Restoration submitted for independent approval." : "Revision restored as a new draft revision.");
+      setMessage(payload?.meta?.requiresReview ? "Restoration submitted for approval." : "Revision restored as a new draft revision.");
       setConfirmation("");
       router.refresh();
     });
@@ -362,7 +364,7 @@ function RestoreRevision({ storyId, revisionId, version }: { storyId: string; re
   }
   return (
     <div className="space-y-3 rounded-lg border border-amber-500/40 bg-amber-500/5 p-4">
-      <div><p className="font-semibold">Restore revision {version} as a new revision?</p><p className="mt-1 text-xs leading-5 text-muted-foreground">History will not be erased. Pre-publication content returns to Draft; an active published story creates an independently reviewed update.</p></div>
+      <div><p className="font-semibold">Restore revision {version} as a new revision?</p><p className="mt-1 text-xs leading-5 text-muted-foreground">History will not be erased. Pre-publication content returns to Draft; an active published story creates an update for review.</p></div>
       <Textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Explain why this restoration is required (minimum 10 characters)" maxLength={500} />
       <Input value={confirmation} onChange={(event) => setConfirmation(event.target.value)} placeholder="Type RESTORE REVISION" autoComplete="off" />
       <div className="flex flex-wrap gap-2"><Button type="button" onClick={restore} disabled={pending || confirmation !== "RESTORE REVISION" || reason.trim().length < 10}>{pending ? <Loader2 className="animate-spin" /> : <RotateCcw />} Confirm restoration</Button><Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={pending}>Cancel</Button></div>

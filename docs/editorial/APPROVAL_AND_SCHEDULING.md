@@ -3,7 +3,7 @@
 Studio treats review, approval, and publication as separate events.
 
 1. The owner saves a draft and submits it for review.
-2. A different editor, producer, or administrator approves the exact content
+2. An editor, producer, or administrator approves the exact content
    version. The approval stores the approver, timestamp, optional note,
    content version, and SHA-256 hash.
 3. A publisher may publish immediately or choose an exact future instant.
@@ -12,6 +12,16 @@ Studio treats review, approval, and publication as separate events.
    and pseudonym moderation state before committing publication.
 5. A material edit cancels an open job, invalidates approval, and returns the
    story to Draft. Rescheduling and cancellation are audited separately.
+
+By default the approver and publisher must be different from the story owner.
+An administrator can select individual publishers under Studio Settings →
+Editorial role eligibility → Publish own articles. Selected accounts can
+approve and publish their own reviewed stories and approve their own proposed
+updates to active stories. The exception requires a current publisher role and
+can be removed in the same place. The change is recorded in configuration
+history and audit logs; the ordinary content, byline and approval checks remain.
+Existing queued publications are not automatically cancelled by a later
+permission change; cancel any unwanted schedules separately.
 
 ## Approval integrity and recovery
 
@@ -27,7 +37,7 @@ publication recheck the story under a row lock to reject intervening edits.
 Approvals created before the October 14, 2026 correction hashed the full row,
 including its own `contentHash`. They cannot safely be reused with the corrected
 hash. After deployment, Studio displays an approval-renewal notice and offers
-**Approve revision** again. A different publisher must review and approve the
+**Approve revision** again. An authorized publisher must review and approve the
 current revision once, then publish or schedule normally. For an existing
 schedule with an invalid approval, cancel it to return to Review first. Prior
 approval records remain in history; a new approval supersedes them. This
@@ -46,7 +56,7 @@ the exact typed confirmation `REOPEN STORY`. Studio records the operator,
 reason, purpose, timestamp, and reopened snapshot in immutable revision and API
 audit history. Applying the override does not change public copy, publication
 time, byline, URL, or approval state. It only reopens the existing active-story
-workspace. The proposed comparison must still be approved by a different
+workspace. The proposed comparison must still be approved by an authorized
 publisher before it replaces the live article. Disabling active-story revisions
 in Configuration disables this override as well.
 

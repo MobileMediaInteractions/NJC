@@ -17,6 +17,7 @@ function renderActions(overrides: Partial<Props> = {}) {
     scheduledAt: null,
     publicationTimezone: "America/New_York",
     canPublish: true,
+    canPublishApproved: true,
     canApprove: true,
     canSubmitReview: true,
     isActive: false,
@@ -43,6 +44,11 @@ test("a matching approval exposes publication and scheduling", () => {
   assert.match(html, />\s*Schedule<\/button>/);
   assert.match(html, /Approved Oct/);
   assert.doesNotMatch(html, /Approve revision|previous approval does not verify/);
+});
+
+test("a publisher without permission cannot publish their own approved story", () => {
+  const html = renderActions({ canPublishApproved: false, approval: { approvedAt: "2026-10-14T16:00:00Z", note: null } });
+  assert.doesNotMatch(html, /Publish now|>\s*Schedule<\/button>/);
 });
 
 test("a scheduled story with an outdated approval can return to review but cannot publish", () => {

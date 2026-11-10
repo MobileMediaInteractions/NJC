@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { storyApprovalMatches, storyContentHash, storyPublicationBlockers } from "../src/lib/story-content-integrity";
-import { canApproveStory, canScheduleApprovedStory, isDue, utcSchedulePreview } from "../src/lib/story-scheduling-policy";
+import { canApproveStory, canPublishReviewedStory, canScheduleApprovedStory, canSelfPublishStory, isDue, utcSchedulePreview } from "../src/lib/story-scheduling-policy";
 
 const material = {
   headline: "Council adopts revised public budget",
@@ -27,6 +27,24 @@ test("approval is independent and restricted to publishing roles", () => {
   assert.equal(canApproveStory({ role: "editor", storyStatus: "review", viewerUserId: "editor", authorId: "author" }), true);
   assert.equal(canApproveStory({ role: "editor", storyStatus: "review", viewerUserId: "author", authorId: "author" }), false);
   assert.equal(canApproveStory({ role: "reporter", storyStatus: "review", viewerUserId: "reporter", authorId: "author" }), false);
+});
+
+test("self-publishing is granted to selected publishers only and still requires approval", () => {
+  const allowedUserIds = ["trusted"];
+  assert.equal(canSelfPublishStory("admin", "trusted", allowedUserIds), true);
+  assert.equal(canSelfPublishStory("admin", "other", allowedUserIds), false);
+  assert.equal(canSelfPublishStory("reporter", "trusted", allowedUserIds), false);
+  assert.equal(canSelfPublishStory("admin", undefined, allowedUserIds), false);
+  const self = { role: "admin" as const, storyStatus: "review" as const, viewerUserId: "trusted", authorId: "trusted" };
+  assert.equal(canApproveStory(self), false);
+  assert.equal(canApproveStory({ ...self, allowSelfApproval: true }), true);
+  assert.equal(canApproveStory({ ...self, role: "reporter", allowSelfApproval: true }), false);
+  const publish = { role: "admin" as const, viewerUserId: "trusted", authorId: "trusted", allowedUserIds, hasActiveApproval: true };
+  assert.equal(canPublishReviewedStory(publish), true);
+  assert.equal(canPublishReviewedStory({ ...publish, hasActiveApproval: false }), false);
+  assert.equal(canPublishReviewedStory({ ...publish, allowedUserIds: [] }), false);
+  assert.equal(canPublishReviewedStory({ ...publish, viewerUserId: "other" }), true);
+  assert.equal(canPublishReviewedStory({ ...publish, viewerUserId: undefined }), false);
 });
 
 test("scheduling requires an explicit approval", () => {

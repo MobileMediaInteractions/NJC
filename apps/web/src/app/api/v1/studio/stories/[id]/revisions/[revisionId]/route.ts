@@ -16,6 +16,8 @@ import { canPublishStory } from "@/lib/story-workflow";
 import { storyRichTextDocumentSchema } from "@/lib/story-rich-text";
 import { storyPublicationBlockers } from "@/lib/story-content-integrity";
 import { isAiStoryImageGeneration } from "@/lib/ai-story-image";
+import { getSiteConfiguration } from "@/lib/site-settings";
+import { canSelfPublishStory } from "@/lib/story-scheduling-policy";
 
 const paramsInput = z.object({
   id: z.uuid(),
@@ -139,7 +141,9 @@ export async function PATCH(
       409,
     );
   }
-  if (revision.editorId && revision.editorId === viewer.databaseId) {
+  const configuration = await getSiteConfiguration();
+  const canSelfPublish = canSelfPublishStory(viewer.role, viewer.databaseId, configuration.studio.editorialWorkflow.selfPublishingUserIds);
+  if (revision.editorId && revision.editorId === viewer.databaseId && !canSelfPublish) {
     return responseError(
       "independent_review_required",
       "A different publisher must approve or reject this update",

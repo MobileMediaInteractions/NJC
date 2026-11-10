@@ -71,11 +71,12 @@ export async function PATCH(request: Request) {
     const before = (await getSiteConfigurationRecord()).configuration;
     const impact = configurationImpact(before, configuration);
     const highImpactDisabled = impact.some((entry) => entry.defaultState === "enabled" && entry.configurationPath && entry.key.match(/pseudonym|scheduling|authorization|audit/));
+    const selfPublishingChanged = JSON.stringify([...before.studio.editorialWorkflow.selfPublishingUserIds].sort()) !== JSON.stringify([...configuration.studio.editorialWorkflow.selfPublishingUserIds].sort());
     const productionDesignTransition = crossesV2ProductionBoundary(
       before.presentation.designMode,
       configuration.presentation.designMode,
     );
-    if ((highImpactDisabled || productionDesignTransition) && parsed.data.confirmation !== "APPLY PRODUCTION CHANGE") {
+    if ((highImpactDisabled || productionDesignTransition || selfPublishingChanged) && parsed.data.confirmation !== "APPLY PRODUCTION CHANGE") {
       return NextResponse.json({ error: { code: "confirmation_required", message: "Type APPLY PRODUCTION CHANGE in the review screen for this high-impact change" } }, { status: 409 });
     }
     const affectedPlatforms = [...new Set(impact.flatMap((entry) => entry.platforms))];
@@ -104,6 +105,8 @@ export async function PATCH(request: Request) {
         easterEggEnabled: configuration.easterEgg.enabled,
         studioExperience: configuration.studio.experience,
         notificationPolicy: configuration.studio.notifications,
+        selfPublishingUsersAdded: configuration.studio.editorialWorkflow.selfPublishingUserIds.filter((id) => !before.studio.editorialWorkflow.selfPublishingUserIds.includes(id)),
+        selfPublishingUsersRemoved: before.studio.editorialWorkflow.selfPublishingUserIds.filter((id) => !configuration.studio.editorialWorkflow.selfPublishingUserIds.includes(id)),
         automations: configuration.studio.automations,
         configurationRevision: record.revision,
         reason: parsed.data.reason,
