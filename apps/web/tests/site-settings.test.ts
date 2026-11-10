@@ -211,6 +211,7 @@ test("older stored configuration receives the complete guarded Studio registry",
   assert.equal(parsed.studio.automations.manualVerificationRequired, true);
   assert.equal(parsed.studio.editorialWorkflow.activeStoryRevisions, true);
   assert.equal(parsed.studio.editorialWorkflow.requireIndependentRevisionApproval, true);
+  assert.deepEqual(parsed.studio.editorialWorkflow.selfPublishingUserIds, []);
   assert.ok(parsed.studio.editorialWorkflow.schedulingEligibleRoles.includes("editor"));
   assert.equal(parsed.registry.schemaVersion, 1);
 });
@@ -227,4 +228,11 @@ test("manual verification and notification preflight cannot be disabled", () => 
   const third = configurationCopy();
   (third.studio.editorialWorkflow.requireIndependentRevisionApproval as boolean) = false;
   assert.equal(siteConfigurationSchema.safeParse(third).success, false);
+});
+
+test("existing workflow configurations default to no self-publishing exceptions", () => {
+  const configuration = configurationCopy();
+  const workflow = configuration.studio.editorialWorkflow as Partial<typeof configuration.studio.editorialWorkflow>;
+  delete workflow.selfPublishingUserIds;
+  assert.deepEqual(siteConfigurationSchema.parse(configuration).studio.editorialWorkflow.selfPublishingUserIds, []);
 });

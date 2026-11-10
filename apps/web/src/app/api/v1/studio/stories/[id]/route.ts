@@ -28,7 +28,7 @@ import {
 import { legacyPublicBylineSnapshot } from "@/lib/pseudonyms";
 import { getSiteConfiguration } from "@/lib/site-settings";
 import { storyApprovalMatches, storyContentHash, storyPublicationBlockers } from "@/lib/story-content-integrity";
-import { canApproveStory } from "@/lib/story-scheduling-policy";
+import { canApproveStory, canPublishReviewedStory, canSelfPublishStory } from "@/lib/story-scheduling-policy";
 import { InvalidStoryLeadMediaError, resolveStoryLeadMedia } from "@/lib/story-lead-media";
 import { hasMeaningfulStoryRevisionChange } from "@/lib/story-revisions";
 import {
@@ -110,11 +110,14 @@ export async function PATCH(
   const mutation = parsedBody.data;
   if ("action" in mutation) {
     if (mutation.action === "approve") {
+      const configuration = await getSiteConfiguration();
+      const allowSelfApproval = canSelfPublishStory(viewer.role, viewer.databaseId, configuration.studio.editorialWorkflow.selfPublishingUserIds);
       if (!canApproveStory({
         role: viewer.role,
         storyStatus: current.status,
         viewerUserId: viewer.databaseId,
         authorId: current.authorId,
+        allowSelfApproval,
       })) {
         return NextResponse.json(
           { error: { code: "independent_approval_required", message: "A publisher other than the story owner must approve this reviewed revision." } },
@@ -164,7 +167,7 @@ export async function PATCH(
         actorClerkId: viewer.id,
         event: "story.approved",
         request,
-        metadata: { storyId: current.id, approvalId: approval?.id, contentVersion: current.contentVersion, contentHash: hash },
+        metadata: { storyId: current.id, approvalId: approval?.id, contentVersion: current.contentVersion, contentHash: hash, selfApproved: viewer.databaseId === current.authorId },
       });
       revalidatePath(`/studio/stories/${current.id}`);
       return NextResponse.json({ data: approval, meta: { apiVersion: "1" } });
@@ -419,6 +422,7 @@ export async function PATCH(
   const isOwner = Boolean(
     viewer.databaseId && current.authorId === viewer.databaseId,
   );
+  const canSelfPublish = canSelfPublishStory(viewer.role, viewer.databaseId, workflowConfiguration.studio.editorialWorkflow.selfPublishingUserIds);
   const [activeApproval] =
     nextStatus === "scheduled" || nextStatus === "published"
       ? await getDb()
@@ -431,12 +435,10 @@ export async function PATCH(
   const isApprovedPublicationTransition =
     (nextStatus === "scheduled" || nextStatus === "published") &&
     (current.status === "review" || current.status === "scheduled") &&
-    canPublishStory(viewer.role) &&
     workflowConfiguration.studio.editorialWorkflow.schedulingEligibleRoles.includes(viewer.role as "admin" | "editor" | "producer") &&
-    !isOwner &&
-    approvalMatches;
+    canPublishReviewedStory({ role: viewer.role, viewerUserId: viewer.databaseId, authorId: current.authorId, allowedUserIds: workflowConfiguration.studio.editorialWorkflow.selfPublishingUserIds, hasActiveApproval: approvalMatches });
   if (!canTransitionStoryStatus(current.status, nextStatus, viewer.role, isOwner) && !isApprovedPublicationTransition) {
-    if ((nextStatus === "scheduled" || nextStatus === "published") && isOwner) {
+    if ((nextStatus === "scheduled" || nextStatus === "published") && isOwner && !canSelfPublish) {
       return NextResponse.json(
         { error: { code: "independent_publication_required", message: "The story owner cannot publish their own reviewed work. Ask another publisher to complete the action." } },
         { status: 403 },

@@ -23,6 +23,7 @@ import { getStudioUser } from "@/lib/auth";
 import { getSiteConfiguration } from "@/lib/site-settings";
 import { canPublishStory } from "@/lib/story-workflow";
 import { storyApprovalMatches } from "@/lib/story-content-integrity";
+import { canSelfPublishStory } from "@/lib/story-scheduling-policy";
 
 const storyId = z.uuid();
 
@@ -73,6 +74,7 @@ export default async function StudioStoryReviewPage({ params }: { params: Promis
     );
   }
   const configuration = await getSiteConfiguration();
+  const canSelfPublish = canSelfPublishStory(viewer.role, viewer.databaseId, configuration.studio.editorialWorkflow.selfPublishingUserIds);
   const [[approval], [publicationJob], authorRows, activeStaff] = await Promise.all([
     getDb().select().from(storyApprovals).where(and(eq(storyApprovals.storyId, story.id), isNull(storyApprovals.invalidatedAt))).limit(1),
     getDb().select().from(storyPublicationJobs).where(eq(storyPublicationJobs.storyId, story.id)).orderBy(desc(storyPublicationJobs.createdAt)).limit(1),
@@ -132,7 +134,7 @@ export default async function StudioStoryReviewPage({ params }: { params: Promis
             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{story.headline}</h1>
             <p className="mt-3 text-lg leading-7 text-muted-foreground">{story.dek}</p>
           </div>
-          <StoryReviewActions id={story.id} slug={story.slug} headline={story.headline} bylineName={story.publicBylineSnapshot?.name ?? story.authorSnapshot?.name ?? "Courier Newsroom"} status={story.status} scheduledAt={story.scheduledAt?.toISOString() ?? null} publicationTimezone={configuration.publication.timezone} canPublish={canPublish} canApprove={canPublish && Boolean(viewer.databaseId) && viewer.databaseId !== story.authorId} canSubmitReview={canPublish || Boolean(viewer.databaseId && story.authorId === viewer.databaseId)} isActive={story.isActive} activeStoryRevisionsEnabled={configuration.studio.editorialWorkflow.activeStoryRevisions} approval={currentApproval ? { approvedAt: currentApproval.approvedAt.toISOString(), note: currentApproval.note } : null} approvalNeedsRenewal={Boolean(approval && !currentApproval)} publicationJob={publicationJob ? { status: publicationJob.status === "queued" && publicationJob.scheduledAt <= new Date() ? "due" : publicationJob.status, originalScheduledAt: publicationJob.originalScheduledAt.toISOString(), scheduledAt: publicationJob.scheduledAt.toISOString(), attempts: publicationJob.attemptCount, error: publicationJob.lastErrorMessage } : null} publicationBlocker={story.imageKind === "ai_placeholder" ? "Replace or remove the temporary AI illustration before this story can be approved, scheduled or published." : null} />
+          <StoryReviewActions id={story.id} slug={story.slug} headline={story.headline} bylineName={story.publicBylineSnapshot?.name ?? story.authorSnapshot?.name ?? "Courier Newsroom"} status={story.status} scheduledAt={story.scheduledAt?.toISOString() ?? null} publicationTimezone={configuration.publication.timezone} canPublish={canPublish} canPublishApproved={canPublish && Boolean(viewer.databaseId) && (story.authorId !== viewer.databaseId || canSelfPublish)} canApprove={canPublish && Boolean(viewer.databaseId) && (viewer.databaseId !== story.authorId || canSelfPublish)} canSubmitReview={canPublish || Boolean(viewer.databaseId && story.authorId === viewer.databaseId)} isActive={story.isActive} activeStoryRevisionsEnabled={configuration.studio.editorialWorkflow.activeStoryRevisions} approval={currentApproval ? { approvedAt: currentApproval.approvedAt.toISOString(), note: currentApproval.note } : null} approvalNeedsRenewal={Boolean(approval && !currentApproval)} publicationJob={publicationJob ? { status: publicationJob.status === "queued" && publicationJob.scheduledAt <= new Date() ? "due" : publicationJob.status, originalScheduledAt: publicationJob.originalScheduledAt.toISOString(), scheduledAt: publicationJob.scheduledAt.toISOString(), attempts: publicationJob.attemptCount, error: publicationJob.lastErrorMessage } : null} publicationBlocker={story.imageKind === "ai_placeholder" ? "Replace or remove the temporary AI illustration before this story can be approved, scheduled or published." : null} />
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -183,6 +185,7 @@ export default async function StudioStoryReviewPage({ params }: { params: Promis
           liveSnapshot={serializableSnapshot(story)}
           revisions={revisionRows}
           canReview={canPublish}
+          canReviewOwn={canSelfPublish}
         />
       </div>
     </StudioShell>
