@@ -6,7 +6,7 @@ test("the community inbox and nested review routes stay inside Studio on its ser
   const rewrites = await nextConfig.rewrites?.();
   assert.ok(rewrites && !Array.isArray(rewrites));
   for (const suffix of ["", "/:path*"]) {
-    const route = rewrites.beforeFiles?.find((item) => item.source === `/community${suffix}` && item.destination === `/studio/community${suffix}`);
+    const route: NonNullable<typeof rewrites.beforeFiles>[number] | undefined = rewrites.beforeFiles?.find((item) => item.source === `/community${suffix}` && item.destination === `/studio/community${suffix}`);
     assert.ok(route, `Missing community admin rewrite ${suffix}`);
     assert.deepEqual(route.has, [{ type: "host", value: "studio.thejerseycourier.com" }]);
   }

@@ -10,6 +10,7 @@ const origin = "https://www.thejerseycourier.com";
 const code = storyShortCode(id)!;
 const updatedAt = new Date("2026-10-15T12:00:00Z");
 const context = { params: Promise.resolve({ code }) };
+const failOnError = (error: unknown): never => { throw error; };
 
 test("short IDs losslessly encode UUIDs, including leading zeros and the full 128-bit range", () => {
   for (const uuid of [id, "00000000-0000-0000-0000-000000000000", "ffffffff-ffff-ffff-ffff-ffffffffffff", ...Array.from({ length: 1000 }, () => randomUUID())]) {
@@ -35,7 +36,7 @@ test("GET and HEAD-compatible redirects use the current slug and canonical site,
   const handler = createStoryShortLinkHandler({
     siteOrigin: () => origin,
     findPublishedStory: async (value) => { requestedId = value; return { slug, updatedAt }; },
-    onError: assert.fail,
+    onError: failOnError,
   });
   for (const method of ["GET", "HEAD"]) {
     const response = await handler(new Request(`https://untrusted.example/s/${code}`, { method }), context);
@@ -50,7 +51,7 @@ test("GET and HEAD-compatible redirects use the current slug and canonical site,
 });
 
 test("only allowlisted campaign attribution passes through; redirects and arbitrary parameters do not", async () => {
-  const handler = createStoryShortLinkHandler({ siteOrigin: () => origin, findPublishedStory: async () => ({ slug: "a/b", updatedAt }), onError: assert.fail });
+  const handler = createStoryShortLinkHandler({ siteOrigin: () => origin, findPublishedStory: async () => ({ slug: "a/b", updatedAt }), onError: failOnError });
   const response = await handler(new Request(`${origin}/s/${code}?utm_source=x&utm_medium=social&redirect=https://evil.example&share=attacker&secret=no&utm_term=${"a".repeat(257)}`), context);
   const destination = new URL(response.headers.get("location")!);
   assert.equal(destination.pathname, "/story/a%2Fb");
@@ -61,7 +62,7 @@ test("only allowlisted campaign attribution passes through; redirects and arbitr
 });
 
 test("unknown, deleted and no-longer-public stories fail closed without caching or a redirect", async () => {
-  const handler = createStoryShortLinkHandler({ siteOrigin: () => origin, findPublishedStory: async () => null, onError: assert.fail });
+  const handler = createStoryShortLinkHandler({ siteOrigin: () => origin, findPublishedStory: async () => null, onError: failOnError });
   const response = await handler(new Request(`${origin}/s/${code}`), context);
   assert.equal(response.status, 404);
   assert.equal(response.headers.has("location"), false);
