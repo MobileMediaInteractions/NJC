@@ -18,7 +18,7 @@ export function MagazineFlipbook({ title, pages, imageAssets, documentUrl }: { t
 
   useEffect(() => {
     let cancelled = false;
-    let objectUrls: string[] = [];
+    const objectUrls: string[] = [];
     async function initialize() {
       if (!rootRef.current) return;
       setError(""); setPdfNotice("");
