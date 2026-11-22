@@ -51,6 +51,7 @@ const studioSections = [
   "legal",
   "links",
   "live",
+  "mag-engine",
   "media",
   "njc-plus",
   "notifications",
@@ -69,6 +70,7 @@ function onHost(value: string) {
 }
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["*.vercel.run"],
   transpilePackages: ["@harborline/backend", "@harborline/contracts", "@harborline/media-player", "@njcourier/domain-registry"],
   images: {
     remotePatterns: [
