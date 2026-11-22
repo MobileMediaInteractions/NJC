@@ -145,41 +145,74 @@ const nextConfig: NextConfig = {
         has: onHost(studioHostname),
         headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" }],
       },
+      {
+        source: "/:path*",
+        has: onHost(apiHostname),
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
+        source: "/:path*",
+        has: onHost(courierCutHostname),
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive, nosnippet" },
+          { key: "Referrer-Policy", value: "same-origin" },
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
+      {
+        source: "/:path*",
+        has: onHost(linksHostname),
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, follow, noarchive" },
+          { key: "Referrer-Policy", value: "origin-when-cross-origin" },
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
+      {
+        source: "/api/:path*",
+        has: onHost(pressHostname),
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+          { key: "Referrer-Policy", value: "no-referrer" },
+        ],
+      },
+      {
+        source: "/distribution/:path*",
+        headers: [
+          {
+            key: "X-Robots-Tag",
+            value: "noindex, nofollow, noarchive, nosnippet",
+          },
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
+      {
+        source: "/:path*",
+        has: onHost(distributionHostname),
+        headers: [
+          {
+            key: "X-Robots-Tag",
+            value: "noindex, nofollow, noarchive, nosnippet",
+          },
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Frame-Options", value: "DENY" },
+        ],
+      },
     ];
   },
   async redirects() {
     return [
-      {
-        source: "/rss",
-        destination: "/rss.xml",
-        permanent: false,
-      },
-      {
-        source: "/stories",
-        destination: "/news",
-        permanent: false,
-      },
-      {
-        source: "/story/:slug",
-        destination: "/news/:slug",
-        permanent: false,
-      },
-      {
-        source: "/:slug",
-        has: onHost(studioHostname),
-        destination: `${studioOrigin}/:slug`,
-        permanent: false,
-      },
-      {
-        source: "/admin",
-        has: onHost(canonicalSiteHostname),
-        destination: studioOrigin,
+      ...futureRedirectHostnames.map((hostname) => ({
+        source: "/:path*",
+        has: onHost(hostname),
+        destination: `${canonicalSiteOrigin}/:path*`,
         permanent: true,
-      },
+      })),
       {
-        source: "/admin/:path*",
+        source: "/analytics",
         has: onHost(canonicalSiteHostname),
-        destination: `${studioOrigin}/:path*`,
+        destination: `${studioOrigin}/analytics`,
         permanent: true,
       },
       {
@@ -195,14 +228,58 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
+        source: "/studio",
+        has: onHost(studioHostname),
+        destination: studioOrigin,
+        permanent: true,
+      },
+      {
+        source: "/studio/:path*",
+        has: onHost(studioHostname),
+        destination: `${studioOrigin}/:path*`,
+        permanent: true,
+      },
+      {
         source: "/plus",
         has: onHost(canonicalSiteHostname),
         destination: plusOrigin,
         permanent: true,
       },
       {
-        source: "/press",
+        source: "/plus/:path*",
         has: onHost(canonicalSiteHostname),
+        destination: `${plusOrigin}/:path*`,
+        permanent: true,
+      },
+      {
+        source: "/plus",
+        has: onHost(plusHostname),
+        destination: plusOrigin,
+        permanent: true,
+      },
+      {
+        source: "/plus/:path*",
+        has: onHost(plusHostname),
+        destination: `${plusOrigin}/:path*`,
+        permanent: true,
+      },
+      {
+        source: "/developers",
+        has: onHost(canonicalSiteHostname),
+        destination: apiOrigin,
+        permanent: true,
+      },
+      ...(pressSubdomainEnabled
+        ? [{
+            source: "/press-portal",
+            has: onHost(canonicalSiteHostname),
+            destination: pressOrigin,
+            permanent: true,
+          }]
+        : []),
+      {
+        source: "/press",
+        has: onHost(pressHostname),
         destination: pressOrigin,
         permanent: true,
       },
@@ -236,6 +313,8 @@ const nextConfig: NextConfig = {
         destination: apiOrigin,
         permanent: true,
       },
+      // Authentication callbacks may still return to the internal portal path.
+      // Settle those requests on the clean API hostname root as well.
       {
         source: "/developers",
         has: onHost(apiHostname),
