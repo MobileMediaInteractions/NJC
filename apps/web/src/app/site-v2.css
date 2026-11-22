@@ -685,6 +685,51 @@ html.dark .site-v2 .v2-newsletter .bg-brand-yellow { color: #071f18 !important; 
 .site-v2 .v2-live-index article.bg-brand-navy p,
 .site-v2 .v2-live-index article.bg-brand-navy span { color: var(--v2-secondary); }
 
+/* Community noticeboard: this section was added after the V2 design shipped
+   and ships with its own cream palette, so map it onto the V2 tokens. */
+.site-v2 section[aria-labelledby="home-community-title"] {
+  color: var(--v2-text);
+  background: var(--v2-bg);
+  border: 0;
+  border-top: 1px solid var(--v2-separator);
+  padding-block: clamp(3rem, 6vw, 5rem);
+}
+.site-v2 section[aria-labelledby="home-community-title"] > .container-news { width: var(--v2-page); margin-inline: auto; padding-inline: 0; }
+.site-v2 section[aria-labelledby="home-community-title"] h2 { color: var(--v2-text); font-weight: 660; letter-spacing: -0.04em; }
+.site-v2 section[aria-labelledby="home-community-title"] header > div > p:first-child { color: var(--v2-accent); }
+.site-v2 section[aria-labelledby="home-community-title"] header > div > p:last-child,
+.site-v2 section[aria-labelledby="home-community-title"] > .container-news > p:last-child { color: var(--v2-secondary); }
+.site-v2 section[aria-labelledby="home-community-title"] header > a { color: var(--v2-text); border-color: var(--v2-separator); }
+.site-v2 section[aria-labelledby="home-community-title"] > .container-news > p { border-color: var(--v2-separator); }
+.site-v2 section[aria-labelledby="home-community-title"] a[href^="/community/"] {
+  color: var(--v2-text);
+  background: var(--v2-surface);
+  border: 1px solid var(--v2-separator);
+  border-radius: 0.75rem;
+  box-shadow: none;
+}
+.site-v2 section[aria-labelledby="home-community-title"] a[href^="/community/"]:hover {
+  border-color: color-mix(in srgb, var(--v2-text) 24%, transparent);
+  box-shadow: 0 1px 14px rgb(0 0 0 / 6%);
+}
+.site-v2 section[aria-labelledby="home-community-title"] a[href^="/community/"] h3 { color: var(--v2-text); }
+.site-v2 section[aria-labelledby="home-community-title"] a[href^="/community/"] > div:first-child > span:first-child { color: var(--v2-accent); }
+.site-v2 section[aria-labelledby="home-community-title"] a[href^="/community/"] > div:first-child > span:last-child:not(:first-child) { color: var(--v2-secondary); background: color-mix(in srgb, var(--v2-text) 8%, transparent); }
+.site-v2 section[aria-labelledby="home-community-title"] a[href^="/community/"] > p:not(:first-child) { color: var(--v2-secondary); }
+.site-v2 section[aria-labelledby="home-community-title"] a[href^="/community/"] > div:last-child { color: var(--v2-tertiary); }
+.site-v2 section[aria-labelledby="home-community-title"] a[href^="/community/"] > div:last-child > span:last-child { color: var(--v2-accent); }
+html.dark .site-v2 section[aria-labelledby="home-community-title"] a[href^="/community/"] { background: var(--v2-surface); border-color: var(--v2-separator); }
+html.dark .site-v2 section[aria-labelledby="home-community-title"] a[href^="/community/"] h3 { color: var(--v2-text); }
+html.dark .site-v2 section[aria-labelledby="home-community-title"] a[href^="/community/"] > div:first-child > span:first-child,
+html.dark .site-v2 section[aria-labelledby="home-community-title"] a[href^="/community/"] > div:last-child > span:last-child { color: var(--v2-accent); }
+html.dark .site-v2 section[aria-labelledby="home-community-title"] a[href^="/community/"] > div:first-child > span:last-child:not(:first-child) { color: var(--v2-secondary); background: rgb(255 255 255 / 8%); }
+html.dark .site-v2 section[aria-labelledby="home-community-title"] a[href^="/community/"] > p:not(:first-child),
+html.dark .site-v2 section[aria-labelledby="home-community-title"] a[href^="/community/"] > div:last-child { color: var(--v2-secondary); }
+html.dark .site-v2 section[aria-labelledby="home-community-title"] header > div > p:first-child { color: var(--v2-accent); }
+html.dark .site-v2 section[aria-labelledby="home-community-title"] header > div > p:last-child,
+html.dark .site-v2 section[aria-labelledby="home-community-title"] > .container-news > p:last-child,
+html.dark .site-v2 section[aria-labelledby="home-community-title"] header > a { color: var(--v2-text); }
+
 
 @keyframes v2-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
